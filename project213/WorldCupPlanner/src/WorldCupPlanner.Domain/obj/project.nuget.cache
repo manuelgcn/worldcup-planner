@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "SFipEVEXUVs=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Domain\\WorldCupPlanner.Domain.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Usuario\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.12\\microsoft.netcore.app.ref.8.0.12.nupkg.sha512",
+    "C:\\Users\\Usuario\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.12\\microsoft.windowsdesktop.app.ref.8.0.12.nupkg.sha512",
+    "C:\\Users\\Usuario\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.12\\microsoft.aspnetcore.app.ref.8.0.12.nupkg.sha512"
+  ],
+  "logs": []
+}

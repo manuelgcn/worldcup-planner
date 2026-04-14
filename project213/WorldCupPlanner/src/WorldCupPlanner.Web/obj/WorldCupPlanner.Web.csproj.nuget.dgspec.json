@@ -1,0 +1,407 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Web\\WorldCupPlanner.Web.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Application\\WorldCupPlanner.Application.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Application\\WorldCupPlanner.Application.csproj",
+        "projectName": "WorldCupPlanner.Application",
+        "projectPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Application\\WorldCupPlanner.Application.csproj",
+        "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Application\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Usuario\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Contracts\\WorldCupPlanner.Contracts.csproj": {
+                "projectPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Contracts\\WorldCupPlanner.Contracts.csproj"
+              },
+              "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Domain\\WorldCupPlanner.Domain.csproj": {
+                "projectPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Domain\\WorldCupPlanner.Domain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Contracts\\WorldCupPlanner.Contracts.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Contracts\\WorldCupPlanner.Contracts.csproj",
+        "projectName": "WorldCupPlanner.Contracts",
+        "projectPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Contracts\\WorldCupPlanner.Contracts.csproj",
+        "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Contracts\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Usuario\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Domain\\WorldCupPlanner.Domain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Domain\\WorldCupPlanner.Domain.csproj",
+        "projectName": "WorldCupPlanner.Domain",
+        "projectPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Domain\\WorldCupPlanner.Domain.csproj",
+        "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Domain\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Usuario\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Infrastructure\\WorldCupPlanner.Infrastructure.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Infrastructure\\WorldCupPlanner.Infrastructure.csproj",
+        "projectName": "WorldCupPlanner.Infrastructure",
+        "projectPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Infrastructure\\WorldCupPlanner.Infrastructure.csproj",
+        "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Infrastructure\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Usuario\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Application\\WorldCupPlanner.Application.csproj": {
+                "projectPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Application\\WorldCupPlanner.Application.csproj"
+              },
+              "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Contracts\\WorldCupPlanner.Contracts.csproj": {
+                "projectPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Contracts\\WorldCupPlanner.Contracts.csproj"
+              },
+              "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Domain\\WorldCupPlanner.Domain.csproj": {
+                "projectPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Domain\\WorldCupPlanner.Domain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Web\\WorldCupPlanner.Web.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Web\\WorldCupPlanner.Web.csproj",
+        "projectName": "WorldCupPlanner.Web",
+        "projectPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Web\\WorldCupPlanner.Web.csproj",
+        "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Web\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Usuario\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Application\\WorldCupPlanner.Application.csproj": {
+                "projectPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Application\\WorldCupPlanner.Application.csproj"
+              },
+              "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Contracts\\WorldCupPlanner.Contracts.csproj": {
+                "projectPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Contracts\\WorldCupPlanner.Contracts.csproj"
+              },
+              "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Infrastructure\\WorldCupPlanner.Infrastructure.csproj": {
+                "projectPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project213\\WorldCupPlanner\\src\\WorldCupPlanner.Infrastructure\\WorldCupPlanner.Infrastructure.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[8.0.12, 8.0.12]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
