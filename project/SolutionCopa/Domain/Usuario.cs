@@ -25,4 +25,12 @@ public class Usuario
         this.email = "";
         this.password = "";
     }
+
+    public Usuario(string name, string lastname)
+    {
+        this.name = name;
+        this.lastname = lastname;
+        this.email = "";
+        this.password = "";
+    }
 }
