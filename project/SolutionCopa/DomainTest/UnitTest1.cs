@@ -35,7 +35,7 @@ public class UnitTest1
     public void UserCanBeInitializedWithAllData()
     {
         var birthDate = new DateTime(1990, 5, 15);
-        Usuario user = new Usuario("Juan", "Pérez", "juan@email.com", "pass123", 2/23/2005);
+        Usuario user = new Usuario("Juan", "Pérez", "juan@email.com", "pass123", birthDate);
         Assert.AreEqual("Juan", user.name);
         Assert.AreEqual("juan@email.com", user.email);
     }
