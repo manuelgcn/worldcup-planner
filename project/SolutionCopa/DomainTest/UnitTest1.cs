@@ -20,4 +20,12 @@ public class UnitTest1
         Usuario user = new Usuario("Juan");
         Assert.AreEqual("Juan", user.name);
     }
+    
+    [TestMethod]
+    public void UserCanBeInitializedWithNameAndLastname()
+    {
+        Usuario user = new Usuario("Juan", "Pérez");
+        Assert.AreEqual("Juan", user.name);
+        Assert.AreEqual("Pérez", user.lastname);
+    }
 }
