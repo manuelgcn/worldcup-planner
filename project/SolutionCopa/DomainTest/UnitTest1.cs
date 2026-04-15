@@ -13,4 +13,11 @@ public class UnitTest1
         Usuario user = new Usuario();
         Assert.IsNotNull(user);
     }
+    
+    [TestMethod]
+    public void UserCanBeInitializedWithName()
+    {
+        Usuario user = new Usuario("Juan");
+        Assert.AreEqual("Juan", user.name);
+    }
 }
