@@ -15,4 +15,10 @@ public class UsuarioTests
         Assert.IsNotNull(user);
     }
     
+    [Test]
+    public void UsuarioCanBeInitializedWithName()
+    {
+        Usuario user = new Usuario("Juan");
+        Assert.AreEqual("Juan", user.name);
+    }
 }
