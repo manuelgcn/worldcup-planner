@@ -28,4 +28,17 @@ public class UnitTest1
         Assert.AreEqual("Juan", user.name);
         Assert.AreEqual("Pérez", user.lastname);
     }
+    
+    
+   
+    [TestMethod]
+    public void UserCanBeInitializedWithAllData()
+    {
+        var birthDate = new DateTime(1990, 5, 15);
+        Usuario user = new Usuario("Juan", "Pérez", "juan@email.com", "pass123", 2/23/2005);
+        Assert.AreEqual("Juan", user.name);
+        Assert.AreEqual("juan@email.com", user.email);
+    }
+
+
 }
