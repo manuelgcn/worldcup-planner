@@ -13,6 +13,12 @@ public class UnitTest1
         Usuario user = new Usuario();
         Assert.IsNotNull(user);
     }
+    [TestMethod]
+    public void UserCanSetAndGetIdUser()
+    {
+        Usuario user = new Usuario(5,"Juan");
+        Assert.AreEqual(5, user.idUser);
+    }
     
     [TestMethod]
     public void UserCanBeInitializedWithName()
@@ -37,8 +43,14 @@ public class UnitTest1
         var birthDate = new DateTime(1990, 5, 15);
         Usuario user = new Usuario("Juan", "Pérez", "juan@email.com", "pass123", birthDate);
         Assert.AreEqual("Juan", user.name);
+        Assert.AreEqual("Pérez", user.lastname);
         Assert.AreEqual("juan@email.com", user.email);
+        Assert.AreEqual("pass123", user.password);
+        Assert.AreEqual(birthDate, user.dateOfBirth);
+        
     }
+    
+   
 
 
 }
