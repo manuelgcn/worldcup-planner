@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\Services\\Services.csproj": {}
+    "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project\\SolutionCopa\\Services\\Services.csproj": {}
   },
   "projects": {
-    "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\Services\\Services.csproj": {
+    "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project\\SolutionCopa\\Services\\Services.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\Services\\Services.csproj",
+        "projectUniqueName": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project\\SolutionCopa\\Services\\Services.csproj",
         "projectName": "Services",
-        "projectPath": "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\Services\\Services.csproj",
-        "packagesPath": "C:\\Users\\59891\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\Services\\obj\\",
+        "projectPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project\\SolutionCopa\\Services\\Services.csproj",
+        "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project\\SolutionCopa\\Services\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\59891\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\Usuario\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -37,7 +37,8 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "9.0.100"
       },
       "frameworks": {
         "net8.0": {
@@ -53,12 +54,26 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.12, 8.0.12]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Users\\59891\\.dotnet\\sdk\\8.0.419/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

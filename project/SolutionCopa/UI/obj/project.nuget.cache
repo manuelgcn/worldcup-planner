@@ -1,8 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "iXk7H+PQC58=",
+  "dgSpecHash": "8Ilt7p4JFdY=",
   "success": true,
-  "projectFilePath": "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\UI\\UI.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "C:\\Users\\Usuario\\Desktop\\obligatorio da1\\project\\SolutionCopa\\UI\\UI.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Usuario\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.12\\microsoft.netcore.app.ref.8.0.12.nupkg.sha512",
+    "C:\\Users\\Usuario\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.12\\microsoft.windowsdesktop.app.ref.8.0.12.nupkg.sha512",
+    "C:\\Users\\Usuario\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.12\\microsoft.aspnetcore.app.ref.8.0.12.nupkg.sha512"
+  ],
   "logs": []
 }
