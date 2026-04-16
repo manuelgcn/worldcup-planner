@@ -8,8 +8,8 @@ public sealed class EquipoTest
     [TestMethod]
     public void TeamIsCreatedWithValidName()
     {
-        const int rankingFifa = 2400;
-        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, ProjectCopa.Confederacion.CONMEBOL);
+        
+        var equipo = new ProjectCopa.Equipo("Argentina", 2400, false, ProjectCopa.Confederacion.CONMEBOL);
 
         Assert.AreEqual("Argentina", equipo.Nombre);
     }

@@ -21,4 +21,10 @@
         <Using Include="NUnit.Framework"/>
     </ItemGroup>
 
+      <ItemGroup>
+        <Compile Remove="Equipo.Test\**\*.cs" />
+        <EmbeddedResource Remove="Equipo.Test\**\*" />
+        <None Remove="Equipo.Test\**\*" />
+      </ItemGroup>
+
 </Project>
