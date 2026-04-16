@@ -6,6 +6,11 @@ public class Equipo
 
     public Equipo(string nombre, int rankingFifa, bool esFicticio, Confederacion confederacion)
     {
+        if (string.IsNullOrEmpty(nombre))
+        {
+            throw new ArgumentException("El nombre del equipo no puede ser vacío.", nameof(nombre));
+        }
+
         Nombre = nombre;
     }
 }

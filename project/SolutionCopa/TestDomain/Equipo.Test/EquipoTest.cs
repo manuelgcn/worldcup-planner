@@ -21,9 +21,10 @@ public sealed class EquipoTest
     {
         // Arrange
         const int rankingFifa = 2400;
+        Action act = () =>
+            new ProjectCopa.Equipo(string.Empty, rankingFifa, false, Confederacion.CONMEBOL);
 
         // Act + Assert
-        Assert.ThrowsException<ArgumentException>(() =>
-            new ProjectCopa.Equipo(string.Empty, rankingFifa, false, Confederacion.CONMEBOL));
+        Assert.ThrowsException<ArgumentException>(act);
     }
 }
