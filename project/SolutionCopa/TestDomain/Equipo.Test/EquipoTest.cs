@@ -15,4 +15,15 @@ public sealed class EquipoTest
         // Assert
         Assert.AreEqual("Argentina", equipo.Nombre);
     }
+
+    [TestMethod]
+    public void TeamCreationThrowsWhenNameIsEmpty()
+    {
+        // Arrange
+        const int rankingFifa = 2400;
+
+        // Act + Assert
+        Assert.ThrowsException<ArgumentException>(() =>
+            new ProjectCopa.Equipo(string.Empty, rankingFifa, false, Confederacion.CONMEBOL));
+    }
 }
