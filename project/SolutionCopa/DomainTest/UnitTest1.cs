@@ -16,7 +16,8 @@ public class UnitTest1
     [TestMethod]
     public void UserCanSetAndGetIdUser()
     {
-        Usuario user = new Usuario(5,"Juan");
+        Usuario user = new Usuario("Juan");
+        user.idUser = 5;
         Assert.AreEqual(5, user.idUser);
     }
     
