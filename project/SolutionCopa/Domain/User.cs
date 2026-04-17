@@ -20,6 +20,8 @@ public class User
     
     public User(int id, string name, string lastname, string email, string password, DateTime dateOfBirth)
     { 
+        ValidateEmail(email);
+        
         this.idUser = id;
         this.name = name;
         this.lastname = lastname;
@@ -27,4 +29,17 @@ public class User
         this.password = password;
         this.dateOfBirth = dateOfBirth;
     }
+    
+    
+    private void ValidateEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Email es un campo obligatorio");
+
+        if (!email.Contains("@") || !email.Contains("."))
+            throw new ArgumentException("Email invalido, debe contener '@' y '.' ");
+    }
+
+    
+    
 }
