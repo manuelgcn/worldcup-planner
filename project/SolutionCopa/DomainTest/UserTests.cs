@@ -143,6 +143,15 @@ public class UserTests
     {
         new User(1, "Juan", "Perez", "", "Pass123@", DateTime.Now);
     }
+    
+    
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void UserCannotHaveInvalidEmailFormat()
+    {
+        new User(1, "Juan", "Perez", "mailinvalido", "Pass123@", DateTime.Now);
+    }
+
 
     
 }
