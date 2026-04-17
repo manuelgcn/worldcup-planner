@@ -153,5 +153,12 @@ public class UserTests
     }
 
 
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void PasswordMustHaveAtLeast8Characters()
+    {
+        new User(1, "Juan", "Perez", "juan@mail.com", "Pa1@", DateTime.Now);
+    }
+
     
 }

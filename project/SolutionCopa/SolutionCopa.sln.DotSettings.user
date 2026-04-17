@@ -2,5 +2,6 @@
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=5a41c65f_002D7a1c_002D4302_002D8485_002D8e3ba87c391e/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="UserCanSetAndGetIdUser" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;MSTest::E1B921DE-78FF-4299-8A9A-42BA96E57540::net8.0::DomainTest.UserTests.UserCannotHaveEmptyEmail&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;MSTest::E1B921DE-78FF-4299-8A9A-42BA96E57540::net8.0::DomainTest.UserTests.PasswordMustHaveAtLeast8Characters&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
