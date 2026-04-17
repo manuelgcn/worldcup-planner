@@ -1,4 +1,7 @@
-﻿namespace ProjectCopa;
+﻿using System.Text.RegularExpressions;
+
+namespace ProjectCopa;
+
 
 public class User
 {
@@ -46,6 +49,11 @@ public class User
     {
         if (password == null || password.Length < 8)
             throw new ArgumentException("Password must have at least 8 characters");
+        
+        
+        if (!Regex.IsMatch(password, "[A-Z]"))
+            throw new ArgumentException("Password must contain an uppercase letter");
+
     }
 
     
