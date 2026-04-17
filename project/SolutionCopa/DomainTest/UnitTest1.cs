@@ -1,22 +1,31 @@
 using System.Reflection.Metadata;
 using ProjectCopa;
 
-
 namespace DomainTest;
 
 [TestClass]
 public class UnitTest1
 {
+    
     [TestMethod]
     public void UserNotNull()
     {
         Usuario user = new Usuario();
         Assert.IsNotNull(user);
     }
+    
     [TestMethod]
-    public void UserCanSetAndGetIdUser()
+    public void UserCanGetIdUser()
     {
-        Usuario user = new Usuario("Juan");
+        Usuario user = new Usuario(5,"Juan");
+        Assert.AreEqual(5, user.idUser);
+    }
+    
+    
+    [TestMethod]
+    public void UserCanSetIdUser()
+    {
+        Usuario user = new Usuario();
         user.idUser = 5;
         Assert.AreEqual(5, user.idUser);
     }
@@ -36,8 +45,8 @@ public class UnitTest1
         Assert.AreEqual("Pérez", user.lastname);
     }
     
-    
-   
+
+
     [TestMethod]
     public void UserCanBeInitializedWithAllData()
     {
@@ -48,10 +57,14 @@ public class UnitTest1
         Assert.AreEqual("juan@email.com", user.email);
         Assert.AreEqual("pass123", user.password);
         Assert.AreEqual(birthDate, user.dateOfBirth);
-        
-    }
-    
-   
 
+    }
+
+    [TestMethod]
+    public void UserDataNotNulls()
+    {
+        Usuario user = new Usuario(string.Empty);
+        Assert.IsNotNull(user.name);
+    }
 
 }

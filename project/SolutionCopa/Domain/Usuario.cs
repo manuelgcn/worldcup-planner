@@ -18,8 +18,9 @@ public class Usuario
         
     }
     
-    public Usuario(string name)
+    public Usuario(int id, string name)
     {
+        this.idUser = id;
         this.name = name;
     }
 
