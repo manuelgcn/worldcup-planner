@@ -17,7 +17,7 @@ public class UnitTest1
     [TestMethod]
     public void UserCanGetIdUser()
     {
-        Usuario user = new Usuario(5,"Juan");
+        Usuario user = new Usuario(5,"Juan","Perez","Juan@gmail.com","pass123",new DateTime(1990,5,15));
         Assert.AreEqual(5, user.idUser);
     }
     

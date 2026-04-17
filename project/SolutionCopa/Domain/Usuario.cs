@@ -38,4 +38,14 @@ public class Usuario
         this.password = password;
         this.dateOfBirth = dateOfBirth;
     }
+    
+    public Usuario(int id, string name, string lastname, string email, string password, DateTime dateOfBirth)
+    {
+        this.idUser = id;
+        this.name = name;
+        this.lastname = lastname;
+        this.email = email;
+        this.password = password;
+        this.dateOfBirth = dateOfBirth;
+    }
 }
