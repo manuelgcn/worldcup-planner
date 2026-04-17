@@ -169,4 +169,12 @@ public class UserTests
     }
 
     
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void PasswordMustHaveNumber()
+    {
+        new User(1, "Juan", "Perez", "juan@mail.com", "Passsss@", DateTime.Now);
+    }
+
+    
 }
