@@ -185,4 +185,15 @@ public class UserTests
     }
 
     
+    [TestMethod]
+    public void PasswordIsNotStoredInPlainText()
+    {
+        string originalPassword = "Pass123@";
+
+        User usuario = new User(1, "Juan", "Perez", "juan@mail.com", originalPassword, new DateTime(1990, 5, 15));
+
+        Assert.AreNotEqual(originalPassword, usuario.password);
+    }
+
+    
 }
