@@ -54,6 +54,10 @@ public class User
         if (!Regex.IsMatch(password, "[A-Z]"))
             throw new ArgumentException("Password must contain an uppercase letter");
 
+        
+        if (!Regex.IsMatch(password, "[0-9]"))
+            throw new ArgumentException("Password must contain a number");
+
     }
 
     
