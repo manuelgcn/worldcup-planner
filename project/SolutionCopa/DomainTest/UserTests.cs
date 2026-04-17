@@ -136,5 +136,13 @@ public class UserTests
         User usuario = new User(1,"Juan","Perez",string.Empty,"pass123",new DateTime(1990,5,15));
         Assert.IsNotNull(usuario.email);
     }
+    
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void UserCannotHaveEmptyEmail()
+    {
+        new User(1, "Juan", "Perez", "", "Pass123@", DateTime.Now);
+    }
 
+    
 }
