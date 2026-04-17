@@ -161,4 +161,12 @@ public class UserTests
     }
 
     
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void PasswordMustHaveUppercaseLetter()
+    {
+        new User(1, "Juan", "Perez", "juan@mail.com", "pass123@", DateTime.Now);
+    }
+
+    
 }
