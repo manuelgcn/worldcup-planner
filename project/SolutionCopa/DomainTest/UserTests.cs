@@ -177,4 +177,12 @@ public class UserTests
     }
 
     
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void PasswordMustHaveSpecialCharacter()
+    {
+        new User(1, "Juan", "Perez", "juan@mail.com", "Pass1234", DateTime.Now);
+    }
+
+    
 }
