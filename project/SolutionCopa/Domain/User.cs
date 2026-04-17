@@ -21,6 +21,7 @@ public class User
     public User(int id, string name, string lastname, string email, string password, DateTime dateOfBirth)
     { 
         ValidateEmail(email);
+        ValidatePassword(password);
         
         this.idUser = id;
         this.name = name;
@@ -38,6 +39,13 @@ public class User
 
         if (!email.Contains("@") || !email.Contains("."))
             throw new ArgumentException("Email invalido, debe contener '@' y '.' ");
+    }
+
+    
+    private void ValidatePassword(string password)
+    {
+        if (password == null || password.Length < 8)
+            throw new ArgumentException("Password must have at least 8 characters");
     }
 
     
