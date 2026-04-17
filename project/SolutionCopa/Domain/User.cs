@@ -1,4 +1,7 @@
 ﻿using System.Text.RegularExpressions;
+using System.Security.Cryptography;
+using System.Text;
+
 
 namespace ProjectCopa;
 
@@ -9,7 +12,7 @@ public class User
     public string name { get; set; }
     public string? lastname { get; set; }
     public string email { get; set; }
-    public string? password { get; set; }
+    public string password { get; private set; }
     public DateTime? dateOfBirth { get; set; } 
     
     public User()
@@ -30,7 +33,7 @@ public class User
         this.name = name;
         this.lastname = lastname;
         this.email = email;
-        this.password = password;
+        this.password = EncryptPassword(password);
         this.dateOfBirth = dateOfBirth;
     }
     
@@ -62,6 +65,12 @@ public class User
         if (!Regex.IsMatch(password, "[^a-zA-Z0-9]"))
             throw new ArgumentException("Password must contain a special character");
 
+    }
+    private string EncryptPassword(string password)
+    {
+        using SHA256 sha = SHA256.Create();
+        byte[] bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
+        return Convert.ToBase64String(bytes);
     }
 
     

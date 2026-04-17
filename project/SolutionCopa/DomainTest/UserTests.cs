@@ -76,16 +76,7 @@ public class UserTests
         usuario.email = "Juan@gmail.com";
         Assert.AreEqual("Juan@gmail.com", usuario.email);
     }
-
-    [TestMethod]
-    public void UserCanSetPassword()
-    {
-        usuario.password = "pass123";
-        Assert.AreEqual("pass123", usuario.password);
-    }
     
-    
-
     [TestMethod]
     public void UserCanGetDateOfBirth()
     {
