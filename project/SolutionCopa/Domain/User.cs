@@ -58,6 +58,10 @@ public class User
         if (!Regex.IsMatch(password, "[0-9]"))
             throw new ArgumentException("Password must contain a number");
 
+        
+        if (!Regex.IsMatch(password, "[^a-zA-Z0-9]"))
+            throw new ArgumentException("Password must contain a special character");
+
     }
 
     
