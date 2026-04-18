@@ -44,10 +44,61 @@ public sealed class EquipoTest
     {
         // Arrange
         const int rankingFifa = 2400;
-        Action act = () =>
-            new ProjectCopa.Equipo(string.Empty, rankingFifa, false, Confederacion.CONMEBOL);
 
         // Act + Assert
-        Assert.ThrowsException<ArgumentException>(act);
+        Assert.ThrowsException<ArgumentException>(() =>
+        {
+            _ = new ProjectCopa.Equipo(string.Empty, rankingFifa, false, Confederacion.CONMEBOL);
+        });
+    }
+
+    [TestMethod]
+    public void TeamCreationThrowsWhenNameIsNull()
+    {
+        // Arrange
+        const int rankingFifa = 2400;
+
+        // Act + Assert
+        Assert.ThrowsException<ArgumentException>(() =>
+        {
+            _ = new ProjectCopa.Equipo(null!, rankingFifa, false, Confederacion.CONMEBOL);
+        });
+    }
+
+    [TestMethod]
+    public void TeamIsCreatedWithNameOfOneCharacter()
+    {
+        // Arrange
+        const int rankingFifa = 2400;
+        var equipo = new ProjectCopa.Equipo("A", rankingFifa, false, Confederacion.CONMEBOL);
+
+        // Assert
+        Assert.AreEqual("A", equipo.Nombre);
+    }
+
+    [TestMethod]
+    public void TeamIsCreatedWithNameOfSixtyCharacters()
+    {
+        // Arrange
+        const int rankingFifa = 2400;
+        var nombre = new string('A', 60);
+        var equipo = new ProjectCopa.Equipo(nombre, rankingFifa, false, Confederacion.CONMEBOL);
+
+        // Assert
+        Assert.AreEqual(nombre, equipo.Nombre);
+    }
+
+    [TestMethod]
+    public void TeamCreationThrowsWhenNameExceedsSixtyCharacters()
+    {
+        // Arrange
+        const int rankingFifa = 2400;
+        var nombre = new string('A', 61);
+
+        // Act + Assert
+        Assert.ThrowsException<ArgumentException>(() =>
+        {
+            _ = new ProjectCopa.Equipo(nombre, rankingFifa, false, Confederacion.CONMEBOL);
+        });
     }
 }
