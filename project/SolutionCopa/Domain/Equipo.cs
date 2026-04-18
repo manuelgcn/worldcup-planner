@@ -4,6 +4,10 @@ public class Equipo
 {
     public string Nombre { get; }
     public int RankingFifa { get; }
+    
+    public bool EsFicticio { get; }
+    
+    public Confederacion Confederacion { get; }
 
     public Equipo(string nombre, int rankingFifa, bool esFicticio, Confederacion confederacion)
     {
@@ -14,6 +18,8 @@ public class Equipo
 
         Nombre = nombre;
         RankingFifa = rankingFifa;
+        EsFicticio = esFicticio;
+        Confederacion = confederacion;
     }
 }
 
