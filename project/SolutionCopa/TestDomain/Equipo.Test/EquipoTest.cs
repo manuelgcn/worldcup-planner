@@ -17,6 +17,17 @@ public sealed class EquipoTest
     }
 
     [TestMethod]
+    public void TeamIsCreatedWithValidRankingFifa()
+    {
+        // Arrange
+        const int rankingFifa = 2400;
+        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.CONMEBOL);
+
+        // Assert
+        Assert.AreEqual(rankingFifa, equipo.RankingFifa);
+    }
+
+    [TestMethod]
     public void TeamCreationThrowsWhenNameIsEmpty()
     {
         // Arrange
