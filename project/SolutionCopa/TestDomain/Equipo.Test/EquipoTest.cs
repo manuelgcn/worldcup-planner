@@ -101,4 +101,59 @@ public sealed class EquipoTest
             _ = new ProjectCopa.Equipo(nombre, rankingFifa, false, Confederacion.CONMEBOL);
         });
     }
+
+    [TestMethod]
+    public void TeamIsCreatedWithConfederacionAfc()
+    {
+        // Arrange
+        const int rankingFifa = 2400;
+        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.AFC);
+
+        // Assert
+        Assert.AreEqual(Confederacion.AFC, equipo.Confederacion);
+    }
+
+    [TestMethod]
+    public void TeamIsCreatedWithConfederacionCaf()
+    {
+        // Arrange
+        const int rankingFifa = 2400;
+        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.CAF);
+
+        // Assert
+        Assert.AreEqual(Confederacion.CAF, equipo.Confederacion);
+    }
+
+    [TestMethod]
+    public void TeamIsCreatedWithConfederacionConcacaf()
+    {
+        // Arrange
+        const int rankingFifa = 2400;
+        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.CONCACAF);
+
+        // Assert
+        Assert.AreEqual(Confederacion.CONCACAF, equipo.Confederacion);
+    }
+
+    [TestMethod]
+    public void TeamIsCreatedWithConfederacionOfc()
+    {
+        // Arrange
+        const int rankingFifa = 2400;
+        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.OFC);
+
+        // Assert
+        Assert.AreEqual(Confederacion.OFC, equipo.Confederacion);
+    }
+
+    [TestMethod]
+    public void TeamIsCreatedWithConfederacionUefa()
+    {
+        // Arrange
+        const int rankingFifa = 2400;
+        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.UEFA);
+
+        // Assert
+        Assert.AreEqual(Confederacion.UEFA, equipo.Confederacion);
+    }
 }
