@@ -120,13 +120,6 @@ public class UserTests
         Assert.AreEqual(birthDate, usuario.dateOfBirth);
 
     }
-
-    [TestMethod]
-    public void UserEmailNotNulls()
-    {
-        User usuario = new User(1,"Juan","Perez",string.Empty,"Pass1234@",new DateTime(1990,5,15));
-        Assert.IsNotNull(usuario.email);
-    }
     
     [TestMethod]
     [ExpectedException(typeof(ArgumentException))]

@@ -13,7 +13,7 @@ public class User
     public string? lastname { get; set; }
     public string email { get; set; }
     public string password { get; private set; }
-    public DateTime? dateOfBirth { get; set; } 
+    public DateTime? dateOfBirth { get; set; }
     
     private List<UserRoles> roles = new List<UserRoles>();
     public IReadOnlyCollection<UserRoles> Roles => roles.AsReadOnly();
