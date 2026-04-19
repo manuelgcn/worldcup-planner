@@ -399,6 +399,19 @@
         "runtime": {
           "bin/placeholder/Domain.dll": {}
         }
+      },
+      "Services/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "dependencies": {
+          "Domain": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/Services.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Services.dll": {}
+        }
       }
     }
   },
@@ -1001,6 +1014,11 @@
       "type": "project",
       "path": "../Domain/Domain.csproj",
       "msbuildProject": "../Domain/Domain.csproj"
+    },
+    "Services/1.0.0": {
+      "type": "project",
+      "path": "../Services/Services.csproj",
+      "msbuildProject": "../Services/Services.csproj"
     }
   },
   "projectFileDependencyGroups": {
@@ -1009,6 +1027,7 @@
       "MSTest.TestAdapter >= 3.1.1",
       "MSTest.TestFramework >= 3.1.1",
       "Microsoft.NET.Test.Sdk >= 17.8.0",
+      "Services >= 1.0.0",
       "coverlet.collector >= 6.0.0"
     ]
   },
@@ -1039,6 +1058,9 @@
           "projectReferences": {
             "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\Domain\\Domain.csproj": {
               "projectPath": "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\Domain\\Domain.csproj"
+            },
+            "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\Services\\Services.csproj": {
+              "projectPath": "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\Services\\Services.csproj"
             }
           }
         }
