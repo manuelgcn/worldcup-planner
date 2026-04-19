@@ -23,7 +23,7 @@ public class UserTests
     [TestMethod]
     public void UserCanGetIdUser()
     {
-        User usuario = new User(5,"Juan","Perez","Juan@gmail.com","pass123",new DateTime(1990,5,15));
+        User usuario = new User(5,"Juan","Perez","Juan@gmail.com","Pass1234@",new DateTime(1990,5,15));
         Assert.AreEqual(5, usuario.idUser);
     }
     
@@ -38,7 +38,7 @@ public class UserTests
     [TestMethod]
     public void UserCanGetNameUser()
     {
-        User usuario = new User(1,"Juan","Perez","Juan@gmail.com","pass123",new DateTime(1990,5,15));
+        User usuario = new User(1,"Juan","Perez","Juan@gmail.com","Pass1234@",new DateTime(1990,5,15));
         Assert.AreEqual("Juan", usuario.name);
     }
 
@@ -52,7 +52,7 @@ public class UserTests
     [TestMethod]
     public void UserCanGetLastNameUser()
     {
-        User usuario = new User(1,"Juan","Perez","Juan@gmail.com","pass123",new DateTime(1990,5,15));
+        User usuario = new User(1,"Juan","Perez","Juan@gmail.com","Pass1234@",new DateTime(1990,5,15));
         Assert.AreEqual("Perez", usuario.lastname);
     }
 
@@ -66,7 +66,7 @@ public class UserTests
     [TestMethod]
     public void UserCanGetEmailUser()
     {
-        User usuario = new User(1,"Juan","Perez","Juan@gmail.com","pass123",new DateTime(1990,5,15));
+        User usuario = new User(1,"Juan","Perez","Juan@gmail.com","Pass1234@",new DateTime(1990,5,15));
         Assert.AreEqual("Juan@gmail.com", usuario.email);
     }
 
@@ -80,7 +80,7 @@ public class UserTests
     [TestMethod]
     public void UserCanGetDateOfBirth()
     {
-        User usuario = new User(1,"Juan","Perez","Juan@gmail.com","pass123",new DateTime(1990,5,15));
+        User usuario = new User(1,"Juan","Perez","Juan@gmail.com","Pass1234@",new DateTime(1990,5,15));
         Assert.AreEqual(new DateTime(1990,5,15), usuario.dateOfBirth);
     }
 
@@ -94,14 +94,14 @@ public class UserTests
     [TestMethod]
     public void UserCanBeInitializedWithName()
     {
-        User usuario = new User(1,"Juan","Perez","Juan@gmail.com","pass123",new DateTime(1990,5,15));
+        User usuario = new User(1,"Juan","Perez","Juan@gmail.com","Pass1234@",new DateTime(1990,5,15));
         Assert.AreEqual("Juan", usuario.name);
     }
     
     [TestMethod]
     public void UserCanBeInitializedWithNameAndLastname()
     {
-        User usuario = new User(1,"Juan","Perez","Juan@gmail.com","pass123",new DateTime(1990,5,15));
+        User usuario = new User(1,"Juan","Perez","Juan@gmail.com","Pass1234@",new DateTime(1990,5,15));
         Assert.AreEqual("Juan", usuario.name);
         Assert.AreEqual("Perez", usuario.lastname);
     }
@@ -112,7 +112,7 @@ public class UserTests
     public void UserCanBeInitializedWithAllData()
     {
         var birthDate = new DateTime(1990, 5, 15);
-        User usuario = new User(1,"Juan","Perez","Juan@gmail.com","pass123",birthDate);
+        User usuario = new User(1,"Juan","Perez","Juan@gmail.com","Pass1234@",birthDate);
         Assert.AreEqual("Juan", usuario.name);
         Assert.AreEqual("Perez", usuario.lastname);
         Assert.AreEqual("Juan@gmail.com", usuario.email);
@@ -124,7 +124,7 @@ public class UserTests
     [TestMethod]
     public void UserEmailNotNulls()
     {
-        User usuario = new User(1,"Juan","Perez",string.Empty,"pass123",new DateTime(1990,5,15));
+        User usuario = new User(1,"Juan","Perez",string.Empty,"Pass1234@",new DateTime(1990,5,15));
         Assert.IsNotNull(usuario.email);
     }
     
@@ -132,7 +132,7 @@ public class UserTests
     [ExpectedException(typeof(ArgumentException))]
     public void UserCannotHaveEmptyEmail()
     {
-        new User(1, "Juan", "Perez", "", "Pass123@", DateTime.Now);
+        new User(1, "Juan", "Perez", "", "Pass1234@", DateTime.Now);
     }
     
     
@@ -140,7 +140,7 @@ public class UserTests
     [ExpectedException(typeof(ArgumentException))]
     public void UserCannotHaveInvalidEmailFormat()
     {
-        new User(1, "Juan", "Perez", "mailinvalido", "Pass123@", DateTime.Now);
+        new User(1, "Juan", "Perez", "mailinvalido", "Pass1234@", DateTime.Now);
     }
 
 
