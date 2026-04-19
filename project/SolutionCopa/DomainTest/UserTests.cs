@@ -196,4 +196,14 @@ public class UserTests
     }
 
     
+    [TestMethod]
+    public void UserCanAddRole()
+    {
+        User usuario = new User(1, "Juan", "Perez", "juan@mail.com", "Passs1234@", new DateTime(1990, 5, 15));
+        usuario.AddRole(UserRole.Admin);
+
+        Assert.IsTrue(usuario.Roles.Contains(UserRole.Admin));
+    }
+
+    
 }
