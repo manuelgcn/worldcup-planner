@@ -47,5 +47,20 @@ public sealed class EquipoServiceTest
         Assert.ThrowsException<InvalidOperationException>(() =>
             service.AgregarEquipo(new Equipo("CONMEBOL Team 8", 1500, false, Confederacion.CONMEBOL)));
     }
+
+    [TestMethod]
+    public void RegisteringTeamBeyondConcacafQuotaThrowsInvalidOperationException()
+    {
+        const int concacafQuota = 7;
+        var service = new EquipoService();
+
+        for (var i = 1; i <= concacafQuota; i++)
+        {
+            service.AgregarEquipo(new Equipo($"CONCACAF Team {i}", 1600 + i, false, Confederacion.CONCACAF));
+        }
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            service.AgregarEquipo(new Equipo("CONCACAF Team 8", 1700, false, Confederacion.CONCACAF)));
+    }
 }
 
