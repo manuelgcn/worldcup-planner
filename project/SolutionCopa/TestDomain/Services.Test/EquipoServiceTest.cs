@@ -17,5 +17,20 @@ public sealed class EquipoServiceTest
 
         Assert.ThrowsException<InvalidOperationException>(() => service.AgregarEquipo(duplicateTeam));
     }
+
+    [TestMethod]
+    public void RegisteringTeamBeyondUefaQuotaThrowsInvalidOperationException()
+    {
+        const int uefaQuota = 16;
+        var service = new EquipoService();
+
+        for (var i = 1; i <= uefaQuota; i++)
+        {
+            service.AgregarEquipo(new Equipo($"UEFA Team {i}", 1000 + i, false, Confederacion.UEFA));
+        }
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            service.AgregarEquipo(new Equipo("UEFA Team 17", 1200, false, Confederacion.UEFA)));
+    }
 }
 
