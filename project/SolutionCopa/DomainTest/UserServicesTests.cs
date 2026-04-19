@@ -125,4 +125,26 @@ public class UserServicesTests
     }
 
     
+    [TestMethod]
+    public void AdminCanAssignRoleToUser()
+    {
+        User user = new User(
+            1,
+            "Juan",
+            "Perez",
+            "juan@mail.com",
+            "Pass123@",
+            new DateTime(1990, 5, 15)
+        );
+
+        service.AddUser(user);
+
+        service.AssignRole(1, UserRole.Admin);
+
+        User updated = service.GetUserById(1);
+
+        Assert.IsTrue(updated.Roles.Contains(UserRole.Admin));
+    }
+
+    
 }
