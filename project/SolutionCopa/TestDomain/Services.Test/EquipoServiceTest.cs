@@ -62,5 +62,50 @@ public sealed class EquipoServiceTest
         Assert.ThrowsException<InvalidOperationException>(() =>
             service.AgregarEquipo(new Equipo("CONCACAF Team 8", 1700, false, Confederacion.CONCACAF)));
     }
+
+    [TestMethod]
+    public void RegisteringTeamBeyondCafQuotaThrowsInvalidOperationException()
+    {
+        const int cafQuota = 9;
+        var service = new EquipoService();
+
+        for (var i = 1; i <= cafQuota; i++)
+        {
+            service.AgregarEquipo(new Equipo($"CAF Team {i}", 1800 + i, false, Confederacion.CAF));
+        }
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            service.AgregarEquipo(new Equipo("CAF Team 10", 1900, false, Confederacion.CAF)));
+    }
+
+    [TestMethod]
+    public void RegisteringTeamBeyondAfcQuotaThrowsInvalidOperationException()
+    {
+        const int afcQuota = 8;
+        var service = new EquipoService();
+
+        for (var i = 1; i <= afcQuota; i++)
+        {
+            service.AgregarEquipo(new Equipo($"AFC Team {i}", 2000 + i, false, Confederacion.AFC));
+        }
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            service.AgregarEquipo(new Equipo("AFC Team 9", 2100, false, Confederacion.AFC)));
+    }
+
+    [TestMethod]
+    public void RegisteringTeamBeyondOfcQuotaThrowsInvalidOperationException()
+    {
+        const int ofcQuota = 1;
+        var service = new EquipoService();
+
+        for (var i = 1; i <= ofcQuota; i++)
+        {
+            service.AgregarEquipo(new Equipo($"OFC Team {i}", 2200 + i, false, Confederacion.OFC));
+        }
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            service.AgregarEquipo(new Equipo("OFC Team 2", 2300, false, Confederacion.OFC)));
+    }
 }
 

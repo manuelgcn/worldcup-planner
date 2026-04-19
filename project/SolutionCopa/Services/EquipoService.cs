@@ -4,11 +4,17 @@ namespace Services;
 
 public class EquipoService
 {
+    private const int AfcQuota = 8;
+    private const int CafQuota = 9;
+    private const int OfcQuota = 1;
     private const int UefaQuota = 16;
     private const int ConmebolQuota = 7;
     private const int ConcacafQuota = 7;
     private static readonly IReadOnlyDictionary<Confederacion, int> QuotasByConfederation = new Dictionary<Confederacion, int>
     {
+        { Confederacion.AFC, AfcQuota },
+        { Confederacion.CAF, CafQuota },
+        { Confederacion.OFC, OfcQuota },
         { Confederacion.UEFA, UefaQuota },
         { Confederacion.CONMEBOL, ConmebolQuota },
         { Confederacion.CONCACAF, ConcacafQuota }
