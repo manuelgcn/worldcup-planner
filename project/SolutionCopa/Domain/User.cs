@@ -15,12 +15,16 @@ public class User
     public string password { get; private set; }
     public DateTime? dateOfBirth { get; set; } 
     
+    private List<UserRoles> roles = new List<UserRoles>();
+    public IReadOnlyCollection<UserRoles> Roles => roles.AsReadOnly();
+    
     public User()
     {
         this.name = "";
         this.lastname = "";
         this.email = "";
         this.password = "";
+        
         
     }
     
