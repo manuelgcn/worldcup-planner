@@ -43,5 +43,24 @@ public class UserServicesTests
     }
 
     
+    [TestMethod]
+    public void CanGetUserById()
+    {
+        User user = new User(
+            1,
+            "Juan",
+            "Perez",
+            "juan@mail.com",
+            "Pass123@",
+            new DateTime(1990, 5, 15)
+        );
+
+        service.AddUser(user);
+
+        User result = service.GetUserById(1);
+
+        Assert.AreEqual(user, result);
+    }
+
     
 }
