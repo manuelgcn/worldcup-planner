@@ -6,13 +6,18 @@ public class EquipoService
 {
     private const int UefaQuota = 16;
     private const int ConmebolQuota = 7;
+    private static readonly IReadOnlyDictionary<Confederacion, int> QuotasByConfederation = new Dictionary<Confederacion, int>
+    {
+        { Confederacion.UEFA, UefaQuota },
+        { Confederacion.CONMEBOL, ConmebolQuota }
+    };
+
     private readonly List<Equipo> _equipos = new();
 
     public void AgregarEquipo(Equipo equipo)
     {
         ValidarNombreUnico(equipo);
-        ValidarCupoUefa(equipo);
-        ValidarCupoConmebol(equipo);
+        ValidarCupoConfederacion(equipo);
 
         _equipos.Add(equipo);
     }
@@ -30,19 +35,16 @@ public class EquipoService
         }
     }
 
-    private void ValidarCupoUefa(Equipo equipo)
+    private void ValidarCupoConfederacion(Equipo equipo)
     {
-        if (EsEquipoUefa(equipo) && CupoUefaCompleto())
+        if (!QuotasByConfederation.TryGetValue(equipo.Confederacion, out var quota))
         {
-            throw new InvalidOperationException("UEFA team quota exceeded.");
+            return;
         }
-    }
 
-    private void ValidarCupoConmebol(Equipo equipo)
-    {
-        if (EsEquipoConmebol(equipo) && CupoConmebolCompleto())
+        if (CantidadEquiposPorConfederacion(equipo.Confederacion) >= quota)
         {
-            throw new InvalidOperationException("CONMEBOL team quota exceeded.");
+            throw new InvalidOperationException($"{equipo.Confederacion} team quota exceeded.");
         }
     }
 
@@ -51,24 +53,9 @@ public class EquipoService
         return _equipos.Any(existingTeam => existingTeam.Nombre == nombre);
     }
 
-    private static bool EsEquipoUefa(Equipo equipo)
+    private int CantidadEquiposPorConfederacion(Confederacion confederacion)
     {
-        return equipo.Confederacion == Confederacion.UEFA;
-    }
-
-    private static bool EsEquipoConmebol(Equipo equipo)
-    {
-        return equipo.Confederacion == Confederacion.CONMEBOL;
-    }
-
-    private bool CupoUefaCompleto()
-    {
-        return _equipos.Count(existingTeam => existingTeam.Confederacion == Confederacion.UEFA) >= UefaQuota;
-    }
-
-    private bool CupoConmebolCompleto()
-    {
-        return _equipos.Count(existingTeam => existingTeam.Confederacion == Confederacion.CONMEBOL) >= ConmebolQuota;
+        return _equipos.Count(existingTeam => existingTeam.Confederacion == confederacion);
     }
 }
 
