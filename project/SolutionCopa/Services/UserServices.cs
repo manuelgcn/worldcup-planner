@@ -20,5 +20,17 @@ public class UserServices
 
         users.Add(user);
     }
+    
+    
+    public User GetUserByEmail(string email)
+    {
+        User user = users.FirstOrDefault(u => u.email == email);
+
+        if (user == null)
+            throw new ArgumentException("User not found");
+
+        return user;
+    }
+
 
 }
