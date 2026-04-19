@@ -5,12 +5,14 @@ namespace Services;
 public class EquipoService
 {
     private const int UefaQuota = 16;
+    private const int ConmebolQuota = 7;
     private readonly List<Equipo> _equipos = new();
 
     public void AgregarEquipo(Equipo equipo)
     {
         ValidarNombreUnico(equipo);
         ValidarCupoUefa(equipo);
+        ValidarCupoConmebol(equipo);
 
         _equipos.Add(equipo);
     }
@@ -36,6 +38,14 @@ public class EquipoService
         }
     }
 
+    private void ValidarCupoConmebol(Equipo equipo)
+    {
+        if (EsEquipoConmebol(equipo) && CupoConmebolCompleto())
+        {
+            throw new InvalidOperationException("CONMEBOL team quota exceeded.");
+        }
+    }
+
     private bool ExisteNombreDuplicado(string nombre)
     {
         return _equipos.Any(existingTeam => existingTeam.Nombre == nombre);
@@ -46,9 +56,19 @@ public class EquipoService
         return equipo.Confederacion == Confederacion.UEFA;
     }
 
+    private static bool EsEquipoConmebol(Equipo equipo)
+    {
+        return equipo.Confederacion == Confederacion.CONMEBOL;
+    }
+
     private bool CupoUefaCompleto()
     {
         return _equipos.Count(existingTeam => existingTeam.Confederacion == Confederacion.UEFA) >= UefaQuota;
+    }
+
+    private bool CupoConmebolCompleto()
+    {
+        return _equipos.Count(existingTeam => existingTeam.Confederacion == Confederacion.CONMEBOL) >= ConmebolQuota;
     }
 }
 
