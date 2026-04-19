@@ -14,11 +14,15 @@ public class UserServices
     
     public void AddUser(User user)
     {
-        if (users.Any(u => u.email == user.email) || users.Any(u => u.idUser == user.idUser))
+        if (users.Any(u => u.email == user.email))
             throw new ArgumentException("Email already exists");
+        if (users.Any(u => u.idUser == user.idUser))
+            throw new ArgumentException("User ID is already assigned");
 
         users.Add(user);
     }
+    
+    
     
     
     public User GetUserByEmail(string email)
