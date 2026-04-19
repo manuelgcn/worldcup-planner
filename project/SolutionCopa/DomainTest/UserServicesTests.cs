@@ -23,6 +23,18 @@ public class UserServicesTests
         Assert.AreEqual(1, service.GetAllUsers().Count);
     }
     
+    
+    [TestMethod]
+    public void CanGetUserByEmail()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15) );
+        service.AddUser(user);
 
+        User result = service.GetUserByEmail("juan@mail.com");
+
+        Assert.AreEqual(user, result);
+    }
+
+    
     
 }
