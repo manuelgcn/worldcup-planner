@@ -9,15 +9,8 @@ public class EquipoService
 
     public void AgregarEquipo(Equipo equipo)
     {
-        if (_equipos.Any(existingTeam => existingTeam.Nombre == equipo.Nombre))
-        {
-            throw new InvalidOperationException("Team name must be unique in the system.");
-        }
-
-        if (equipo.Confederacion == Confederacion.UEFA && _equipos.Count(existingTeam => existingTeam.Confederacion == Confederacion.UEFA) >= UefaQuota)
-        {
-            throw new InvalidOperationException("UEFA team quota exceeded.");
-        }
+        ValidarNombreUnico(equipo);
+        ValidarCupoUefa(equipo);
 
         _equipos.Add(equipo);
     }
@@ -25,6 +18,37 @@ public class EquipoService
     public IReadOnlyCollection<Equipo> ObtenerEquipos()
     {
         return _equipos.AsReadOnly();
+    }
+
+    private void ValidarNombreUnico(Equipo equipo)
+    {
+        if (ExisteNombreDuplicado(equipo.Nombre))
+        {
+            throw new InvalidOperationException("Team name must be unique in the system.");
+        }
+    }
+
+    private void ValidarCupoUefa(Equipo equipo)
+    {
+        if (EsEquipoUefa(equipo) && CupoUefaCompleto())
+        {
+            throw new InvalidOperationException("UEFA team quota exceeded.");
+        }
+    }
+
+    private bool ExisteNombreDuplicado(string nombre)
+    {
+        return _equipos.Any(existingTeam => existingTeam.Nombre == nombre);
+    }
+
+    private static bool EsEquipoUefa(Equipo equipo)
+    {
+        return equipo.Confederacion == Confederacion.UEFA;
+    }
+
+    private bool CupoUefaCompleto()
+    {
+        return _equipos.Count(existingTeam => existingTeam.Confederacion == Confederacion.UEFA) >= UefaQuota;
     }
 }
 
