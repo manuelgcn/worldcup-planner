@@ -32,5 +32,16 @@ public class UserServices
         return user;
     }
 
+    
+    public User GetUserById(int id)
+    {
+        User user = users.FirstOrDefault(u => u.idUser == id);
+
+        if (user == null)
+            throw new ArgumentException("User not found");
+
+        return user;
+    }
+
 
 }
