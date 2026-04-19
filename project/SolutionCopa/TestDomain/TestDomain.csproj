@@ -25,6 +25,9 @@
         <Compile Remove="Equipo.Test\**\*.cs" />
         <EmbeddedResource Remove="Equipo.Test\**\*" />
         <None Remove="Equipo.Test\**\*" />
+        <Compile Remove="Services.Test\**\*.cs" />
+        <EmbeddedResource Remove="Services.Test\**\*" />
+        <None Remove="Services.Test\**\*" />
       </ItemGroup>
 
 </Project>
