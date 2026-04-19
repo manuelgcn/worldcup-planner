@@ -73,4 +73,20 @@ public class UserServicesTests
     }
 
     
+    [TestMethod]
+    public void CanUpdateUserData()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        service.AddUser(user);
+
+        service.UpdateUser(1, "Juan Carlos", "Perez", "juan.c@mail.com");
+
+        User updated = service.GetUserById(1);
+
+        Assert.AreEqual("Juan Carlos", updated.name);
+        Assert.AreEqual("juan.c@mail.com", updated.email);
+    }
+
+    
 }
