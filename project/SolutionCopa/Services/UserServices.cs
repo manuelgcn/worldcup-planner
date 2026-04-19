@@ -6,7 +6,6 @@ namespace Services;
 public class UserServices
 {
     private List<User> users = new List<User>();
-
     public IReadOnlyCollection<User> GetAllUsers()
     {
         return users.AsReadOnly();
@@ -50,5 +49,20 @@ public class UserServices
         users.Remove(user);
     }
 
+    
+    public void UpdateUser(int id, string name, string lastname, string email)
+    {
+        User user = GetUserById(id);
+
+        if (users.Any(u => u.email == email && u.idUser != id))
+            throw new ArgumentException("Email already exists");
+
+        user.UpdatePersonalData(name, lastname, email);
+    }
+
+    
+    
+
+ 
 
 }

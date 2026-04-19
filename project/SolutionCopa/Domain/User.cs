@@ -86,5 +86,13 @@ public class User
         }
     }
 
+    public void UpdatePersonalData(string name, string lastname, string email)
+    {
+        ValidateEmail(email);
+
+        this.name = name;
+        this.lastname = lastname;
+        this.email = email;
+    }
     
 }
