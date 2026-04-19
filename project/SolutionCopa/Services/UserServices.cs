@@ -15,7 +15,7 @@ public class UserServices
     
     public void AddUser(User user)
     {
-        if (users.Any(u => u.email == user.email))
+        if (users.Any(u => u.email == user.email) || users.Any(u => u.idUser == user.idUser))
             throw new ArgumentException("Email already exists");
 
         users.Add(user);
