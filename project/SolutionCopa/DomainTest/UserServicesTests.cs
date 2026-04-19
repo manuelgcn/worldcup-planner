@@ -34,6 +34,13 @@ public class UserServicesTests
 
         Assert.AreEqual(user, result);
     }
+    
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void GetUserByEmailThrowsIfNotFound()
+    {
+        service.GetUserByEmail("noexiste@mail.com");
+    }
 
     
     
