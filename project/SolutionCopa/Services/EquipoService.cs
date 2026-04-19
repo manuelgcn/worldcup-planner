@@ -4,6 +4,7 @@ namespace Services;
 
 public class EquipoService
 {
+    private const int FixtureTeamCount = 48;
     private const int AfcQuota = 8;
     private const int CafQuota = 9;
     private const int OfcQuota = 1;
@@ -37,30 +38,10 @@ public class EquipoService
 
     public IReadOnlyList<Equipo> OrdenarParaFixture(IReadOnlyCollection<Equipo> equipos, int semillaFixture)
     {
-        if (equipos is null)
-        {
-            throw new ArgumentNullException(nameof(equipos));
-        }
+        ArgumentNullException.ThrowIfNull(equipos);
+        ValidarCantidadEquiposParaFixture(equipos.Count);
 
-        if (equipos.Count != 48)
-        {
-            throw new InvalidOperationException("Fixture ordering requires exactly 48 teams.");
-        }
-
-        var ordenados = new List<Equipo>(capacity: equipos.Count);
-        var gruposPorRanking = equipos
-            .GroupBy(equipo => equipo.RankingFifa)
-            .OrderByDescending(grupo => grupo.Key)
-            .ToList();
-
-        for (var indiceGrupo = 0; indiceGrupo < gruposPorRanking.Count; indiceGrupo++)
-        {
-            var grupo = gruposPorRanking[indiceGrupo].ToList();
-            FisherYatesDeterministico(grupo, semillaFixture + indiceGrupo);
-            ordenados.AddRange(grupo);
-        }
-
-        return ordenados;
+        return ConstruirOrdenFixture(equipos, semillaFixture);
     }
 
     private void ValidarNombreUnico(Equipo equipo)
@@ -103,6 +84,32 @@ public class EquipoService
             var j = random.Next(i + 1);
             (equipos[i], equipos[j]) = (equipos[j], equipos[i]);
         }
+    }
+
+    private static void ValidarCantidadEquiposParaFixture(int cantidadEquipos)
+    {
+        if (cantidadEquipos != FixtureTeamCount)
+        {
+            throw new InvalidOperationException("Fixture ordering requires exactly 48 teams.");
+        }
+    }
+
+    private static IReadOnlyList<Equipo> ConstruirOrdenFixture(IEnumerable<Equipo> equipos, int semillaFixture)
+    {
+        var ordenados = new List<Equipo>(capacity: FixtureTeamCount);
+        var gruposPorRanking = equipos
+            .GroupBy(equipo => equipo.RankingFifa)
+            .OrderByDescending(grupo => grupo.Key)
+            .ToList();
+
+        for (var indiceGrupo = 0; indiceGrupo < gruposPorRanking.Count; indiceGrupo++)
+        {
+            var grupoEmpatado = gruposPorRanking[indiceGrupo].ToList();
+            FisherYatesDeterministico(grupoEmpatado, semillaFixture + indiceGrupo);
+            ordenados.AddRange(grupoEmpatado);
+        }
+
+        return ordenados;
     }
 }
 

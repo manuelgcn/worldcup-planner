@@ -125,44 +125,13 @@ public sealed class EquipoServiceTest
         var equipos = Crear48EquiposConEmpatesDeRanking();
         const int semillaFixture = 2026;
 
-        var primerOrden = ObtenerNombresOrdenadosParaFixture(service, equipos, semillaFixture);
-        var segundoOrden = ObtenerNombresOrdenadosParaFixture(service, equipos, semillaFixture);
+        var primerOrden = service.OrdenarParaFixture(equipos, semillaFixture).Select(equipo => equipo.Nombre).ToList();
+        var segundoOrden = service.OrdenarParaFixture(equipos, semillaFixture).Select(equipo => equipo.Nombre).ToList();
 
         Assert.AreEqual(48, primerOrden.Count);
         CollectionAssert.AreEqual(primerOrden, segundoOrden);
     }
 
-    private static List<string> ObtenerNombresOrdenadosParaFixture(EquipoService service, IReadOnlyCollection<Equipo> equipos, int semillaFixture)
-    {
-        var metodo = typeof(EquipoService)
-            .GetMethods()
-            .FirstOrDefault(m => m.Name == "OrdenarParaFixture" && m.GetParameters().Length == 2);
-
-        if (metodo is null)
-        {
-            Assert.Fail("Expected method EquipoService.OrdenarParaFixture(IReadOnlyCollection<Equipo>, int semillaFixture) was not found.");
-        }
-
-        var resultado = metodo!.Invoke(service, [equipos, semillaFixture]);
-        if (resultado is null)
-        {
-            Assert.Fail("OrdenarParaFixture returned null.");
-        }
-
-        if (resultado is IEnumerable<Equipo> equiposOrdenados)
-        {
-            return equiposOrdenados.Select(equipo => equipo.Nombre).ToList();
-        }
-
-        var propiedadEquiposOrdenados = resultado!.GetType().GetProperty("EquiposOrdenados");
-        if (propiedadEquiposOrdenados?.GetValue(resultado) is IEnumerable<Equipo> equiposDesdePropiedad)
-        {
-            return equiposDesdePropiedad.Select(equipo => equipo.Nombre).ToList();
-        }
-
-        Assert.Fail("OrdenarParaFixture must return IEnumerable<Equipo> or an object with EquiposOrdenados.");
-        return [];
-    }
 
     private static IReadOnlyCollection<Equipo> Crear48EquiposConEmpatesDeRanking()
     {
