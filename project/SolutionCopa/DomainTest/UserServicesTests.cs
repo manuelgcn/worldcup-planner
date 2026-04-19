@@ -65,4 +65,12 @@ public class UserServicesTests
     }
 
     
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void CannotRemoveNonExistingUser()
+    {
+        service.RemoveUser(99);
+    }
+
+    
 }
