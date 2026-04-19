@@ -12,6 +12,7 @@
           "MSTest.TestAdapter": "3.1.1",
           "MSTest.TestFramework": "3.1.1",
           "Microsoft.NET.Test.Sdk": "17.8.0",
+          "Services": "1.0.0",
           "coverlet.collector": "6.0.0",
           "Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions": "14.0.0.0"
         },
@@ -356,6 +357,17 @@
           }
         }
       },
+      "Services/1.0.0": {
+        "dependencies": {
+          "Domain": "1.0.0"
+        },
+        "runtime": {
+          "Services.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
       "Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions/14.0.0.0": {
         "runtime": {
           "Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll": {
@@ -443,6 +455,11 @@
       "hashPath": "system.reflection.metadata.1.6.0.nupkg.sha512"
     },
     "Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Services/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

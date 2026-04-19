@@ -12,4 +12,13 @@ public class UserServices
         return users.AsReadOnly();
     }
 
+    
+    public void AddUser(User user)
+    {
+        if (users.Any(u => u.email == user.email))
+            throw new ArgumentException("Email already exists");
+
+        users.Add(user);
+    }
+
 }
