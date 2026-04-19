@@ -78,5 +78,13 @@ public class User
     }
 
     
+    public void AddRole(UserRoles role)
+    {
+        if (!roles.Contains(role))
+        {
+            roles.Add(role);
+        }
+    }
+
     
 }
