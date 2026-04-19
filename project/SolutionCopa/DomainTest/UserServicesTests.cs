@@ -89,4 +89,40 @@ public class UserServicesTests
     }
 
     
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void CannotUpdateUserThatDoesNotExist()
+    {
+        service.UpdateUser(99, "Ana", "Lopez", "ana@mail.com");
+    }
+
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void CannotUpdateUserWithDuplicatedEmail()
+    {
+        User user1 = new User(
+            1,
+            "Juan",
+            "Perez",
+            "juan@mail.com",
+            "Pass123@",
+            new DateTime(1990, 5, 15)
+        );
+
+        User user2 = new User(
+            2,
+            "Ana",
+            "Lopez",
+            "ana@mail.com",
+            "Pass123@",
+            new DateTime(1995, 3, 10)
+        );
+
+        service.AddUser(user1);
+        service.AddUser(user2);
+
+        service.UpdateUser(2, "Ana", "Lopez", "juan@mail.com");
+    }
+
+    
 }
