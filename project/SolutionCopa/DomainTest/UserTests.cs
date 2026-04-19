@@ -206,4 +206,23 @@ public class UserTests
     }
 
     
+    [TestMethod]
+    public void UserCannotHaveDuplicateRoles()
+    {
+        User usuario = new User(
+            1,
+            "Juan",
+            "Perez",
+            "juan@mail.com",
+            "Pass123@",
+            new DateTime(1990, 5, 15)
+        );
+
+        usuario.AddRole(UserRoles.Admin);
+        usuario.AddRole(UserRoles.Admin);
+
+        Assert.AreEqual(1, usuario.Roles.Count);
+    }
+
+    
 }
