@@ -46,20 +46,23 @@ public class UserServicesTests
     [TestMethod]
     public void CanGetUserById()
     {
-        User user = new User(
-            1,
-            "Juan",
-            "Perez",
-            "juan@mail.com",
-            "Pass123@",
-            new DateTime(1990, 5, 15)
-        );
-
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15) );
         service.AddUser(user);
 
         User result = service.GetUserById(1);
 
         Assert.AreEqual(user, result);
+    }
+
+    
+    [TestMethod]
+    public void CanRemoveUser()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15) );
+        service.AddUser(user);
+        service.RemoveUser(1);
+
+        Assert.AreEqual(0, service.GetAllUsers().Count);
     }
 
     
