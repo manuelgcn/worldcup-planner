@@ -35,6 +35,34 @@ public class EquipoService
         return _equipos.AsReadOnly();
     }
 
+    public IReadOnlyList<Equipo> OrdenarParaFixture(IReadOnlyCollection<Equipo> equipos, int semillaFixture)
+    {
+        if (equipos is null)
+        {
+            throw new ArgumentNullException(nameof(equipos));
+        }
+
+        if (equipos.Count != 48)
+        {
+            throw new InvalidOperationException("Fixture ordering requires exactly 48 teams.");
+        }
+
+        var ordenados = new List<Equipo>(capacity: equipos.Count);
+        var gruposPorRanking = equipos
+            .GroupBy(equipo => equipo.RankingFifa)
+            .OrderByDescending(grupo => grupo.Key)
+            .ToList();
+
+        for (var indiceGrupo = 0; indiceGrupo < gruposPorRanking.Count; indiceGrupo++)
+        {
+            var grupo = gruposPorRanking[indiceGrupo].ToList();
+            FisherYatesDeterministico(grupo, semillaFixture + indiceGrupo);
+            ordenados.AddRange(grupo);
+        }
+
+        return ordenados;
+    }
+
     private void ValidarNombreUnico(Equipo equipo)
     {
         if (ExisteNombreDuplicado(equipo.Nombre))
@@ -64,6 +92,17 @@ public class EquipoService
     private int CantidadEquiposPorConfederacion(Confederacion confederacion)
     {
         return _equipos.Count(existingTeam => existingTeam.Confederacion == confederacion);
+    }
+
+    private static void FisherYatesDeterministico(IList<Equipo> equipos, int semilla)
+    {
+        var random = new Random(semilla);
+
+        for (var i = equipos.Count - 1; i > 0; i--)
+        {
+            var j = random.Next(i + 1);
+            (equipos[i], equipos[j]) = (equipos[j], equipos[i]);
+        }
     }
 }
 
