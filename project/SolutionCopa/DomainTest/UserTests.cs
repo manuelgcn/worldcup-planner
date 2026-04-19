@@ -187,4 +187,13 @@ public class UserTests
     }
 
     
+    [TestMethod]
+    public void UserStartsWithoutRoles()
+    {
+        
+        User usuario = new User(1, "Juan", "Perez", "juan@mail.com", "Passs1234", new DateTime(1990, 5, 15));
+        Assert.AreEqual(0, usuario.Roles.Count);
+    }
+
+    
 }
