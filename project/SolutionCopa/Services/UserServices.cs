@@ -61,6 +61,12 @@ public class UserServices
     }
 
     
+    public void AssignRole(int userId, UserRoles role)
+    {
+        User user = GetUserById(userId);
+        user.AddRole(role);
+    }
+
     
 
  

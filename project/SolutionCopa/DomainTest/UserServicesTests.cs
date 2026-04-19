@@ -139,11 +139,11 @@ public class UserServicesTests
 
         service.AddUser(user);
 
-        service.AssignRole(1, UserRole.Admin);
+        service.AssignRole(1, UserRoles.Admin);
 
         User updated = service.GetUserById(1);
 
-        Assert.IsTrue(updated.Roles.Contains(UserRole.Admin));
+        Assert.IsTrue(updated.Roles.Contains(UserRoles.Admin));
     }
 
     
