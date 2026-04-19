@@ -43,5 +43,12 @@ public class UserServices
         return user;
     }
 
+    
+    public void RemoveUser(int id)
+    {
+        User user = GetUserById(id);
+        users.Remove(user);
+    }
+
 
 }

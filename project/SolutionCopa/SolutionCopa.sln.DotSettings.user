@@ -10,5 +10,6 @@
     &lt;TestId&gt;MSTest::E1B921DE-78FF-4299-8A9A-42BA96E57540::net8.0::DomainTest.UserTests.UserStartsWithoutRoles&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;MSTest::E1B921DE-78FF-4299-8A9A-42BA96E57540::net8.0::DomainTest.UserTests.UserCanAddRole&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;MSTest::E1B921DE-78FF-4299-8A9A-42BA96E57540::net8.0::DomainTest.UserServicesTests.CanAddUser&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;MSTest::E1B921DE-78FF-4299-8A9A-42BA96E57540::net8.0::DomainTest.UserServicesTests.CanRemoveUser&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
