@@ -147,4 +147,12 @@ public class UserServicesTests
     }
 
     
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void CannotAssignRoleToNonExistingUser()
+    {
+        service.AssignRole(99, UserRoles.Editor);
+    }
+
+    
 }
