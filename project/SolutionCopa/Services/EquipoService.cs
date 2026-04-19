@@ -6,10 +6,12 @@ public class EquipoService
 {
     private const int UefaQuota = 16;
     private const int ConmebolQuota = 7;
+    private const int ConcacafQuota = 7;
     private static readonly IReadOnlyDictionary<Confederacion, int> QuotasByConfederation = new Dictionary<Confederacion, int>
     {
         { Confederacion.UEFA, UefaQuota },
-        { Confederacion.CONMEBOL, ConmebolQuota }
+        { Confederacion.CONMEBOL, ConmebolQuota },
+        { Confederacion.CONCACAF, ConcacafQuota }
     };
 
     private readonly List<Equipo> _equipos = new();
