@@ -6,6 +6,10 @@ namespace Services;
 public class UserServices
 {
     private List<User> users = new List<User>();
-    
-    
+
+    public IReadOnlyCollection<User> GetAllUsers()
+    {
+        return users.AsReadOnly();
+    }
+
 }

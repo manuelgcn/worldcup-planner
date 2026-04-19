@@ -1,3 +1,4 @@
+using ProjectCopa;
 using Services;
 
 namespace DomainTest;
@@ -11,7 +12,10 @@ public class UserServicesTests
     [TestInitialize]
     public void Setup()
     {
-        service = new UserService();
+        service = new UserServices();
     }
+    
+    
 
+    
 }
