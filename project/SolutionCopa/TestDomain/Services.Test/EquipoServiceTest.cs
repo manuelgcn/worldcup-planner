@@ -132,6 +132,16 @@ public sealed class EquipoServiceTest
         Assert.ThrowsException<InvalidOperationException>(() => service.BuscarPorNombre("Argentina"));
     }
 
+    [TestMethod]
+    public void DeletingNonExistingTeamThrowsInvalidOperationExceptionWithExpectedMessage()
+    {
+        var service = CrearServicio();
+
+        var exception = Assert.ThrowsException<InvalidOperationException>(() => service.EliminarEquipo("Brazil"));
+
+        Assert.AreEqual("Cannot delete team because it does not exist.", exception.Message);
+    }
+
     private static EquipoService CrearServicio()
     {
         return new EquipoService();

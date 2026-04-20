@@ -12,6 +12,7 @@ public class EquipoService
     private const int ConmebolQuota = 7;
     private const int ConcacafQuota = 7;
     private const string TeamNotFoundMessage = "Team was not found.";
+    private const string CannotDeleteTeamMessage = "Cannot delete team because it does not exist.";
     private const string DuplicateTeamNameMessage = "Team name must be unique in the system.";
     private const string QuotaExceededMessage = "{0} team quota exceeded.";
     private const string FixtureRequires48TeamsMessage = "Fixture ordering requires exactly 48 teams.";
@@ -51,7 +52,15 @@ public class EquipoService
 
     public void EliminarEquipo(string nombre)
     {
-        var equipo = BuscarPorNombre(nombre);
+        ArgumentNullException.ThrowIfNull(nombre);
+
+        var equipo = _equipos.FirstOrDefault(existingTeam => existingTeam.Nombre == nombre);
+
+        if (equipo is null)
+        {
+            throw new InvalidOperationException(CannotDeleteTeamMessage);
+        }
+
         _equipos.Remove(equipo);
     }
 
