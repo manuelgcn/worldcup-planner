@@ -8,80 +8,80 @@ namespace DomainTest;
 public class PartidoTests
 {
 
-    private Mock<IEquipo> equipoLocal = null!;
-    private Mock<IEquipo> equipoVisita = null!;
-    private Mock<IEstadio> estadio = null!;
-    private Partido partido = null!;
+    private Mock<IEquipo> _equipoLocal = null!;
+    private Mock<IEquipo> _equipoVisita = null!;
+    private Mock<IEstadio> _estadio = null!;
+    private Partido _partido = null!;
 
     private static readonly DateTime FechaPartido = new DateTime(2022, 11, 21);
 
     private Partido CrearPartidoConDatos()
     {
-        return new Partido(1, FechaPartido, equipoLocal.Object, equipoVisita.Object, 4, 1, estadio.Object);
+        return new Partido(1, FechaPartido, _equipoLocal.Object, _equipoVisita.Object, _estadio.Object);
     }
     
     [TestInitialize]
     public void Setup()
     {
-        equipoLocal = new Mock<IEquipo>();
-        equipoVisita = new Mock<IEquipo>();
-        estadio = new Mock<IEstadio>();
-        partido = new Partido();
+        _equipoLocal = new Mock<IEquipo>();
+        _equipoVisita = new Mock<IEquipo>();
+        _estadio = new Mock<IEstadio>();
+        _partido = new Partido();
     }
 
     [TestMethod]
     public void TestCreationAccurateOfPartidoSinDatos()
     {
-        Assert.IsNotNull(partido);
+        Assert.IsNotNull(_partido);
     }
 
     [TestMethod]
     public void TestPartidoCanGetIdPartido()
     {
-        partido = CrearPartidoConDatos();
-        Assert.AreEqual(1, partido.idPartido);
+        _partido = CrearPartidoConDatos();
+        Assert.AreEqual(1, _partido.IdPartido);
     }
 
     [TestMethod]
     public void TestPartidoCanGetFechaPartido()
     {
-        partido = CrearPartidoConDatos();
-        Assert.AreEqual(FechaPartido, partido.fechaPartido);
+        _partido = CrearPartidoConDatos();
+        Assert.AreEqual(FechaPartido, _partido.FechaPartido);
     }
 
     [TestMethod]
     public void TestPartidoCanGetEquipoLocal()
     {
-        partido = CrearPartidoConDatos();
-        Assert.AreSame(equipoLocal.Object, partido.equipoLocal);
+        _partido = CrearPartidoConDatos();
+        Assert.AreSame(_equipoLocal.Object, _partido.EquipoLocal);
     }
 
     [TestMethod]
     public void TestPartidoCanGetEquipoVisita()
     {
-        partido = CrearPartidoConDatos();
-        Assert.AreSame(equipoVisita.Object, partido.equipoVisita);
+        _partido = CrearPartidoConDatos();
+        Assert.AreSame(_equipoVisita.Object, _partido.EquipoVisita);
     }
 
     [TestMethod]
     public void TestPartidoCanGetGolLocal()
     {
-        partido = CrearPartidoConDatos();
-        Assert.AreEqual(4, partido.golLocal);
+        _partido = CrearPartidoConDatos();
+        Assert.AreEqual(0, _partido.GolLocal);
     }
 
     [TestMethod]
     public void TestPartidoCanGetGolVisita()
     {
-        partido = CrearPartidoConDatos();
-        Assert.AreEqual(1, partido.golVisita);
+        _partido = CrearPartidoConDatos();
+        Assert.AreEqual(0, _partido.GolVisita);
     }
 
     [TestMethod]
     public void TestPartidoCanGetEstadio()
     {
-        partido = CrearPartidoConDatos();
-        Assert.AreSame(estadio.Object, partido.estadio);
+        _partido = CrearPartidoConDatos();
+        Assert.AreSame(_estadio.Object, _partido.Estadio);
     }
     
     [TestMethod]
@@ -89,6 +89,6 @@ public class PartidoTests
     {
         var mismoEquipo = new Mock<IEquipo>();
         Assert.ThrowsException<ArgumentException>(() =>
-            new Partido(1, FechaPartido, mismoEquipo.Object, mismoEquipo.Object, 4, 1, estadio.Object));
+            new Partido(1, FechaPartido, mismoEquipo.Object, mismoEquipo.Object, _estadio.Object));
     }
 }
