@@ -49,6 +49,12 @@ public class EquipoService
             ?? throw new InvalidOperationException(TeamNotFoundMessage);
     }
 
+    public void EliminarEquipo(string nombre)
+    {
+        var equipo = BuscarPorNombre(nombre);
+        _equipos.Remove(equipo);
+    }
+
     public IReadOnlyList<Equipo> OrdenarParaFixture(IReadOnlyCollection<Equipo> equipos, int semillaFixture)
     {
         ArgumentNullException.ThrowIfNull(equipos);
