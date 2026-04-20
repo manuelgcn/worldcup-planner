@@ -83,4 +83,12 @@ public class PartidoTests
         partido = CrearPartidoConDatos();
         Assert.AreSame(estadio.Object, partido.estadio);
     }
+    
+    [TestMethod]
+    public void TestPartidoRechazaMismoEquipoLocalYVisita()
+    {
+        var mismoEquipo = new Mock<IEquipo>();
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Partido(1, FechaPartido, mismoEquipo.Object, mismoEquipo.Object, 4, 1, estadio.Object));
+    }
 }

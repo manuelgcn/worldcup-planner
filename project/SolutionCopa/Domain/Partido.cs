@@ -18,7 +18,7 @@ public class Partido
 
     public Partido(int id, DateTime fechaPartido, IEquipo equipoLocal, IEquipo equipoVisita, int golLocal, int golVisita, IEstadio estadio)
     {
-        idPartido = id;
+        this.idPartido = id;
         this.fechaPartido = fechaPartido;
         this.equipoLocal = equipoLocal;
         this.equipoVisita = equipoVisita;
