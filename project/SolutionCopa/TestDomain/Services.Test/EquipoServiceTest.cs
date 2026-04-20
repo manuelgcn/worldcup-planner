@@ -146,5 +146,18 @@ public sealed class EquipoServiceTest
 
         return equipos;
     }
+    
+    [TestMethod]
+    public void FindingTeamByNameReturnsRegisteredTeam()
+    {
+        var service = new EquipoService();
+        var argentina = new Equipo("Argentina", 2400, false, Confederacion.CONMEBOL);
+        service.AgregarEquipo(argentina);
+
+        var foundTeam = service.BuscarPorNombre("Argentina");
+
+        Assert.IsNotNull(foundTeam);
+        Assert.AreEqual("Argentina", foundTeam.Nombre);
+    }
 }
 
