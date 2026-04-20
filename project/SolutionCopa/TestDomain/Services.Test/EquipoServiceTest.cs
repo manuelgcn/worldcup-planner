@@ -5,6 +5,13 @@ namespace Services.Test;
 [TestClass]
 public sealed class EquipoServiceTest
 {
+    private const int RankingBaseUefa = 1000;
+    private const int RankingBaseConmebol = 1400;
+    private const int RankingBaseConcacaf = 1600;
+    private const int RankingBaseCaf = 1800;
+    private const int RankingBaseAfc = 2000;
+    private const int RankingBaseOfc = 2200;
+
     private static readonly Confederacion[] Confederaciones =
     [
         Confederacion.AFC,
@@ -30,73 +37,37 @@ public sealed class EquipoServiceTest
     [TestMethod]
     public void RegisteringTeamBeyondUefaQuotaThrowsInvalidOperationException()
     {
-        const int uefaQuota = 16;
-        var service = CrearServicio();
-
-        CargarEquipos(service, uefaQuota, Confederacion.UEFA, 1000);
-
-        Assert.ThrowsException<InvalidOperationException>(() =>
-            service.AgregarEquipo(CrearEquipo("UEFA Team 17", 1200, Confederacion.UEFA)));
+        AssertExcesoDeCupo(Confederacion.UEFA, cuota: 16, RankingBaseUefa, "UEFA Team 17", 1200);
     }
 
     [TestMethod]
     public void RegisteringTeamBeyondConmebolQuotaThrowsInvalidOperationException()
     {
-        const int conmebolQuota = 7;
-        var service = CrearServicio();
-
-        CargarEquipos(service, conmebolQuota, Confederacion.CONMEBOL, 1400);
-
-        Assert.ThrowsException<InvalidOperationException>(() =>
-            service.AgregarEquipo(CrearEquipo("CONMEBOL Team 8", 1500, Confederacion.CONMEBOL)));
+        AssertExcesoDeCupo(Confederacion.CONMEBOL, cuota: 7, RankingBaseConmebol, "CONMEBOL Team 8", 1500);
     }
 
     [TestMethod]
     public void RegisteringTeamBeyondConcacafQuotaThrowsInvalidOperationException()
     {
-        const int concacafQuota = 7;
-        var service = CrearServicio();
-
-        CargarEquipos(service, concacafQuota, Confederacion.CONCACAF, 1600);
-
-        Assert.ThrowsException<InvalidOperationException>(() =>
-            service.AgregarEquipo(CrearEquipo("CONCACAF Team 8", 1700, Confederacion.CONCACAF)));
+        AssertExcesoDeCupo(Confederacion.CONCACAF, cuota: 7, RankingBaseConcacaf, "CONCACAF Team 8", 1700);
     }
 
     [TestMethod]
     public void RegisteringTeamBeyondCafQuotaThrowsInvalidOperationException()
     {
-        const int cafQuota = 9;
-        var service = CrearServicio();
-
-        CargarEquipos(service, cafQuota, Confederacion.CAF, 1800);
-
-        Assert.ThrowsException<InvalidOperationException>(() =>
-            service.AgregarEquipo(CrearEquipo("CAF Team 10", 1900, Confederacion.CAF)));
+        AssertExcesoDeCupo(Confederacion.CAF, cuota: 9, RankingBaseCaf, "CAF Team 10", 1900);
     }
 
     [TestMethod]
     public void RegisteringTeamBeyondAfcQuotaThrowsInvalidOperationException()
     {
-        const int afcQuota = 8;
-        var service = CrearServicio();
-
-        CargarEquipos(service, afcQuota, Confederacion.AFC, 2000);
-
-        Assert.ThrowsException<InvalidOperationException>(() =>
-            service.AgregarEquipo(CrearEquipo("AFC Team 9", 2100, Confederacion.AFC)));
+        AssertExcesoDeCupo(Confederacion.AFC, cuota: 8, RankingBaseAfc, "AFC Team 9", 2100);
     }
 
     [TestMethod]
     public void RegisteringTeamBeyondOfcQuotaThrowsInvalidOperationException()
     {
-        const int ofcQuota = 1;
-        var service = CrearServicio();
-
-        CargarEquipos(service, ofcQuota, Confederacion.OFC, 2200);
-
-        Assert.ThrowsException<InvalidOperationException>(() =>
-            service.AgregarEquipo(CrearEquipo("OFC Team 2", 2300, Confederacion.OFC)));
+        AssertExcesoDeCupo(Confederacion.OFC, cuota: 1, RankingBaseOfc, "OFC Team 2", 2300);
     }
 
     [TestMethod]
@@ -165,6 +136,21 @@ public sealed class EquipoServiceTest
         {
             service.AgregarEquipo(CrearEquipo($"{confederacion} Team {i}", rankingBase + i, confederacion));
         }
+    }
+
+    private static void AssertExcesoDeCupo(
+        Confederacion confederacion,
+        int cuota,
+        int rankingBase,
+        string nombreExcedido,
+        int rankingExcedido)
+    {
+        var service = CrearServicio();
+
+        CargarEquipos(service, cuota, confederacion, rankingBase);
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            service.AgregarEquipo(CrearEquipo(nombreExcedido, rankingExcedido, confederacion)));
     }
 }
 
