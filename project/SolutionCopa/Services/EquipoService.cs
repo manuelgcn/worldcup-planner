@@ -36,6 +36,11 @@ public class EquipoService
         return _equipos.AsReadOnly();
     }
 
+    public Equipo? BuscarPorNombre(string nombre)
+    {
+        return _equipos.FirstOrDefault(equipo => equipo.Nombre == nombre);
+    }
+
     public IReadOnlyList<Equipo> OrdenarParaFixture(IReadOnlyCollection<Equipo> equipos, int semillaFixture)
     {
         ArgumentNullException.ThrowIfNull(equipos);
