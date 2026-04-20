@@ -120,6 +120,18 @@ public sealed class EquipoServiceTest
         Assert.ThrowsException<InvalidOperationException>(() => service.BuscarPorNombre("Brazil"));
     }
 
+    [TestMethod]
+    public void DeletingRegisteredTeamRemovesItFromService()
+    {
+        var service = CrearServicio();
+        var argentina = CrearEquipo("Argentina", 2400, Confederacion.CONMEBOL);
+        service.AgregarEquipo(argentina);
+
+        service.EliminarEquipo("Argentina");
+
+        Assert.ThrowsException<InvalidOperationException>(() => service.BuscarPorNombre("Argentina"));
+    }
+
     private static EquipoService CrearServicio()
     {
         return new EquipoService();
