@@ -11,6 +11,10 @@ public class EquipoService
     private const int UefaQuota = 16;
     private const int ConmebolQuota = 7;
     private const int ConcacafQuota = 7;
+    private const string TeamNotFoundMessage = "Team was not found.";
+    private const string DuplicateTeamNameMessage = "Team name must be unique in the system.";
+    private const string QuotaExceededMessage = "{0} team quota exceeded.";
+    private const string FixtureRequires48TeamsMessage = "Fixture ordering requires exactly 48 teams.";
     private static readonly IReadOnlyDictionary<Confederacion, int> QuotasByConfederation = new Dictionary<Confederacion, int>
     {
         { Confederacion.AFC, AfcQuota },
@@ -25,6 +29,7 @@ public class EquipoService
 
     public void AgregarEquipo(Equipo equipo)
     {
+        ArgumentNullException.ThrowIfNull(equipo);
         ValidarNombreUnico(equipo);
         ValidarCupoConfederacion(equipo);
 
@@ -36,9 +41,12 @@ public class EquipoService
         return _equipos.AsReadOnly();
     }
 
-    public Equipo? BuscarPorNombre(string nombre)
+    public Equipo BuscarPorNombre(string nombre)
     {
-        return _equipos.FirstOrDefault(equipo => equipo.Nombre == nombre);
+        ArgumentNullException.ThrowIfNull(nombre);
+
+        return _equipos.FirstOrDefault(equipo => equipo.Nombre == nombre)
+            ?? throw new InvalidOperationException(TeamNotFoundMessage);
     }
 
     public IReadOnlyList<Equipo> OrdenarParaFixture(IReadOnlyCollection<Equipo> equipos, int semillaFixture)
@@ -53,20 +61,16 @@ public class EquipoService
     {
         if (ExisteNombreDuplicado(equipo.Nombre))
         {
-            throw new InvalidOperationException("Team name must be unique in the system.");
+            throw new InvalidOperationException(DuplicateTeamNameMessage);
         }
     }
 
     private void ValidarCupoConfederacion(Equipo equipo)
     {
-        if (!QuotasByConfederation.TryGetValue(equipo.Confederacion, out var quota))
+        if (QuotasByConfederation.TryGetValue(equipo.Confederacion, out var quota) &&
+            CantidadEquiposPorConfederacion(equipo.Confederacion) >= quota)
         {
-            return;
-        }
-
-        if (CantidadEquiposPorConfederacion(equipo.Confederacion) >= quota)
-        {
-            throw new InvalidOperationException($"{equipo.Confederacion} team quota exceeded.");
+            throw new InvalidOperationException(string.Format(QuotaExceededMessage, equipo.Confederacion));
         }
     }
 
@@ -95,7 +99,7 @@ public class EquipoService
     {
         if (cantidadEquipos != FixtureTeamCount)
         {
-            throw new InvalidOperationException("Fixture ordering requires exactly 48 teams.");
+            throw new InvalidOperationException(FixtureRequires48TeamsMessage);
         }
     }
 
@@ -107,15 +111,19 @@ public class EquipoService
             .OrderByDescending(grupo => grupo.Key)
             .ToList();
 
-        for (var indiceGrupo = 0; indiceGrupo < gruposPorRanking.Count; indiceGrupo++)
+        var indiceGrupo = 0;
+
+        foreach (var grupoEmpatado in gruposPorRanking)
         {
-            var grupoEmpatado = gruposPorRanking[indiceGrupo].ToList();
-            FisherYatesDeterministico(grupoEmpatado, semillaFixture + indiceGrupo);
-            ordenados.AddRange(grupoEmpatado);
+            var equiposEmpatados = grupoEmpatado.ToList();
+            FisherYatesDeterministico(equiposEmpatados, semillaFixture + indiceGrupo);
+            ordenados.AddRange(equiposEmpatados);
+            indiceGrupo++;
         }
 
         return ordenados;
     }
 }
+
 
 
