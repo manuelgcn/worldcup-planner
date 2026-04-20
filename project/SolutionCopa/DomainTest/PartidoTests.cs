@@ -1,4 +1,6 @@
 using ProjectCopa;
+using ProjectCopa.Interfaces;
+using Moq;
 
 namespace DomainTest;
 
@@ -6,12 +8,18 @@ namespace DomainTest;
 public class PartidoTests
 {
 
-    private Partido partido;
+    private Mock<IEquipo> equipoLocal = null!;
+    private Mock<IEquipo> equipoVisita = null!;
+    private Mock<IEstadio> estadio = null!;
+    private Partido partido = null!;
     
     [TestInitialize]
     public void Setup()
     {
-        partido = new  Partido();
+        equipoLocal = new Mock<IEquipo>();
+        equipoVisita = new Mock<IEquipo>();
+        estadio = new Mock<IEstadio>();
+        partido = new Partido();
     }
 
     [TestMethod]
@@ -21,9 +29,9 @@ public class PartidoTests
     }
 
     [TestMethod]
-    public void TestCreationGetIdPartido()
+    public void TestPartidoCanGetIdPartido()
     {
-        partido = new Partido(1, new DateTime(2022, 11, 21), "Uruguay", "Argentina", 4, 1, "Al Bayt Stadium");
+        partido = new Partido(1, new DateTime(2022, 11, 21), equipoLocal.Object, equipoVisita.Object, 4, 1, estadio.Object);
         Assert.AreEqual(1, partido.idPartido);
     }
 }
