@@ -2,7 +2,7 @@ using ProjectCopa;
 
 namespace Services;
 
-public class EquipoService
+public class TeamServices
 {
     private const int FixtureTeamCount = 48;
     private const int AfcQuota = 8;
@@ -16,19 +16,19 @@ public class EquipoService
     private const string DuplicateTeamNameMessage = "Team name must be unique in the system.";
     private const string QuotaExceededMessage = "{0} team quota exceeded.";
     private const string FixtureRequires48TeamsMessage = "Fixture ordering requires exactly 48 teams.";
-    private static readonly IReadOnlyDictionary<Confederacion, int> QuotasByConfederation = new Dictionary<Confederacion, int>
+    private static readonly IReadOnlyDictionary<Confederation, int> QuotasByConfederation = new Dictionary<Confederation, int>
     {
-        { Confederacion.AFC, AfcQuota },
-        { Confederacion.CAF, CafQuota },
-        { Confederacion.OFC, OfcQuota },
-        { Confederacion.UEFA, UefaQuota },
-        { Confederacion.CONMEBOL, ConmebolQuota },
-        { Confederacion.CONCACAF, ConcacafQuota }
+        { Confederation.AFC, AfcQuota },
+        { Confederation.CAF, CafQuota },
+        { Confederation.OFC, OfcQuota },
+        { Confederation.UEFA, UefaQuota },
+        { Confederation.CONMEBOL, ConmebolQuota },
+        { Confederation.CONCACAF, ConcacafQuota }
     };
 
-    private readonly List<Equipo> _equipos = new();
+    private readonly List<Team> _equipos = new();
 
-    public void AgregarEquipo(Equipo equipo)
+    public void AgregarEquipo(Team equipo)
     {
         ArgumentNullException.ThrowIfNull(equipo);
         ValidarNombreUnico(equipo);
@@ -37,12 +37,12 @@ public class EquipoService
         _equipos.Add(equipo);
     }
 
-    public IReadOnlyCollection<Equipo> ObtenerEquipos()
+    public IReadOnlyCollection<Team> ObtenerEquipos()
     {
         return _equipos.AsReadOnly();
     }
 
-    public Equipo BuscarPorNombre(string nombre)
+    public Team BuscarPorNombre(string nombre)
     {
         ArgumentNullException.ThrowIfNull(nombre);
 
@@ -64,7 +64,7 @@ public class EquipoService
         _equipos.Remove(equipo);
     }
 
-    public IReadOnlyList<Equipo> OrdenarParaFixture(IReadOnlyCollection<Equipo> equipos, int semillaFixture)
+    public IReadOnlyList<Team> OrdenarParaFixture(IReadOnlyCollection<Team> equipos, int semillaFixture)
     {
         ArgumentNullException.ThrowIfNull(equipos);
         ValidarCantidadEquiposParaFixture(equipos.Count);
@@ -72,7 +72,7 @@ public class EquipoService
         return ConstruirOrdenFixture(equipos, semillaFixture);
     }
 
-    private void ValidarNombreUnico(Equipo equipo)
+    private void ValidarNombreUnico(Team equipo)
     {
         if (ExisteNombreDuplicado(equipo.Nombre))
         {
@@ -80,12 +80,12 @@ public class EquipoService
         }
     }
 
-    private void ValidarCupoConfederacion(Equipo equipo)
+    private void ValidarCupoConfederacion(Team equipo)
     {
-        if (QuotasByConfederation.TryGetValue(equipo.Confederacion, out var quota) &&
-            CantidadEquiposPorConfederacion(equipo.Confederacion) >= quota)
+        if (QuotasByConfederation.TryGetValue(equipo.Confederation, out var quota) &&
+            CantidadEquiposPorConfederacion(equipo.Confederation) >= quota)
         {
-            throw new InvalidOperationException(string.Format(QuotaExceededMessage, equipo.Confederacion));
+            throw new InvalidOperationException(string.Format(QuotaExceededMessage, equipo.Confederation));
         }
     }
 
@@ -94,12 +94,12 @@ public class EquipoService
         return _equipos.Any(existingTeam => existingTeam.Nombre == nombre);
     }
 
-    private int CantidadEquiposPorConfederacion(Confederacion confederacion)
+    private int CantidadEquiposPorConfederacion(Confederation confederation)
     {
-        return _equipos.Count(existingTeam => existingTeam.Confederacion == confederacion);
+        return _equipos.Count(existingTeam => existingTeam.Confederation == confederation);
     }
 
-    private static void FisherYatesDeterministico(IList<Equipo> equipos, int semilla)
+    private static void FisherYatesDeterministico(IList<Team> equipos, int semilla)
     {
         var random = new Random(semilla);
 
@@ -118,9 +118,9 @@ public class EquipoService
         }
     }
 
-    private static IReadOnlyList<Equipo> ConstruirOrdenFixture(IEnumerable<Equipo> equipos, int semillaFixture)
+    private static IReadOnlyList<Team> ConstruirOrdenFixture(IEnumerable<Team> equipos, int semillaFixture)
     {
-        var ordenados = new List<Equipo>(capacity: FixtureTeamCount);
+        var ordenados = new List<Team>(capacity: FixtureTeamCount);
         var gruposPorRanking = equipos
             .GroupBy(equipo => equipo.RankingFifa)
             .OrderByDescending(grupo => grupo.Key)
@@ -139,6 +139,7 @@ public class EquipoService
         return ordenados;
     }
 }
+
 
 
 

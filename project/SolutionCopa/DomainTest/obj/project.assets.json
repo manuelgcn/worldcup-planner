@@ -1032,19 +1032,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\59891\\.nuget\\packages\\": {}
+    "C:\\Users\\manu1\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\DomainTest\\DomainTest.csproj",
+      "projectUniqueName": "C:\\Users\\manu1\\OneDrive\\Escritorio\\obligatorio da1\\project\\SolutionCopa\\DomainTest\\DomainTest.csproj",
       "projectName": "DomainTest",
-      "projectPath": "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\DomainTest\\DomainTest.csproj",
-      "packagesPath": "C:\\Users\\59891\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\DomainTest\\obj\\",
+      "projectPath": "C:\\Users\\manu1\\OneDrive\\Escritorio\\obligatorio da1\\project\\SolutionCopa\\DomainTest\\DomainTest.csproj",
+      "packagesPath": "C:\\Users\\manu1\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\manu1\\OneDrive\\Escritorio\\obligatorio da1\\project\\SolutionCopa\\DomainTest\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\59891\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\manu1\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -1056,11 +1056,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\Domain\\Domain.csproj": {
-              "projectPath": "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\Domain\\Domain.csproj"
+            "C:\\Users\\manu1\\OneDrive\\Escritorio\\obligatorio da1\\project\\SolutionCopa\\Domain\\Domain.csproj": {
+              "projectPath": "C:\\Users\\manu1\\OneDrive\\Escritorio\\obligatorio da1\\project\\SolutionCopa\\Domain\\Domain.csproj"
             },
-            "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\Services\\Services.csproj": {
-              "projectPath": "C:\\Users\\59891\\Documents\\ORT\\DISENO\\OBL\\255503---330734---326829\\project\\SolutionCopa\\Services\\Services.csproj"
+            "C:\\Users\\manu1\\OneDrive\\Escritorio\\obligatorio da1\\project\\SolutionCopa\\Services\\Services.csproj": {
+              "projectPath": "C:\\Users\\manu1\\OneDrive\\Escritorio\\obligatorio da1\\project\\SolutionCopa\\Services\\Services.csproj"
             }
           }
         }
@@ -1074,7 +1074,8 @@
         "enableAudit": "true",
         "auditLevel": "low",
         "auditMode": "direct"
-      }
+      },
+      "SdkAnalysisLevel": "10.0.200"
     },
     "frameworks": {
       "net8.0": {
@@ -1108,12 +1109,26 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[8.0.25, 8.0.25]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Ref",
+            "version": "[8.0.25, 8.0.25]"
+          },
+          {
+            "name": "Microsoft.WindowsDesktop.App.Ref",
+            "version": "[8.0.25, 8.0.25]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Users\\59891\\.dotnet\\sdk\\8.0.419/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Users\\manu1\\.dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

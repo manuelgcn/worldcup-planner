@@ -1,16 +1,16 @@
 using ProjectCopa;
 
-namespace Equipo.Test;
+namespace Team.Tests;
 
 [TestClass]
-public sealed class EquipoTest
+public sealed class TeamTests
 {
     [TestMethod]
     public void TeamIsCreatedWithValidName()
     {
         // Arrange
         const int rankingFifa = 2400;
-        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.CONMEBOL);
+        var equipo = new ProjectCopa.Team("Argentina", rankingFifa, false, Confederation.CONMEBOL);
 
         // Assert
         Assert.AreEqual("Argentina", equipo.Nombre);
@@ -21,7 +21,7 @@ public sealed class EquipoTest
     {
         // Arrange
         const int rankingFifa = 2400;
-        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.CONMEBOL);
+        var equipo = new ProjectCopa.Team("Argentina", rankingFifa, false, Confederation.CONMEBOL);
 
         // Assert
         Assert.AreEqual(rankingFifa, equipo.RankingFifa);
@@ -32,11 +32,11 @@ public sealed class EquipoTest
     {
         // Arrange
         const int rankingFifa = 2400;
-        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.CONMEBOL);
+        var equipo = new ProjectCopa.Team("Argentina", rankingFifa, false, Confederation.CONMEBOL);
 
         // Assert
         Assert.IsFalse(equipo.EsFicticio);
-        Assert.AreEqual(Confederacion.CONMEBOL, equipo.Confederacion);
+        Assert.AreEqual(Confederation.CONMEBOL, equipo.Confederation);
     }
 
     [TestMethod]
@@ -48,7 +48,7 @@ public sealed class EquipoTest
         // Act + Assert
         Assert.ThrowsException<ArgumentException>(() =>
         {
-            _ = new ProjectCopa.Equipo(string.Empty, rankingFifa, false, Confederacion.CONMEBOL);
+            _ = new ProjectCopa.Team(string.Empty, rankingFifa, false, Confederation.CONMEBOL);
         });
     }
 
@@ -61,7 +61,7 @@ public sealed class EquipoTest
         // Act + Assert
         Assert.ThrowsException<ArgumentException>(() =>
         {
-            _ = new ProjectCopa.Equipo(null!, rankingFifa, false, Confederacion.CONMEBOL);
+            _ = new ProjectCopa.Team(null!, rankingFifa, false, Confederation.CONMEBOL);
         });
     }
 
@@ -70,7 +70,7 @@ public sealed class EquipoTest
     {
         // Arrange
         const int rankingFifa = 2400;
-        var equipo = new ProjectCopa.Equipo("A", rankingFifa, false, Confederacion.CONMEBOL);
+        var equipo = new ProjectCopa.Team("A", rankingFifa, false, Confederation.CONMEBOL);
 
         // Assert
         Assert.AreEqual("A", equipo.Nombre);
@@ -82,7 +82,7 @@ public sealed class EquipoTest
         // Arrange
         const int rankingFifa = 2400;
         var nombre = new string('A', 60);
-        var equipo = new ProjectCopa.Equipo(nombre, rankingFifa, false, Confederacion.CONMEBOL);
+        var equipo = new ProjectCopa.Team(nombre, rankingFifa, false, Confederation.CONMEBOL);
 
         // Assert
         Assert.AreEqual(nombre, equipo.Nombre);
@@ -98,63 +98,63 @@ public sealed class EquipoTest
         // Act + Assert
         Assert.ThrowsException<ArgumentException>(() =>
         {
-            _ = new ProjectCopa.Equipo(nombre, rankingFifa, false, Confederacion.CONMEBOL);
+            _ = new ProjectCopa.Team(nombre, rankingFifa, false, Confederation.CONMEBOL);
         });
     }
 
     [TestMethod]
-    public void TeamIsCreatedWithConfederacionAfc()
+    public void TeamIsCreatedWithConfederationAfc()
     {
         // Arrange
         const int rankingFifa = 2400;
-        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.AFC);
+        var equipo = new ProjectCopa.Team("Argentina", rankingFifa, false, Confederation.AFC);
 
         // Assert
-        Assert.AreEqual(Confederacion.AFC, equipo.Confederacion);
+        Assert.AreEqual(Confederation.AFC, equipo.Confederation);
     }
 
     [TestMethod]
-    public void TeamIsCreatedWithConfederacionCaf()
+    public void TeamIsCreatedWithConfederationCaf()
     {
         // Arrange
         const int rankingFifa = 2400;
-        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.CAF);
+        var equipo = new ProjectCopa.Team("Argentina", rankingFifa, false, Confederation.CAF);
 
         // Assert
-        Assert.AreEqual(Confederacion.CAF, equipo.Confederacion);
+        Assert.AreEqual(Confederation.CAF, equipo.Confederation);
     }
 
     [TestMethod]
-    public void TeamIsCreatedWithConfederacionConcacaf()
+    public void TeamIsCreatedWithConfederationConcacaf()
     {
         // Arrange
         const int rankingFifa = 2400;
-        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.CONCACAF);
+        var equipo = new ProjectCopa.Team("Argentina", rankingFifa, false, Confederation.CONCACAF);
 
         // Assert
-        Assert.AreEqual(Confederacion.CONCACAF, equipo.Confederacion);
+        Assert.AreEqual(Confederation.CONCACAF, equipo.Confederation);
     }
 
     [TestMethod]
-    public void TeamIsCreatedWithConfederacionOfc()
+    public void TeamIsCreatedWithConfederationOfc()
     {
         // Arrange
         const int rankingFifa = 2400;
-        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.OFC);
+        var equipo = new ProjectCopa.Team("Argentina", rankingFifa, false, Confederation.OFC);
 
         // Assert
-        Assert.AreEqual(Confederacion.OFC, equipo.Confederacion);
+        Assert.AreEqual(Confederation.OFC, equipo.Confederation);
     }
 
     [TestMethod]
-    public void TeamIsCreatedWithConfederacionUefa()
+    public void TeamIsCreatedWithConfederationUefa()
     {
         // Arrange
         const int rankingFifa = 2400;
-        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.UEFA);
+        var equipo = new ProjectCopa.Team("Argentina", rankingFifa, false, Confederation.UEFA);
 
         // Assert
-        Assert.AreEqual(Confederacion.UEFA, equipo.Confederacion);
+        Assert.AreEqual(Confederation.UEFA, equipo.Confederation);
     }
 
     [TestMethod]
@@ -162,7 +162,7 @@ public sealed class EquipoTest
     {
         // Arrange
         const int rankingFifa = 300;
-        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.CONMEBOL);
+        var equipo = new ProjectCopa.Team("Argentina", rankingFifa, false, Confederation.CONMEBOL);
 
         // Assert
         Assert.AreEqual(rankingFifa, equipo.RankingFifa);
@@ -173,7 +173,7 @@ public sealed class EquipoTest
     {
         // Arrange
         const int rankingFifa = 2500;
-        var equipo = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.CONMEBOL);
+        var equipo = new ProjectCopa.Team("Argentina", rankingFifa, false, Confederation.CONMEBOL);
 
         // Assert
         Assert.AreEqual(rankingFifa, equipo.RankingFifa);
@@ -188,7 +188,7 @@ public sealed class EquipoTest
         // Act + Assert
         Assert.ThrowsException<ArgumentException>(() =>
         {
-            _ = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.CONMEBOL);
+            _ = new ProjectCopa.Team("Argentina", rankingFifa, false, Confederation.CONMEBOL);
         });
     }
 
@@ -201,7 +201,7 @@ public sealed class EquipoTest
         // Act + Assert
         Assert.ThrowsException<ArgumentException>(() =>
         {
-            _ = new ProjectCopa.Equipo("Argentina", rankingFifa, false, Confederacion.CONMEBOL);
+            _ = new ProjectCopa.Team("Argentina", rankingFifa, false, Confederation.CONMEBOL);
         });
     }
 }

@@ -10,9 +10,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess", "DataAccess\Da
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Controllers", "Controllers\Controllers.csproj", "{A197F177-4F95-4183-A775-B4E94E8418D9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Equipo.Test", "TestDomain\Equipo.Test\Equipo.Test.csproj", "{87669527-E2D4-4423-9B29-DD37EF43515D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Team.Tests", "TestDomain\Team.Tests\Team.Tests.csproj", "{87669527-E2D4-4423-9B29-DD37EF43515D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services.Test", "TestDomain\Services.Test\Services.Test.csproj", "{2F14EA48-DF4A-4E57-A212-AB3713E955F4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeamServices.Tests", "TestDomain\TeamServices.Tests\TeamServices.Tests.csproj", "{2F14EA48-DF4A-4E57-A212-AB3713E955F4}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DomainTest", "DomainTest\DomainTest.csproj", "{E1B921DE-78FF-4299-8A9A-42BA96E57540}"
 EndProject
 Global

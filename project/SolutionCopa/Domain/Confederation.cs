@@ -1,6 +1,6 @@
 namespace ProjectCopa;
 
-public enum Confederacion
+public enum Confederation
 {
     AFC,
     CAF,
@@ -9,4 +9,5 @@ public enum Confederacion
     OFC,
     UEFA
 }
+
 
