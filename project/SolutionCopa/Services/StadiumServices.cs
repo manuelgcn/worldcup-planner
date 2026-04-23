@@ -19,5 +19,17 @@ public class StadiumServices
 
         stadiums.Add(stadium);
     }
+    
+    
+    public Stadium GetByName(string name)
+    {
+        Stadium stadium = stadiums.FirstOrDefault(s => s.Name == name);
+
+        if (stadium == null)
+            throw new ArgumentException("Stadium not found");
+
+        return stadium;
+    }
+
 
 }
