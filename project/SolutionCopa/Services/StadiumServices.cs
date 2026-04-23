@@ -30,6 +30,13 @@ public class StadiumServices
 
         return stadium;
     }
+    
+    
+    public void Remove(string name)
+    {
+        Stadium stadium = GetByName(name);
+        stadiums.Remove(stadium);
+    }
 
 
 }
