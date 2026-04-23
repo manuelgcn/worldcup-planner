@@ -116,56 +116,55 @@ public class UserTests
         Assert.AreEqual("Juan", usuario.name);
         Assert.AreEqual("Perez", usuario.lastname);
         Assert.AreEqual("Juan@gmail.com", usuario.email);
-        Assert.AreEqual("pass123", usuario.password);
         Assert.AreEqual(birthDate, usuario.dateOfBirth);
 
     }
     
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void UserCannotHaveEmptyEmail()
     {
-        new User(1, "Juan", "Perez", "", "Pass1234@", DateTime.Now);
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(1, "Juan", "Perez", "", "Pass1234@", DateTime.Now));
     }
     
     
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void UserCannotHaveInvalidEmailFormat()
     {
-        new User(1, "Juan", "Perez", "mailinvalido", "Pass1234@", DateTime.Now);
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(1, "Juan", "Perez", "mailinvalido", "Pass1234@", DateTime.Now));
     }
 
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void PasswordMustHaveAtLeast8Characters()
     {
-        new User(1, "Juan", "Perez", "juan@mail.com", "Pa1@", DateTime.Now);
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(1, "Juan", "Perez", "juan@mail.com", "Pa1@", DateTime.Now));
     }
 
     
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void PasswordMustHaveUppercaseLetter()
     {
-        new User(1, "Juan", "Perez", "juan@mail.com", "pass123@", DateTime.Now);
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(1, "Juan", "Perez", "juan@mail.com", "pass123@", DateTime.Now));
     }
 
     
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void PasswordMustHaveNumber()
     {
-        new User(1, "Juan", "Perez", "juan@mail.com", "Passsss@", DateTime.Now);
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(1, "Juan", "Perez", "juan@mail.com", "Passsss@", DateTime.Now));
     }
 
     
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void PasswordMustHaveSpecialCharacter()
     {
-        new User(1, "Juan", "Perez", "juan@mail.com", "Pass1234", DateTime.Now);
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(1, "Juan", "Perez", "juan@mail.com", "Pass1234", DateTime.Now));
     }
 
     

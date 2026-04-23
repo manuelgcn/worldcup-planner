@@ -33,14 +33,13 @@ public class StadiumServicesTests
 
     
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void CannotAddTwoStadiumsWithSameName()
     {
         Stadium s1 = new Stadium("Centenario", "Montevideo", null, 60000);
         Stadium s2 = new Stadium("Centenario", "Otra", null, 50000);
 
         service.AddStadium(s1);
-        service.AddStadium(s2);
+        Assert.ThrowsException<ArgumentException>(() => service.AddStadium(s2));
     }
 
     
@@ -62,11 +61,11 @@ public class StadiumServicesTests
     }
 
     
+    
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void GetStadiumByNameThrowsIfNotFound()
     {
-        service.GetByName("NoExiste");
+        Assert.ThrowsException<ArgumentException>(() => service.GetByName("NoExiste"));
     }
 
     
@@ -86,11 +85,11 @@ public class StadiumServicesTests
         Assert.AreEqual(0, service.GetAllStadiums().Count);
     }
 
+   
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void CannotRemoveNonExistingStadium()
     {
-        service.Remove("NoExiste");
+        Assert.ThrowsException<ArgumentException>(() => service.Remove("NoExiste"));
     }
 
     
@@ -120,15 +119,10 @@ public class StadiumServicesTests
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void CannotUpdateNonExistingStadium()
     {
-        service.Update(
-            "NoExiste",
-            "Ciudad",
-            null,
-            30000
-        );
+        Assert.ThrowsException<ArgumentException>(() =>
+            service.Update("NoExiste", "Ciudad", null, 30000));
     }
 
     

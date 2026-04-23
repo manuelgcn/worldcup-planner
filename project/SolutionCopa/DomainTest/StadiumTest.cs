@@ -21,28 +21,18 @@ public class StadiumTest
 
     
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void StadiumCapacityMustBeAtLeast20000()
     {
-        new Stadium(
-            "Estadio Chico",
-            "Ciudad",
-            "Muy pequeno",
-            15000
-        );
+        Assert.ThrowsException<ArgumentException>(() => 
+            new Stadium("Estadio Chico", "Ciudad", "Muy pequeno", 15000));
     }
 
     
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void StadiumNameCannotBeEmpty()
     {
-        new Stadium(
-            "",
-            "Ciudad",
-            "Descripcion",
-            30000
-        );
+        Assert.ThrowsException<ArgumentException>(() => 
+            new Stadium("", "Ciudad", "Descripcion", 30000));
     }
 
     
