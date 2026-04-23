@@ -28,7 +28,7 @@ public class StadiumServicesTests
 
         service.AddStadium(stadium);
 
-        Assert.AreEqual(1, service.GetAll().Count);
+        Assert.AreEqual(1, service.GetAllStadiums().Count);
     }
 
 }
