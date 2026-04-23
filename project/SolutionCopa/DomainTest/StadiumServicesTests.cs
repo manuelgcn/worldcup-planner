@@ -93,4 +93,44 @@ public class StadiumServicesTests
         service.Remove("NoExiste");
     }
 
+    
+    [TestMethod]
+    public void CanUpdateStadium()
+    {
+        Stadium stadium = new Stadium(
+            "Centenario",
+            "Montevideo",
+            null,
+            60000
+        );
+
+        service.AddStadium(stadium);
+
+        service.Update(
+            "Centenario",
+            "Montevideo Nuevo",
+            "Estadio remodelado",
+            65000
+        );
+
+        Stadium updated = service.GetByName("Centenario");
+
+        Assert.AreEqual("Montevideo Nuevo", updated.City);
+        Assert.AreEqual(65000, updated.Capacity);
+    }
+
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void CannotUpdateNonExistingStadium()
+    {
+        service.Update(
+            "NoExiste",
+            "Ciudad",
+            null,
+            30000
+        );
+    }
+
+    
+    
 }
