@@ -43,4 +43,22 @@ public class StadiumServicesTests
         service.AddStadium(s2);
     }
 
+    
+    [TestMethod]
+    public void CanGetStadiumByName()
+    {
+        Stadium stadium = new Stadium(
+            "Centenario",
+            "Montevideo",
+            null,
+            60000
+        );
+
+        service.AddStadium(stadium);
+
+        Stadium result = service.GetByName("Centenario");
+
+        Assert.AreEqual(stadium, result);
+    }
+
 }
