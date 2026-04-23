@@ -70,4 +70,27 @@ public class StadiumServicesTests
     }
 
     
+    [TestMethod]
+    public void CanRemoveStadium()
+    {
+        Stadium stadium = new Stadium(
+            "Centenario",
+            "Montevideo",
+            null,
+            60000
+        );
+
+        service.AddStadium(stadium);
+        service.Remove("Centenario");
+
+        Assert.AreEqual(0, service.GetAllStadiums().Count);
+    }
+
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void CannotRemoveNonExistingStadium()
+    {
+        service.Remove("NoExiste");
+    }
+
 }
