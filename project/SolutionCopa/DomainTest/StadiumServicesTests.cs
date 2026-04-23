@@ -31,4 +31,16 @@ public class StadiumServicesTests
         Assert.AreEqual(1, service.GetAllStadiums().Count);
     }
 
+    
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void CannotAddTwoStadiumsWithSameName()
+    {
+        Stadium s1 = new Stadium("Centenario", "Montevideo", null, 60000);
+        Stadium s2 = new Stadium("Centenario", "Otra", null, 50000);
+
+        service.AddStadium(s1);
+        service.AddStadium(s2);
+    }
+
 }
