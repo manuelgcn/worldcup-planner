@@ -37,6 +37,13 @@ public class StadiumServices
         Stadium stadium = GetByName(name);
         stadiums.Remove(stadium);
     }
+    
+    public void Update(string name, string city, string? description, int capacity)
+    {
+        Stadium stadium = GetByName(name);
+        stadium.Update(city, description, capacity);
+    }
+
 
 
 }

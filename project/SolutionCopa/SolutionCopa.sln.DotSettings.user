@@ -14,5 +14,6 @@
     &lt;TestId&gt;MSTest::E1B921DE-78FF-4299-8A9A-42BA96E57540::net8.0::DomainTest.UserServicesTests.CanUpdateUserData&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;MSTest::E1B921DE-78FF-4299-8A9A-42BA96E57540::net8.0::DomainTest.StadiumServicesTests.CanGetStadiumByName&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;MSTest::E1B921DE-78FF-4299-8A9A-42BA96E57540::net8.0::DomainTest.StadiumServicesTests.CannotRemoveNonExistingStadium&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;MSTest::E1B921DE-78FF-4299-8A9A-42BA96E57540::net8.0::DomainTest.StadiumServicesTests.CannotUpdateNonExistingStadium&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

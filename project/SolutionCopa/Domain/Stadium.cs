@@ -45,4 +45,14 @@ public class Stadium
             throw new ArgumentException("Capacity must be at least 20000");
     }
 
+    public void Update(string city, string? description, int capacity)
+    {
+        ValidateCity(city);
+        ValidateCapacity(capacity);
+
+        City = city;
+        Description = description;
+        Capacity = capacity;
+    }
+    
 }
