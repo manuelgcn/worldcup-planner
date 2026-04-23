@@ -61,4 +61,13 @@ public class StadiumServicesTests
         Assert.AreEqual(stadium, result);
     }
 
+    
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void GetStadiumByNameThrowsIfNotFound()
+    {
+        service.GetByName("NoExiste");
+    }
+
+    
 }
