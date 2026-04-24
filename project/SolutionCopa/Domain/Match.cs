@@ -6,6 +6,7 @@ namespace ProjectCopa;
 public class Match
 {
     private static readonly DateTime DefaultTournamentStartDate = new DateTime(2022, 11, 21);
+    private const int InitialGoals = 0;
 
     public int MatchId { get; private set; }
     public DateTime MatchDate { get; private set; }
@@ -18,7 +19,7 @@ public class Match
         get => _homeTeam;
         private set
         {
-            ValidateDifferentTeams(value, _awayTeam);
+            EnsureDifferentTeams(value, _awayTeam);
 
             _homeTeam = value;
         }
@@ -29,7 +30,7 @@ public class Match
         get => _awayTeam;
         private set
         {
-            ValidateDifferentTeams(_homeTeam, value);
+            EnsureDifferentTeams(_homeTeam, value);
 
             _awayTeam = value;
         }
@@ -67,33 +68,44 @@ public class Match
         IStadium stadium,
         DateTime minAllowedDate)
     {
-        ValidateMatchDate(matchDate, minAllowedDate);
-        ValidateRequiredStadium(stadium);
+        EnsureValidMatchDate(matchDate, minAllowedDate);
+        EnsureRequiredStadium(stadium);
 
+        InitializeMatch(id, matchDate, homeTeam, awayTeam, stadium);
+    }
+
+    private void InitializeMatch(int id, DateTime matchDate, ITeam homeTeam, ITeam awayTeam, IStadium stadium)
+    {
         MatchId = id;
         MatchDate = matchDate;
         HomeTeam = homeTeam;
         AwayTeam = awayTeam;
-        HomeGoals = 0;
-        AwayGoals = 0;
+        HomeGoals = InitialGoals;
+        AwayGoals = InitialGoals;
         Stadium = stadium;
     }
 
-    private static void ValidateMatchDate(DateTime matchDate, DateTime minAllowedDate)
+    private static void EnsureValidMatchDate(DateTime matchDate, DateTime minAllowedDate)
     {
         if (matchDate < minAllowedDate)
-            throw new MatchException();
+        {
+            throw new MatchException("Match date cannot be earlier than the tournament start date.");
+        }
     }
 
-    private static void ValidateDifferentTeams(ITeam? homeTeam, ITeam? awayTeam)
+    private static void EnsureDifferentTeams(ITeam? homeTeam, ITeam? awayTeam)
     {
         if (homeTeam != null && awayTeam != null && ReferenceEquals(homeTeam, awayTeam))
-            throw new MatchException();
+        {
+            throw new MatchException("Home team and away team must be different.");
+        }
     }
 
-    private static void ValidateRequiredStadium(IStadium? stadium)
+    private static void EnsureRequiredStadium(IStadium? stadium)
     {
         if (stadium == null)
-            throw new MatchException();
+        {
+            throw new MatchException("Stadium is required.");
+        }
     }
 }
