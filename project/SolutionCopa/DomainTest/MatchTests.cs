@@ -113,6 +113,18 @@ public class MatchTests
     }
 
     [TestMethod]
+    public void MatchCanBeCreatedWithChampionshipConfiguration()
+    {
+        var championshipConfiguration = new Mock<IChampConf>();
+        championshipConfiguration.Setup(config => config.StartDate()).Returns(MatchDate);
+
+        _match = new Match(1, MatchDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, championshipConfiguration.Object);
+
+        championshipConfiguration.Verify(config => config.StartDate(), Times.Once);
+        Assert.AreEqual(MatchDate, _match.MatchDate);
+    }
+
+    [TestMethod]
     public void MatchRejectsNullStadium()
     {
         Assert.ThrowsException<MatchException>(() =>
