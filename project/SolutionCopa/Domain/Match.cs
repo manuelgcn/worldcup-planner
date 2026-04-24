@@ -10,6 +10,7 @@ public class Match
     private const string InvalidMatchDateMessage = "Match date cannot be earlier than the tournament start date.";
     private const string SameTeamsMessage = "Home team and away team must be different.";
     private const string RequiredStadiumMessage = "Stadium is required.";
+    private const string RequiredChampionshipConfigurationMessage = "Championship configuration is required.";
 
     public int MatchId { get; private set; }
     public DateTime MatchDate { get; private set; }
@@ -59,7 +60,9 @@ public class Match
         ITeam awayTeam,
         IStadium stadium,
         IChampConf championshipConfiguration)
-        : this(id, matchDate, homeTeam, awayTeam, stadium, championshipConfiguration.StartDate()){}
+        : this(id, matchDate, homeTeam, awayTeam, stadium, EnsureRequiredChampionshipConfiguration(championshipConfiguration).StartDate())
+    {
+    }
 
     private Match(
         int id,
@@ -124,5 +127,15 @@ public class Match
         {
             throw new MatchException(RequiredStadiumMessage);
         }
+    }
+
+    private static IChampConf EnsureRequiredChampionshipConfiguration(IChampConf? championshipConfiguration)
+    {
+        if (championshipConfiguration == null)
+        {
+            throw new MatchException(RequiredChampionshipConfigurationMessage);
+        }
+
+        return championshipConfiguration;
     }
 }
