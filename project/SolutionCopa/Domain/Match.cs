@@ -68,6 +68,7 @@ public class Match
         DateTime minAllowedDate)
     {
         ValidateMatchDate(matchDate, minAllowedDate);
+        ValidateRequiredStadium(stadium);
 
         MatchId = id;
         MatchDate = matchDate;
@@ -87,6 +88,12 @@ public class Match
     private static void ValidateDifferentTeams(ITeam? homeTeam, ITeam? awayTeam)
     {
         if (homeTeam != null && awayTeam != null && ReferenceEquals(homeTeam, awayTeam))
+            throw new MatchException();
+    }
+
+    private static void ValidateRequiredStadium(IStadium? stadium)
+    {
+        if (stadium == null)
             throw new MatchException();
     }
 }
