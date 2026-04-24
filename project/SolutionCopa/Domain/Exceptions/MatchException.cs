@@ -1,9 +1,4 @@
 namespace ProjectCopa.Exceptions;
 
-public class MatchException : Exception
-{
-	public MatchException(string message) : base(message)
-	{
-	}
-}
+public class MatchException(string message) : Exception(message);
 
