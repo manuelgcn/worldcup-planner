@@ -111,4 +111,15 @@ public class MatchTests
         Assert.ThrowsException<MatchException>(() =>
             new Match(1, MatchDate, _homeTeam.Object, _awayTeam.Object, null!));
     }
+
+    [TestMethod]
+    public void MatchCanChangeStadium()
+    {
+        _match = CreateMatchWithData();
+        var newStadium = new Mock<IStadium>();
+
+        _match.ChangeStadium(newStadium.Object);
+
+        Assert.AreSame(newStadium.Object, _match.Stadium);
+    }
 }
