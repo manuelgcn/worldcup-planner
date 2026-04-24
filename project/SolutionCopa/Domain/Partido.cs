@@ -1,3 +1,4 @@
+using ProjectCopa.Exceptions;
 using ProjectCopa.Interfaces;
 
 namespace ProjectCopa;
@@ -15,8 +16,7 @@ public class Partido
         get => _equipoLocal;
         private set
         {
-            if (value != null && ReferenceEquals(value, _equipoVisita))
-                throw new ArgumentException("El equipo local debe ser distinto al equipo de visita");
+            ValidarEquiposDistintos(value, _equipoVisita);
 
             _equipoLocal = value;
         }
@@ -27,8 +27,7 @@ public class Partido
         get => _equipoVisita;
         private set
         {
-            if (value != null && ReferenceEquals(value, _equipoLocal))
-                throw new ArgumentException("El equipo de visita debe ser distinto al equipo local");
+            ValidarEquiposDistintos(_equipoLocal, value);
 
             _equipoVisita = value;
         }
@@ -51,5 +50,11 @@ public class Partido
         GolLocal = 0;
         GolVisita = 0;
         Estadio = estadio;
+    }
+
+    private static void ValidarEquiposDistintos(IEquipo? equipoLocal, IEquipo? equipoVisita)
+    {
+        if (equipoLocal != null && equipoVisita != null && ReferenceEquals(equipoLocal, equipoVisita))
+            throw new MatchException("El equipo local debe ser distinto al equipo de visita");
     }
 }

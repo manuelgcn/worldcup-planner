@@ -1,4 +1,5 @@
 using ProjectCopa;
+using ProjectCopa.Exceptions;
 using ProjectCopa.Interfaces;
 using Moq;
 
@@ -88,7 +89,7 @@ public class PartidoTests
     public void TestPartidoRechazaMismoEquipoLocalYVisita()
     {
         var mismoEquipo = new Mock<IEquipo>();
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsException<MatchException>(() =>
             new Partido(1, FechaPartido, mismoEquipo.Object, mismoEquipo.Object, _estadio.Object));
     }
 }
