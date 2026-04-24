@@ -85,6 +85,12 @@ public class Match
         Stadium = stadium;
     }
 
+    public void ChangeStadium(IStadium stadium)
+    {
+        EnsureRequiredStadium(stadium);
+        Stadium = stadium;
+    }
+
     private static void EnsureValidMatchDate(DateTime matchDate, DateTime minAllowedDate)
     {
         if (matchDate < minAllowedDate)
