@@ -93,4 +93,13 @@ public class MatchTests
         Assert.ThrowsException<MatchException>(() =>
             new Match(1, MatchDate, sameTeam.Object, sameTeam.Object, _stadium.Object));
     }
+
+    [TestMethod]
+    public void MatchRejectsInvalidDate()
+    {
+        var invalidDate = DateTime.MinValue;
+
+        Assert.ThrowsException<MatchException>(() =>
+            new Match(1, invalidDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object));
+    }
 }
