@@ -44,9 +44,30 @@ public class Match
     }
 
     public Match(int id, DateTime matchDate, ITeam homeTeam, ITeam awayTeam, IStadium stadium)
+        : this(id, matchDate, homeTeam, awayTeam, stadium, DefaultTournamentStartDate)
     {
-        if (matchDate < DefaultTournamentStartDate)
-            throw new MatchException();
+    }
+
+    public Match(
+        int id,
+        DateTime matchDate,
+        ITeam homeTeam,
+        ITeam awayTeam,
+        IStadium stadium,
+        IChampConf championshipConfiguration)
+        : this(id, matchDate, homeTeam, awayTeam, stadium, championshipConfiguration.StartDate())
+    {
+    }
+
+    private Match(
+        int id,
+        DateTime matchDate,
+        ITeam homeTeam,
+        ITeam awayTeam,
+        IStadium stadium,
+        DateTime minAllowedDate)
+    {
+        ValidateMatchDate(matchDate, minAllowedDate);
 
         MatchId = id;
         MatchDate = matchDate;
@@ -57,24 +78,10 @@ public class Match
         Stadium = stadium;
     }
 
-    public Match(
-        int id,
-        DateTime matchDate,
-        ITeam homeTeam,
-        ITeam awayTeam,
-        IStadium stadium,
-        IChampConf championshipConfiguration)
+    private static void ValidateMatchDate(DateTime matchDate, DateTime minAllowedDate)
     {
-        if (matchDate < championshipConfiguration.StartDate())
+        if (matchDate < minAllowedDate)
             throw new MatchException();
-
-        MatchId = id;
-        MatchDate = matchDate;
-        HomeTeam = homeTeam;
-        AwayTeam = awayTeam;
-        HomeGoals = 0;
-        AwayGoals = 0;
-        Stadium = stadium;
     }
 
     private static void ValidateDifferentTeams(ITeam? homeTeam, ITeam? awayTeam)
