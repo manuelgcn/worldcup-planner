@@ -60,7 +60,7 @@ public class Match
         ITeam awayTeam,
         IStadium stadium,
         IChampConf championshipConfiguration)
-        : this(id, matchDate, homeTeam, awayTeam, stadium, EnsureRequiredChampionshipConfiguration(championshipConfiguration).StartDate())
+        : this(id, matchDate, homeTeam, awayTeam, stadium, GetStartDateOrThrow(championshipConfiguration))
     {
     }
 
@@ -73,7 +73,6 @@ public class Match
         DateTime minAllowedDate)
     {
         EnsureValidMatchDate(matchDate, minAllowedDate);
-        EnsureRequiredStadium(stadium);
 
         InitializeMatch(id, matchDate, homeTeam, awayTeam, stadium);
     }
@@ -137,5 +136,10 @@ public class Match
         }
 
         return championshipConfiguration;
+    }
+
+    private static DateTime GetStartDateOrThrow(IChampConf? championshipConfiguration)
+    {
+        return EnsureRequiredChampionshipConfiguration(championshipConfiguration).StartDate();
     }
 }
