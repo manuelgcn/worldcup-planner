@@ -7,6 +7,9 @@ public class Match
 {
     private static readonly DateTime DefaultTournamentStartDate = new DateTime(2022, 11, 21);
     private const int InitialGoals = 0;
+    private const string InvalidMatchDateMessage = "Match date cannot be earlier than the tournament start date.";
+    private const string SameTeamsMessage = "Home team and away team must be different.";
+    private const string RequiredStadiumMessage = "Stadium is required.";
 
     public int MatchId { get; private set; }
     public DateTime MatchDate { get; private set; }
@@ -78,14 +81,24 @@ public class Match
     {
         MatchId = id;
         MatchDate = matchDate;
-        HomeTeam = homeTeam;
-        AwayTeam = awayTeam;
+        SetTeams(homeTeam, awayTeam);
         HomeGoals = InitialGoals;
         AwayGoals = InitialGoals;
-        Stadium = stadium;
+        SetStadium(stadium);
     }
 
     public void ChangeStadium(IStadium stadium)
+    {
+        SetStadium(stadium);
+    }
+
+    private void SetTeams(ITeam homeTeam, ITeam awayTeam)
+    {
+        HomeTeam = homeTeam;
+        AwayTeam = awayTeam;
+    }
+
+    private void SetStadium(IStadium stadium)
     {
         EnsureRequiredStadium(stadium);
         Stadium = stadium;
@@ -95,7 +108,7 @@ public class Match
     {
         if (matchDate < minAllowedDate)
         {
-            throw new MatchException("Match date cannot be earlier than the tournament start date.");
+            throw new MatchException(InvalidMatchDateMessage);
         }
     }
 
@@ -103,7 +116,7 @@ public class Match
     {
         if (homeTeam != null && awayTeam != null && ReferenceEquals(homeTeam, awayTeam))
         {
-            throw new MatchException("Home team and away team must be different.");
+            throw new MatchException(SameTeamsMessage);
         }
     }
 
@@ -111,7 +124,7 @@ public class Match
     {
         if (stadium == null)
         {
-            throw new MatchException("Stadium is required.");
+            throw new MatchException(RequiredStadiumMessage);
         }
     }
 }
