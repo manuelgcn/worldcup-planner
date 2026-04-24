@@ -5,6 +5,8 @@ namespace ProjectCopa;
 
 public class Match
 {
+    private static readonly DateTime DefaultTournamentStartDate = new DateTime(2022, 11, 21);
+
     public int MatchId { get; private set; }
     public DateTime MatchDate { get; private set; }
 
@@ -43,6 +45,29 @@ public class Match
 
     public Match(int id, DateTime matchDate, ITeam homeTeam, ITeam awayTeam, IStadium stadium)
     {
+        if (matchDate < DefaultTournamentStartDate)
+            throw new MatchException();
+
+        MatchId = id;
+        MatchDate = matchDate;
+        HomeTeam = homeTeam;
+        AwayTeam = awayTeam;
+        HomeGoals = 0;
+        AwayGoals = 0;
+        Stadium = stadium;
+    }
+
+    public Match(
+        int id,
+        DateTime matchDate,
+        ITeam homeTeam,
+        ITeam awayTeam,
+        IStadium stadium,
+        IChampConf championshipConfiguration)
+    {
+        if (matchDate < championshipConfiguration.StartDate())
+            throw new MatchException();
+
         MatchId = id;
         MatchDate = matchDate;
         HomeTeam = homeTeam;

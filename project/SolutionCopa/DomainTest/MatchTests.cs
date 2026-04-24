@@ -97,9 +97,11 @@ public class MatchTests
     [TestMethod]
     public void MatchRejectsInvalidDate()
     {
-        var invalidDate = DateTime.MinValue;
+        var configurationMock = new Mock<IChampConf>();
+        configurationMock.Setup(config => config.StartDate()).Returns(MatchDate);
+        var invalidDate = MatchDate.AddDays(-1);
 
         Assert.ThrowsException<MatchException>(() =>
-            new Match(1, invalidDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object));
+            new Match(1, invalidDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, configurationMock.Object));
     }
 }
