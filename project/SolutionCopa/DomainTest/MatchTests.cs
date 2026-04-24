@@ -104,4 +104,11 @@ public class MatchTests
         Assert.ThrowsException<MatchException>(() =>
             new Match(1, invalidDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, configurationMock.Object));
     }
+
+    [TestMethod]
+    public void MatchRejectsNullStadium()
+    {
+        Assert.ThrowsException<MatchException>(() =>
+            new Match(1, MatchDate, _homeTeam.Object, _awayTeam.Object, null!));
+    }
 }
