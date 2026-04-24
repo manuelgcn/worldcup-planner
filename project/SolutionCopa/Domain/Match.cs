@@ -66,9 +66,7 @@ public class Match
             homeTeam,
             awayTeam,
             stadium,
-            championshipConfiguration == null
-                ? throw new MatchException(RequiredChampionshipConfigurationMessage)
-                : championshipConfiguration.StartDate())
+            GetStartDateOrThrow(championshipConfiguration))
     {
     }
 
@@ -81,7 +79,7 @@ public class Match
         DateTime minAllowedDate)
     {
         EnsureValidMatchDate(matchDate, minAllowedDate);
-
+        EnsureRequiredStadium(stadium);
         InitializeMatch(id, matchDate, homeTeam, awayTeam, stadium);
     }
 
@@ -89,24 +87,14 @@ public class Match
     {
         MatchId = id;
         MatchDate = matchDate;
-        SetTeams(homeTeam, awayTeam);
+        HomeTeam = homeTeam;
+        AwayTeam = awayTeam;
         HomeGoals = InitialGoals;
         AwayGoals = InitialGoals;
-        SetStadium(stadium);
+        Stadium = stadium;
     }
 
     public void ChangeStadium(IStadium stadium)
-    {
-        SetStadium(stadium);
-    }
-
-    private void SetTeams(ITeam homeTeam, ITeam awayTeam)
-    {
-        HomeTeam = homeTeam;
-        AwayTeam = awayTeam;
-    }
-
-    private void SetStadium(IStadium stadium)
     {
         EnsureRequiredStadium(stadium);
         Stadium = stadium;
@@ -134,6 +122,16 @@ public class Match
         {
             throw new MatchException(RequiredStadiumMessage);
         }
+    }
+
+    private static DateTime GetStartDateOrThrow(IChampConf? championshipConfiguration)
+    {
+        if (championshipConfiguration == null)
+        {
+            throw new MatchException(RequiredChampionshipConfigurationMessage);
+        }
+
+        return championshipConfiguration.StartDate();
     }
 
 }
