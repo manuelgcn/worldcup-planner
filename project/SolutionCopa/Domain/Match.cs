@@ -60,7 +60,15 @@ public class Match
         ITeam awayTeam,
         IStadium stadium,
         IChampConf championshipConfiguration)
-        : this(id, matchDate, homeTeam, awayTeam, stadium, GetStartDateOrThrow(championshipConfiguration))
+        : this(
+            id,
+            matchDate,
+            homeTeam,
+            awayTeam,
+            stadium,
+            championshipConfiguration == null
+                ? throw new MatchException(RequiredChampionshipConfigurationMessage)
+                : championshipConfiguration.StartDate())
     {
     }
 
@@ -128,18 +136,4 @@ public class Match
         }
     }
 
-    private static IChampConf EnsureRequiredChampionshipConfiguration(IChampConf? championshipConfiguration)
-    {
-        if (championshipConfiguration == null)
-        {
-            throw new MatchException(RequiredChampionshipConfigurationMessage);
-        }
-
-        return championshipConfiguration;
-    }
-
-    private static DateTime GetStartDateOrThrow(IChampConf? championshipConfiguration)
-    {
-        return EnsureRequiredChampionshipConfiguration(championshipConfiguration).StartDate();
-    }
 }

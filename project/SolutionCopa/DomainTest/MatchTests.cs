@@ -108,8 +108,10 @@ public class MatchTests
     [TestMethod]
     public void MatchRejectsNullChampionshipConfiguration()
     {
+        IChampConf? championshipConfiguration = null;
+
         Assert.ThrowsException<MatchException>(() =>
-            new Match(1, MatchDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, null!));
+            new Match(1, MatchDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, championshipConfiguration!));
     }
 
     [TestMethod]
