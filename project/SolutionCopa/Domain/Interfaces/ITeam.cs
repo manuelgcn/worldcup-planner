@@ -1,5 +1,5 @@
 namespace ProjectCopa.Interfaces;
 
-public interface IEquipo
+public interface ITeam
 {
 }

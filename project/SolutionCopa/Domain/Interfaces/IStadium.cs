@@ -1,6 +1,6 @@
 namespace ProjectCopa.Interfaces;
 
-public interface IEstadio
+public interface IStadium
 {
     
 }
