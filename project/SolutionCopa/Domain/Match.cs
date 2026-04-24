@@ -59,9 +59,7 @@ public class Match
         ITeam awayTeam,
         IStadium stadium,
         IChampConf championshipConfiguration)
-        : this(id, matchDate, homeTeam, awayTeam, stadium, championshipConfiguration.StartDate())
-    {
-    }
+        : this(id, matchDate, homeTeam, awayTeam, stadium, championshipConfiguration.StartDate()){}
 
     private Match(
         int id,
