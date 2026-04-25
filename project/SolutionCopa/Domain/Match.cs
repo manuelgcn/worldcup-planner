@@ -12,6 +12,7 @@ public class Match
     private const string RequiredStadiumMessage = "Stadium is required.";
     private const string RequiredChampionshipConfigurationMessage = "Championship configuration is required.";
     private const string GoalsCannotBeNegativeMessage = "Goals cannot be negative.";
+    private const string CannotRemoveGoalWhenZeroMessage = "Cannot remove a goal when the current count is zero.";
 
     public int MatchId { get; private set; }
     public DateTime MatchDate { get; private set; }
@@ -108,14 +109,73 @@ public class Match
         AwayGoals = awayGoals;
     }
 
+    public void SetHomeGoals(int goals)
+    {
+        EnsureNonNegativeGoal(goals);
+        HomeGoals = goals;
+    }
+
+    public void SetAwayGoals(int goals)
+    {
+        EnsureNonNegativeGoal(goals);
+        AwayGoals = goals;
+    }
+
+    public void AddHomeGoal()
+    {
+        HomeGoals++;
+    }
+
+    public void AddAwayGoal()
+    {
+        AwayGoals++;
+    }
+
+    public void RemoveHomeGoal()
+    {
+        EnsureCanRemoveGoal(HomeGoals);
+        HomeGoals--;
+    }
+
+    public void RemoveAwayGoal()
+    {
+        EnsureCanRemoveGoal(AwayGoals);
+        AwayGoals--;
+    }
+
+    public bool HasHomeTeamWon()
+    {
+        return HomeGoals > AwayGoals;
+    }
+
+    public bool HasAwayTeamWon()
+    {
+        return AwayGoals > HomeGoals;
+    }
+
+    public bool IsDraw()
+    {
+        return HomeGoals == AwayGoals;
+    }
+
+    public int GetGoalDifferenceForHome()
+    {
+        return HomeGoals - AwayGoals;
+    }
+
+    public int GetGoalDifferenceForAway()
+    {
+        return AwayGoals - HomeGoals;
+    }
+
     public ITeam? GetWinner()
     {
-        if (HomeGoals > AwayGoals)
+        if (HasHomeTeamWon())
         {
             return HomeTeam;
         }
 
-        if (AwayGoals > HomeGoals)
+        if (HasAwayTeamWon())
         {
             return AwayTeam;
         }
@@ -168,6 +228,14 @@ public class Match
         if (goals < 0)
         {
             throw new MatchException(GoalsCannotBeNegativeMessage);
+        }
+    }
+
+    private static void EnsureCanRemoveGoal(int goals)
+    {
+        if (goals == 0)
+        {
+            throw new MatchException(CannotRemoveGoalWhenZeroMessage);
         }
     }
 

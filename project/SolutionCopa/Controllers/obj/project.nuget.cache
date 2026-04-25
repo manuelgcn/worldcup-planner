@@ -1,8 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "oNHgJfrtX9Q=",
+  "dgSpecHash": "gSp+pkaIAEs=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Tommy\\Desktop\\Diseño1\\255503---330734---326829\\project\\SolutionCopa\\Controllers\\Controllers.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "/home/runner/work/255503---330734---326829/255503---330734---326829/project/SolutionCopa/Controllers/Controllers.csproj",
+  "expectedPackageFiles": [
+    "/tmp/codeql-scratch-080116fba6536997/dbs/csharp/working/packages/microsoft.netcore.app.ref/8.0.25/microsoft.netcore.app.ref.8.0.25.nupkg.sha512",
+    "/tmp/codeql-scratch-080116fba6536997/dbs/csharp/working/packages/microsoft.aspnetcore.app.ref/8.0.25/microsoft.aspnetcore.app.ref.8.0.25.nupkg.sha512"
+  ],
   "logs": []
 }
