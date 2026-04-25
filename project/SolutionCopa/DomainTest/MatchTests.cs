@@ -110,8 +110,7 @@ public class MatchTests
     {
         IChampConf? championshipConfiguration = null;
 
-        Assert.ThrowsException<MatchException>(() =>
-            new Match(1, MatchDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, championshipConfiguration!));
+        Assert.ThrowsException<MatchException>(() => new Match(1, MatchDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, championshipConfiguration!));
     }
 
     [TestMethod]
@@ -142,5 +141,38 @@ public class MatchTests
         _match.ChangeStadium(newStadium.Object);
 
         Assert.AreSame(newStadium.Object, _match.Stadium);
-    }
-}
+    } }
+
+/*
+ * GENERALIZATION TESTS NEEDED FOR MATCHGROUP AND MATCHELIMINATION:
+ * 
+ * MatchGroup Tests (Group Stage Matches):
+ * ========================================
+ * 1. MatchGroupCanBeCreatedWithGroupAndJourney - Validates creation with IGroup and IJourney
+ * 2. MatchGroupRejectsNullGroup - Ensures IGroup is required
+ * 3. MatchGroupRejectsNullJourney - Ensures IJourney is required
+ * 4. MatchGroupCanGetGroup - Validates IGroup property getter
+ * 5. MatchGroupCanGetJourney - Validates IJourney property getter
+ * 6. MatchGroupCanBeCreatedWithChampionshipConfigurationAndGroupAndJourney - Validates overload with IChampConf
+ * 7. MatchGroupInheritsMatchBehavior - Validates that MatchGroup inherits all Match domain rules (teams different, valid date, required stadium)
+ * 8. MatchGroupCanChangeStadiumInheritedBehavior - Validates ChangeStadium(IStadium) works from base Match class
+ * 
+ * MatchElimination Tests (Knockout Stage Matches):
+ * ================================================
+ * 1. MatchEliminationCanBeCreatedWithParentMatches - Validates creation with IMatch references for home and away finalists
+ * 2. MatchEliminationRejectsNullMatchCodeIdentifier - Ensures match code is required (e.g., "SF1", "F")
+ * 3. MatchEliminationRejectsNullHomeParentMatch - Ensures home parent match (IMatch) is required
+ * 4. MatchEliminationRejectsNullAwayParentMatch - Ensures away parent match (IMatch) is required
+ * 5. MatchEliminationCanGetMatchCode - Validates match code property getter
+ * 6. MatchEliminationCanGetHomeParentMatch - Validates home finalist match reference
+ * 7. MatchEliminationCanGetAwayParentMatch - Validates away finalist match reference
+ * 8. MatchEliminationCanBeCreatedWithChampionshipConfiguration - Validates overload with IChampConf
+ * 9. MatchEliminationInheritsMatchBehavior - Validates that MatchElimination inherits all Match domain rules
+ * 10. MatchEliminationCanChangeStadiumInheritedBehavior - Validates ChangeStadium behavior works from base
+ * 
+ * Integration Tests (Future):
+ * ===========================
+ * 1. CompetitionBracketCanTransitionMatchesFromGroupToEliminationStage - Winners from MatchGroup become home/away for MatchElimination
+ * 2. VenueCanHostMultipleMatchesAcrossStages - Stadium can be used for both group and elimination matches
+ * 3. MatchSequenceCanBeFollowedAcrossStages - Journey progression and match code sequencing are logical
+ */
