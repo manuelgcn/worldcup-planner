@@ -100,6 +100,21 @@ public class Match
         Stadium = stadium;
     }
 
+    public ITeam? GetWinner()
+    {
+        if (HomeGoals > AwayGoals)
+        {
+            return HomeTeam;
+        }
+
+        if (AwayGoals > HomeGoals)
+        {
+            return AwayTeam;
+        }
+
+        return null;
+    }
+
     private static void EnsureValidMatchDate(DateTime matchDate, DateTime minAllowedDate)
     {
         if (matchDate < minAllowedDate)
