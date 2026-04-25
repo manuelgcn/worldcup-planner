@@ -40,15 +40,7 @@ public class MatchEliminationTests
         var sourceHomeMatch = CreateSourceMatch(100);
         var sourceAwayMatch = CreateSourceMatch(200);
 
-        var matchElimination = new MatchElimination(
-            1,
-            MatchDate,
-            _homeTeam.Object,
-            _awayTeam.Object,
-            _stadium.Object,
-            "A1",
-            sourceHomeMatch,
-            sourceAwayMatch);
+        var matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch);
 
         Assert.AreEqual("A1", matchElimination.MatchCode);
     }
@@ -59,15 +51,7 @@ public class MatchEliminationTests
         var sourceHomeMatch = CreateSourceMatch(100);
         var sourceAwayMatch = CreateSourceMatch(200);
 
-        var matchElimination = new MatchElimination(
-            1,
-            MatchDate,
-            _homeTeam.Object,
-            _awayTeam.Object,
-            _stadium.Object,
-            "A1",
-            sourceHomeMatch,
-            sourceAwayMatch);
+        var matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch);
 
         Assert.AreSame(sourceHomeMatch, matchElimination.MatchHome);
     }
@@ -78,15 +62,7 @@ public class MatchEliminationTests
         var sourceHomeMatch = CreateSourceMatch(100);
         var sourceAwayMatch = CreateSourceMatch(200);
 
-        var matchElimination = new MatchElimination(
-            1,
-            MatchDate,
-            _homeTeam.Object,
-            _awayTeam.Object,
-            _stadium.Object,
-            "A1",
-            sourceHomeMatch,
-            sourceAwayMatch);
+        var matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch);
 
         Assert.AreSame(sourceAwayMatch, matchElimination.MatchAway);
     }
@@ -97,16 +73,7 @@ public class MatchEliminationTests
         var sourceHomeMatch = CreateSourceMatch(100);
         var sourceAwayMatch = CreateSourceMatch(200);
 
-        var matchElimination = new MatchElimination(
-            1,
-            MatchDate,
-            _homeTeam.Object,
-            _awayTeam.Object,
-            _stadium.Object,
-            _championshipConfiguration.Object,
-            "A1",
-            sourceHomeMatch,
-            sourceAwayMatch);
+        var matchElimination = CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch);
 
         Assert.AreEqual(MatchDate, matchElimination.MatchDate);
     }
@@ -118,15 +85,7 @@ public class MatchEliminationTests
         var sourceAwayMatch = CreateSourceMatch(200);
 
         Assert.ThrowsException<MatchException>(() =>
-            new MatchElimination(
-                1,
-                MatchDate,
-                _homeTeam.Object,
-                _awayTeam.Object,
-                _stadium.Object,
-                null!,
-                sourceHomeMatch,
-                sourceAwayMatch));
+            CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, matchCode: null!));
     }
 
     [TestMethod]
@@ -136,15 +95,7 @@ public class MatchEliminationTests
         var sourceAwayMatch = CreateSourceMatch(200);
 
         Assert.ThrowsException<MatchException>(() =>
-            new MatchElimination(
-                1,
-                MatchDate,
-                _homeTeam.Object,
-                _awayTeam.Object,
-                _stadium.Object,
-                "   ",
-                sourceHomeMatch,
-                sourceAwayMatch));
+            CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, matchCode: "   "));
     }
 
     [TestMethod]
@@ -153,15 +104,7 @@ public class MatchEliminationTests
         var sourceAwayMatch = CreateSourceMatch(200);
 
         Assert.ThrowsException<MatchException>(() =>
-            new MatchElimination(
-                1,
-                MatchDate,
-                _homeTeam.Object,
-                _awayTeam.Object,
-                _stadium.Object,
-                "A1",
-                null!,
-                sourceAwayMatch));
+            CreateValidMatchElimination(null!, sourceAwayMatch));
     }
 
     [TestMethod]
@@ -170,15 +113,7 @@ public class MatchEliminationTests
         var sourceHomeMatch = CreateSourceMatch(100);
 
         Assert.ThrowsException<MatchException>(() =>
-            new MatchElimination(
-                1,
-                MatchDate,
-                _homeTeam.Object,
-                _awayTeam.Object,
-                _stadium.Object,
-                "A1",
-                sourceHomeMatch,
-                null!));
+            CreateValidMatchElimination(sourceHomeMatch, null!));
     }
 
     [TestMethod]
@@ -187,15 +122,7 @@ public class MatchEliminationTests
         var sourceMatch = CreateSourceMatch(100);
 
         Assert.ThrowsException<MatchException>(() =>
-            new MatchElimination(
-                1,
-                MatchDate,
-                _homeTeam.Object,
-                _awayTeam.Object,
-                _stadium.Object,
-                "A1",
-                sourceMatch,
-                sourceMatch));
+            CreateValidMatchElimination(sourceMatch, sourceMatch));
     }
 
     [TestMethod]
@@ -205,16 +132,7 @@ public class MatchEliminationTests
         var sourceAwayMatch = CreateSourceMatch(200);
 
         Assert.ThrowsException<MatchException>(() =>
-            new MatchElimination(
-                1,
-                MatchDate,
-                _homeTeam.Object,
-                _awayTeam.Object,
-                _stadium.Object,
-                _championshipConfiguration.Object,
-                null!,
-                sourceHomeMatch,
-                sourceAwayMatch));
+            CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch, matchCode: null!));
     }
 
     private static Match CreateSourceMatch(int matchId)
@@ -224,5 +142,35 @@ public class MatchEliminationTests
         var sourceStadium = new Mock<IStadium>();
 
         return new Match(matchId, MatchDate, sourceHomeTeam.Object, sourceAwayTeam.Object, sourceStadium.Object);
+    }
+
+    private MatchElimination CreateValidMatchElimination(Match matchHome, Match matchAway, string matchCode = "A1")
+    {
+        return new MatchElimination(
+            1,
+            MatchDate,
+            _homeTeam.Object,
+            _awayTeam.Object,
+            _stadium.Object,
+            matchCode,
+            matchHome,
+            matchAway);
+    }
+
+    private MatchElimination CreateValidMatchEliminationWithConfiguration(
+        Match matchHome,
+        Match matchAway,
+        string matchCode = "A1")
+    {
+        return new MatchElimination(
+            1,
+            MatchDate,
+            _homeTeam.Object,
+            _awayTeam.Object,
+            _stadium.Object,
+            _championshipConfiguration.Object,
+            matchCode,
+            matchHome,
+            matchAway);
     }
 }

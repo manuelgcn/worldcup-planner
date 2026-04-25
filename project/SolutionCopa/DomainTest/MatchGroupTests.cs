@@ -40,14 +40,7 @@ public class MatchGroupTests
     [TestMethod]
     public void MatchGroupCanGetGroup()
     {
-        var matchGroup = new MatchGroup(
-            1,
-            MatchDate,
-            _homeTeam.Object,
-            _awayTeam.Object,
-            _stadium.Object,
-            _group.Object,
-            _journey.Object);
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
 
         Assert.AreSame(_group.Object, matchGroup.Group);
     }
@@ -55,89 +48,123 @@ public class MatchGroupTests
     [TestMethod]
     public void MatchGroupCanGetJourney()
     {
-        var matchGroup = new MatchGroup(
-            1,
-            MatchDate,
-            _homeTeam.Object,
-            _awayTeam.Object,
-            _stadium.Object,
-            _group.Object,
-            _journey.Object);
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
 
         Assert.AreSame(_journey.Object, matchGroup.Journey);
     }
 
     [TestMethod]
+    public void MatchGroupCanGetHomeTeam()
+    {
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
+
+        Assert.AreSame(_homeTeam.Object, matchGroup.HomeTeam);
+    }
+
+    [TestMethod]
+    public void MatchGroupCanGetAwayTeam()
+    {
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
+
+        Assert.AreSame(_awayTeam.Object, matchGroup.AwayTeam);
+    }
+
+    [TestMethod]
+    public void MatchGroupCanGetStadium()
+    {
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
+
+        Assert.AreSame(_stadium.Object, matchGroup.Stadium);
+    }
+
+    [TestMethod]
     public void MatchGroupCanBeCreatedWithChampionshipConfiguration()
     {
-        var matchGroup = new MatchGroup(
-            1,
-            MatchDate,
-            _homeTeam.Object,
-            _awayTeam.Object,
-            _stadium.Object,
-            _championshipConfiguration.Object,
-            _group.Object,
-            _journey.Object);
+        var matchGroup = CreateValidMatchGroupWithConfiguration(_group.Object, _journey.Object);
 
         Assert.AreEqual(MatchDate, matchGroup.MatchDate);
+    }
+
+    [TestMethod]
+    public void MatchGroupRejectsSameHomeAndAwayTeam()
+    {
+        var sameTeam = new Mock<ITeam>();
+
+        Assert.ThrowsException<MatchException>(() =>
+            new MatchGroup(
+                1,
+                MatchDate,
+                sameTeam.Object,
+                sameTeam.Object,
+                _stadium.Object,
+                _group.Object,
+                _journey.Object));
+    }
+
+    [TestMethod]
+    public void MatchGroupRejectsNullStadium()
+    {
+        Assert.ThrowsException<MatchException>(() =>
+            new MatchGroup(
+                1,
+                MatchDate,
+                _homeTeam.Object,
+                _awayTeam.Object,
+                null!,
+                _group.Object,
+                _journey.Object));
     }
 
     [TestMethod]
     public void MatchGroupRejectsNullGroup()
     {
         Assert.ThrowsException<MatchException>(() =>
-            new MatchGroup(
-                1,
-                MatchDate,
-                _homeTeam.Object,
-                _awayTeam.Object,
-                _stadium.Object,
-                null!,
-                _journey.Object));
+            CreateValidMatchGroup(null!, _journey.Object));
     }
 
     [TestMethod]
     public void MatchGroupRejectsNullJourney()
     {
         Assert.ThrowsException<MatchException>(() =>
-            new MatchGroup(
-                1,
-                MatchDate,
-                _homeTeam.Object,
-                _awayTeam.Object,
-                _stadium.Object,
-                _group.Object,
-                null!));
+            CreateValidMatchGroup(_group.Object, null!));
     }
 
     [TestMethod]
     public void MatchGroupRejectsNullGroupWithChampionshipConfiguration()
     {
         Assert.ThrowsException<MatchException>(() =>
-            new MatchGroup(
-                1,
-                MatchDate,
-                _homeTeam.Object,
-                _awayTeam.Object,
-                _stadium.Object,
-                _championshipConfiguration.Object,
-                null!,
-                _journey.Object));
+            CreateValidMatchGroupWithConfiguration(null!, _journey.Object));
     }
 
     [TestMethod]
     public void MatchGroupRejectsNullJourneyWithChampionshipConfiguration()
     {
         Assert.ThrowsException<MatchException>(() =>
-            new MatchGroup(
-                1,
-                MatchDate,
-                _homeTeam.Object,
-                _awayTeam.Object,
-                _stadium.Object,
-                _championshipConfiguration.Object,
-                _group.Object,
-                null!));
+            CreateValidMatchGroupWithConfiguration(_group.Object, null!));
+    }
+
+    private MatchGroup CreateValidMatchGroup(IGroup group, IJourney journey)
+    {
+        return new MatchGroup(
+            1,
+            MatchDate,
+            _homeTeam.Object,
+            _awayTeam.Object,
+            _stadium.Object,
+            group,
+            journey);
+    }
+
+    private MatchGroup CreateValidMatchGroupWithConfiguration(IGroup group, IJourney journey)
+    {
+        return new MatchGroup(
+            1,
+            MatchDate,
+            _homeTeam.Object,
+            _awayTeam.Object,
+            _stadium.Object,
+            _championshipConfiguration.Object,
+            group,
+            journey);
     }
 }

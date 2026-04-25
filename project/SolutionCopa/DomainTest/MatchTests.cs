@@ -2,6 +2,7 @@ using ProjectCopa;
 using ProjectCopa.Exceptions;
 using ProjectCopa.Interfaces;
 using Moq;
+using System.Reflection;
 using Match = ProjectCopa.Match;
 
 namespace DomainTest;
@@ -141,5 +142,26 @@ public class MatchTests
         _match.ChangeStadium(newStadium.Object);
 
         Assert.AreSame(newStadium.Object, _match.Stadium);
-    } }
+    }
+
+    [TestMethod]
+    public void MatchReturnsHomeTeamWhenHomeGoalsAreGreater()
+    {
+        _match = CreateMatchWithData();
+        SetGoals(_match, homeGoals: 2, awayGoals: 1);
+        var winnerTeam = _homeTeam.Object;
+
+        Assert.AreSame(winnerTeam, _match.GetWinner());
+    }
+
+    private static void SetGoals(Match match, int homeGoals, int awayGoals)
+    {
+        var homeGoalsField = typeof(Match).GetField("<HomeGoals>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
+        var awayGoalsField = typeof(Match).GetField("<AwayGoals>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        homeGoalsField!.SetValue(match, homeGoals);
+        awayGoalsField!.SetValue(match, awayGoals);
+    }
+
+}
 
