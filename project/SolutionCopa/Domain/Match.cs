@@ -104,7 +104,8 @@ public class Match
     public void SetGoals(int homeGoals, int awayGoals)
     {
         EnsureNonNegativeGoals(homeGoals, awayGoals);
-        (HomeGoals, AwayGoals) = (homeGoals, awayGoals);
+        HomeGoals = homeGoals;
+        AwayGoals = awayGoals;
     }
 
     public ITeam? GetWinner()
@@ -158,7 +159,13 @@ public class Match
 
     private static void EnsureNonNegativeGoals(int homeGoals, int awayGoals)
     {
-        if (homeGoals < 0 || awayGoals < 0)
+        EnsureNonNegativeGoal(homeGoals);
+        EnsureNonNegativeGoal(awayGoals);
+    }
+
+    private static void EnsureNonNegativeGoal(int goals)
+    {
+        if (goals < 0)
         {
             throw new MatchException(GoalsCannotBeNegativeMessage);
         }
