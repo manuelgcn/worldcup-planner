@@ -2,7 +2,6 @@ using ProjectCopa;
 using ProjectCopa.Exceptions;
 using ProjectCopa.Interfaces;
 using Moq;
-using System.Reflection;
 using Match = ProjectCopa.Match;
 
 namespace DomainTest;
@@ -148,20 +147,26 @@ public class MatchTests
     public void MatchReturnsHomeTeamWhenHomeGoalsAreGreater()
     {
         _match = CreateMatchWithData();
-        SetGoals(_match, homeGoals: 2, awayGoals: 1);
+        _match.SetGoals(homeGoals: 2, awayGoals: 1);
         var winnerTeam = _homeTeam.Object;
 
         Assert.AreSame(winnerTeam, _match.GetWinner());
     }
 
-    private static void SetGoals(Match match, int homeGoals, int awayGoals)
+    [TestMethod]
+    public void MatchRejectsNegativeHomeGoals()
     {
-        var homeGoalsField = typeof(Match).GetField("<HomeGoals>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
-        var awayGoalsField = typeof(Match).GetField("<AwayGoals>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
+        _match = CreateMatchWithData();
 
-        homeGoalsField!.SetValue(match, homeGoals);
-        awayGoalsField!.SetValue(match, awayGoals);
+        Assert.ThrowsException<MatchException>(() => _match.SetGoals(homeGoals: -1, awayGoals: 0));
+    }
+
+    [TestMethod]
+    public void MatchRejectsNegativeAwayGoals()
+    {
+        _match = CreateMatchWithData();
+
+        Assert.ThrowsException<MatchException>(() => _match.SetGoals(homeGoals: 0, awayGoals: -1));
     }
 
 }
-

@@ -8,8 +8,8 @@ public class MatchGroup : Match
     private const string RequiredGroupMessage = "Group is required.";
     private const string RequiredJourneyMessage = "Journey is required.";
 
-    public IGroup Group { get; private set; }
-    public IJourney Journey { get; private set; }
+    public IGroup? Group { get; private set; }
+    public IJourney? Journey { get; private set; }
 
     public MatchGroup()
     {
@@ -66,4 +66,3 @@ public class MatchGroup : Match
         }
     }
 }
-

@@ -27,14 +27,6 @@ public class MatchEliminationTests
     }
 
     [TestMethod]
-    public void MatchEliminationCanBeCreatedWithoutData()
-    {
-        var matchElimination = new MatchElimination();
-
-        Assert.IsNotNull(matchElimination);
-    }
-
-    [TestMethod]
     public void MatchEliminationCanGetMatchCode()
     {
         var sourceHomeMatch = CreateSourceMatch(100);
@@ -96,6 +88,16 @@ public class MatchEliminationTests
 
         Assert.ThrowsException<MatchException>(() =>
             CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, matchCode: "   "));
+    }
+
+    [TestMethod]
+    public void MatchEliminationRejectsEmptyMatchCode()
+    {
+        var sourceHomeMatch = CreateSourceMatch(100);
+        var sourceAwayMatch = CreateSourceMatch(200);
+
+        Assert.ThrowsException<MatchException>(() =>
+            CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, matchCode: string.Empty));
     }
 
     [TestMethod]

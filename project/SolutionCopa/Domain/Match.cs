@@ -100,6 +100,11 @@ public class Match
         Stadium = stadium;
     }
 
+    public void SetGoals(int homeGoals, int awayGoals)
+    {
+        (HomeGoals, AwayGoals) = (homeGoals, awayGoals);
+    }
+
     public ITeam? GetWinner()
     {
         if (HomeGoals > AwayGoals)

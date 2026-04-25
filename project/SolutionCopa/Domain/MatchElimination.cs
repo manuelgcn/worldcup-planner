@@ -10,7 +10,7 @@ public class MatchElimination : Match
     private const string RequiredMatchAwayMessage = "Away match (source) is required.";
     private const string SameSourceMatchesMessage = "Home and away source matches must be different.";
 
-    public string MatchCode { get; private set; }
+    public string MatchCode { get; private set; } = null!;
     private Match? _matchHome;
     private Match? _matchAway;
 
@@ -32,10 +32,6 @@ public class MatchElimination : Match
             EnsureRequiredMatchAway(value);
             _matchAway = value;
         }
-    }
-
-    public MatchElimination()
-    {
     }
 
     public MatchElimination(
