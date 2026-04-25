@@ -167,4 +167,95 @@ public class MatchGroupTests
             group,
             journey);
     }
+
+    // Inheritance: scoring behaviors
+    [TestMethod]
+    public void MatchGroup_SetHomeGoals_SetsValue()
+    {
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
+        matchGroup.SetHomeGoals(2);
+        Assert.AreEqual(2, matchGroup.HomeGoals);
+    }
+
+    [TestMethod]
+    public void MatchGroup_SetAwayGoals_SetsValue()
+    {
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
+        matchGroup.SetAwayGoals(1);
+        Assert.AreEqual(1, matchGroup.AwayGoals);
+    }
+
+    [TestMethod]
+    public void MatchGroup_AddHomeGoal_Increments()
+    {
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
+        matchGroup.AddHomeGoal();
+        Assert.AreEqual(1, matchGroup.HomeGoals);
+    }
+
+    [TestMethod]
+    public void MatchGroup_AddAwayGoal_Increments()
+    {
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
+        matchGroup.AddAwayGoal();
+        Assert.AreEqual(1, matchGroup.AwayGoals);
+    }
+
+    [TestMethod]
+    public void MatchGroup_RemoveHomeGoal_Decrements()
+    {
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
+        matchGroup.AddHomeGoal();
+        matchGroup.RemoveHomeGoal();
+        Assert.AreEqual(0, matchGroup.HomeGoals);
+    }
+
+    [TestMethod]
+    public void MatchGroup_RemoveAwayGoal_Decrements()
+    {
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
+        matchGroup.AddAwayGoal();
+        matchGroup.RemoveAwayGoal();
+        Assert.AreEqual(0, matchGroup.AwayGoals);
+    }
+
+    [TestMethod]
+    public void MatchGroup_HasHomeTeamWon_ReturnsTrue()
+    {
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
+        matchGroup.SetGoals(2, 0);
+        Assert.IsTrue(matchGroup.HasHomeTeamWon());
+    }
+
+    [TestMethod]
+    public void MatchGroup_HasAwayTeamWon_ReturnsTrue()
+    {
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
+        matchGroup.SetGoals(0, 2);
+        Assert.IsTrue(matchGroup.HasAwayTeamWon());
+    }
+
+    [TestMethod]
+    public void MatchGroup_IsDraw_ReturnsTrueOnEqualGoals()
+    {
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
+        matchGroup.SetGoals(1, 1);
+        Assert.IsTrue(matchGroup.IsDraw());
+    }
+
+    [TestMethod]
+    public void MatchGroup_GetGoalDifferenceForHome_ReturnsCorrectValue()
+    {
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
+        matchGroup.SetGoals(3, 1);
+        Assert.AreEqual(2, matchGroup.GetGoalDifferenceForHome());
+    }
+
+    [TestMethod]
+    public void MatchGroup_GetGoalDifferenceForAway_ReturnsCorrectValue()
+    {
+        var matchGroup = CreateValidMatchGroup(_group.Object, _journey.Object);
+        matchGroup.SetGoals(1, 3);
+        Assert.AreEqual(2, matchGroup.GetGoalDifferenceForAway());
+    }
 }
