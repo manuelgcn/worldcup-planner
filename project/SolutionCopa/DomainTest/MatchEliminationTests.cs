@@ -175,4 +175,117 @@ public class MatchEliminationTests
             matchHome,
             matchAway);
     }
+
+    // Inheritance: scoring behaviors
+    [TestMethod]
+    public void MatchElimination_SetHomeGoals_SetsValue()
+    {
+        var sourceHome = CreateSourceMatch(100);
+        var sourceAway = CreateSourceMatch(200);
+        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.SetHomeGoals(2);
+        Assert.AreEqual(2, matchElimination.HomeGoals);
+    }
+
+    [TestMethod]
+    public void MatchElimination_SetAwayGoals_SetsValue()
+    {
+        var sourceHome = CreateSourceMatch(100);
+        var sourceAway = CreateSourceMatch(200);
+        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.SetAwayGoals(1);
+        Assert.AreEqual(1, matchElimination.AwayGoals);
+    }
+
+    [TestMethod]
+    public void MatchElimination_AddHomeGoal_Increments()
+    {
+        var sourceHome = CreateSourceMatch(100);
+        var sourceAway = CreateSourceMatch(200);
+        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.AddHomeGoal();
+        Assert.AreEqual(1, matchElimination.HomeGoals);
+    }
+
+    [TestMethod]
+    public void MatchElimination_AddAwayGoal_Increments()
+    {
+        var sourceHome = CreateSourceMatch(100);
+        var sourceAway = CreateSourceMatch(200);
+        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.AddAwayGoal();
+        Assert.AreEqual(1, matchElimination.AwayGoals);
+    }
+
+    [TestMethod]
+    public void MatchElimination_RemoveHomeGoal_Decrements()
+    {
+        var sourceHome = CreateSourceMatch(100);
+        var sourceAway = CreateSourceMatch(200);
+        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.AddHomeGoal();
+        matchElimination.RemoveHomeGoal();
+        Assert.AreEqual(0, matchElimination.HomeGoals);
+    }
+
+    [TestMethod]
+    public void MatchElimination_RemoveAwayGoal_Decrements()
+    {
+        var sourceHome = CreateSourceMatch(100);
+        var sourceAway = CreateSourceMatch(200);
+        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.AddAwayGoal();
+        matchElimination.RemoveAwayGoal();
+        Assert.AreEqual(0, matchElimination.AwayGoals);
+    }
+
+    [TestMethod]
+    public void MatchElimination_HasHomeTeamWon_ReturnsTrue()
+    {
+        var sourceHome = CreateSourceMatch(100);
+        var sourceAway = CreateSourceMatch(200);
+        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.SetGoals(2, 0);
+        Assert.IsTrue(matchElimination.HasHomeTeamWon());
+    }
+
+    [TestMethod]
+    public void MatchElimination_HasAwayTeamWon_ReturnsTrue()
+    {
+        var sourceHome = CreateSourceMatch(100);
+        var sourceAway = CreateSourceMatch(200);
+        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.SetGoals(0, 2);
+        Assert.IsTrue(matchElimination.HasAwayTeamWon());
+    }
+
+    [TestMethod]
+    public void MatchElimination_IsDraw_ReturnsTrueOnEqualGoals()
+    {
+        var sourceHome = CreateSourceMatch(100);
+        var sourceAway = CreateSourceMatch(200);
+        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.SetGoals(1, 1);
+        Assert.IsTrue(matchElimination.IsDraw());
+    }
+
+    [TestMethod]
+    public void MatchElimination_GetGoalDifferenceForHome_ReturnsCorrectValue()
+    {
+        var sourceHome = CreateSourceMatch(100);
+        var sourceAway = CreateSourceMatch(200);
+        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.SetGoals(3, 1);
+        Assert.AreEqual(2, matchElimination.GetGoalDifferenceForHome());
+    }
+
+    [TestMethod]
+    public void MatchElimination_GetGoalDifferenceForAway_ReturnsCorrectValue()
+    {
+        var sourceHome = CreateSourceMatch(100);
+        var sourceAway = CreateSourceMatch(200);
+        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.SetGoals(1, 3);
+        Assert.AreEqual(2, matchElimination.GetGoalDifferenceForAway());
+    }
 }
