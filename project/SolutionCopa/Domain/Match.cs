@@ -170,12 +170,12 @@ public class Match
 
     public ITeam? GetWinner()
     {
-        if (HomeGoals > AwayGoals)
+        if (HasHomeTeamWon())
         {
             return HomeTeam;
         }
 
-        if (AwayGoals > HomeGoals)
+        if (HasAwayTeamWon())
         {
             return AwayTeam;
         }
