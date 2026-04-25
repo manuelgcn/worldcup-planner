@@ -8,6 +8,7 @@ public class MatchElimination : Match
     private const string RequiredMatchCodeMessage = "Match code is required.";
     private const string RequiredMatchHomeMessage = "Home match (source) is required.";
     private const string RequiredMatchAwayMessage = "Away match (source) is required.";
+    private const string SameSourceMatchesMessage = "Home and away source matches must be different.";
 
     public string MatchCode { get; private set; }
     private Match? _matchHome;
@@ -48,13 +49,7 @@ public class MatchElimination : Match
         Match matchAway)
         : base(id, matchDate, homeTeam, awayTeam, stadium)
     {
-        EnsureRequiredMatchCode(matchCode);
-        EnsureRequiredMatchHome(matchHome);
-        EnsureRequiredMatchAway(matchAway);
-
-        MatchCode = matchCode;
-        MatchHome = matchHome;
-        MatchAway = matchAway;
+        InitializeEliminationData(matchCode, matchHome, matchAway);
     }
 
     public MatchElimination(
@@ -69,9 +64,15 @@ public class MatchElimination : Match
         Match matchAway)
         : base(id, matchDate, homeTeam, awayTeam, stadium, championshipConfiguration)
     {
+        InitializeEliminationData(matchCode, matchHome, matchAway);
+    }
+
+    private void InitializeEliminationData(string matchCode, Match matchHome, Match matchAway)
+    {
         EnsureRequiredMatchCode(matchCode);
         EnsureRequiredMatchHome(matchHome);
         EnsureRequiredMatchAway(matchAway);
+        EnsureDifferentSourceMatches(matchHome, matchAway);
 
         MatchCode = matchCode;
         MatchHome = matchHome;
@@ -101,5 +102,12 @@ public class MatchElimination : Match
             throw new MatchException(RequiredMatchAwayMessage);
         }
     }
-}
 
+    private static void EnsureDifferentSourceMatches(Match matchHome, Match matchAway)
+    {
+        if (ReferenceEquals(matchHome, matchAway))
+        {
+            throw new MatchException(SameSourceMatchesMessage);
+        }
+    }
+}
