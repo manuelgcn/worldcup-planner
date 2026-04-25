@@ -11,6 +11,7 @@ public class Match
     private const string SameTeamsMessage = "Home team and away team must be different.";
     private const string RequiredStadiumMessage = "Stadium is required.";
     private const string RequiredChampionshipConfigurationMessage = "Championship configuration is required.";
+    private const string GoalsCannotBeNegativeMessage = "Goals cannot be negative.";
 
     public int MatchId { get; private set; }
     public DateTime MatchDate { get; private set; }
@@ -102,6 +103,7 @@ public class Match
 
     public void SetGoals(int homeGoals, int awayGoals)
     {
+        EnsureNonNegativeGoals(homeGoals, awayGoals);
         (HomeGoals, AwayGoals) = (homeGoals, awayGoals);
     }
 
@@ -152,6 +154,14 @@ public class Match
         }
 
         return championshipConfiguration.StartDate();
+    }
+
+    private static void EnsureNonNegativeGoals(int homeGoals, int awayGoals)
+    {
+        if (homeGoals < 0 || awayGoals < 0)
+        {
+            throw new MatchException(GoalsCannotBeNegativeMessage);
+        }
     }
 
 }
