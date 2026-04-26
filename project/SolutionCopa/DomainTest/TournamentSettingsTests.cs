@@ -18,4 +18,10 @@ public sealed class TournamentSettingsTests
     {
         Assert.IsNotNull(_setting);
     }
+
+    [TestMethod]
+    public void SettingsHasDefaultStartDate()
+    {
+        Assert.AreEqual(new DateTime(2026, 6, 1), _setting.StartDate);
+    }
 }
