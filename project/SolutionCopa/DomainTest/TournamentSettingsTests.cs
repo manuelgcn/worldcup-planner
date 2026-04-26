@@ -36,4 +36,10 @@ public sealed class TournamentSettingsTests
     {
         Assert.AreEqual(3, _tournamentSettings.DaysBetweenJourneys);
     }
+
+    [TestMethod]
+    public void SettingsHasDefaultFixtureSeed()
+    {
+        Assert.AreEqual(0, _tournamentSettings.FixtureSeed);
+    }
 }
