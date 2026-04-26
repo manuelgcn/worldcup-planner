@@ -24,4 +24,10 @@ public sealed class TournamentSettingsTests
     {
         Assert.AreEqual(new DateTime(2026, 6, 1), _setting.StartDate);
     }
+
+    [TestMethod]
+    public void SettingsHasDefaultMaxMatchesPerDay()
+    {
+        Assert.AreEqual(3, _setting.MaxMatchesPerDay);
+    }
 }
