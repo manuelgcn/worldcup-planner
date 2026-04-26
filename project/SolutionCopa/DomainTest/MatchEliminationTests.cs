@@ -38,6 +38,17 @@ public class MatchEliminationTests
     }
 
     [TestMethod]
+    public void MatchEliminationCanGetPhase()
+    {
+        var sourceHomeMatch = CreateSourceMatch(100);
+        var sourceAwayMatch = CreateSourceMatch(200);
+
+        var matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, phase: Phase.SemiFinal);
+
+        Assert.AreEqual(Phase.SemiFinal, matchElimination.Phase);
+    }
+
+    [TestMethod]
     public void MatchEliminationCanGetMatchHome()
     {
         var sourceHomeMatch = CreateSourceMatch(100);
@@ -68,6 +79,43 @@ public class MatchEliminationTests
         var matchElimination = CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch);
 
         Assert.AreEqual(MatchDate, matchElimination.MatchDate);
+    }
+
+    [TestMethod]
+    public void MatchEliminationCanGetPhaseWhenUsingChampionshipConfiguration()
+    {
+        var sourceHomeMatch = CreateSourceMatch(100);
+        var sourceAwayMatch = CreateSourceMatch(200);
+
+        var matchElimination = CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch, phase: Phase.Final);
+
+        Assert.AreEqual(Phase.Final, matchElimination.Phase);
+    }
+
+    [DataTestMethod]
+    [DataRow(Phase.Final)]
+    [DataRow(Phase.SemiFinal)]
+    [DataRow(Phase.QuarterFinals)]
+    [DataRow(Phase.RoundOf16)]
+    [DataRow(Phase.RoundOf32)]
+    public void MatchEliminationAcceptsEveryDefinedPhase(Phase phase)
+    {
+        var sourceHomeMatch = CreateSourceMatch(100);
+        var sourceAwayMatch = CreateSourceMatch(200);
+
+        var matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, phase: phase);
+
+        Assert.AreEqual(phase, matchElimination.Phase);
+    }
+
+    [TestMethod]
+    public void MatchEliminationRejectsInvalidPhase()
+    {
+        var sourceHomeMatch = CreateSourceMatch(100);
+        var sourceAwayMatch = CreateSourceMatch(200);
+
+        Assert.ThrowsException<MatchException>(() =>
+            CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, phase: (Phase)999));
     }
 
     [TestMethod]
@@ -146,7 +194,11 @@ public class MatchEliminationTests
         return new Match(matchId, MatchDate, sourceHomeTeam.Object, sourceAwayTeam.Object, sourceStadium.Object);
     }
 
-    private MatchElimination CreateValidMatchElimination(Match matchHome, Match matchAway, string matchCode = "A1")
+    private MatchElimination CreateValidMatchElimination(
+        Match matchHome,
+        Match matchAway,
+        string matchCode = "A1",
+        Phase phase = Phase.RoundOf16)
     {
         return new MatchElimination(
             1,
@@ -154,6 +206,7 @@ public class MatchEliminationTests
             _homeTeam.Object,
             _awayTeam.Object,
             _stadium.Object,
+            phase,
             matchCode,
             matchHome,
             matchAway);
@@ -162,7 +215,8 @@ public class MatchEliminationTests
     private MatchElimination CreateValidMatchEliminationWithConfiguration(
         Match matchHome,
         Match matchAway,
-        string matchCode = "A1")
+        string matchCode = "A1",
+        Phase phase = Phase.RoundOf16)
     {
         return new MatchElimination(
             1,
@@ -171,6 +225,7 @@ public class MatchEliminationTests
             _awayTeam.Object,
             _stadium.Object,
             _championshipConfiguration.Object,
+            phase,
             matchCode,
             matchHome,
             matchAway);

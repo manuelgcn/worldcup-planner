@@ -9,8 +9,10 @@ public class MatchElimination : Match
     private const string RequiredMatchHomeMessage = "Home match (source) is required.";
     private const string RequiredMatchAwayMessage = "Away match (source) is required.";
     private const string SameSourceMatchesMessage = "Home and away source matches must be different.";
+    private const string InvalidPhaseMessage = "Phase is invalid.";
 
     public string MatchCode { get; private set; } = null!;
+    public Phase Phase { get; private set; }
     private Match? _matchHome;
     private Match? _matchAway;
 
@@ -40,12 +42,13 @@ public class MatchElimination : Match
         ITeam homeTeam,
         ITeam awayTeam,
         IStadium stadium,
+        Phase phase,
         string matchCode,
         Match matchHome,
         Match matchAway)
         : base(id, matchDate, homeTeam, awayTeam, stadium)
     {
-        InitializeEliminationData(matchCode, matchHome, matchAway);
+        InitializeEliminationData(phase, matchCode, matchHome, matchAway);
     }
 
     public MatchElimination(
@@ -55,24 +58,35 @@ public class MatchElimination : Match
         ITeam awayTeam,
         IStadium stadium,
         IChampConf championshipConfiguration,
+        Phase phase,
         string matchCode,
         Match matchHome,
         Match matchAway)
         : base(id, matchDate, homeTeam, awayTeam, stadium, championshipConfiguration)
     {
-        InitializeEliminationData(matchCode, matchHome, matchAway);
+        InitializeEliminationData(phase, matchCode, matchHome, matchAway);
     }
 
-    private void InitializeEliminationData(string matchCode, Match matchHome, Match matchAway)
+    private void InitializeEliminationData(Phase phase, string matchCode, Match matchHome, Match matchAway)
     {
+        EnsureValidPhase(phase);
         EnsureRequiredMatchCode(matchCode);
         EnsureRequiredMatchHome(matchHome);
         EnsureRequiredMatchAway(matchAway);
         EnsureDifferentSourceMatches(matchHome, matchAway);
 
+        Phase = phase;
         MatchCode = matchCode;
         MatchHome = matchHome;
         MatchAway = matchAway;
+    }
+
+    private static void EnsureValidPhase(Phase phase)
+    {
+        if (!Enum.IsDefined(typeof(Phase), phase))
+        {
+            throw new MatchException(InvalidPhaseMessage);
+        }
     }
 
     private static void EnsureRequiredMatchCode(string? matchCode)
