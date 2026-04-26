@@ -6,6 +6,7 @@ namespace DomainTest;
 public sealed class TournamentSettingsTests
 {
     private TournamentSettings _tournamentSettings = null!;
+    private static readonly DateTime BaseParameterizedStartDate = new DateTime(2026, 6, 10);
 
     [TestInitialize]
     public void InitializeTournamentSettings()
@@ -66,24 +67,9 @@ public sealed class TournamentSettingsTests
     {
         // Arrange
         var id = 10;
-        var startDate = new DateTime(2026, 6, 1);
-        const int maxMatchesPerDay = 3;
-        const int daysBetweenJourneys = 3;
-        const int fixtureSeed = 0;
-        const int crossingsSeed = 0;
-        const int simulationSeed = 0;
-        const int completionSeed = 0;
 
         // Act
-        var settings = new TournamentSettings(
-            id,
-            startDate,
-            maxMatchesPerDay,
-            daysBetweenJourneys,
-            fixtureSeed,
-            crossingsSeed,
-            simulationSeed,
-            completionSeed);
+        var settings = CreateConfiguredSettings(id: id);
 
         // Assert
         Assert.AreEqual(id, settings.Id);
@@ -93,27 +79,111 @@ public sealed class TournamentSettingsTests
     public void SettingsCanGetStartDate()
     {
         // Arrange
-        var id = 10;
         var startDate = new DateTime(2026, 6, 10);
-        const int maxMatchesPerDay = 3;
-        const int daysBetweenJourneys = 3;
-        const int fixtureSeed = 0;
-        const int crossingsSeed = 0;
-        const int simulationSeed = 0;
-        const int completionSeed = 0;
 
         // Act
-        var settings = new TournamentSettings(
+        var settings = CreateConfiguredSettings(startDate: startDate);
+
+        // Assert
+        Assert.AreEqual(startDate, settings.StartDate);
+    }
+
+    [TestMethod]
+    public void SettingsCanGetMaxMatchesPerDay()
+    {
+        // Arrange
+        const int maxMatchesPerDay = 5;
+
+        // Act
+        var settings = CreateConfiguredSettings(maxMatchesPerDay: maxMatchesPerDay);
+
+        // Assert
+        Assert.AreEqual(maxMatchesPerDay, settings.MaxMatchesPerDay);
+    }
+
+    [TestMethod]
+    public void SettingsCanGetDaysBetweenJourneys()
+    {
+        // Arrange
+        const int daysBetweenJourneys = 4;
+
+        // Act
+        var settings = CreateConfiguredSettings(daysBetweenJourneys: daysBetweenJourneys);
+
+        // Assert
+        Assert.AreEqual(daysBetweenJourneys, settings.DaysBetweenJourneys);
+    }
+
+    [TestMethod]
+    public void SettingsCanGetFixtureSeed()
+    {
+        // Arrange
+        const int fixtureSeed = 11;
+
+        // Act
+        var settings = CreateConfiguredSettings(fixtureSeed: fixtureSeed);
+
+        // Assert
+        Assert.AreEqual(fixtureSeed, settings.FixtureSeed);
+    }
+
+    [TestMethod]
+    public void SettingsCanGetCrossingsSeed()
+    {
+        // Arrange
+        const int crossingsSeed = 22;
+
+        // Act
+        var settings = CreateConfiguredSettings(crossingsSeed: crossingsSeed);
+
+        // Assert
+        Assert.AreEqual(crossingsSeed, settings.CrossingsSeed);
+    }
+
+    [TestMethod]
+    public void SettingsCanGetSimulationSeed()
+    {
+        // Arrange
+        const int simulationSeed = 33;
+
+        // Act
+        var settings = CreateConfiguredSettings(simulationSeed: simulationSeed);
+
+        // Assert
+        Assert.AreEqual(simulationSeed, settings.SimulationSeed);
+    }
+
+    [TestMethod]
+    public void SettingsCanGetCompletionSeed()
+    {
+        // Arrange
+        const int completionSeed = 44;
+
+        // Act
+        var settings = CreateConfiguredSettings(completionSeed: completionSeed);
+
+        // Assert
+        Assert.AreEqual(completionSeed, settings.CompletionSeed);
+    }
+
+    private static TournamentSettings CreateConfiguredSettings(
+        int id = 10,
+        DateTime? startDate = null,
+        int maxMatchesPerDay = 3,
+        int daysBetweenJourneys = 3,
+        int fixtureSeed = 0,
+        int crossingsSeed = 0,
+        int simulationSeed = 0,
+        int completionSeed = 0)
+    {
+        return new TournamentSettings(
             id,
-            startDate,
+            startDate ?? BaseParameterizedStartDate,
             maxMatchesPerDay,
             daysBetweenJourneys,
             fixtureSeed,
             crossingsSeed,
             simulationSeed,
             completionSeed);
-
-        // Assert
-        Assert.AreEqual(startDate, settings.StartDate);
     }
 }
