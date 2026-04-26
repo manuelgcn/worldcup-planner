@@ -14,5 +14,18 @@ public class Group
 
         Name = name;
     }
+    
+    
+    public void AddTeam(Team team)
+    {
+        if (teams.Count >= 4)
+            throw new ArgumentException("Group cannot have more than 4 teams");
+
+        if (teams.Contains(team))
+            throw new ArgumentException("Team already exists in group");
+
+        teams.Add(team);
+    }
+
 
 }

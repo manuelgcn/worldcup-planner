@@ -32,4 +32,6 @@ public class GroupTest
         Assert.IsTrue(group.Teams.Contains(team));
     }
 
+    
+    
 }
