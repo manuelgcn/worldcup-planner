@@ -30,4 +30,10 @@ public sealed class TournamentSettingsTests
     {
         Assert.AreEqual(3, _tournamentSettings.MaxMatchesPerDay);
     }
+
+    [TestMethod]
+    public void SettingsHasDefaultDaysBetweenJourneys()
+    {
+        Assert.AreEqual(3, _tournamentSettings.DaysBetweenJourneys);
+    }
 }
