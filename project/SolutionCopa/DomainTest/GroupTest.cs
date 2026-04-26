@@ -32,6 +32,19 @@ public class GroupTest
         Assert.IsTrue(group.Teams.Contains(team));
     }
 
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void GroupCannotHaveMoreThanFourTeams()
+    {
+        Group group = new Group("A");
+
+        group.AddTeam(new ProjectCopa.Team("T1", 1000, false, Confederation.UEFA));
+        group.AddTeam(new ProjectCopa.Team("T2", 1100, false, Confederation.UEFA));
+        group.AddTeam(new ProjectCopa.Team("T3", 1200, false, Confederation.UEFA));
+        group.AddTeam(new ProjectCopa.Team("T4", 1300, false, Confederation.UEFA));
+        group.AddTeam(new ProjectCopa.Team("T5", 1400, false, Confederation.UEFA));
+    }
+
     
     
 }
