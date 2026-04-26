@@ -5,29 +5,29 @@ namespace DomainTest;
 [TestClass]
 public sealed class TournamentSettingsTests
 {
-    private TournamentSettings _setting = null!;
+    private TournamentSettings _tournamentSettings = null!;
 
     [TestInitialize]
-    public void Setup()
+    public void InitializeTournamentSettings()
     {
-        _setting = new TournamentSettings();
+        _tournamentSettings = new TournamentSettings();
     }
 
     [TestMethod]
-    public void SettingsCanBeCreatedWithoutData()
+    public void ShouldCreateTournamentSettings()
     {
-        Assert.IsNotNull(_setting);
+        Assert.IsNotNull(_tournamentSettings);
     }
 
     [TestMethod]
-    public void SettingsHasDefaultStartDate()
+    public void ShouldHaveDefaultStartDate()
     {
-        Assert.AreEqual(new DateTime(2026, 6, 1), _setting.StartDate);
+        Assert.AreEqual(new DateTime(2026, 6, 1), _tournamentSettings.StartDate);
     }
 
     [TestMethod]
-    public void SettingsHasDefaultMaxMatchesPerDay()
+    public void ShouldHaveDefaultMaxMatchesPerDay()
     {
-        Assert.AreEqual(3, _setting.MaxMatchesPerDay);
+        Assert.AreEqual(3, _tournamentSettings.MaxMatchesPerDay);
     }
 }
