@@ -54,4 +54,10 @@ public sealed class TournamentSettingsTests
     {
         Assert.AreEqual(0, _tournamentSettings.SimulationSeed);
     }
+    
+    [TestMethod]
+    public void SettingsHasDefaultCompletionSeed()
+    {
+        Assert.AreEqual(0, _tournamentSettings.CompletionSeed);
+    }
 }
