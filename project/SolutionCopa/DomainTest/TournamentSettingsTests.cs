@@ -1,4 +1,5 @@
 using ProjectCopa;
+using ProjectCopa.Exceptions;
 
 namespace DomainTest;
 
@@ -164,6 +165,16 @@ public sealed class TournamentSettingsTests
 
         // Assert
         Assert.AreEqual(completionSeed, settings.CompletionSeed);
+    }
+
+    [TestMethod]
+    public void SettingsRejectsZeroMaxMatchesPerDay()
+    {
+        // Act
+        void Action() => CreateConfiguredSettings(maxMatchesPerDay: 0);
+
+        // Assert
+        Assert.ThrowsException<SettingsException>(Action);
     }
 
     private static TournamentSettings CreateConfiguredSettings(
