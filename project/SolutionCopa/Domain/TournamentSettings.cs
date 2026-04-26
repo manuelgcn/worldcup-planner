@@ -45,11 +45,7 @@ public class TournamentSettings
         int simulationSeed,
         int completionSeed)
     {
-        if (maxMatchesPerDay < 1)
-        {
-            throw new SettingsException(InvalidMaxMatchesPerDayMessage);
-        }
-
+        ValidateMaxMatchesPerDay(maxMatchesPerDay);
         Id = id;
         StartDate = startDate;
         MaxMatchesPerDay = maxMatchesPerDay;
@@ -58,5 +54,13 @@ public class TournamentSettings
         CrossingsSeed = crossingsSeed;
         SimulationSeed = simulationSeed;
         CompletionSeed = completionSeed;
+    }
+
+    private static void ValidateMaxMatchesPerDay(int maxMatchesPerDay)
+    {
+        if (maxMatchesPerDay < 1)
+        {
+            throw new SettingsException(InvalidMaxMatchesPerDayMessage);
+        }
     }
 }
