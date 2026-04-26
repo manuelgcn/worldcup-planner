@@ -46,5 +46,23 @@ public class GroupTest
     }
 
     
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void GroupCannotContainDuplicateTeams()
+    {
+        Group group = new Group("A");
+
+        ProjectCopa.Team team = new ProjectCopa.Team(
+            "Uruguay",
+            1500,
+            false,
+            Confederation.CONMEBOL
+        );
+
+        group.AddTeam(team);
+        group.AddTeam(team); 
+    }
+
+    
     
 }
