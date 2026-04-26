@@ -2,21 +2,53 @@ namespace ProjectCopa;
 
 public class TournamentSettings
 {
+    private const int DefaultId = 0;
     private const int DefaultStartDateYear = 2026;
     private const int DefaultStartDateMonth = 6;
     private const int DefaultStartDateDay = 1;
     private const int DefaultMaxMatchesPerDay = 3;
     private const int DefaultDaysBetweenJourneys = 3;
-    private const int DefaultFixtureSeed = 0;
-    private const int DefaultCrossingsSeed = 0;
-    private const int DefaultSimulationSeed = 0;
-    private const int DefaultCompletionSeed = 0;
+    private const int DefaultSeed = 0;
 
-    public DateTime StartDate { get; } = new DateTime(DefaultStartDateYear, DefaultStartDateMonth, DefaultStartDateDay);
-    public int MaxMatchesPerDay { get; } = DefaultMaxMatchesPerDay;
-    public int DaysBetweenJourneys { get; } = DefaultDaysBetweenJourneys;
-    public int FixtureSeed { get; } = DefaultFixtureSeed;
-    public int CrossingsSeed { get; } = DefaultCrossingsSeed;
-    public int SimulationSeed { get; } = DefaultSimulationSeed;
-    public int CompletionSeed { get; } = DefaultCompletionSeed;
+    public int Id { get; }
+    public DateTime StartDate { get; }
+    public int MaxMatchesPerDay { get; }
+    public int DaysBetweenJourneys { get; }
+    public int FixtureSeed { get; }
+    public int CrossingsSeed { get; }
+    public int SimulationSeed { get; }
+    public int CompletionSeed { get; }
+
+    public TournamentSettings()
+        : this(
+            DefaultId,
+            new DateTime(DefaultStartDateYear, DefaultStartDateMonth, DefaultStartDateDay),
+            DefaultMaxMatchesPerDay,
+            DefaultDaysBetweenJourneys,
+            DefaultSeed,
+            DefaultSeed,
+            DefaultSeed,
+            DefaultSeed)
+    {
+    }
+
+    public TournamentSettings(
+        int id,
+        DateTime startDate,
+        int maxMatchesPerDay,
+        int daysBetweenJourneys,
+        int fixtureSeed,
+        int crossingsSeed,
+        int simulationSeed,
+        int completionSeed)
+    {
+        Id = id;
+        StartDate = startDate;
+        MaxMatchesPerDay = maxMatchesPerDay;
+        DaysBetweenJourneys = daysBetweenJourneys;
+        FixtureSeed = fixtureSeed;
+        CrossingsSeed = crossingsSeed;
+        SimulationSeed = simulationSeed;
+        CompletionSeed = completionSeed;
+    }
 }
