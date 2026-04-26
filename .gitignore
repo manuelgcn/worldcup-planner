@@ -89,4 +89,5 @@ fabric.properties
 # Rider/.NET user and cache files
 *.DotSettings.user
 **/rider.project.model.nuget.info
+**/rider.project.restore.info
 
