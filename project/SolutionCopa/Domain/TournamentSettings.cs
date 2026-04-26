@@ -11,7 +11,8 @@ public class TournamentSettings
     private const int DefaultMaxMatchesPerDay = 3;
     private const int DefaultDaysBetweenJourneys = 3;
     private const int DefaultSeed = 0;
-    private const string InvalidMaxMatchesPerDayMessage = "MaxMatchesPerDay must be greater than or equal to 1.";
+    private const int MaxAllowedMatchesPerDay = 3;
+    private const string InvalidMaxMatchesPerDayMessage = "MaxMatchesPerDay must be between 1 and 3 inclusive.";
 
     public int Id { get; }
     public DateTime StartDate { get; }
@@ -58,7 +59,7 @@ public class TournamentSettings
 
     private static void ValidateMaxMatchesPerDay(int maxMatchesPerDay)
     {
-        if (maxMatchesPerDay < 1 || maxMatchesPerDay > 3)
+        if (maxMatchesPerDay < 1 || maxMatchesPerDay > MaxAllowedMatchesPerDay)
         {
             throw new SettingsException(InvalidMaxMatchesPerDayMessage);
         }
