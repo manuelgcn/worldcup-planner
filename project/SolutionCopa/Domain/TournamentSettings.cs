@@ -1,3 +1,5 @@
+using ProjectCopa.Exceptions;
+
 namespace ProjectCopa;
 
 public class TournamentSettings
@@ -9,6 +11,7 @@ public class TournamentSettings
     private const int DefaultMaxMatchesPerDay = 3;
     private const int DefaultDaysBetweenJourneys = 3;
     private const int DefaultSeed = 0;
+    private const string InvalidMaxMatchesPerDayMessage = "MaxMatchesPerDay must be greater than or equal to 1.";
 
     public int Id { get; }
     public DateTime StartDate { get; }
@@ -42,6 +45,11 @@ public class TournamentSettings
         int simulationSeed,
         int completionSeed)
     {
+        if (maxMatchesPerDay < 1)
+        {
+            throw new SettingsException(InvalidMaxMatchesPerDayMessage);
+        }
+
         Id = id;
         StartDate = startDate;
         MaxMatchesPerDay = maxMatchesPerDay;
