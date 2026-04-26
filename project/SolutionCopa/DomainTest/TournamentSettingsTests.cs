@@ -197,6 +197,16 @@ public sealed class TournamentSettingsTests
         Assert.ThrowsException<SettingsException>(Action);
     }
 
+    [TestMethod]
+    public void SettingsRejectsZeroDaysBetweenJourneys()
+    {
+        // Act
+        void Action() => CreateConfiguredSettings(daysBetweenJourneys: 0);
+
+        // Assert
+        Assert.ThrowsException<SettingsException>(Action);
+    }
+
     private static TournamentSettings CreateConfiguredSettings(
         int id = 10,
         DateTime? startDate = null,
