@@ -26,7 +26,7 @@ public class TournamentSettings
     public TournamentSettings()
         : this(
             DefaultId,
-            new DateTime(DefaultStartDateYear, DefaultStartDateMonth, DefaultStartDateDay),
+            CreateDefaultStartDate(),
             DefaultMaxMatchesPerDay,
             DefaultDaysBetweenJourneys,
             DefaultSeed,
@@ -63,5 +63,10 @@ public class TournamentSettings
         {
             throw new SettingsException(InvalidMaxMatchesPerDayMessage);
         }
+    }
+
+    private static DateTime CreateDefaultStartDate()
+    {
+        return new DateTime(DefaultStartDateYear, DefaultStartDateMonth, DefaultStartDateDay);
     }
 }
