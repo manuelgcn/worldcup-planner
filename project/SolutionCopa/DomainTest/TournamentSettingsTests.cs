@@ -93,7 +93,7 @@ public sealed class TournamentSettingsTests
     public void SettingsCanGetMaxMatchesPerDay()
     {
         // Arrange
-        const int maxMatchesPerDay = 5;
+        const int maxMatchesPerDay = 3;
 
         // Act
         var settings = CreateConfiguredSettings(maxMatchesPerDay: maxMatchesPerDay);

@@ -58,7 +58,7 @@ public class TournamentSettings
 
     private static void ValidateMaxMatchesPerDay(int maxMatchesPerDay)
     {
-        if (maxMatchesPerDay < 1)
+        if (maxMatchesPerDay < 1 || maxMatchesPerDay > 3)
         {
             throw new SettingsException(InvalidMaxMatchesPerDayMessage);
         }
