@@ -11,7 +11,7 @@ Proyecto en C#/.NET para la gestión de equipos de fútbol.
 - `TestDomain`: pruebas unitarias
 
 ## Reglas del dominio
-La entidad `Equipo` valida:
+La entidad `Team` valida:
 - nombre obligatorio
 - nombre entre 1 y 60 caracteres
 - ranking FIFA obligatorio

@@ -1,6 +1,6 @@
 namespace ProjectCopa;
 
-public class Equipo
+public class Team
 {
     private const int MaxNombreLength = 60;
     private const int MinRankingFifa = 300;
@@ -11,16 +11,16 @@ public class Equipo
     public string Nombre { get; }
     public int RankingFifa { get; }
     public bool EsFicticio { get; }
-    public Confederacion Confederacion { get; }
+    public Confederation Confederation { get; }
 
-    public Equipo(string nombre, int rankingFifa, bool esFicticio, Confederacion confederacion)
+    public Team(string nombre, int rankingFifa, bool esFicticio, Confederation confederation)
     {
         ValidarNombre(nombre);
         ValidarRankingFifa(rankingFifa);
         Nombre = nombre;
         RankingFifa = rankingFifa;
         EsFicticio = esFicticio;
-        Confederacion = confederacion;
+        Confederation = confederation;
     }
 
     private static void ValidarNombre(string nombre)
@@ -49,4 +49,5 @@ public class Equipo
         return rankingFifa < MinRankingFifa || rankingFifa > MaxRankingFifa;
     }
 }
+
 
