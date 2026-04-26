@@ -60,4 +60,32 @@ public sealed class TournamentSettingsTests
     {
         Assert.AreEqual(0, _tournamentSettings.CompletionSeed);
     }
+
+    [TestMethod]
+    public void SettingsCanGetId()
+    {
+        // Arrange
+        var id = 10;
+        var startDate = new DateTime(2026, 6, 1);
+        const int maxMatchesPerDay = 3;
+        const int daysBetweenJourneys = 3;
+        const int fixtureSeed = 0;
+        const int crossingsSeed = 0;
+        const int simulationSeed = 0;
+        const int completionSeed = 0;
+
+        // Act
+        var settings = new TournamentSettings(
+            id,
+            startDate,
+            maxMatchesPerDay,
+            daysBetweenJourneys,
+            fixtureSeed,
+            crossingsSeed,
+            simulationSeed,
+            completionSeed);
+
+        // Assert
+        Assert.AreEqual(id, settings.Id);
+    }
 }
