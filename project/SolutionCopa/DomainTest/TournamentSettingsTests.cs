@@ -48,4 +48,10 @@ public sealed class TournamentSettingsTests
     {
         Assert.AreEqual(0, _tournamentSettings.CrossingsSeed);
     }
+    
+    [TestMethod]
+    public void SettingsHasDefaultSimulationSeed()
+    {
+        Assert.AreEqual(0, _tournamentSettings.SimulationSeed);
+    }
 }
