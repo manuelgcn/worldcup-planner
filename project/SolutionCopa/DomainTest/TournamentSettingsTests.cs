@@ -177,6 +177,26 @@ public sealed class TournamentSettingsTests
         Assert.ThrowsException<SettingsException>(Action);
     }
 
+    [TestMethod]
+    public void SettingsRejectsNegativeMaxMatchesPerDay()
+    {
+        // Act
+        void Action() => CreateConfiguredSettings(maxMatchesPerDay: -1);
+
+        // Assert
+        Assert.ThrowsException<SettingsException>(Action);
+    }
+
+    [TestMethod]
+    public void SettingsRejectsMoreThanThreeMatchesPerDay()
+    {
+        // Act
+        void Action() => CreateConfiguredSettings(maxMatchesPerDay: 4);
+
+        // Assert
+        Assert.ThrowsException<SettingsException>(Action);
+    }
+
     private static TournamentSettings CreateConfiguredSettings(
         int id = 10,
         DateTime? startDate = null,
