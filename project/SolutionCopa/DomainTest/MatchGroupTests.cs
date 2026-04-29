@@ -2,6 +2,7 @@ using Moq;
 using ProjectCopa;
 using ProjectCopa.Exceptions;
 using ProjectCopa.Interfaces;
+using Match = ProjectCopa.Match;
 
 namespace DomainTest;
 
@@ -60,6 +61,13 @@ public class MatchGroupTests
         var matchGroup = new MatchGroup();
 
         Assert.IsNotNull(matchGroup);
+    }
+
+    [TestMethod]
+    public void MatchGroupInheritsFromAbstractMatch()
+    {
+        Assert.IsTrue(typeof(Match).IsAbstract);
+        Assert.IsTrue(typeof(MatchGroup).IsSubclassOf(typeof(Match)));
     }
 
     [TestMethod]

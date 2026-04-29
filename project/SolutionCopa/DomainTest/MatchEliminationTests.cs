@@ -11,6 +11,14 @@ public class MatchEliminationTests
 {
     private static readonly DateTime MatchDate = new(2026, 6, 21);
 
+    private sealed class TestMatch : Match
+    {
+        public TestMatch(int id, DateTime matchDate, ITeam homeTeam, ITeam awayTeam, IStadium stadium)
+            : base(id, matchDate, homeTeam, awayTeam, stadium)
+        {
+        }
+    }
+
     private Mock<ITeam> _homeTeam = null!;
     private Mock<ITeam> _awayTeam = null!;
     private Mock<IStadium> _stadium = null!;
@@ -23,7 +31,7 @@ public class MatchEliminationTests
         var sourceAwayTeam = new Mock<ITeam>();
         var sourceStadium = new Mock<IStadium>();
 
-        return new Match(matchId, MatchDate, sourceHomeTeam.Object, sourceAwayTeam.Object, sourceStadium.Object);
+        return new TestMatch(matchId, MatchDate, sourceHomeTeam.Object, sourceAwayTeam.Object, sourceStadium.Object);
     }
 
     private MatchElimination CreateValidMatchElimination(
@@ -82,6 +90,13 @@ public class MatchEliminationTests
         var matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch);
 
         Assert.AreEqual("A1", matchElimination.MatchCode);
+    }
+
+    [TestMethod]
+    public void MatchEliminationInheritsFromAbstractMatch()
+    {
+        Assert.IsTrue(typeof(Match).IsAbstract);
+        Assert.IsTrue(typeof(MatchElimination).IsSubclassOf(typeof(Match)));
     }
 
     [TestMethod]

@@ -3,7 +3,7 @@ using ProjectCopa.Interfaces;
 
 namespace ProjectCopa;
 
-public class Match
+public abstract class Match
 {
     private static readonly DateTime DefaultTournamentStartDate = new DateTime(2022, 11, 21);
     private const int InitialGoals = 0;
@@ -46,16 +46,16 @@ public class Match
     public int AwayGoals { get; private set; }
     public IStadium? Stadium { get; private set; }
 
-    public Match()
+    protected Match()
     {
     }
 
-    public Match(int id, DateTime matchDate, ITeam homeTeam, ITeam awayTeam, IStadium stadium)
+    protected Match(int id, DateTime matchDate, ITeam homeTeam, ITeam awayTeam, IStadium stadium)
         : this(id, matchDate, homeTeam, awayTeam, stadium, DefaultTournamentStartDate)
     {
     }
 
-    public Match(
+    protected Match(
         int id,
         DateTime matchDate,
         ITeam homeTeam,

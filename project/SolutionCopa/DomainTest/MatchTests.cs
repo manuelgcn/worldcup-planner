@@ -19,7 +19,7 @@ public class MatchTests
 
     private Match CreateMatchWithData()
     {
-        return new Match(1, MatchDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object);
+        return new TestMatch(1, MatchDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object);
     }
     
     [TestInitialize]
@@ -28,13 +28,19 @@ public class MatchTests
         _homeTeam = new Mock<ITeam>();
         _awayTeam = new Mock<ITeam>();
         _stadium = new Mock<IStadium>();
-        _match = new Match();
+        _match = new TestMatch();
     }
 
     [TestMethod]
     public void MatchCanBeCreatedWithoutData()
     {
         Assert.IsNotNull(_match);
+    }
+
+    [TestMethod]
+    public void MatchTypeIsAbstract()
+    {
+        Assert.IsTrue(typeof(Match).IsAbstract);
     }
 
     [TestMethod]
@@ -91,7 +97,7 @@ public class MatchTests
     {
         var sameTeam = new Mock<ITeam>();
         Assert.ThrowsException<MatchException>(() =>
-            new Match(1, MatchDate, sameTeam.Object, sameTeam.Object, _stadium.Object));
+            new TestMatch(1, MatchDate, sameTeam.Object, sameTeam.Object, _stadium.Object));
     }
 
     [TestMethod]
@@ -102,7 +108,7 @@ public class MatchTests
         var invalidDate = MatchDate.AddDays(-1);
 
         Assert.ThrowsException<MatchException>(() =>
-            new Match(1, invalidDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, configurationMock.Object));
+            new TestMatch(1, invalidDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, configurationMock.Object));
     }
 
     [TestMethod]
@@ -110,7 +116,7 @@ public class MatchTests
     {
         IChampConf? championshipConfiguration = null;
 
-        Assert.ThrowsException<MatchException>(() => new Match(1, MatchDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, championshipConfiguration!));
+        Assert.ThrowsException<MatchException>(() => new TestMatch(1, MatchDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, championshipConfiguration!));
     }
 
     [TestMethod]
@@ -119,7 +125,7 @@ public class MatchTests
         var championshipConfiguration = new Mock<IChampConf>();
         championshipConfiguration.Setup(config => config.StartDate()).Returns(MatchDate);
 
-        _match = new Match(1, MatchDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, championshipConfiguration.Object);
+        _match = new TestMatch(1, MatchDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, championshipConfiguration.Object);
 
         championshipConfiguration.Verify(config => config.StartDate(), Times.Once);
         Assert.AreEqual(MatchDate, _match.MatchDate);
@@ -129,7 +135,7 @@ public class MatchTests
     public void MatchRejectsNullStadium()
     {
         Assert.ThrowsException<MatchException>(() =>
-            new Match(1, MatchDate, _homeTeam.Object, _awayTeam.Object, null!));
+            new TestMatch(1, MatchDate, _homeTeam.Object, _awayTeam.Object, null!));
     }
 
     [TestMethod]
