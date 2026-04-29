@@ -18,5 +18,8 @@
     <ProjectReference Include="..\..\Services\Services.csproj" />
     <ProjectReference Include="..\..\Domain\Domain.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\DomainTest\TeamServicesTests.cs" Link="TeamServicesTests.cs" />
+  </ItemGroup>
 </Project>
 

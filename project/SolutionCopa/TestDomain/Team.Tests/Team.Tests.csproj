@@ -5,6 +5,8 @@
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,7 +19,12 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\Services\Services.csproj"/>
         <ProjectReference Include="..\..\Domain\Domain.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="..\..\DomainTest\TeamTests.cs" Link="TeamTests.cs"/>
     </ItemGroup>
 
 </Project>
