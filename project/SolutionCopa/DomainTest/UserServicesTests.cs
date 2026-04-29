@@ -36,12 +36,11 @@ public class UserServicesTests
     }
     
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void GetUserByEmailThrowsIfNotFound()
     {
-        service.GetUserByEmail("noexiste@mail.com");
+        Assert.ThrowsException<ArgumentException>(() =>
+            service.GetUserByEmail("noexiste@mail.com"));
     }
-
     
     [TestMethod]
     public void CanGetUserById()
@@ -65,11 +64,12 @@ public class UserServicesTests
     }
 
     
+    
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void CannotRemoveNonExistingUser()
     {
-        service.RemoveUser(99);
+        Assert.ThrowsException<ArgumentException>(() =>
+            service.RemoveUser(99));
     }
 
     
@@ -90,14 +90,13 @@ public class UserServicesTests
 
     
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void CannotUpdateUserThatDoesNotExist()
     {
-        service.UpdateUser(99, "Ana", "Lopez", "ana@mail.com");
+        Assert.ThrowsException<ArgumentException>(() =>
+            service.UpdateUser(99, "Ana", "Lopez", "ana@mail.com"));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void CannotUpdateUserWithDuplicatedEmail()
     {
         User user1 = new User(
@@ -121,7 +120,8 @@ public class UserServicesTests
         service.AddUser(user1);
         service.AddUser(user2);
 
-        service.UpdateUser(2, "Ana", "Lopez", "juan@mail.com");
+        Assert.ThrowsException<ArgumentException>(() =>
+            service.UpdateUser(2, "Ana", "Lopez", "juan@mail.com"));
     }
 
     
@@ -147,11 +147,12 @@ public class UserServicesTests
     }
 
     
+   
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void CannotAssignRoleToNonExistingUser()
     {
-        service.AssignRole(99, UserRoles.Editor);
+        Assert.ThrowsException<ArgumentException>(() =>
+            service.AssignRole(99, UserRoles.Editor));
     }
 
     
