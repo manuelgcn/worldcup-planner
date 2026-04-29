@@ -16,6 +16,53 @@ public class MatchEliminationTests
     private Mock<IStadium> _stadium = null!;
     private Mock<IChampConf> _championshipConfiguration = null!;
 
+    
+    private static Match CreateSourceMatch(int matchId)
+    {
+        var sourceHomeTeam = new Mock<ITeam>();
+        var sourceAwayTeam = new Mock<ITeam>();
+        var sourceStadium = new Mock<IStadium>();
+
+        return new Match(matchId, MatchDate, sourceHomeTeam.Object, sourceAwayTeam.Object, sourceStadium.Object);
+    }
+
+    private MatchElimination CreateValidMatchElimination(
+        Match matchHome,
+        Match matchAway,
+        string matchCode = "A1",
+        Phase phase = Phase.RoundOf16)
+    {
+        return new MatchElimination(
+            1,
+            MatchDate,
+            _homeTeam.Object,
+            _awayTeam.Object,
+            _stadium.Object,
+            phase,
+            matchCode,
+            matchHome,
+            matchAway);
+    }
+
+    private MatchElimination CreateValidMatchEliminationWithConfiguration(
+        Match matchHome,
+        Match matchAway,
+        string matchCode = "A1",
+        Phase phase = Phase.RoundOf16)
+    {
+        return new MatchElimination(
+            1,
+            MatchDate,
+            _homeTeam.Object,
+            _awayTeam.Object,
+            _stadium.Object,
+            _championshipConfiguration.Object,
+            phase,
+            matchCode,
+            matchHome,
+            matchAway);
+    }
+    
     [TestInitialize]
     public void Setup()
     {
@@ -183,52 +230,6 @@ public class MatchEliminationTests
 
         Assert.ThrowsException<MatchException>(() =>
             CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch, matchCode: null!));
-    }
-
-    private static Match CreateSourceMatch(int matchId)
-    {
-        var sourceHomeTeam = new Mock<ITeam>();
-        var sourceAwayTeam = new Mock<ITeam>();
-        var sourceStadium = new Mock<IStadium>();
-
-        return new Match(matchId, MatchDate, sourceHomeTeam.Object, sourceAwayTeam.Object, sourceStadium.Object);
-    }
-
-    private MatchElimination CreateValidMatchElimination(
-        Match matchHome,
-        Match matchAway,
-        string matchCode = "A1",
-        Phase phase = Phase.RoundOf16)
-    {
-        return new MatchElimination(
-            1,
-            MatchDate,
-            _homeTeam.Object,
-            _awayTeam.Object,
-            _stadium.Object,
-            phase,
-            matchCode,
-            matchHome,
-            matchAway);
-    }
-
-    private MatchElimination CreateValidMatchEliminationWithConfiguration(
-        Match matchHome,
-        Match matchAway,
-        string matchCode = "A1",
-        Phase phase = Phase.RoundOf16)
-    {
-        return new MatchElimination(
-            1,
-            MatchDate,
-            _homeTeam.Object,
-            _awayTeam.Object,
-            _stadium.Object,
-            _championshipConfiguration.Object,
-            phase,
-            matchCode,
-            matchHome,
-            matchAway);
     }
 
     // Inheritance: scoring behaviors

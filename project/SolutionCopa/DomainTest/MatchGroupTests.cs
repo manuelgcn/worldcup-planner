@@ -17,6 +17,31 @@ public class MatchGroupTests
     private Mock<IJourney> _journey = null!;
     private Mock<IChampConf> _championshipConfiguration = null!;
 
+    private MatchGroup CreateValidMatchGroup(IGroup group, IJourney journey)
+    {
+        return new MatchGroup(
+            1,
+            MatchDate,
+            _homeTeam.Object,
+            _awayTeam.Object,
+            _stadium.Object,
+            group,
+            journey);
+    }
+
+    private MatchGroup CreateValidMatchGroupWithConfiguration(IGroup group, IJourney journey)
+    {
+        return new MatchGroup(
+            1,
+            MatchDate,
+            _homeTeam.Object,
+            _awayTeam.Object,
+            _stadium.Object,
+            _championshipConfiguration.Object,
+            group,
+            journey);
+    }
+    
     [TestInitialize]
     public void Setup()
     {
@@ -141,31 +166,6 @@ public class MatchGroupTests
     {
         Assert.ThrowsException<MatchException>(() =>
             CreateValidMatchGroupWithConfiguration(_group.Object, null!));
-    }
-
-    private MatchGroup CreateValidMatchGroup(IGroup group, IJourney journey)
-    {
-        return new MatchGroup(
-            1,
-            MatchDate,
-            _homeTeam.Object,
-            _awayTeam.Object,
-            _stadium.Object,
-            group,
-            journey);
-    }
-
-    private MatchGroup CreateValidMatchGroupWithConfiguration(IGroup group, IJourney journey)
-    {
-        return new MatchGroup(
-            1,
-            MatchDate,
-            _homeTeam.Object,
-            _awayTeam.Object,
-            _stadium.Object,
-            _championshipConfiguration.Object,
-            group,
-            journey);
     }
 
     // Inheritance: scoring behaviors
