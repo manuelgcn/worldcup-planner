@@ -1,7 +1,7 @@
+using DomainTest.TestDoubles;
 using ProjectCopa;
 using ProjectCopa.Exceptions;
 using ProjectCopa.Interfaces;
-using Moq;
 using Match = ProjectCopa.Match;
 
 namespace DomainTest;
@@ -9,25 +9,24 @@ namespace DomainTest;
 [TestClass]
 public class MatchTests
 {
-
-    private Mock<ITeam> _homeTeam = null!;
-    private Mock<ITeam> _awayTeam = null!;
-    private Mock<IStadium> _stadium = null!;
+    private ITeam _homeTeam = null!;
+    private ITeam _awayTeam = null!;
+    private IStadium _stadium = null!;
     private Match _match = null!;
 
-    private static readonly DateTime MatchDate = new DateTime(2022, 11, 21);
+    private static readonly DateTime MatchDate = new(2022, 11, 21);
 
     private Match CreateMatchWithData()
     {
-        return new TestMatch(1, MatchDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object);
+        return new TestMatch(1, MatchDate, _homeTeam, _awayTeam, _stadium);
     }
-    
+
     [TestInitialize]
     public void Setup()
     {
-        _homeTeam = new Mock<ITeam>();
-        _awayTeam = new Mock<ITeam>();
-        _stadium = new Mock<IStadium>();
+        _homeTeam = new MockTeam(1, "Home Team");
+        _awayTeam = new MockTeam(2, "Away Team");
+        _stadium = new MockStadium(1, "Main Stadium");
         _match = new TestMatch();
     }
 
@@ -61,14 +60,14 @@ public class MatchTests
     public void MatchCanGetHomeTeam()
     {
         _match = CreateMatchWithData();
-        Assert.AreSame(_homeTeam.Object, _match.HomeTeam);
+        Assert.AreSame(_homeTeam, _match.HomeTeam);
     }
 
     [TestMethod]
     public void MatchCanGetAwayTeam()
     {
         _match = CreateMatchWithData();
-        Assert.AreSame(_awayTeam.Object, _match.AwayTeam);
+        Assert.AreSame(_awayTeam, _match.AwayTeam);
     }
 
     [TestMethod]
@@ -89,26 +88,26 @@ public class MatchTests
     public void MatchCanGetStadium()
     {
         _match = CreateMatchWithData();
-        Assert.AreSame(_stadium.Object, _match.Stadium);
+        Assert.AreSame(_stadium, _match.Stadium);
     }
-    
+
     [TestMethod]
     public void MatchRejectsSameHomeAndAwayTeam()
     {
-        var sameTeam = new Mock<ITeam>();
+        var sameTeam = new MockTeam(99, "Same Team");
+
         Assert.ThrowsException<MatchException>(() =>
-            new TestMatch(1, MatchDate, sameTeam.Object, sameTeam.Object, _stadium.Object));
+            new TestMatch(1, MatchDate, sameTeam, sameTeam, _stadium));
     }
 
     [TestMethod]
     public void MatchRejectsInvalidDate()
     {
-        var configurationMock = new Mock<IChampConf>();
-        configurationMock.Setup(config => config.StartDate()).Returns(MatchDate);
+        var championshipConfiguration = new DummyChampConf(MatchDate);
         var invalidDate = MatchDate.AddDays(-1);
 
         Assert.ThrowsException<MatchException>(() =>
-            new TestMatch(1, invalidDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, configurationMock.Object));
+            new TestMatch(1, invalidDate, _homeTeam, _awayTeam, _stadium, championshipConfiguration));
     }
 
     [TestMethod]
@@ -116,18 +115,18 @@ public class MatchTests
     {
         IChampConf? championshipConfiguration = null;
 
-        Assert.ThrowsException<MatchException>(() => new TestMatch(1, MatchDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, championshipConfiguration!));
+        Assert.ThrowsException<MatchException>(() =>
+            new TestMatch(1, MatchDate, _homeTeam, _awayTeam, _stadium, championshipConfiguration!));
     }
 
     [TestMethod]
     public void MatchCanBeCreatedWithChampionshipConfiguration()
     {
-        var championshipConfiguration = new Mock<IChampConf>();
-        championshipConfiguration.Setup(config => config.StartDate()).Returns(MatchDate);
+        var championshipConfiguration = new DummyChampConf(MatchDate);
 
-        _match = new TestMatch(1, MatchDate, _homeTeam.Object, _awayTeam.Object, _stadium.Object, championshipConfiguration.Object);
+        _match = new TestMatch(1, MatchDate, _homeTeam, _awayTeam, _stadium, championshipConfiguration);
 
-        championshipConfiguration.Verify(config => config.StartDate(), Times.Once);
+        Assert.AreEqual(1, championshipConfiguration.StartDateCalls);
         Assert.AreEqual(MatchDate, _match.MatchDate);
     }
 
@@ -135,18 +134,18 @@ public class MatchTests
     public void MatchRejectsNullStadium()
     {
         Assert.ThrowsException<MatchException>(() =>
-            new TestMatch(1, MatchDate, _homeTeam.Object, _awayTeam.Object, null!));
+            new TestMatch(1, MatchDate, _homeTeam, _awayTeam, null!));
     }
 
     [TestMethod]
     public void MatchCanChangeStadium()
     {
         _match = CreateMatchWithData();
-        var newStadium = new Mock<IStadium>();
+        var newStadium = new MockStadium(2, "Secondary Stadium");
 
-        _match.ChangeStadium(newStadium.Object);
+        _match.ChangeStadium(newStadium);
 
-        Assert.AreSame(newStadium.Object, _match.Stadium);
+        Assert.AreSame(newStadium, _match.Stadium);
     }
 
     [TestMethod]
@@ -154,7 +153,7 @@ public class MatchTests
     {
         _match = CreateMatchWithData();
         _match.SetGoals(homeGoals: 2, awayGoals: 1);
-        var winnerTeam = _homeTeam.Object;
+        var winnerTeam = _homeTeam;
 
         Assert.AreSame(winnerTeam, _match.GetWinner());
     }
@@ -175,7 +174,6 @@ public class MatchTests
         Assert.ThrowsException<MatchException>(() => _match.SetGoals(homeGoals: 0, awayGoals: -1));
     }
 
-    // SetHomeGoals / SetAwayGoals
     [TestMethod]
     public void SetHomeGoals_SetsHomeGoalsToGivenValue()
     {
@@ -206,7 +204,6 @@ public class MatchTests
         Assert.ThrowsException<MatchException>(() => _match.SetAwayGoals(-1));
     }
 
-    // AddHomeGoal / AddAwayGoal
     [TestMethod]
     public void AddHomeGoal_IncrementsHomeGoalsByOne()
     {
@@ -241,7 +238,6 @@ public class MatchTests
         Assert.AreEqual(2, _match.AwayGoals);
     }
 
-    // RemoveHomeGoal / RemoveAwayGoal
     [TestMethod]
     public void RemoveHomeGoal_DecrementsHomeGoalsByOne()
     {
@@ -274,7 +270,6 @@ public class MatchTests
         Assert.ThrowsException<MatchException>(() => _match.RemoveAwayGoal());
     }
 
-    // HasHomeTeamWon / HasAwayTeamWon / IsDraw
     [TestMethod]
     public void HasHomeTeamWon_ReturnsTrueWhenHomeGoalsAreGreater()
     {
@@ -347,7 +342,6 @@ public class MatchTests
         Assert.IsFalse(_match.IsDraw());
     }
 
-    // GetGoalDifferenceForHome / GetGoalDifferenceForAway
     [TestMethod]
     public void GetGoalDifferenceForHome_ReturnsHomeMinusAway()
     {
@@ -395,5 +389,4 @@ public class MatchTests
         _match.SetGoals(homeGoals: 2, awayGoals: 2);
         Assert.AreEqual(0, _match.GetGoalDifferenceForAway());
     }
-
 }
