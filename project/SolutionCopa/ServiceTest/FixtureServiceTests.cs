@@ -101,5 +101,38 @@ public class FixtureServiceTests
             allTeamsInGroups.Distinct().Count()
         );
     }
+    
+    
+    [TestMethod]
+    public void CreateFixtureAssignsTeamsByDescendingFifaRanking()
+    {
+        List<Team> teams = new List<Team>
+        {
+            new Team("MidRank", 1500, false, Confederation.UEFA),
+            new Team("HighRank", 2000, false, Confederation.UEFA),
+            new Team("LowRank", 1000, false, Confederation.UEFA)
+        };
+        
+        for (int i = 3; i < 48; i++)
+        {
+            teams.Add(new Team(
+                "Team" + i,
+                500,
+                false,
+                Confederation.UEFA
+            ));
+        }
+
+        List<Stadium> stadiums = Create4ValidStadiums();
+
+        FixtureService service = new FixtureService(teams, stadiums);
+        
+        IReadOnlyCollection<Group> groups = service.CreateFixture();
+
+        Group firstGroup = groups.First();
+        
+        Assert.AreEqual("HighRank", firstGroup.Teams.First().Nombre);
+    }
+
 
 }

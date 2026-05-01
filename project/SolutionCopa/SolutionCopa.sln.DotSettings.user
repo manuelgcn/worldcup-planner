@@ -8,5 +8,6 @@
     &lt;TestId&gt;MSTest::E0E2A760-BA6A-4567-B7B4-33019DF36F38::net8.0::ServiceTest.FixtureServiceTests.CannotCreateFixtureWithout48Teams&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;MSTest::E0E2A760-BA6A-4567-B7B4-33019DF36F38::net8.0::ServiceTest.FixtureServiceTests.CreateFixtureDistributesTeamsInto12GroupsOf4&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;MSTest::E0E2A760-BA6A-4567-B7B4-33019DF36F38::net8.0::ServiceTest.FixtureServiceTests.CreateFixtureUsesTeamOnce&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;MSTest::E0E2A760-BA6A-4567-B7B4-33019DF36F38::net8.0::ServiceTest.FixtureServiceTests.CreateFixtureAssignsTeamsByDescendingFifaRanking&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
