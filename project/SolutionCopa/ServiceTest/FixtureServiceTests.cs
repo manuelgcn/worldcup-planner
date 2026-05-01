@@ -135,4 +135,50 @@ public class FixtureServiceTests
     }
 
 
+    
+    [TestMethod]
+    public void CreateFixtureResolvesEqualRankingsDeterministically()
+    {
+      
+        List<Team> teams = new List<Team>();
+
+        
+        for (int i = 0; i < 12; i++)
+        {
+            teams.Add(new Team(
+                "TeamEqual" + i,
+                1500,
+                false,
+                Confederation.UEFA
+            ));
+        }
+
+       
+        for (int i = 12; i < 48; i++)
+        {
+            teams.Add(new Team(
+                "Team" + i,
+                1000,
+                false,
+                Confederation.UEFA
+            ));
+        }
+
+        List<Stadium> stadiums = Create4ValidStadiums();
+
+        
+        FixtureService service1 = new FixtureService(teams, stadiums, seed: 42);
+        FixtureService service2 = new FixtureService(teams, stadiums, seed: 42);
+
+      
+        var groups1 = service1.CreateFixture();
+        var groups2 = service2.CreateFixture();
+
+        var firstTeamsRun1 = groups1.Select(g => g.Teams.First().Nombre).ToList();
+        var firstTeamsRun2 = groups2.Select(g => g.Teams.First().Nombre).ToList();
+
+        
+        CollectionAssert.AreEqual(firstTeamsRun1, firstTeamsRun2);
+    }
+
 }
