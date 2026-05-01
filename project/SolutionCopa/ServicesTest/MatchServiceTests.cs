@@ -9,17 +9,17 @@ public class MatchServiceTests
     [TestMethod]
     public void CreateMatchForGroupReturnsDtoWithId()
     {
-        var context = new MatchServiceTestContext();
+        MatchServiceTestContext context = new MatchServiceTestContext();
 
-        var dto = context.Service.CreateMatch(context.NewGroupMatchRequest(1));
+        Services.DTOs.MatchDto dto = context.Service.CreateMatch(context.NewGroupMatchRequest(1));
 
         Assert.AreEqual(1, dto.MatchId);
     }
 
     [TestMethod]
-    public void CreateMatchForGroupCallsCommit()
+    public void Should_CreateGroupMatch_CallUnitOfWorkCommit()
     {
-        var context = new MatchServiceTestContext();
+        MatchServiceTestContext context = new MatchServiceTestContext();
 
         context.Service.CreateMatch(context.NewGroupMatchRequest(1));
 
@@ -27,20 +27,20 @@ public class MatchServiceTests
     }
 
     [TestMethod]
-    public void CreateMatchForEliminationReturnsDtoWithId()
+    public void Should_CreateEliminationMatch_ReturnsMatchDtoWithId()
     {
-        var context = new MatchServiceTestContext();
+        MatchServiceTestContext context = new MatchServiceTestContext();
         context.AddSourceEliminationMatches();
 
-        var dto = context.Service.CreateMatch(context.NewEliminationMatchRequest(2));
+        Services.DTOs.MatchDto dto = context.Service.CreateMatch(context.NewEliminationMatchRequest(2));
 
         Assert.AreEqual(2, dto.MatchId);
     }
 
     [TestMethod]
-    public void CreateMatchForEliminationCallsCommit()
+    public void Should_CreateEliminationMatch_CallUnitOfWorkCommit()
     {
-        var context = new MatchServiceTestContext();
+        MatchServiceTestContext context = new MatchServiceTestContext();
         context.AddSourceEliminationMatches();
 
         context.Service.CreateMatch(context.NewEliminationMatchRequest(2));
@@ -49,18 +49,18 @@ public class MatchServiceTests
     }
 
     [TestMethod]
-    public void CreateMatchThrowsWhenIdAlreadyExists()
+    public void Should_ThrowWhenCreatingMatch_WithDuplicateId()
     {
-        var context = new MatchServiceTestContext();
+        MatchServiceTestContext context = new MatchServiceTestContext();
         context.Service.CreateMatch(context.NewGroupMatchRequest(1));
 
         Assert.ThrowsException<ArgumentException>(() => context.Service.CreateMatch(context.NewGroupMatchRequest(1)));
     }
 
     [TestMethod]
-    public void SetGoalsCallsUpdate()
+    public void Should_CallRepositoryUpdate_When_SetGoals()
     {
-        var context = new MatchServiceTestContext();
+        MatchServiceTestContext context = new MatchServiceTestContext();
         context.Service.CreateMatch(context.NewGroupMatchRequest(1));
 
         context.Service.SetGoals(1, 2, 1);
@@ -69,9 +69,9 @@ public class MatchServiceTests
     }
 
     [TestMethod]
-    public void GetByDateRangeThrowsWhenRangeIsInvalid()
+    public void GetByDateRange_ShouldThrow_When_FromIsAfterTo()
     {
-        var context = new MatchServiceTestContext();
+        MatchServiceTestContext context = new MatchServiceTestContext();
 
         Assert.ThrowsException<ArgumentException>(() =>
             context.Service.GetByDateRange(new DateTime(2026, 6, 30), new DateTime(2026, 6, 1)));
