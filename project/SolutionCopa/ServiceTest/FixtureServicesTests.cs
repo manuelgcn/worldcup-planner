@@ -21,6 +21,21 @@ public class FixtureServicesTests
         service.CreateFixture();
     }
 
+    
+    [TestMethod]
+    public void CreateFixtureWith48TeamsCreates12Groups()
+    {
+        
+        List<Team> teams = Create48ValidTeams();
+        List<Stadium> stadiums = Create4ValidStadiums();
+
+        FixtureServices service = new FixtureServices(teams, stadiums);
+        
+        IReadOnlyCollection<Group> groups = service.CreateFixture();
+        
+        Assert.AreEqual(12, groups.Count);
+    }
+
 
 
 }

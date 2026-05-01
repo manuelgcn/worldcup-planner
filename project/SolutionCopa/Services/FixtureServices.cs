@@ -16,6 +16,24 @@ public class FixtureServices
         this.stadiums = stadiums;
     }
 
+    
+    public IReadOnlyCollection<Group> CreateFixture()
+    {
+        ValidatePreconditions();
+
+        var groups = CreateGroups();
+        
+        return groups;
+    }
+
+    private void ValidatePreconditions()
+    {
+        if (teams.Count != 48)
+            throw new ArgumentException("Fixture requires exactly 48 teams");
+
+        if (stadiums.Count < 4)
+            throw new ArgumentException("At least 4 stadiums are required");
+    }
 
     private List<Group> CreateGroups()
     {
