@@ -79,4 +79,27 @@ public class FixtureServiceTests
     }
 
 
+    [TestMethod]
+    public void CreateFixtureUsesTeamOnce()
+    {
+        
+        List<Team> teams = Create48ValidTeams();
+        List<Stadium> stadiums = Create4ValidStadiums();
+
+        FixtureService service = new FixtureService(teams, stadiums);
+        
+        IReadOnlyCollection<Group> groups = service.CreateFixture();
+        
+        List<Team> allTeamsInGroups = groups
+            .SelectMany(g => g.Teams)
+            .ToList();
+        
+        Assert.AreEqual(48, allTeamsInGroups.Count);
+        
+        Assert.AreEqual(
+            48,
+            allTeamsInGroups.Distinct().Count()
+        );
+    }
+
 }
