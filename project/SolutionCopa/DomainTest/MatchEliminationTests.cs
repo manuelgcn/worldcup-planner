@@ -1,4 +1,4 @@
-using Moq;
+using DomainTest.TestDoubles;
 using ProjectCopa;
 using ProjectCopa.Exceptions;
 using ProjectCopa.Interfaces;
@@ -11,27 +11,19 @@ public class MatchEliminationTests
 {
     private static readonly DateTime MatchDate = new(2026, 6, 21);
 
-    private sealed class TestMatch : Match
-    {
-        public TestMatch(int id, DateTime matchDate, ITeam homeTeam, ITeam awayTeam, IStadium stadium)
-            : base(id, matchDate, homeTeam, awayTeam, stadium)
-        {
-        }
-    }
-
-    private Mock<ITeam> _homeTeam = null!;
-    private Mock<ITeam> _awayTeam = null!;
-    private Mock<IStadium> _stadium = null!;
-    private Mock<IChampConf> _championshipConfiguration = null!;
+    private ITeam _homeTeam = null!;
+    private ITeam _awayTeam = null!;
+    private IStadium _stadium = null!;
+    private DummyChampConf _championshipConfiguration = null!;
 
     
     private static Match CreateSourceMatch(int matchId)
     {
-        var sourceHomeTeam = new Mock<ITeam>();
-        var sourceAwayTeam = new Mock<ITeam>();
-        var sourceStadium = new Mock<IStadium>();
+        var sourceHomeTeam = new StubTeam(matchId, "Home Team");
+        var sourceAwayTeam = new StubTeam(matchId + 1, "Away Team");
+        var sourceStadium = new StubStadium(matchId, "Stadium");
 
-        return new TestMatch(matchId, MatchDate, sourceHomeTeam.Object, sourceAwayTeam.Object, sourceStadium.Object);
+        return new TestMatch(matchId, MatchDate, sourceHomeTeam, sourceAwayTeam, sourceStadium);
     }
 
     private MatchElimination CreateValidMatchElimination(
@@ -43,9 +35,9 @@ public class MatchEliminationTests
         return new MatchElimination(
             1,
             MatchDate,
-            _homeTeam.Object,
-            _awayTeam.Object,
-            _stadium.Object,
+            _homeTeam,
+            _awayTeam,
+            _stadium,
             phase,
             matchCode,
             matchHome,
@@ -61,10 +53,10 @@ public class MatchEliminationTests
         return new MatchElimination(
             1,
             MatchDate,
-            _homeTeam.Object,
-            _awayTeam.Object,
-            _stadium.Object,
-            _championshipConfiguration.Object,
+            _homeTeam,
+            _awayTeam,
+            _stadium,
+            _championshipConfiguration,
             phase,
             matchCode,
             matchHome,
@@ -74,11 +66,10 @@ public class MatchEliminationTests
     [TestInitialize]
     public void Setup()
     {
-        _homeTeam = new Mock<ITeam>();
-        _awayTeam = new Mock<ITeam>();
-        _stadium = new Mock<IStadium>();
-        _championshipConfiguration = new Mock<IChampConf>();
-        _championshipConfiguration.Setup(config => config.StartDate()).Returns(MatchDate);
+        _homeTeam = new StubTeam(1, "Home Team");
+        _awayTeam = new StubTeam(2, "Away Team");
+        _stadium = new StubStadium(1, "Main Stadium");
+        _championshipConfiguration = new DummyChampConf(MatchDate);
     }
 
     [TestMethod]

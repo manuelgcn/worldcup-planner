@@ -1,5 +1,4 @@
 using DomainTest.TestDoubles;
-using ProjectCopa;
 using ProjectCopa.Exceptions;
 using ProjectCopa.Interfaces;
 using Match = ProjectCopa.Match;
@@ -24,9 +23,9 @@ public class MatchTests
     [TestInitialize]
     public void Setup()
     {
-        _homeTeam = new MockTeam(1, "Home Team");
-        _awayTeam = new MockTeam(2, "Away Team");
-        _stadium = new MockStadium(1, "Main Stadium");
+        _homeTeam = new StubTeam(1, "Home Team");
+        _awayTeam = new StubTeam(2, "Away Team");
+        _stadium = new StubStadium(1, "Main Stadium");
         _match = new TestMatch();
     }
 
@@ -94,7 +93,7 @@ public class MatchTests
     [TestMethod]
     public void MatchRejectsSameHomeAndAwayTeam()
     {
-        var sameTeam = new MockTeam(99, "Same Team");
+        var sameTeam = new StubTeam(99, "Same Team");
 
         Assert.ThrowsException<MatchException>(() =>
             new TestMatch(1, MatchDate, sameTeam, sameTeam, _stadium));
@@ -141,7 +140,7 @@ public class MatchTests
     public void MatchCanChangeStadium()
     {
         _match = CreateMatchWithData();
-        var newStadium = new MockStadium(2, "Secondary Stadium");
+        var newStadium = new StubStadium(2, "Secondary Stadium");
 
         _match.ChangeStadium(newStadium);
 
