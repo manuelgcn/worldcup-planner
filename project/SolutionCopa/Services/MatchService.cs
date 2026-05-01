@@ -2,6 +2,7 @@ using DataAccess.Interfaces;
 using ProjectCopa;
 using ProjectCopa.Interfaces;
 using Services.DTOs;
+using Services.Exceptions;
 using Services.Interfaces;
 
 namespace Services;
@@ -40,7 +41,7 @@ public class MatchService : IMatchService
 
         if (_matchRepository.ExistsById(request.MatchId))
         {
-            throw new ArgumentException("Match ID already exists");
+            throw new MatchServicesException("Match ID already exists");
         }
 
         var match = BuildMatch(request);
@@ -84,7 +85,7 @@ public class MatchService : IMatchService
     {
         if (string.IsNullOrWhiteSpace(groupName))
         {
-            throw new ArgumentException("Group name is required");
+            throw new MatchServicesException("Group name is required");
         }
 
         return _matchRepository.GetByGroup(groupName).Select(MapToDto).ToList();
@@ -99,7 +100,7 @@ public class MatchService : IMatchService
     {
         if (from > to)
         {
-            throw new ArgumentException("'from' must be less than or equal to 'to'");
+            throw new MatchServicesException("'from' must be less than or equal to 'to'");
         }
 
         return _matchRepository.GetByDateRange(from, to).Select(MapToDto).ToList();
@@ -163,10 +164,10 @@ public class MatchService : IMatchService
 
         if (request.IsElimination)
         {
-            var phase = request.Phase ?? throw new ArgumentException("Phase is required");
-            var matchCode = request.MatchCode ?? throw new ArgumentException("MatchCode is required");
-            var sourceHomeId = request.MatchHomeId ?? throw new ArgumentException("MatchHomeId is required");
-            var sourceAwayId = request.MatchAwayId ?? throw new ArgumentException("MatchAwayId is required");
+            var phase = request.Phase ?? throw new MatchServicesException("Phase is required");
+            var matchCode = request.MatchCode ?? throw new MatchServicesException("MatchCode is required");
+            var sourceHomeId = request.MatchHomeId ?? throw new MatchServicesException("MatchHomeId is required");
+            var sourceAwayId = request.MatchAwayId ?? throw new MatchServicesException("MatchAwayId is required");
             var sourceHome = GetMatchOrThrow(sourceHomeId);
             var sourceAway = GetMatchOrThrow(sourceAwayId);
 
@@ -197,8 +198,8 @@ public class MatchService : IMatchService
                 sourceAway);
         }
 
-        var groupId = request.GroupId ?? throw new ArgumentException("GroupId is required");
-        var journeyId = request.JourneyId ?? throw new ArgumentException("JourneyId is required");
+        var groupId = request.GroupId ?? throw new MatchServicesException("GroupId is required");
+        var journeyId = request.JourneyId ?? throw new MatchServicesException("JourneyId is required");
         var group = GetGroupOrThrow(groupId);
         var journey = GetJourneyOrThrow(journeyId);
 
@@ -238,27 +239,27 @@ public class MatchService : IMatchService
 
     private Match GetMatchOrThrow(int matchId)
     {
-        return _matchRepository.GetById(matchId) ?? throw new ArgumentException("Match not found");
+        return _matchRepository.GetById(matchId) ?? throw new MatchServicesException("Match not found");
     }
 
     private ITeam GetTeamOrThrow(int teamId)
     {
-        return _teamRepository.GetById(teamId) ?? throw new ArgumentException("Team not found");
+        return _teamRepository.GetById(teamId) ?? throw new MatchServicesException("Team not found");
     }
 
     private IStadium GetStadiumOrThrow(int stadiumId)
     {
-        return _stadiumRepository.GetById(stadiumId) ?? throw new ArgumentException("Stadium not found");
+        return _stadiumRepository.GetById(stadiumId) ?? throw new MatchServicesException("Stadium not found");
     }
 
     private IGroup GetGroupOrThrow(int groupId)
     {
-        return _groupRepository.GetById(groupId) ?? throw new ArgumentException("Group not found");
+        return _groupRepository.GetById(groupId) ?? throw new MatchServicesException("Group not found");
     }
 
     private IJourney GetJourneyOrThrow(int journeyId)
     {
-        return _journeyRepository.GetById(journeyId) ?? throw new ArgumentException("Journey not found");
+        return _journeyRepository.GetById(journeyId) ?? throw new MatchServicesException("Journey not found");
     }
 
     private IChampConf? GetChampionshipOrNull(int? championshipId)
@@ -269,14 +270,14 @@ public class MatchService : IMatchService
         }
 
         return _championshipRepository.GetById(championshipId.Value)
-               ?? throw new ArgumentException("Championship configuration not found");
+               ?? throw new MatchServicesException("Championship configuration not found");
     }
 
     private static void ValidateRequired(object? value)
     {
         if (value == null)
         {
-            throw new ArgumentException("Value is required");
+            throw new MatchServicesException("Value is required");
         }
     }
 }

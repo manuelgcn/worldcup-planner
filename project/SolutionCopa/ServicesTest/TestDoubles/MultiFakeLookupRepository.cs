@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using ServicesTest.TestDoubles.Fakes_Stubs;
 using DataAccess.Interfaces;
+using ProjectCopa.Interfaces;
 
 namespace ServicesTest.TestDoubles;
 
@@ -30,10 +31,10 @@ public sealed class MultiFakeLookupRepository : ITeamRepository, IStadiumReposit
     }
 
     // explicit interface implementations
-    ProjectCopa.Interfaces.ITeam? ITeamRepository.GetById(int teamId) => GetByIdTyped<ProjectCopa.Interfaces.ITeam>(teamId);
-    ProjectCopa.Interfaces.IStadium? IStadiumRepository.GetById(int stadiumId) => GetByIdTyped<ProjectCopa.Interfaces.IStadium>(stadiumId);
-    ProjectCopa.Interfaces.IGroup? IGroupRepository.GetById(int groupId) => GetByIdTyped<ProjectCopa.Interfaces.IGroup>(groupId);
-    ProjectCopa.Interfaces.IJourney? IJourneyRepository.GetById(int journeyId) => GetByIdTyped<ProjectCopa.Interfaces.IJourney>(journeyId);
-    ProjectCopa.Interfaces.IChampConf? IChampConfRepository.GetById(int championshipConfigurationId) => GetByIdTyped<ProjectCopa.Interfaces.IChampConf>(championshipConfigurationId);
+    ITeam? ITeamRepository.GetById(int teamId) => GetByIdTyped<ITeam>(teamId);
+    IStadium? IStadiumRepository.GetById(int stadiumId) => GetByIdTyped<IStadium>(stadiumId);
+    IGroup? IGroupRepository.GetById(int groupId) => GetByIdTyped<IGroup>(groupId);
+    IJourney? IJourneyRepository.GetById(int journeyId) => GetByIdTyped<IJourney>(journeyId);
+    IChampConf? IChampConfRepository.GetById(int championshipConfigurationId) => GetByIdTyped<IChampConf>(championshipConfigurationId);
 }
 
