@@ -23,16 +23,13 @@ public class FixtureServiceTests
     [TestMethod]
     public void CreateFixtureWith48TeamsCreates12Groups()
     {
-        // Arrange
         List<Team> teams = Create48ValidTeams();
         List<Stadium> stadiums = Create4ValidStadiums();
 
         FixtureService service = new FixtureService(teams, stadiums);
-
-        // Act
+        
         IReadOnlyCollection<Group> groups = service.CreateFixture();
-
-        // Assert
+        
         Assert.AreEqual(12, groups.Count);
     }
 
@@ -62,6 +59,23 @@ public class FixtureServiceTests
             new Stadium("Stadium3", "City", null, 30000),
             new Stadium("Stadium4", "City", null, 30000)
         };
+    }
+
+    
+    [TestMethod]
+    public void CreateFixtureDistributesTeamsInto12GroupsOf4()
+    {
+        List<Team> teams = Create48ValidTeams();
+        List<Stadium> stadiums = Create4ValidStadiums();
+
+        FixtureService service = new FixtureService(teams, stadiums);
+        
+        IReadOnlyCollection<Group> groups = service.CreateFixture();
+        
+        foreach (Group group in groups)
+        {
+            Assert.AreEqual(4, group.Teams.Count);
+        }
     }
 
 
