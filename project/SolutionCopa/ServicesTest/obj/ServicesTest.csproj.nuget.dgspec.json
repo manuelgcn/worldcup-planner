@@ -263,6 +263,9 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
+              "C:\\Users\\Tommy\\Desktop\\Diseño1\\255503---330734---326829\\project\\SolutionCopa\\DataAccess\\DataAccess.csproj": {
+                "projectPath": "C:\\Users\\Tommy\\Desktop\\Diseño1\\255503---330734---326829\\project\\SolutionCopa\\DataAccess\\DataAccess.csproj"
+              },
               "C:\\Users\\Tommy\\Desktop\\Diseño1\\255503---330734---326829\\project\\SolutionCopa\\Domain\\Domain.csproj": {
                 "projectPath": "C:\\Users\\Tommy\\Desktop\\Diseño1\\255503---330734---326829\\project\\SolutionCopa\\Domain\\Domain.csproj"
               }

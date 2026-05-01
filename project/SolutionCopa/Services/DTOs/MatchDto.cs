@@ -2,24 +2,25 @@ using ProjectCopa;
 
 namespace Services.DTOs;
 
-// Single DTO used as both inbound (create/update) and outbound (read) model.
 public sealed class MatchDto
 {
-    public int MatchId { get; init; }
+    public int MatchId { get; set; }
 
-    public DateTime? MatchDate { get; init; }
-    public int? HomeTeamId { get; init; }
-    public int? AwayTeamId { get; init; }
-    public int? StadiumId { get; init; }
+    public DateTime? MatchDate { get; set; }
+    public int? HomeTeamId { get; set; }
+    public int? AwayTeamId { get; set; }
+    public int? StadiumId { get; set; }
 
-    public int HomeGoals { get; init; }
-    public int AwayGoals { get; init; }
+    public int HomeGoals { get; set; }
+    public int AwayGoals { get; set; }
 
-    public bool IsElimination { get; init; }
-    public string? MatchCode { get; init; }
-    public Phase? Phase { get; init; }
-    public int? MatchHomeId { get; init; }
-    public int? MatchAwayId { get; init; }
+    public bool IsElimination { get; set; }
+    public string? GroupName { get; set; }
+    public int? JourneyNumber { get; set; }
+    public string? MatchCode { get; set; }
+    public Phase? Phase { get; set; }
+    public int? MatchHomeId { get; set; }
+    public int? MatchAwayId { get; set; }
 
-    public int? ChampionshipConfigurationId { get; init; }
+    public int? ChampionshipConfigurationId { get; set; }
 }

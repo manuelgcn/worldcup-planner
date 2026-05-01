@@ -62,3 +62,5 @@ C:\Users\Tommy\Desktop\Diseño1\255503---330734---326829\project\SolutionCopa\Se
 C:\Users\Tommy\Desktop\Diseño1\255503---330734---326829\project\SolutionCopa\Services\obj\Debug\net8.0\refint\Services.dll
 C:\Users\Tommy\Desktop\Diseño1\255503---330734---326829\project\SolutionCopa\Services\obj\Debug\net8.0\Services.pdb
 C:\Users\Tommy\Desktop\Diseño1\255503---330734---326829\project\SolutionCopa\Services\obj\Debug\net8.0\ref\Services.dll
+C:\Users\Tommy\Desktop\Diseño1\255503---330734---326829\project\SolutionCopa\Services\bin\Debug\net8.0\DataAccess.dll
+C:\Users\Tommy\Desktop\Diseño1\255503---330734---326829\project\SolutionCopa\Services\bin\Debug\net8.0\DataAccess.pdb
