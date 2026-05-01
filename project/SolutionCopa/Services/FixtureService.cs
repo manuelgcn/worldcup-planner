@@ -15,12 +15,17 @@ public class FixtureService
         this.stadiums = stadiums;
     }
 
+   
     public IReadOnlyCollection<Group> CreateFixture()
     {
         ValidatePreconditions();
 
-        return CreateGroups();
+        List<Group> groups = CreateGroups();
+        AssignTeamsToGroups(groups);
+
+        return groups;
     }
+
 
     private void ValidatePreconditions()
     {
@@ -39,10 +44,22 @@ public class FixtureService
         {
             groups.Add(new Group(c.ToString()));
         }
-
+        
         return groups;
     }
 
+
+    
+    private void AssignTeamsToGroups(List<Group> groups)
+    {
+        int groupIndex = 0;
+
+        foreach (Team team in teams)
+        {
+            groups[groupIndex].AddTeam(team);
+            groupIndex = (groupIndex + 1) % groups.Count;
+        }
+    }
 
 
 }
