@@ -1,14 +1,13 @@
 using ProjectCopa;
 namespace Services;
 
-public class FixtureServices
+public class FixtureService
 {
-    
    
     private readonly IReadOnlyCollection<Team> teams;
     private readonly IReadOnlyCollection<Stadium> stadiums;
 
-    public FixtureServices(
+    public FixtureService(
         IReadOnlyCollection<Team> teams,
         IReadOnlyCollection<Stadium> stadiums)
     {
@@ -16,14 +15,11 @@ public class FixtureServices
         this.stadiums = stadiums;
     }
 
-    
     public IReadOnlyCollection<Group> CreateFixture()
     {
         ValidatePreconditions();
 
-        var groups = CreateGroups();
-        
-        return groups;
+        return CreateGroups();
     }
 
     private void ValidatePreconditions()
@@ -46,5 +42,7 @@ public class FixtureServices
 
         return groups;
     }
+
+
 
 }

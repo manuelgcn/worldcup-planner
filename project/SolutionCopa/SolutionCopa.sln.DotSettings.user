@@ -5,6 +5,6 @@
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=a64f5c5b_002D3d2c_002D4fa6_002Da108_002D11ab949fe39c/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="GroupCanBeCreatedWithName" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
-    &lt;TestId&gt;MSTest::E0E2A760-BA6A-4567-B7B4-33019DF36F38::net8.0::ServiceTest.FixtureServicesTests.CannotCreateFixtureWithout48Teams&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;MSTest::E0E2A760-BA6A-4567-B7B4-33019DF36F38::net8.0::ServiceTest.FixtureServiceTests.CannotCreateFixtureWithout48Teams&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
