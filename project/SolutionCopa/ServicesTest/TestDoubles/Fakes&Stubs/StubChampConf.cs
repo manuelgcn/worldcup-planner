@@ -1,6 +1,7 @@
 using ProjectCopa.Interfaces;
+using System;
 
-namespace ServicesTest.TestDoubles;
+namespace ServicesTest.TestDoubles.Fakes_Stubs;
 
 public sealed class StubChampConf : IChampConf
 {

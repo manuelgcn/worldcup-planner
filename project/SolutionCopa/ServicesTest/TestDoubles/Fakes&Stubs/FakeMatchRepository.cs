@@ -1,7 +1,9 @@
 using DataAccess.Interfaces;
 using ProjectCopa;
+using System;
+using System.Collections.Generic;
 
-namespace ServicesTest.TestDoubles;
+namespace ServicesTest.TestDoubles.Fakes_Stubs;
 
 public sealed class FakeMatchRepository : IMatchRepository
 {

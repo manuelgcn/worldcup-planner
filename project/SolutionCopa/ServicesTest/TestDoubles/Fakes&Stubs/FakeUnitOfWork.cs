@@ -1,6 +1,6 @@
 using DataAccess.Interfaces;
 
-namespace ServicesTest.TestDoubles;
+namespace ServicesTest.TestDoubles.Fakes_Stubs;
 
 public sealed class FakeUnitOfWork : IUnitOfWork
 {

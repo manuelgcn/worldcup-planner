@@ -9,12 +9,10 @@
       "DomainTest/1.0.0": {
         "dependencies": {
           "Domain": "1.0.0",
-          "MSTest.TestAdapter": "3.1.1",
           "MSTest.TestFramework": "3.1.1",
           "Microsoft.NET.Test.Sdk": "17.8.0",
           "Moq": "4.20.72",
           "Services": "1.0.0",
-          "coverlet.collector": "6.0.0",
           "Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions": "14.0.0.0"
         },
         "runtime": {
@@ -32,7 +30,6 @@
           }
         }
       },
-      "coverlet.collector/6.0.0": {},
       "Microsoft.CodeCoverage/17.8.0": {
         "runtime": {
           "lib/netcoreapp3.1/Microsoft.VisualStudio.CodeCoverage.Shim.dll": {
@@ -49,8 +46,7 @@
       },
       "Microsoft.TestPlatform.ObjectModel/17.8.0": {
         "dependencies": {
-          "NuGet.Frameworks": "6.5.0",
-          "System.Reflection.Metadata": "1.6.0"
+          "NuGet.Frameworks": "6.5.0"
         },
         "runtime": {
           "lib/netcoreapp3.1/Microsoft.TestPlatform.CoreUtilities.dll": {
@@ -305,7 +301,6 @@
           }
         }
       },
-      "MSTest.TestAdapter/3.1.1": {},
       "MSTest.TestFramework/3.1.1": {
         "runtime": {
           "lib/net6.0/Microsoft.VisualStudio.TestPlatform.TestFramework.dll": {
@@ -393,7 +388,17 @@
           }
         }
       },
-      "System.Reflection.Metadata/1.6.0": {},
+      "DataAccess/1.0.0": {
+        "dependencies": {
+          "Domain": "1.0.0"
+        },
+        "runtime": {
+          "DataAccess.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
       "Domain/1.0.0": {
         "runtime": {
           "Domain.dll": {
@@ -404,6 +409,7 @@
       },
       "Services/1.0.0": {
         "dependencies": {
+          "DataAccess": "1.0.0",
           "Domain": "1.0.0"
         },
         "runtime": {
@@ -435,13 +441,6 @@
       "sha512": "sha512-rpYtIczkzGpf+EkZgDr9CClTdemhsrwA/W5hMoPjLkRFnXzH44zDLoovXeKtmxb1ykXK9aJVODSpiJml8CTw2g==",
       "path": "castle.core/5.1.1",
       "hashPath": "castle.core.5.1.1.nupkg.sha512"
-    },
-    "coverlet.collector/6.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-tW3lsNS+dAEII6YGUX/VMoJjBS1QvsxqJeqLaJXub08y1FSjasFPtQ4UBUsudE9PNrzLjooClMsPtY2cZLdXpQ==",
-      "path": "coverlet.collector/6.0.0",
-      "hashPath": "coverlet.collector.6.0.0.nupkg.sha512"
     },
     "Microsoft.CodeCoverage/17.8.0": {
       "type": "package",
@@ -478,13 +477,6 @@
       "path": "moq/4.20.72",
       "hashPath": "moq.4.20.72.nupkg.sha512"
     },
-    "MSTest.TestAdapter/3.1.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-kMvdO5dhrUR3o1qk0fzS0St0prlKyMQAfz1ChVAUdGGobTU5ehR60szOFto0+Q7rFG5iXMvTlVIthXM9EcNYnw==",
-      "path": "mstest.testadapter/3.1.1",
-      "hashPath": "mstest.testadapter.3.1.1.nupkg.sha512"
-    },
     "MSTest.TestFramework/3.1.1": {
       "type": "package",
       "serviceable": true,
@@ -513,12 +505,10 @@
       "path": "system.diagnostics.eventlog/6.0.0",
       "hashPath": "system.diagnostics.eventlog.6.0.0.nupkg.sha512"
     },
-    "System.Reflection.Metadata/1.6.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-COC1aiAJjCoA5GBF+QKL2uLqEBew4JsCkQmoHKbN3TlOZKa2fKLz5CpiRQKDz0RsAOEGsVKqOD5bomsXq/4STQ==",
-      "path": "system.reflection.metadata/1.6.0",
-      "hashPath": "system.reflection.metadata.1.6.0.nupkg.sha512"
+    "DataAccess/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     },
     "Domain/1.0.0": {
       "type": "project",

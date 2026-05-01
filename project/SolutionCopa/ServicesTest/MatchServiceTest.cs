@@ -1,23 +1,26 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using Services.DTOs;
+using Services;
 using ServicesTest.TestDoubles;
 
 namespace ServicesTest;
 
 [TestClass]
-public class MatchServiceTests
+public class MatchServiceTest
 {
     [TestMethod]
     public void CreateMatchForGroupReturnsDtoWithId()
     {
         MatchServiceTestContext context = new MatchServiceTestContext();
 
-        Services.DTOs.MatchDto dto = context.Service.CreateMatch(context.NewGroupMatchRequest(1));
+        MatchDto dto = context.Service.CreateMatch(context.NewGroupMatchRequest(1));
 
         Assert.AreEqual(1, dto.MatchId);
     }
 
     [TestMethod]
-    public void Should_CreateGroupMatch_CallUnitOfWorkCommit()
+    public void CreateMatchForGroupCallsCommit()
     {
         MatchServiceTestContext context = new MatchServiceTestContext();
 
@@ -27,18 +30,18 @@ public class MatchServiceTests
     }
 
     [TestMethod]
-    public void Should_CreateEliminationMatch_ReturnsMatchDtoWithId()
+    public void CreateMatchForEliminationReturnsDtoWithId()
     {
         MatchServiceTestContext context = new MatchServiceTestContext();
         context.AddSourceEliminationMatches();
 
-        Services.DTOs.MatchDto dto = context.Service.CreateMatch(context.NewEliminationMatchRequest(2));
+        MatchDto dto = context.Service.CreateMatch(context.NewEliminationMatchRequest(2));
 
         Assert.AreEqual(2, dto.MatchId);
     }
 
     [TestMethod]
-    public void Should_CreateEliminationMatch_CallUnitOfWorkCommit()
+    public void CreateMatchForEliminationCallsCommit()
     {
         MatchServiceTestContext context = new MatchServiceTestContext();
         context.AddSourceEliminationMatches();
@@ -49,7 +52,7 @@ public class MatchServiceTests
     }
 
     [TestMethod]
-    public void Should_ThrowWhenCreatingMatch_WithDuplicateId()
+    public void CreateMatchThrowsWhenIdAlreadyExists()
     {
         MatchServiceTestContext context = new MatchServiceTestContext();
         context.Service.CreateMatch(context.NewGroupMatchRequest(1));
@@ -58,7 +61,7 @@ public class MatchServiceTests
     }
 
     [TestMethod]
-    public void Should_CallRepositoryUpdate_When_SetGoals()
+    public void SetGoalsCallsUpdate()
     {
         MatchServiceTestContext context = new MatchServiceTestContext();
         context.Service.CreateMatch(context.NewGroupMatchRequest(1));
@@ -69,7 +72,7 @@ public class MatchServiceTests
     }
 
     [TestMethod]
-    public void GetByDateRange_ShouldThrow_When_FromIsAfterTo()
+    public void GetByDateRangeThrowsWhenRangeIsInvalid()
     {
         MatchServiceTestContext context = new MatchServiceTestContext();
 
