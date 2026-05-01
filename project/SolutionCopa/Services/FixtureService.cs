@@ -54,7 +54,11 @@ public class FixtureService
     {
         int groupIndex = 0;
 
-        foreach (Team team in teams)
+        List<Team> orderedTeams = teams
+            .OrderByDescending(t => t.RankingFifa)
+            .ToList();
+
+        foreach (Team team in orderedTeams)
         {
             groups[groupIndex].AddTeam(team);
             groupIndex = (groupIndex + 1) % groups.Count;
