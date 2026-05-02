@@ -7,13 +7,23 @@ public class FixtureService
     private readonly IReadOnlyCollection<Team> teams;
     private readonly IReadOnlyCollection<Stadium> stadiums;
 
+    
+    
+    private readonly int seed;
+
+    
     public FixtureService(
         IReadOnlyCollection<Team> teams,
-        IReadOnlyCollection<Stadium> stadiums)
+        IReadOnlyCollection<Stadium> stadiums,
+        int? seed = null)
     {
         this.teams = teams;
         this.stadiums = stadiums;
+        this.seed = seed ?? 0; 
     }
+
+
+
 
    
     public IReadOnlyCollection<Group> CreateFixture()
@@ -50,18 +60,45 @@ public class FixtureService
 
 
     
+    
     private void AssignTeamsToGroups(List<Group> groups)
     {
         int groupIndex = 0;
 
-        List<Team> orderedTeams = teams
-            .OrderByDescending(t => t.RankingFifa)
-            .ToList();
+        List<Team> orderedTeams = OrderTeamsByRankingWithDeterministicTieBreak();
 
         foreach (Team team in orderedTeams)
         {
             groups[groupIndex].AddTeam(team);
             groupIndex = (groupIndex + 1) % groups.Count;
+        }
+    }
+
+
+    
+    private List<Team> OrderTeamsByRankingWithDeterministicTieBreak()
+    {
+        Random random = new Random(seed);
+
+        return teams
+            .GroupBy(t => t.RankingFifa)
+            .OrderByDescending(g => g.Key)
+            .SelectMany(group =>
+            {
+                List<Team> tiedTeams = group.ToList();
+                ShuffleDeterministically(tiedTeams, random);
+                return tiedTeams;
+            })
+            .ToList();
+    }
+
+    
+    private void ShuffleDeterministically(List<Team> teams, Random random)
+    {
+        for (int i = teams.Count - 1; i > 0; i--)
+        {
+            int j = random.Next(i + 1);
+            (teams[i], teams[j]) = (teams[j], teams[i]);
         }
     }
 
