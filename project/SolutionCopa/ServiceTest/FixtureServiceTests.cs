@@ -247,15 +247,59 @@ public class FixtureServiceTests
                 .OrderByDescending(r => r)
                 .ToList();
 
-            // cada grupo debe tener:
-            // 1 equipo >= 2300 (bombo 1)
-            // 1 equipo entre 1900-2100 (bombo 2)
-            // 1 equipo entre 1500-1700 (bombo 3)
-            // 1 equipo <= 1300 (bombo 4)
+            
             Assert.IsTrue(rankings[0] >= 2300);
             Assert.IsTrue(rankings[1] >= 1900 && rankings[1] <= 2100);
             Assert.IsTrue(rankings[2] >= 1500 && rankings[2] <= 1700);
             Assert.IsTrue(rankings[3] <= 1300);
+        }
+    }
+
+    
+    [TestMethod]
+    public void CreateFixtureAllowsAtMostTwoUefaTeamsPerGroup()
+    {
+        
+        List<Team> teams = new List<Team>();
+
+       
+       
+
+        
+        for (int i = 24; i < 48; i++)
+        {
+            teams.Add(new Team(
+                "CONMEBOL_Team" + i,
+                2000 - i,
+                false,
+                Confederation.CONMEBOL
+            ));
+        }
+        for (int i = 0; i < 24; i++)
+        {
+            teams.Add(new Team(
+                "UEFA_Team" + i,
+                2400 - i,
+                false,
+                Confederation.UEFA
+            ));
+        }
+
+        List<Stadium> stadiums = Create4ValidStadiums();
+
+        FixtureService service = new FixtureService(teams, stadiums);
+        
+        IReadOnlyCollection<Group> groups = service.CreateFixture();
+        
+        foreach (Group group in groups)
+        {
+            int uefaCount = group.Teams
+                .Count(t => t.Confederation == Confederation.UEFA);
+
+            Assert.IsTrue(
+                uefaCount <= 2,
+                $"Group {group.Name} has more than 2 UEFA teams"
+            );
         }
     }
 
