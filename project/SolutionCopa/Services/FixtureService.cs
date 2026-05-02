@@ -61,18 +61,49 @@ public class FixtureService
 
     
     
+    
+    
     private void AssignTeamsToGroups(List<Group> groups)
     {
-        int groupIndex = 0;
+        List<List<Team>> bombos = CreateBombos();
+        DistributeBombosIntoGroups(groups, bombos);
+    }
 
+    
+    private List<List<Team>> CreateBombos()
+    {
         List<Team> orderedTeams = OrderTeamsByRankingWithDeterministicTieBreak();
 
-        foreach (Team team in orderedTeams)
+        List<List<Team>> bombos = new();
+
+        for (int i = 0; i < 4; i++)
         {
-            groups[groupIndex].AddTeam(team);
-            groupIndex = (groupIndex + 1) % groups.Count;
+            bombos.Add(
+                orderedTeams
+                    .Skip(i * 12)
+                    .Take(12)
+                    .ToList()
+            );
+        }
+
+        return bombos;
+    }
+
+    
+    private void DistributeBombosIntoGroups(
+        List<Group> groups,
+        List<List<Team>> bombos)
+    {
+        foreach (List<Team> bombo in bombos)
+        {
+            for (int i = 0; i < groups.Count; i++)
+            {
+                groups[i].AddTeam(bombo[i]);
+            }
         }
     }
+
+
 
 
     
