@@ -181,4 +181,83 @@ public class FixtureServiceTests
         CollectionAssert.AreEqual(firstTeamsRun1, firstTeamsRun2);
     }
 
+    
+    [TestMethod]
+    public void CreateFixtureDistributesOneTeamFromEachBomboIntoEachGroup()
+    {
+       
+        List<Team> teams = new List<Team>();
+
+        // Bombo 1 (rankings mas altos)
+        for (int i = 0; i < 12; i++)
+        {
+            teams.Add(new Team(
+                "B1_Team" + i,
+                2400 - i,
+                false,
+                Confederation.UEFA
+            ));
+        }
+
+        // Bombo 2
+        for (int i = 0; i < 12; i++)
+        {
+            teams.Add(new Team(
+                "B2_Team" + i,
+                2000 - i,
+                false,
+                Confederation.UEFA
+            ));
+        }
+
+        // Bombo 4
+        for (int i = 0; i < 12; i++)
+        {
+            teams.Add(new Team(
+                "B4_Team" + i,
+                1200 - i,
+                false,
+                Confederation.UEFA
+            ));
+        }
+        
+        // Bombo 3
+        for (int i = 0; i < 12; i++)
+        {
+            teams.Add(new Team(
+                "B3_Team" + i,
+                1600 - i,
+                false,
+                Confederation.UEFA
+            ));
+        }
+
+       
+
+        List<Stadium> stadiums = Create4ValidStadiums();
+
+        FixtureService service = new FixtureService(teams, stadiums);
+        
+        IReadOnlyCollection<Group> groups = service.CreateFixture();
+        
+        foreach (Group group in groups)
+        {
+            var rankings = group.Teams
+                .Select(t => t.RankingFifa)
+                .OrderByDescending(r => r)
+                .ToList();
+
+            // cada grupo debe tener:
+            // 1 equipo >= 2300 (bombo 1)
+            // 1 equipo entre 1900-2100 (bombo 2)
+            // 1 equipo entre 1500-1700 (bombo 3)
+            // 1 equipo <= 1300 (bombo 4)
+            Assert.IsTrue(rankings[0] >= 2300);
+            Assert.IsTrue(rankings[1] >= 1900 && rankings[1] <= 2100);
+            Assert.IsTrue(rankings[2] >= 1500 && rankings[2] <= 1700);
+            Assert.IsTrue(rankings[3] <= 1300);
+        }
+    }
+
+    
 }
