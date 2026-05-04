@@ -1,7 +1,7 @@
 using ProjectCopa;
 using Services;
 
-namespace DomainTest;
+namespace ServiceTest;
 
 [TestClass]
 public sealed class TeamServicesTests
