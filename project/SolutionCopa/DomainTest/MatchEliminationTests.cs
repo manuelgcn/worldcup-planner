@@ -32,7 +32,7 @@ public class MatchEliminationTests
         string matchCode = "A1",
         Phase phase = Phase.RoundOf16)
     {
-        return new MatchElimination(
+        return MatchElimination.Create(
             1,
             MatchDate,
             _homeTeam,
@@ -50,7 +50,7 @@ public class MatchEliminationTests
         string matchCode = "A1",
         Phase phase = Phase.RoundOf16)
     {
-        return new MatchElimination(
+        return MatchElimination.CreateMatchWithConfig(
             1,
             MatchDate,
             _homeTeam,

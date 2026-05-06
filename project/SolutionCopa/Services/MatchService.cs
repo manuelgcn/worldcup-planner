@@ -7,46 +7,28 @@ using Services.Interfaces;
 
 namespace Services;
 
-public class MatchService : IMatchService
+public class MatchService(
+    IMatchRepository matchRepository,
+    ITeamRepository teamRepository,
+    IStadiumRepository stadiumRepository,
+    IGroupRepository groupRepository,
+    IJourneyRepository journeyRepository,
+    IChampConfRepository championshipRepository,
+    IUnitOfWork unitOfWork)
+    : IMatchService
 {
-    private readonly IMatchRepository _matchRepository;
-    private readonly ITeamRepository _teamRepository;
-    private readonly IStadiumRepository _stadiumRepository;
-    private readonly IGroupRepository _groupRepository;
-    private readonly IJourneyRepository _journeyRepository;
-    private readonly IChampConfRepository _championshipRepository;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public MatchService(
-        IMatchRepository matchRepository,
-        ITeamRepository teamRepository,
-        IStadiumRepository stadiumRepository,
-        IGroupRepository groupRepository,
-        IJourneyRepository journeyRepository,
-        IChampConfRepository championshipRepository,
-        IUnitOfWork unitOfWork)
-    {
-        _matchRepository = matchRepository;
-        _teamRepository = teamRepository;
-        _stadiumRepository = stadiumRepository;
-        _groupRepository = groupRepository;
-        _journeyRepository = journeyRepository;
-        _championshipRepository = championshipRepository;
-        _unitOfWork = unitOfWork;
-    }
-
     public MatchDto CreateMatch(CreateMatchRequestDto request)
     {
         ValidateRequired(request);
 
-        if (_matchRepository.ExistsById(request.MatchId))
+        if (matchRepository.ExistsById(request.MatchId))
         {
             throw new MatchServicesException("Match ID already exists");
         }
 
-        var match = BuildMatch(request);
-        _matchRepository.Add(match);
-        _unitOfWork.Commit();
+        Match match = BuildMatch(request);
+        matchRepository.Add(match);
+        unitOfWork.Commit();
 
         return MapToDto(match);
     }
@@ -55,7 +37,7 @@ public class MatchService : IMatchService
     {
         ValidateRequired(request);
 
-        var match = GetMatchOrThrow(matchId);
+        Match match = GetMatchOrThrow(matchId);
 
         if (request.StadiumId.HasValue)
         {
@@ -63,8 +45,8 @@ public class MatchService : IMatchService
             match.ChangeStadium(stadium);
         }
 
-        _matchRepository.Update(match);
-        _unitOfWork.Commit();
+        matchRepository.Update(match);
+        unitOfWork.Commit();
 
         return MapToDto(match);
     }
@@ -72,8 +54,8 @@ public class MatchService : IMatchService
     public void DeleteMatch(int matchId)
     {
         var match = GetMatchOrThrow(matchId);
-        _matchRepository.Delete(match);
-        _unitOfWork.Commit();
+        matchRepository.Delete(match);
+        unitOfWork.Commit();
     }
 
     public MatchDto GetById(int matchId)
@@ -88,12 +70,12 @@ public class MatchService : IMatchService
             throw new MatchServicesException("Group name is required");
         }
 
-        return _matchRepository.GetByGroup(groupName).Select(MapToDto).ToList();
+        return matchRepository.GetByGroup(groupName).Select(MapToDto).ToList();
     }
 
     public List<MatchDto> GetByJourney(int journeyNumber)
     {
-        return _matchRepository.GetByJourney(journeyNumber).Select(MapToDto).ToList();
+        return matchRepository.GetByJourney(journeyNumber).Select(MapToDto).ToList();
     }
 
     public List<MatchDto> GetByDateRange(DateTime from, DateTime to)
@@ -103,15 +85,15 @@ public class MatchService : IMatchService
             throw new MatchServicesException("'from' must be less than or equal to 'to'");
         }
 
-        return _matchRepository.GetByDateRange(from, to).Select(MapToDto).ToList();
+        return matchRepository.GetByDateRange(from, to).Select(MapToDto).ToList();
     }
 
     public void SetGoals(int matchId, int homeGoals, int awayGoals)
     {
         var match = GetMatchOrThrow(matchId);
         match.SetGoals(homeGoals, awayGoals);
-        _matchRepository.Update(match);
-        _unitOfWork.Commit();
+        matchRepository.Update(match);
+        unitOfWork.Commit();
     }
 
     public void AddGoal(int matchId, bool isHomeTeam)
@@ -127,8 +109,8 @@ public class MatchService : IMatchService
             match.AddAwayGoal();
         }
 
-        _matchRepository.Update(match);
-        _unitOfWork.Commit();
+        matchRepository.Update(match);
+        unitOfWork.Commit();
     }
 
     public void RemoveGoal(int matchId, bool isHomeTeam)
@@ -144,15 +126,15 @@ public class MatchService : IMatchService
             match.RemoveAwayGoal();
         }
 
-        _matchRepository.Update(match);
-        _unitOfWork.Commit();
+        matchRepository.Update(match);
+        unitOfWork.Commit();
     }
 
     public void PublishResult(int matchId)
     {
         var match = GetMatchOrThrow(matchId);
-        _matchRepository.Update(match);
-        _unitOfWork.Commit();
+        matchRepository.Update(match);
+        unitOfWork.Commit();
     }
 
     private Match BuildMatch(CreateMatchRequestDto request)
@@ -173,7 +155,7 @@ public class MatchService : IMatchService
 
             if (championship == null)
             {
-                return new MatchElimination(
+                return MatchElimination.Create(
                     request.MatchId,
                     request.MatchDate,
                     homeTeam,
@@ -185,7 +167,7 @@ public class MatchService : IMatchService
                     sourceAway);
             }
 
-            return new MatchElimination(
+            return MatchElimination.CreateMatchWithConfig(
                 request.MatchId,
                 request.MatchDate,
                 homeTeam,
@@ -205,8 +187,7 @@ public class MatchService : IMatchService
 
         if (championship == null)
         {
-            return new MatchGroup(
-                request.MatchId,
+            return MatchGroup.CreateInstance(request.MatchId,
                 request.MatchDate,
                 homeTeam,
                 awayTeam,
@@ -215,8 +196,7 @@ public class MatchService : IMatchService
                 journey);
         }
 
-        return new MatchGroup(
-            request.MatchId,
+        return MatchGroup.CreateMatchWithConfig(request.MatchId,
             request.MatchDate,
             homeTeam,
             awayTeam,
@@ -239,27 +219,27 @@ public class MatchService : IMatchService
 
     private Match GetMatchOrThrow(int matchId)
     {
-        return _matchRepository.GetById(matchId) ?? throw new MatchServicesException("Match not found");
+        return matchRepository.GetById(matchId) ?? throw new MatchServicesException("Match not found");
     }
 
     private ITeam GetTeamOrThrow(int teamId)
     {
-        return _teamRepository.GetById(teamId) ?? throw new MatchServicesException("Team not found");
+        return teamRepository.GetById(teamId) ?? throw new MatchServicesException("Team not found");
     }
 
     private IStadium GetStadiumOrThrow(int stadiumId)
     {
-        return _stadiumRepository.GetById(stadiumId) ?? throw new MatchServicesException("Stadium not found");
+        return stadiumRepository.GetById(stadiumId) ?? throw new MatchServicesException("Stadium not found");
     }
 
     private IGroup GetGroupOrThrow(int groupId)
     {
-        return _groupRepository.GetById(groupId) ?? throw new MatchServicesException("Group not found");
+        return groupRepository.GetById(groupId) ?? throw new MatchServicesException("Group not found");
     }
 
     private IJourney GetJourneyOrThrow(int journeyId)
     {
-        return _journeyRepository.GetById(journeyId) ?? throw new MatchServicesException("Journey not found");
+        return journeyRepository.GetById(journeyId) ?? throw new MatchServicesException("Journey not found");
     }
 
     private IChampConf? GetChampionshipOrNull(int? championshipId)
@@ -269,7 +249,7 @@ public class MatchService : IMatchService
             return null;
         }
 
-        return _championshipRepository.GetById(championshipId.Value)
+        return championshipRepository.GetById(championshipId.Value)
                ?? throw new MatchServicesException("Championship configuration not found");
     }
 

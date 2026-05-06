@@ -11,11 +11,7 @@ public class MatchGroup : Match
     public IGroup? Group { get; private set; }
     public IJourney? Journey { get; private set; }
 
-    public MatchGroup()
-    {
-    }
-
-    public MatchGroup(
+    private MatchGroup(
         int id,
         DateTime matchDate,
         ITeam homeTeam,
@@ -32,7 +28,12 @@ public class MatchGroup : Match
         Journey = journey;
     }
 
-    public MatchGroup(
+    public static MatchGroup CreateInstance(int id, DateTime matchDate, ITeam homeTeam, ITeam awayTeam, IStadium stadium, IGroup group, IJourney journey)
+    {
+        return new MatchGroup(id, matchDate, homeTeam, awayTeam, stadium, group, journey);
+    }
+
+    private MatchGroup(
         int id,
         DateTime matchDate,
         ITeam homeTeam,
@@ -48,6 +49,16 @@ public class MatchGroup : Match
 
         Group = group;
         Journey = journey;
+    }
+
+    internal static MatchGroup CreateInstance1(int id, DateTime matchDate, ITeam homeTeam, ITeam awayTeam, IStadium stadium, IChampConf championshipConfiguration, IGroup group, IJourney journey)
+    {
+        return new MatchGroup(id, matchDate, homeTeam, awayTeam, stadium, championshipConfiguration, group, journey);
+    }
+
+    public static MatchGroup CreateMatchWithConfig(int id, DateTime matchDate, ITeam homeTeam, ITeam awayTeam, IStadium stadium, IChampConf championshipConfiguration, IGroup group, IJourney journey)
+    {
+        return CreateInstance1(id, matchDate, homeTeam, awayTeam, stadium, championshipConfiguration, group, journey);
     }
 
     private static void EnsureRequiredGroup(IGroup? group)

@@ -11,6 +11,9 @@ public abstract class Match
     private const string SameTeamsMessage = "Home team and away team must be different.";
     private const string RequiredStadiumMessage = "Stadium is required.";
     private const string RequiredChampionshipConfigurationMessage = "Championship configuration is required.";
+    private const string RequiredHomeSourceMatchMessage = "Home match (source) is required.";
+    private const string RequiredAwaySourceMatchMessage = "Away match (source) is required.";
+    private const string SameSourceMatchesMessage = "Home and away source matches must be different.";
     private const string GoalsCannotBeNegativeMessage = "Goals cannot be negative.";
     private const string CannotRemoveGoalWhenZeroMessage = "Cannot remove a goal when the current count is zero.";
 
@@ -215,6 +218,30 @@ public abstract class Match
         }
 
         return championshipConfiguration.StartDate();
+    }
+
+    protected static void EnsureRequiredHomeSourceMatch(Match? matchHome)
+    {
+        if (matchHome == null)
+        {
+            throw new MatchException(RequiredHomeSourceMatchMessage);
+        }
+    }
+
+    protected static void EnsureRequiredAwaySourceMatch(Match? matchAway)
+    {
+        if (matchAway == null)
+        {
+            throw new MatchException(RequiredAwaySourceMatchMessage);
+        }
+    }
+
+    protected static void EnsureDifferentSourceMatches(Match? matchHome, Match? matchAway)
+    {
+        if (matchHome != null && matchAway != null && ReferenceEquals(matchHome, matchAway))
+        {
+            throw new MatchException(SameSourceMatchesMessage);
+        }
     }
 
     private static void EnsureNonNegativeGoals(int homeGoals, int awayGoals)

@@ -6,9 +6,6 @@ namespace ProjectCopa;
 public class MatchElimination : Match
 {
     private const string RequiredMatchCodeMessage = "Match code is required.";
-    private const string RequiredMatchHomeMessage = "Home match (source) is required.";
-    private const string RequiredMatchAwayMessage = "Away match (source) is required.";
-    private const string SameSourceMatchesMessage = "Home and away source matches must be different.";
     private const string InvalidPhaseMessage = "Phase is invalid.";
 
     public string MatchCode { get; private set; } = null!;
@@ -21,7 +18,7 @@ public class MatchElimination : Match
         get => _matchHome;
         private set
         {
-            EnsureRequiredMatchHome(value);
+            EnsureRequiredHomeSourceMatch(value);
             _matchHome = value;
         }
     }
@@ -31,12 +28,12 @@ public class MatchElimination : Match
         get => _matchAway;
         private set
         {
-            EnsureRequiredMatchAway(value);
+            EnsureRequiredAwaySourceMatch(value);
             _matchAway = value;
         }
     }
 
-    public MatchElimination(
+    private MatchElimination(
         int id,
         DateTime matchDate,
         ITeam homeTeam,
@@ -51,7 +48,7 @@ public class MatchElimination : Match
         InitializeEliminationData(phase, matchCode, matchHome, matchAway);
     }
 
-    public MatchElimination(
+    private MatchElimination(
         int id,
         DateTime matchDate,
         ITeam homeTeam,
@@ -67,12 +64,51 @@ public class MatchElimination : Match
         InitializeEliminationData(phase, matchCode, matchHome, matchAway);
     }
 
+    public static MatchElimination Create(
+        int id,
+        DateTime matchDate,
+        ITeam homeTeam,
+        ITeam awayTeam,
+        IStadium stadium,
+        Phase phase,
+        string matchCode,
+        Match matchHome,
+        Match matchAway)
+    {
+        return new MatchElimination(id, matchDate, homeTeam, awayTeam, stadium, phase, matchCode, matchHome, matchAway);
+    }
+
+    public static MatchElimination CreateMatchWithConfig(
+        int id,
+        DateTime matchDate,
+        ITeam homeTeam,
+        ITeam awayTeam,
+        IStadium stadium,
+        IChampConf championshipConfiguration,
+        Phase phase,
+        string matchCode,
+        Match matchHome,
+        Match matchAway)
+    {
+        return new MatchElimination(
+            id,
+            matchDate,
+            homeTeam,
+            awayTeam,
+            stadium,
+            championshipConfiguration,
+            phase,
+            matchCode,
+            matchHome,
+            matchAway);
+    }
+
     private void InitializeEliminationData(Phase phase, string matchCode, Match matchHome, Match matchAway)
     {
         EnsureValidPhase(phase);
         EnsureRequiredMatchCode(matchCode);
-        EnsureRequiredMatchHome(matchHome);
-        EnsureRequiredMatchAway(matchAway);
+        EnsureRequiredHomeSourceMatch(matchHome);
+        EnsureRequiredAwaySourceMatch(matchAway);
         EnsureDifferentSourceMatches(matchHome, matchAway);
 
         Phase = phase;
@@ -97,27 +133,4 @@ public class MatchElimination : Match
         }
     }
 
-    private static void EnsureRequiredMatchHome(Match? matchHome)
-    {
-        if (matchHome == null)
-        {
-            throw new MatchException(RequiredMatchHomeMessage);
-        }
-    }
-
-    private static void EnsureRequiredMatchAway(Match? matchAway)
-    {
-        if (matchAway == null)
-        {
-            throw new MatchException(RequiredMatchAwayMessage);
-        }
-    }
-
-    private static void EnsureDifferentSourceMatches(Match matchHome, Match matchAway)
-    {
-        if (ReferenceEquals(matchHome, matchAway))
-        {
-            throw new MatchException(SameSourceMatchesMessage);
-        }
-    }
 }

@@ -19,8 +19,7 @@ public class MatchGroupTests
 
     private MatchGroup CreateValidMatchGroup()
     {
-        return new MatchGroup(
-            1,
+        return MatchGroup.CreateInstance(1,
             MatchDate,
             _homeTeam,
             _awayTeam,
@@ -31,8 +30,7 @@ public class MatchGroupTests
 
     private MatchGroup CreateValidMatchGroupWithConfiguration()
     {
-        return new MatchGroup(
-            1,
+        return MatchGroup.CreateMatchWithConfig(1,
             MatchDate,
             _homeTeam,
             _awayTeam,
@@ -85,14 +83,14 @@ public class MatchGroupTests
     public void MatchGroupRejectsNullGroup()
     {
         Assert.ThrowsException<MatchException>(() =>
-            new MatchGroup(1, MatchDate, _homeTeam, _awayTeam, _stadium, null!, _journey));
+            MatchGroup.CreateInstance(1, MatchDate, _homeTeam, _awayTeam, _stadium, null!, _journey));
     }
 
     [TestMethod]
     public void MatchGroupRejectsNullJourney()
     {
         Assert.ThrowsException<MatchException>(() =>
-            new MatchGroup(1, MatchDate, _homeTeam, _awayTeam, _stadium, _group, null!));
+            MatchGroup.CreateInstance(1, MatchDate, _homeTeam, _awayTeam, _stadium, _group, null!));
     }
 
     [TestMethod]

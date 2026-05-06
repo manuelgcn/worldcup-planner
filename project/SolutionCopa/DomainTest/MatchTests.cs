@@ -148,6 +148,14 @@ public class MatchTests
     }
 
     [TestMethod]
+    public void MatchRejectsNullStadiumWhenChangingStadium()
+    {
+        _match = CreateMatchWithData();
+
+        Assert.ThrowsException<MatchException>(() => _match.ChangeStadium(null!));
+    }
+
+    [TestMethod]
     public void MatchReturnsHomeTeamWhenHomeGoalsAreGreater()
     {
         _match = CreateMatchWithData();
@@ -155,6 +163,34 @@ public class MatchTests
         var winnerTeam = _homeTeam;
 
         Assert.AreSame(winnerTeam, _match.GetWinner());
+    }
+
+    [TestMethod]
+    public void MatchReturnsAwayTeamWhenAwayGoalsAreGreater()
+    {
+        _match = CreateMatchWithData();
+        _match.SetGoals(homeGoals: 1, awayGoals: 2);
+        var winnerTeam = _awayTeam;
+
+        Assert.AreSame(winnerTeam, _match.GetWinner());
+    }
+
+    [TestMethod]
+    public void MatchReturnsNoWinnerWhenGoalsAreEqual()
+    {
+        _match = CreateMatchWithData();
+        _match.SetGoals(homeGoals: 2, awayGoals: 2);
+
+        Assert.IsNull(_match.GetWinner());
+    }
+
+    [TestMethod]
+    public void MatchRejectsDateEarlierThanDefaultTournamentStartDate()
+    {
+        var invalidDate = MatchDate.AddDays(-1);
+
+        Assert.ThrowsException<MatchException>(() =>
+            new TestMatch(1, invalidDate, _homeTeam, _awayTeam, _stadium));
     }
 
     [TestMethod]
