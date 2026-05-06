@@ -1,0 +1,65 @@
+@page "/signup"
+@using ProjectCopa
+@using Services
+@inject UserServices UserServices
+@inject NavigationManager Nav
+
+<PageTitle>Register</PageTitle>
+
+<h3>Crear usuario</h3>
+
+@if (!string.IsNullOrWhiteSpace(error))
+{
+    <p style="color:red">@error</p>
+}
+
+<input placeholder="Nombre" @bind="name" />
+<br />
+<input placeholder="Apellido" @bind="lastname" />
+<br />
+<input placeholder="Email" @bind="email" />
+<br />
+<input placeholder="Password" type="password" @bind="password" />
+<br />
+<input type="date" @bind="dateOfBirth" />
+<br />
+
+<button @onclick="Register">Crear cuenta</button>
+
+@code {
+    private string name = "";
+    private string lastname = "";
+    private string email = "";
+    private string password = "";
+    private DateTime dateOfBirth = DateTime.Today;
+    private string? error;
+
+    private void Register()
+    {
+        error = null;
+
+        try
+        {
+            User user = new User(
+                id: GenerateUserId(),
+                name: name,
+                lastname: lastname,
+                email: email,
+                password: password,
+                dateOfBirth: dateOfBirth
+            );
+
+            UserServices.AddUser(user);
+            Nav.NavigateTo("/login");
+        }
+        catch (ArgumentException ex)
+        {
+            error = ex.Message;
+        }
+    }
+
+    private int GenerateUserId()
+    {
+        return UserServices.GetAllUsers().Count + 1;
+    }
+}

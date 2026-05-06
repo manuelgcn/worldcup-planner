@@ -1,0 +1,17 @@
+@page "/logout"
+@inject SessionState Session
+@inject NavigationManager Nav
+
+<PageTitle>Logout</PageTitle>
+
+<h3>Logout</h3>
+
+<button @onclick="Logout">Cerrar sesion</button>
+
+@code {
+    private void Logout()
+    {
+        Session.Logout();
+        Nav.NavigateTo("/login");
+    }
+}

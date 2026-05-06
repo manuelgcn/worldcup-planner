@@ -1,0 +1,87 @@
+@page "/login"
+@using ProjectCopa
+@using Services
+@inject UserServices UserServices
+@inject SessionState Session
+@inject NavigationManager Nav
+
+<PageTitle>Login</PageTitle>
+
+<h3>Login</h3>
+
+@if (errors.Count > 0)
+{
+    <ul style="color:red">
+        @foreach (string error in errors)
+        {
+            <li>@error</li>
+        }
+    </ul>
+}
+
+<input placeholder="Email" @bind="email" />
+<br />
+<input placeholder="Password" type="password" @bind="password" />
+<br />
+<button @onclick="Login">Ingresar</button>
+
+@code {
+    private string email = "";
+    private string password = "";
+    private readonly List<string> errors = new();
+
+    private void Login()
+    {
+        errors.Clear();
+
+        try
+        {
+            ValidateInput();
+
+            User user = UserServices.GetUserByEmail(email);
+            string passwordHash = Hash(password);
+
+            if (user.password != passwordHash)
+            {
+                errors.Add("Credenciales invalidas");
+                return;
+            }
+
+            Session.Login(user);
+        }
+        catch (ArgumentException ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void ValidateInput()
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            errors.Add("Email es obligatorio");
+        }
+
+        if (!string.IsNullOrWhiteSpace(email) && (!email.Contains("@") || !email.Contains(".")))
+        {
+            errors.Add("Email invalido");
+        }
+
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            errors.Add("Password es obligatorio");
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new ArgumentException("Corrige los errores del formulario");
+        }
+    }
+
+    private static string Hash(string password)
+    {
+        using var sha = System.Security.Cryptography.SHA256.Create();
+        byte[] bytes = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+        return Convert.ToBase64String(bytes);
+    }
+}
