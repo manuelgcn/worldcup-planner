@@ -20,10 +20,10 @@ public abstract class Match
     public int MatchId { get; private set; }
     public DateTime MatchDate { get; private set; }
 
-    private ITeam? _homeTeam;
-    private ITeam? _awayTeam;
+    private Team? _homeTeam;
+    private Team? _awayTeam;
 
-    public ITeam? HomeTeam
+    public Team? HomeTeam
     {
         get => _homeTeam;
         private set
@@ -34,7 +34,7 @@ public abstract class Match
         }
     }
 
-    public ITeam? AwayTeam
+    public Team? AwayTeam
     {
         get => _awayTeam;
         private set
@@ -47,13 +47,13 @@ public abstract class Match
 
     public int HomeGoals { get; private set; }
     public int AwayGoals { get; private set; }
-    public IStadium? Stadium { get; private set; }
+    public Stadium? Stadium { get; private set; }
 
     protected Match()
     {
     }
 
-    protected Match(int id, DateTime matchDate, ITeam homeTeam, ITeam awayTeam, IStadium stadium)
+    protected Match(int id, DateTime matchDate, Team homeTeam, Team awayTeam, Stadium stadium)
         : this(id, matchDate, homeTeam, awayTeam, stadium, DefaultTournamentStartDate)
     {
     }
@@ -61,10 +61,10 @@ public abstract class Match
     protected Match(
         int id,
         DateTime matchDate,
-        ITeam homeTeam,
-        ITeam awayTeam,
-        IStadium stadium,
-        ITournamentSettings tournamentSettings)
+        Team homeTeam,
+        Team awayTeam,
+        Stadium stadium,
+        TournamentSettings tournamentSettings)
         : this(
             id,
             matchDate,
@@ -78,9 +78,9 @@ public abstract class Match
     private Match(
         int id,
         DateTime matchDate,
-        ITeam homeTeam,
-        ITeam awayTeam,
-        IStadium stadium,
+        Team homeTeam,
+        Team awayTeam,
+        Stadium stadium,
         DateTime minAllowedDate)
     {
         EnsureValidMatchDate(matchDate, minAllowedDate);
@@ -88,7 +88,7 @@ public abstract class Match
         InitializeMatch(id, matchDate, homeTeam, awayTeam, stadium);
     }
 
-    private void InitializeMatch(int id, DateTime matchDate, ITeam homeTeam, ITeam awayTeam, IStadium stadium)
+    private void InitializeMatch(int id, DateTime matchDate, Team homeTeam, Team awayTeam, Stadium stadium)
     {
         MatchId = id;
         MatchDate = matchDate;
@@ -99,7 +99,7 @@ public abstract class Match
         Stadium = stadium;
     }
 
-    public void ChangeStadium(IStadium stadium)
+    public void ChangeStadium(Stadium stadium)
     {
         EnsureRequiredStadium(stadium);
         Stadium = stadium;
@@ -171,7 +171,7 @@ public abstract class Match
         return AwayGoals - HomeGoals;
     }
 
-    public ITeam? GetWinner()
+    public Team? GetWinner()
     {
         if (HasHomeTeamWon())
         {
@@ -194,7 +194,7 @@ public abstract class Match
         }
     }
 
-    private static void EnsureDifferentTeams(ITeam? homeTeam, ITeam? awayTeam)
+    private static void EnsureDifferentTeams(Team? homeTeam, Team? awayTeam)
     {
         if (homeTeam != null && awayTeam != null && ReferenceEquals(homeTeam, awayTeam))
         {
@@ -202,7 +202,7 @@ public abstract class Match
         }
     }
 
-    private static void EnsureRequiredStadium(IStadium? stadium)
+    private static void EnsureRequiredStadium(Stadium? stadium)
     {
         if (stadium == null)
         {
@@ -210,14 +210,14 @@ public abstract class Match
         }
     }
 
-    private static DateTime GetStartDateOrThrow(ITournamentSettings? tournamentSettings)
+    private static DateTime GetStartDateOrThrow(TournamentSettings? tournamentSettings)
     {
         if (tournamentSettings == null)
         {
             throw new MatchException(RequiredChampionshipConfigurationMessage);
         }
 
-        return tournamentSettings.StartDate();
+        return tournamentSettings.StartDate;
     }
 
     protected static void EnsureRequiredHomeSourceMatch(Match? matchHome)

@@ -1,4 +1,3 @@
-using DomainTest.TestDoubles;
 using ProjectCopa;
 using ProjectCopa.Exceptions;
 
