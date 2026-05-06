@@ -12,8 +12,8 @@ public class FixtureServiceTests
     [ExpectedException(typeof(ArgumentException))]
     public void CannotCreateFixtureWithout48Teams()
     {
-        var teams = new List<Team>();
-        var stadiums = new List<Stadium>();
+        List<Team> teams = new List<Team>();
+        List<Stadium> stadiums = new List<Stadium>();
 
         FixtureService service = new FixtureService(teams, stadiums);
 
@@ -171,11 +171,11 @@ public class FixtureServiceTests
         FixtureService service2 = new FixtureService(teams, stadiums, seed: 42);
 
       
-        var groups1 = service1.CreateFixture();
-        var groups2 = service2.CreateFixture();
+        IReadOnlyCollection<Group> groups1 = service1.CreateFixture();
+        IReadOnlyCollection<Group> groups2 = service2.CreateFixture();
 
-        var firstTeamsRun1 = groups1.Select(g => g.Teams.First().Nombre).ToList();
-        var firstTeamsRun2 = groups2.Select(g => g.Teams.First().Nombre).ToList();
+        List<string> firstTeamsRun1 = groups1.Select(g => g.Teams.First().Nombre).ToList();
+        List<string> firstTeamsRun2 = groups2.Select(g => g.Teams.First().Nombre).ToList();
 
         
         CollectionAssert.AreEqual(firstTeamsRun1, firstTeamsRun2);
@@ -242,7 +242,7 @@ public class FixtureServiceTests
         
         foreach (Group group in groups)
         {
-            var rankings = group.Teams
+            List<int> rankings = group.Teams
                 .Select(t => t.RankingFifa)
                 .OrderByDescending(r => r)
                 .ToList();

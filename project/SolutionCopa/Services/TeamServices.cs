@@ -82,7 +82,7 @@ public class TeamServices
 
     private void ValidarCupoConfederacion(Team equipo)
     {
-        if (QuotasByConfederation.TryGetValue(equipo.Confederation, out var quota) &&
+        if (QuotasByConfederation.TryGetValue(equipo.Confederation, out int quota) &&
             CantidadEquiposPorConfederacion(equipo.Confederation) >= quota)
         {
             throw new InvalidOperationException(string.Format(QuotaExceededMessage, equipo.Confederation));
@@ -103,9 +103,9 @@ public class TeamServices
     {
         var random = new Random(semilla);
 
-        for (var i = equipos.Count - 1; i > 0; i--)
+        for (int i = equipos.Count - 1; i > 0; i--)
         {
-            var j = random.Next(i + 1);
+            int j = random.Next(i + 1);
             (equipos[i], equipos[j]) = (equipos[j], equipos[i]);
         }
     }
@@ -120,17 +120,17 @@ public class TeamServices
 
     private static IReadOnlyList<Team> ConstruirOrdenFixture(IEnumerable<Team> equipos, int semillaFixture)
     {
-        var ordenados = new List<Team>(capacity: FixtureTeamCount);
-        var gruposPorRanking = equipos
+        List<Team> ordenados = new List<Team>(capacity: FixtureTeamCount);
+        List<IGrouping<int, Team>> gruposPorRanking = equipos
             .GroupBy(equipo => equipo.RankingFifa)
             .OrderByDescending(grupo => grupo.Key)
             .ToList();
 
-        var indiceGrupo = 0;
+        int indiceGrupo = 0;
 
-        foreach (var grupoEmpatado in gruposPorRanking)
+        foreach (IGrouping<int, Team> grupoEmpatado in gruposPorRanking)
         {
-            var equiposEmpatados = grupoEmpatado.ToList();
+            List<Team> equiposEmpatados = grupoEmpatado.ToList();
             FisherYatesDeterministico(equiposEmpatados, semillaFixture + indiceGrupo);
             ordenados.AddRange(equiposEmpatados);
             indiceGrupo++;
