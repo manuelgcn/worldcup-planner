@@ -1,8 +1,8 @@
-using ProjectCopa.Interfaces;
+using ProjectCopa;
 
 namespace DataAccess.Interfaces;
 
 public interface ITeamRepository
 {
-    ITeam? GetById(int teamId);
+    Team? GetById(int teamId);
 }

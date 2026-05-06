@@ -1,8 +1,8 @@
-using ProjectCopa.Interfaces;
+using ProjectCopa;
 
 namespace DataAccess.Interfaces;
 
 public interface IChampConfRepository
 {
-    IChampConf? GetById(int championshipConfigurationId);
+    ChampConf? GetById(int championshipConfigurationId);
 }

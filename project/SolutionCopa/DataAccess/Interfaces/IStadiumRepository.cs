@@ -1,8 +1,8 @@
-using ProjectCopa.Interfaces;
+using ProjectCopa;
 
 namespace DataAccess.Interfaces;
 
 public interface IStadiumRepository
 {
-    IStadium? GetById(int stadiumId);
+    Stadium? GetById(int stadiumId);
 }

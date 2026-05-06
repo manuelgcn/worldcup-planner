@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
-using ServicesTest.TestDoubles.Fakes_Stubs;
 using DataAccess.Interfaces;
-using ProjectCopa.Interfaces;
+using ProjectCopa;
 
 namespace ServicesTest.TestDoubles;
 
@@ -17,7 +16,7 @@ public sealed class MultiFakeLookupRepository : ITeamRepository, IStadiumReposit
         where T : class
     {
         var type = typeof(T);
-        var dict = _store.GetOrAdd(type, _ => new ConcurrentDictionary<int, object>());
+        ConcurrentDictionary<int, object> dict = _store.GetOrAdd(type, _ => new ConcurrentDictionary<int, object>());
         dict[id] = item!;
     }
 
@@ -25,16 +24,16 @@ public sealed class MultiFakeLookupRepository : ITeamRepository, IStadiumReposit
         where T : class
     {
         var type = typeof(T);
-        if (!_store.TryGetValue(type, out var dict)) return null;
-        if (!dict.TryGetValue(id, out var obj)) return null;
+        if (!_store.TryGetValue(type, out ConcurrentDictionary<int, object>? dict)) return null;
+        if (!dict.TryGetValue(id, out object? obj)) return null;
         return obj as T;
     }
 
     // explicit interface implementations
-    ITeam? ITeamRepository.GetById(int teamId) => GetByIdTyped<ITeam>(teamId);
-    IStadium? IStadiumRepository.GetById(int stadiumId) => GetByIdTyped<IStadium>(stadiumId);
-    IGroup? IGroupRepository.GetById(int groupId) => GetByIdTyped<IGroup>(groupId);
-    IJourney? IJourneyRepository.GetById(int journeyId) => GetByIdTyped<IJourney>(journeyId);
-    IChampConf? IChampConfRepository.GetById(int championshipConfigurationId) => GetByIdTyped<IChampConf>(championshipConfigurationId);
+    Team? ITeamRepository.GetById(int teamId) => GetByIdTyped<Team>(teamId);
+    Stadium? IStadiumRepository.GetById(int stadiumId) => GetByIdTyped<Stadium>(stadiumId);
+    Group? IGroupRepository.GetById(int groupId) => GetByIdTyped<Group>(groupId);
+    Journey? IJourneyRepository.GetById(int journeyId) => GetByIdTyped<Journey>(journeyId);
+    ChampConf? IChampConfRepository.GetById(int championshipConfigurationId) => GetByIdTyped<ChampConf>(championshipConfigurationId);
 }
 

@@ -1,8 +1,8 @@
-using ServicesTest.TestDoubles.Fakes_Stubs;
+using DataAccess.Interfaces;
+using ProjectCopa;
 using Services;
 using Services.DTOs;
-using DataAccess.Interfaces;
-using ProjectCopa.Interfaces;
+using ServicesTest.TestDoubles.Fakes_Stubs;
 
 namespace ServicesTest.TestDoubles;
 
@@ -27,12 +27,12 @@ public sealed class MatchServiceTestContext
 
     public MatchServiceTestContext()
     {
-        _lookup.Set<ITeam>(10, new StubTeam());
-        _lookup.Set<ITeam>(20, new StubTeam());
-        _lookup.Set<IStadium>(30, new StubStadium());
-        _lookup.Set<IGroup>(40, new StubGroup("A"));
-        _lookup.Set<IJourney>(50, new StubJourney(1));
-        _lookup.Set<IChampConf>(60, new StubChampConf(new DateTime(2026, 6, 1)));
+        _lookup.Set(10, new Team(10, "Home Team"));
+        _lookup.Set(20, new Team(20, "Away Team"));
+        _lookup.Set(30, new Stadium(30, "Main Stadium"));
+        _lookup.Set(40, new Group("A"));
+        _lookup.Set(50, new Journey(1));
+        _lookup.Set(60, new ChampConf(new DateTime(2026, 6, 1)));
 
         // adapters delegate to the shared lookup repository
         TeamRepository = new TeamAdapter(_lookup);
@@ -54,27 +54,27 @@ public sealed class MatchServiceTestContext
     // simple adapters that forward GetById to the shared lookup store
     private sealed class TeamAdapter(MultiFakeLookupRepository lookup) : ITeamRepository
     {
-        public ITeam? GetById(int teamId) => lookup.GetByIdTyped<ITeam>(teamId);
+        public Team? GetById(int teamId) => lookup.GetByIdTyped<Team>(teamId);
     }
 
     private sealed class StadiumAdapter(MultiFakeLookupRepository lookup) : IStadiumRepository
     {
-        public IStadium? GetById(int stadiumId) => lookup.GetByIdTyped<IStadium>(stadiumId);
+        public Stadium? GetById(int stadiumId) => lookup.GetByIdTyped<Stadium>(stadiumId);
     }
 
     private sealed class GroupAdapter(MultiFakeLookupRepository lookup) : IGroupRepository
     {
-        public IGroup? GetById(int groupId) => lookup.GetByIdTyped<IGroup>(groupId);
+        public Group? GetById(int groupId) => lookup.GetByIdTyped<Group>(groupId);
     }
 
     private sealed class JourneyAdapter(MultiFakeLookupRepository lookup) : IJourneyRepository
     {
-        public IJourney? GetById(int journeyId) => lookup.GetByIdTyped<IJourney>(journeyId);
+        public Journey? GetById(int journeyId) => lookup.GetByIdTyped<Journey>(journeyId);
     }
 
     private sealed class ChampConfAdapter(MultiFakeLookupRepository lookup) : IChampConfRepository
     {
-        public IChampConf? GetById(int championshipConfigurationId) => lookup.GetByIdTyped<IChampConf>(championshipConfigurationId);
+        public ChampConf? GetById(int championshipConfigurationId) => lookup.GetByIdTyped<ChampConf>(championshipConfigurationId);
     }
 
     public CreateMatchRequestDto NewGroupMatchRequest(int id = 1)
@@ -102,7 +102,7 @@ public sealed class MatchServiceTestContext
             StadiumId = 30,
             IsElimination = true,
             ChampionshipConfigurationId = 60,
-            Phase = ProjectCopa.Phase.RoundOf16,
+            Phase = Phase.RoundOf16,
             MatchCode = "A1",
             MatchHomeId = 100,
             MatchAwayId = 200
@@ -111,7 +111,7 @@ public sealed class MatchServiceTestContext
 
     public void AddSourceEliminationMatches()
     {
-        MatchRepository.Add(new StubMatch(100, new DateTime(2026, 6, 20), new StubTeam(), new StubTeam(), new StubStadium()));
-        MatchRepository.Add(new StubMatch(200, new DateTime(2026, 6, 20), new StubTeam(), new StubTeam(), new StubStadium()));
+        MatchRepository.Add(new StubMatch(100, new DateTime(2026, 6, 20), new Team(1, "Team 1"), new Team(2, "Team 2"), new Stadium(1, "Stadium 1")));
+        MatchRepository.Add(new StubMatch(200, new DateTime(2026, 6, 20), new Team(3, "Team 3"), new Team(4, "Team 4"), new Stadium(2, "Stadium 2")));
     }
 }

@@ -1,13 +1,12 @@
 using ProjectCopa.Interfaces;
-using System;
 
-namespace ServicesTest.TestDoubles.Fakes_Stubs;
+namespace ProjectCopa;
 
-public sealed class StubChampConf : IChampConf
+public class ChampConf : IChampConf
 {
     private readonly DateTime _startDate;
 
-    public StubChampConf(DateTime startDate)
+    public ChampConf(DateTime startDate)
     {
         _startDate = startDate;
     }

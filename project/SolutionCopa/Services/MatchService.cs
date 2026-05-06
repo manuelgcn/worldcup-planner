@@ -1,6 +1,5 @@
 using DataAccess.Interfaces;
 using ProjectCopa;
-using ProjectCopa.Interfaces;
 using Services.DTOs;
 using Services.Exceptions;
 using Services.Interfaces;
@@ -115,7 +114,7 @@ public class MatchService(
 
     public void RemoveGoal(int matchId, bool isHomeTeam)
     {
-        var match = GetMatchOrThrow(matchId);
+        Match match = GetMatchOrThrow(matchId);
 
         if (isHomeTeam)
         {
@@ -147,9 +146,9 @@ public class MatchService(
         if (request.IsElimination)
         {
             var phase = request.Phase ?? throw new MatchServicesException("Phase is required");
-            var matchCode = request.MatchCode ?? throw new MatchServicesException("MatchCode is required");
-            var sourceHomeId = request.MatchHomeId ?? throw new MatchServicesException("MatchHomeId is required");
-            var sourceAwayId = request.MatchAwayId ?? throw new MatchServicesException("MatchAwayId is required");
+            string matchCode = request.MatchCode ?? throw new MatchServicesException("MatchCode is required");
+            int sourceHomeId = request.MatchHomeId ?? throw new MatchServicesException("MatchHomeId is required");
+            int sourceAwayId = request.MatchAwayId ?? throw new MatchServicesException("MatchAwayId is required");
             var sourceHome = GetMatchOrThrow(sourceHomeId);
             var sourceAway = GetMatchOrThrow(sourceAwayId);
 
@@ -180,10 +179,10 @@ public class MatchService(
                 sourceAway);
         }
 
-        var groupId = request.GroupId ?? throw new MatchServicesException("GroupId is required");
-        var journeyId = request.JourneyId ?? throw new MatchServicesException("JourneyId is required");
-        var group = GetGroupOrThrow(groupId);
-        var journey = GetJourneyOrThrow(journeyId);
+        int groupId = request.GroupId ?? throw new MatchServicesException("GroupId is required");
+        int journeyId = request.JourneyId ?? throw new MatchServicesException("JourneyId is required");
+        Group group = GetGroupOrThrow(groupId);
+        Journey journey = GetJourneyOrThrow(journeyId);
 
         if (championship == null)
         {
@@ -222,27 +221,27 @@ public class MatchService(
         return matchRepository.GetById(matchId) ?? throw new MatchServicesException("Match not found");
     }
 
-    private ITeam GetTeamOrThrow(int teamId)
+    private Team GetTeamOrThrow(int teamId)
     {
         return teamRepository.GetById(teamId) ?? throw new MatchServicesException("Team not found");
     }
 
-    private IStadium GetStadiumOrThrow(int stadiumId)
+    private Stadium GetStadiumOrThrow(int stadiumId)
     {
         return stadiumRepository.GetById(stadiumId) ?? throw new MatchServicesException("Stadium not found");
     }
 
-    private IGroup GetGroupOrThrow(int groupId)
+    private Group GetGroupOrThrow(int groupId)
     {
         return groupRepository.GetById(groupId) ?? throw new MatchServicesException("Group not found");
     }
 
-    private IJourney GetJourneyOrThrow(int journeyId)
+    private Journey GetJourneyOrThrow(int journeyId)
     {
         return journeyRepository.GetById(journeyId) ?? throw new MatchServicesException("Journey not found");
     }
 
-    private IChampConf? GetChampionshipOrNull(int? championshipId)
+    private ChampConf? GetChampionshipOrNull(int? championshipId)
     {
         if (!championshipId.HasValue)
         {

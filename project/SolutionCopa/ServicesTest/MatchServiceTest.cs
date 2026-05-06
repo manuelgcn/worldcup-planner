@@ -218,7 +218,7 @@ public class MatchServiceTest
     [TestMethod]
     public void CreateEliminationThrowsWhenHomeSourceMatchDoesNotExist()
     {
-        _context.MatchRepository.Add(match: new StubMatch(id: 200, matchDate: new DateTime(year: 2026, month: 6, day: 20), homeTeam: new StubTeam(), awayTeam: new StubTeam(), stadium: new StubStadium()));
+        _context.MatchRepository.Add(match: new StubMatch(id: 200, matchDate: new DateTime(year: 2026, month: 6, day: 20), homeTeam: new Team(1, "Team 1"), awayTeam: new Team(2, "Team 2"), stadium: new Stadium(1, "Stadium 1")));
 
         Assert.ThrowsException<MatchServicesException>(action: () => _context.Service.CreateMatch(request: NewEliminationRequest()));
     }
@@ -226,7 +226,7 @@ public class MatchServiceTest
     [TestMethod]
     public void CreateEliminationThrowsWhenAwaySourceMatchDoesNotExist()
     {
-        _context.MatchRepository.Add(match: new StubMatch(id: 100, matchDate: new DateTime(year: 2026, month: 6, day: 20), homeTeam: new StubTeam(), awayTeam: new StubTeam(), stadium: new StubStadium()));
+        _context.MatchRepository.Add(match: new StubMatch(id: 100, matchDate: new DateTime(year: 2026, month: 6, day: 20), homeTeam: new Team(3, "Team 3"), awayTeam: new Team(4, "Team 4"), stadium: new Stadium(2, "Stadium 2")));
 
         Assert.ThrowsException<MatchServicesException>(action: () => _context.Service.CreateMatch(request: NewEliminationRequest()));
     }
@@ -242,7 +242,7 @@ public class MatchServiceTest
     {
         _context.Service.CreateMatch(request: NewGroupRequest(id: 1));
 
-        var dto = _context.Service.UpdateMatch(matchId: 1, request: new UpdateMatchRequestDto { StadiumId = 30 });
+        MatchDto dto = _context.Service.UpdateMatch(matchId: 1, request: new UpdateMatchRequestDto { StadiumId = 30 });
 
         Assert.AreEqual(expected: 1, actual: dto.MatchId);
     }
@@ -313,7 +313,7 @@ public class MatchServiceTest
         _context.AddSourceEliminationMatches();
         _context.Service.CreateMatch(request: NewEliminationRequest(id: 2));
 
-        var result = _context.Service.GetByGroup(groupName: "A");
+        List<MatchDto> result = _context.Service.GetByGroup(groupName: "A");
 
         Assert.AreEqual(expected: 1, actual: result.Count);
         Assert.AreEqual(expected: 1, actual: result[index: 0].MatchId);
@@ -332,7 +332,7 @@ public class MatchServiceTest
         _context.AddSourceEliminationMatches();
         _context.Service.CreateMatch(request: NewEliminationRequest(id: 2));
 
-        var result = _context.Service.GetByJourney(journeyNumber: 1);
+        List<MatchDto> result = _context.Service.GetByJourney(journeyNumber: 1);
 
         Assert.AreEqual(expected: 1, actual: result.Count);
         Assert.AreEqual(expected: 1, actual: result[index: 0].MatchId);
@@ -344,7 +344,7 @@ public class MatchServiceTest
         _context.Service.CreateMatch(request: NewGroupRequest(id: 1, date: new DateTime(year: 2026, month: 6, day: 10)));
         _context.Service.CreateMatch(request: NewGroupRequest(id: 2, date: new DateTime(year: 2026, month: 7, day: 10)));
 
-        var result = _context.Service.GetByDateRange(from: new DateTime(year: 2026, month: 6, day: 1), to: new DateTime(year: 2026, month: 6, day: 30));
+        List<MatchDto>  result = _context.Service.GetByDateRange(from: new DateTime(year: 2026, month: 6, day: 1), to: new DateTime(year: 2026, month: 6, day: 30));
 
         Assert.AreEqual(expected: 1, actual: result.Count);
         Assert.AreEqual(expected: 1, actual: result[index: 0].MatchId);
@@ -385,7 +385,7 @@ public class MatchServiceTest
 
         _context.Service.AddGoal(matchId: 1, isHomeTeam: false);
 
-        var dto = _context.Service.GetById(matchId: 1);
+        MatchDto dto = _context.Service.GetById(matchId: 1);
         Assert.AreEqual(expected: 0, actual: dto.HomeGoals);
         Assert.AreEqual(expected: 1, actual: dto.AwayGoals);
     }
@@ -404,7 +404,7 @@ public class MatchServiceTest
 
         _context.Service.RemoveGoal(matchId: 1, isHomeTeam: true);
 
-        var dto = _context.Service.GetById(matchId: 1);
+        MatchDto dto = _context.Service.GetById(matchId: 1);
         Assert.AreEqual(expected: 0, actual: dto.HomeGoals);
     }
 
@@ -416,7 +416,7 @@ public class MatchServiceTest
 
         _context.Service.RemoveGoal(matchId: 1, isHomeTeam: false);
 
-        var dto = _context.Service.GetById(matchId: 1);
+        MatchDto dto = _context.Service.GetById(matchId: 1);
         Assert.AreEqual(expected: 0, actual: dto.AwayGoals);
     }
 

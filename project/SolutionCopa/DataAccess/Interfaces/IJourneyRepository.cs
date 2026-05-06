@@ -1,8 +1,8 @@
-using ProjectCopa.Interfaces;
+using ProjectCopa;
 
 namespace DataAccess.Interfaces;
 
 public interface IJourneyRepository
 {
-    IJourney? GetById(int journeyId);
+    Journey? GetById(int journeyId);
 }

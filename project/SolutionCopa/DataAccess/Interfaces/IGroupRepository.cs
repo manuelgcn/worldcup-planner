@@ -1,8 +1,8 @@
-using ProjectCopa.Interfaces;
+using ProjectCopa;
 
 namespace DataAccess.Interfaces;
 
 public interface IGroupRepository
 {
-    IGroup? GetById(int groupId);
+    Group? GetById(int groupId);
 }

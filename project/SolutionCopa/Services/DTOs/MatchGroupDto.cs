@@ -1,10 +1,10 @@
-using ProjectCopa.Interfaces;
+using ProjectCopa;
 
 namespace Services.DTOs;
 
 public sealed class MatchGroupDto
 {
-    public MatchGroupDto(int matchId, DateTime? matchDate, ITeam homeTeamId, ITeam awayTeamId, IStadium stadiumId, int homeGoals, int awayGoals, IGroup group, IJourney journey)
+    public MatchGroupDto(int matchId, DateTime? matchDate, Team homeTeamId, Team awayTeamId, Stadium stadiumId, int homeGoals, int awayGoals, Group group, Journey journey)
     {
         MatchId = matchId;
         MatchDate = matchDate;
@@ -20,14 +20,14 @@ public sealed class MatchGroupDto
     public int MatchId { get; init; }
 
     public DateTime? MatchDate { get; init; }
-    public ITeam HomeTeamId { get; init; }
-    public ITeam AwayTeamId { get; init; }
-    public IStadium StadiumId { get; init; }
+    public Team HomeTeamId { get; init; }
+    public Team AwayTeamId { get; init; }
+    public Stadium StadiumId { get; init; }
 
     public int HomeGoals { get; init; }
     public int AwayGoals { get; init; }
     
     
-    public IGroup Group { get; init; }
-    public IJourney Journey { get; init; }
+    public Group Group { get; init; }
+    public Journey Journey { get; init; }
 }
