@@ -1,7 +1,0 @@
-C:\Users\Tommy\Desktop\Diseño1\255503---330734---326829\project\SolutionCopa\DomainTest\bin\Release\net8.0\CoverletSourceRootsMapping_DomainTest
-C:\Users\Tommy\Desktop\Diseño1\255503---330734---326829\project\SolutionCopa\DomainTest\obj\Release\net8.0\DomainTest.csproj.AssemblyReference.cache
-C:\Users\Tommy\Desktop\Diseño1\255503---330734---326829\project\SolutionCopa\DomainTest\obj\Release\net8.0\DomainTest.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\Tommy\Desktop\Diseño1\255503---330734---326829\project\SolutionCopa\DomainTest\obj\Release\net8.0\DomainTest.AssemblyInfoInputs.cache
-C:\Users\Tommy\Desktop\Diseño1\255503---330734---326829\project\SolutionCopa\DomainTest\obj\Release\net8.0\DomainTest.AssemblyInfo.cs
-C:\Users\Tommy\Desktop\Diseño1\255503---330734---326829\project\SolutionCopa\DomainTest\obj\Release\net8.0\DomainTest.csproj.CoreCompileInputs.cache
-C:\Users\Tommy\Desktop\Diseño1\255503---330734---326829\project\SolutionCopa\DomainTest\obj\Release\net8.0\DomainTest.sourcelink.json
