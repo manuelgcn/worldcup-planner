@@ -474,6 +474,22 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
+    public void SetGoals_WithValidMatchId_UpdatesMatchScores()
+    {
+        // Arrange
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+
+        // Act
+        _context.Service.SetGoals(matchId: 1, homeGoals: 3, awayGoals: 2);
+
+        // Assert
+        MatchDto match = _context.Service.GetById(matchId: 1);
+        Assert.AreEqual(3, match.HomeGoals);
+        Assert.AreEqual(2, match.AwayGoals);
+    }
+
+    [TestMethod]
     [ExpectedException(typeof(MatchServicesException))]
     public void SetGoals_WithNonexistentMatch_ThrowsException()
     {
@@ -653,6 +669,4 @@ public sealed class MatchServiceTest
             awayTeam: awayTeam,
             stadium: stadium);
     }
-
-    
 }
