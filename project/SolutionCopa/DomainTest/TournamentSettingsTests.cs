@@ -67,7 +67,7 @@ public sealed class TournamentSettingsTests
     public void SettingsCanGetId()
     {
         // Arrange
-        var id = 10;
+        int id = 10;
 
         // Act
         var settings = CreateConfiguredSettings(id: id);

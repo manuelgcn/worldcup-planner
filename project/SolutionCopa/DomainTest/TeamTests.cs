@@ -63,7 +63,7 @@ public sealed class TeamTests
     {
         // Arrange
         const int rankingFifa = 2400;
-        var nombre = new string('A', 60);
+        string nombre = new string('A', 60);
         var equipo = new ProjectCopa.Team(nombre, rankingFifa, false, Confederation.CONMEBOL);
 
         // Assert
@@ -74,7 +74,7 @@ public sealed class TeamTests
     public void TeamCreationThrowsWhenNameExceedsSixtyCharacters()
     {
         const int rankingFifa = 2400;
-        var nombre = new string('A', 61);
+        string nombre = new string('A', 61);
         Assert.ThrowsException<ArgumentException>(() =>
         {
             _ = new ProjectCopa.Team(nombre, rankingFifa, false, Confederation.CONMEBOL);
