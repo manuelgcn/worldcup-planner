@@ -115,14 +115,12 @@ public sealed class MatchServiceTest
     }
     
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateMatch_WithNullRequest_ThrowsException()
     {
-        _context.Service.CreateMatch(request: null!);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request: null!));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateMatch_WithDuplicateId_ThrowsException()
     {
         // Arrange
@@ -130,111 +128,98 @@ public sealed class MatchServiceTest
         _context.Service.CreateMatch(request);
 
         // Act & Assert
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateMatch_WithNonexistentHomeTeam_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(homeTeamId: 999);
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateMatch_WithNonexistentAwayTeam_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(awayTeamId: 999);
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateMatch_WithNonexistentStadium_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(stadiumId: 999);
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateMatch_WithNonexistentChampionshipConfiguration_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(championshipConfigurationId: 999);
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
     
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateGroupMatch_WithMissingGroupId_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(groupId: null);
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateGroupMatch_WithNonexistentGroup_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(groupId: 999);
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateGroupMatch_WithMissingJourneyId_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(journeyId: null);
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateGroupMatch_WithNonexistentJourney_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(journeyId: 999);
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateEliminationMatch_WithMissingPhase_ThrowsException()
     {
         _context.AddSourceEliminationMatches();
         CreateMatchRequestDto request = BuildEliminationMatchRequest(phase: null);
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateEliminationMatch_WithMissingMatchCode_ThrowsException()
     {
         _context.AddSourceEliminationMatches();
         CreateMatchRequestDto request = BuildEliminationMatchRequest(matchCode: null);
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateEliminationMatch_WithMissingHomeSourceId_ThrowsException()
     {
         _context.AddSourceEliminationMatches();
         CreateMatchRequestDto request = BuildEliminationMatchRequest(matchHomeId: null);
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateEliminationMatch_WithMissingAwaySourceId_ThrowsException()
     {
         _context.AddSourceEliminationMatches();
         CreateMatchRequestDto request = BuildEliminationMatchRequest(matchAwayId: null);
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateEliminationMatch_WithNonexistentHomeSourceMatch_ThrowsException()
     {
         // Add only the away source match (ID 200)
@@ -245,11 +230,10 @@ public sealed class MatchServiceTest
             stadium: new Stadium("Stadium 1", "City 1", "None", 25000)));
 
         CreateMatchRequestDto request = BuildEliminationMatchRequest();
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void CreateEliminationMatch_WithNonexistentAwaySourceMatch_ThrowsException()
     {
         // Add only the home source match (ID 100)
@@ -260,14 +244,13 @@ public sealed class MatchServiceTest
             stadium: new Stadium("Stadium 2", "City 2", "None", 25000)));
 
         CreateMatchRequestDto request = BuildEliminationMatchRequest();
-        _context.Service.CreateMatch(request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void UpdateMatch_WithNullRequest_ThrowsException()
     {
-        _context.Service.UpdateMatch(matchId: 1, request: null!);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.UpdateMatch(matchId: 1, request: null!));
     }
 
     [TestMethod]
@@ -305,15 +288,13 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void UpdateMatch_WithNonexistentMatch_ThrowsException()
     {
         UpdateMatchRequestDto request = new UpdateMatchRequestDto();
-        _context.Service.UpdateMatch(matchId: 999, request);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.UpdateMatch(matchId: 999, request));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void UpdateMatch_WithNonexistentStadium_ThrowsException()
     {
         // Arrange
@@ -322,7 +303,7 @@ public sealed class MatchServiceTest
         UpdateMatchRequestDto updateRequest = new UpdateMatchRequestDto { StadiumId = 999 };
 
         // Act & Assert
-        _context.Service.UpdateMatch(matchId: 1, request: updateRequest);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.UpdateMatch(matchId: 1, request: updateRequest));
     }
 
     [TestMethod]
@@ -348,10 +329,9 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void DeleteMatch_WithNonexistentMatch_ThrowsException()
     {
-        _context.Service.DeleteMatch(matchId: 999);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.DeleteMatch(matchId: 999));
     }
 
     [TestMethod]
@@ -370,10 +350,9 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void GetMatchById_WithNonexistentMatch_ThrowsException()
     {
-        _context.Service.GetById(matchId: 999);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.GetById(matchId: 999));
     }
 
     [TestMethod]
@@ -397,10 +376,24 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
+    public void GetMatchesByGroup_WithGroupNameHavingNoMatches_ReturnsEmptyList()
+    {
+        // Arrange
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+
+        // Act
+        List<MatchDto> result = _context.Service.GetByGroup(groupName: "Z");
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(0, result.Count);
+    }
+
+    [TestMethod]
     public void GetMatchesByGroup_WithWhitespaceGroupName_ThrowsException()
     {
-        _context.Service.GetByGroup(groupName: "  ");
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.GetByGroup(groupName: "  "));
     }
 
     [TestMethod]
@@ -421,6 +414,21 @@ public sealed class MatchServiceTest
         Assert.IsNotNull(result);
         Assert.AreEqual(1, result.Count);
         Assert.AreEqual(1, result[0].MatchId);
+    }
+
+    [TestMethod]
+    public void GetMatchesByJourney_WithJourneyHavingNoMatches_ReturnsEmptyList()
+    {
+        // Arrange
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+
+        // Act
+        List<MatchDto> result = _context.Service.GetByJourney(journeyNumber: 999);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(0, result.Count);
     }
 
     [TestMethod]
@@ -449,13 +457,12 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void GetMatchesByDateRange_WithInvertedRange_ThrowsException()
     {
         DateTime from = new DateTime(year: 2026, month: 6, day: 30);
         DateTime to = new DateTime(year: 2026, month: 6, day: 1);
         
-        _context.Service.GetByDateRange(from, to);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.GetByDateRange(from, to));
     }
 
     [TestMethod]
@@ -490,10 +497,9 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void SetGoals_WithNonexistentMatch_ThrowsException()
     {
-        _context.Service.SetGoals(matchId: 999, homeGoals: 1, awayGoals: 1);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.SetGoals(matchId: 999, homeGoals: 1, awayGoals: 1));
     }
 
     [TestMethod]
@@ -513,6 +519,23 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
+    public void AddGoal_ForHomeTeam_UpdatesAndCommits()
+    {
+        // Arrange
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+        int initialUpdateCalls = _context.MatchRepository.UpdateCalls;
+        int initialCommitCalls = _context.UnitOfWork.CommitCalls;
+
+        // Act
+        _context.Service.AddGoal(matchId: 1, isHomeTeam: true);
+
+        // Assert
+        Assert.AreEqual(initialUpdateCalls + 1, _context.MatchRepository.UpdateCalls);
+        Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);
+    }
+
+    [TestMethod]
     public void AddGoal_ForAwayTeam_IncrementsAwayGoals()
     {
         // Arrange
@@ -529,10 +552,26 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
+    public void AddGoal_ForAwayTeam_UpdatesAndCommits()
+    {
+        // Arrange
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+        int initialUpdateCalls = _context.MatchRepository.UpdateCalls;
+        int initialCommitCalls = _context.UnitOfWork.CommitCalls;
+
+        // Act
+        _context.Service.AddGoal(matchId: 1, isHomeTeam: false);
+
+        // Assert
+        Assert.AreEqual(initialUpdateCalls + 1, _context.MatchRepository.UpdateCalls);
+        Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);
+    }
+
+    [TestMethod]
     public void AddGoal_WithNonexistentMatch_ThrowsException()
     {
-        _context.Service.AddGoal(matchId: 999, isHomeTeam: true);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.AddGoal(matchId: 999, isHomeTeam: true));
     }
 
     
@@ -556,6 +595,24 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
+    public void RemoveGoal_FromHomeTeam_UpdatesAndCommits()
+    {
+        // Arrange
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+        _context.Service.AddGoal(matchId: 1, isHomeTeam: true);
+        int initialUpdateCalls = _context.MatchRepository.UpdateCalls;
+        int initialCommitCalls = _context.UnitOfWork.CommitCalls;
+
+        // Act
+        _context.Service.RemoveGoal(matchId: 1, isHomeTeam: true);
+
+        // Assert
+        Assert.AreEqual(initialUpdateCalls + 1, _context.MatchRepository.UpdateCalls);
+        Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);
+    }
+
+    [TestMethod]
     public void RemoveGoal_FromAwayTeam_DecrementsAwayGoals()
     {
         // Arrange
@@ -572,10 +629,27 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
+    public void RemoveGoal_FromAwayTeam_UpdatesAndCommits()
+    {
+        // Arrange
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+        _context.Service.AddGoal(matchId: 1, isHomeTeam: false);
+        int initialUpdateCalls = _context.MatchRepository.UpdateCalls;
+        int initialCommitCalls = _context.UnitOfWork.CommitCalls;
+
+        // Act
+        _context.Service.RemoveGoal(matchId: 1, isHomeTeam: false);
+
+        // Assert
+        Assert.AreEqual(initialUpdateCalls + 1, _context.MatchRepository.UpdateCalls);
+        Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);
+    }
+
+    [TestMethod]
     public void RemoveGoal_WithNonexistentMatch_ThrowsException()
     {
-        _context.Service.RemoveGoal(matchId: 999, isHomeTeam: true);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.RemoveGoal(matchId: 999, isHomeTeam: true));
     }
 
     [TestMethod]
@@ -596,10 +670,9 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void PublishResult_WithNonexistentMatch_ThrowsException()
     {
-        _context.Service.PublishResult(matchId: 999);
+        Assert.ThrowsException<MatchServicesException>(() => _context.Service.PublishResult(matchId: 999));
     }
     
     private static CreateMatchRequestDto BuildGroupMatchRequest(
