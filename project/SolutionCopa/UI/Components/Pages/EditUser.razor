@@ -1,6 +1,8 @@
+
 @page "/edit-user"
-@inject SessionState Session
 @using Services
+@using UI
+@inject SessionState Session
 @inject UserServices UserServices
 @inject NavigationManager Nav
 
@@ -8,7 +10,7 @@
 
 <h3>Mi perfil</h3>
 
-@if (errors.Count > 0)
+@if (errors.Any())
 {
     <ul style="color:red">
         @foreach (string error in errors)
@@ -57,9 +59,7 @@ else
     private void LoadCurrentUser()
     {
         if (Session.CurrentUser is null)
-        {
             return;
-        }
 
         name = Session.CurrentUser.name;
         lastname = Session.CurrentUser.lastname ?? "";
@@ -71,24 +71,18 @@ else
         errors.Clear();
         successMessage = null;
 
-        if (Session.CurrentUser is null)
-        {
-            Nav.NavigateTo("/login");
+        if (!ValidateInput())
             return;
-        }
 
         try
         {
-            ValidateInput();
-
             UserServices.UpdateUser(
-                Session.CurrentUser.idUser,
+                Session.CurrentUser!.idUser,
                 name,
                 lastname,
                 email
             );
 
-            Session.Login(UserServices.GetUserById(Session.CurrentUser.idUser));
             successMessage = "Usuario actualizado correctamente";
         }
         catch (ArgumentException ex)
@@ -97,27 +91,20 @@ else
         }
     }
 
-    private void ValidateInput()
+    private bool ValidateInput()
     {
         if (string.IsNullOrWhiteSpace(name))
-        {
             errors.Add("Nombre es obligatorio");
-        }
 
         if (string.IsNullOrWhiteSpace(lastname))
-        {
             errors.Add("Apellido es obligatorio");
-        }
 
         if (string.IsNullOrWhiteSpace(email))
-        {
             errors.Add("Email es obligatorio");
-        }
+        else if (!email.Contains("@") || !email.Contains("."))
+            errors.Add("Email invalido");
 
-        if (errors.Count > 0)
-        {
-            throw new ArgumentException("Corrige los errores del formulario");
-        }
+        return !errors.Any();
     }
 
     private void GoToLogin()

@@ -1,4 +1,5 @@
 ﻿@using UI
+@implements IDisposable
 @inject SessionState Session
 
 <div class="top-row ps-3 navbar navbar-dark">
@@ -47,3 +48,15 @@
         }
     </nav>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Session.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        Session.OnChange -= StateHasChanged;
+    }
+}

@@ -48,6 +48,7 @@
             }
 
             Session.Login(user);
+            Nav.NavigateTo("/");
         }
         catch (ArgumentException ex)
         {
@@ -60,11 +61,6 @@
         if (string.IsNullOrWhiteSpace(email))
         {
             errors.Add("Email es obligatorio");
-        }
-
-        if (!string.IsNullOrWhiteSpace(email) && (!email.Contains("@") || !email.Contains(".")))
-        {
-            errors.Add("Email invalido");
         }
 
         if (string.IsNullOrWhiteSpace(password))
