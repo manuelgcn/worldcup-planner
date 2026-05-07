@@ -1,0 +1,117 @@
+
+@page "/stadiums/create"
+@using ProjectCopa
+@using Services
+@using UI
+@inject StadiumServices StadiumServices
+@inject SessionState Session
+@inject NavigationManager Nav
+
+<PageTitle>Crear Estadio</PageTitle>
+
+<h3>Crear Estadio</h3>
+
+@if (!Session.IsLoggedIn)
+{
+    <p>No estas logueado</p>
+    <button @onclick="GoToLogin">Ir a Login</button>
+}
+else if (!IsAdmin)
+{
+    <p>No tenes permisos para crear estadios</p>
+}
+else
+{
+    if (errors.Any())
+    {
+        <ul style="color:red">
+            @foreach (string error in errors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+    }
+
+    if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <p style="color:green">@successMessage</p>
+    }
+
+    <input placeholder="Nombre del estadio" @bind="name" />
+    <br />
+    <input placeholder="Ciudad" @bind="city" />
+    <br />
+    <input placeholder="Descripcion (opcional)" @bind="description" />
+    <br />
+    <input placeholder="Capacidad" type="number" @bind="capacity" />
+    <br />
+
+    <button @onclick="Create">Crear</button>
+}
+
+@code {
+    private string name = "";
+    private string city = "";
+    private string? description;
+    private int capacity;
+    private readonly List<string> errors = new();
+    private string? successMessage;
+
+    private bool IsAdmin =>
+        Session.CurrentUser!.Roles.Contains(UserRoles.Admin);
+
+    private void Create()
+    {
+        errors.Clear();
+        successMessage = null;
+
+        if (!ValidateInput())
+            return;
+
+        try
+        {
+            Stadium stadium = new Stadium(
+                name,
+                city,
+                description,
+                capacity
+            );
+
+            StadiumServices.AddStadium(stadium);
+
+            successMessage = "Estadio creado correctamente";
+            ClearForm();
+        }
+        catch (ArgumentException ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private bool ValidateInput()
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            errors.Add("El nombre es obligatorio");
+
+        if (string.IsNullOrWhiteSpace(city))
+            errors.Add("La ciudad es obligatoria");
+
+        if (capacity < 20000)
+            errors.Add("La capacidad debe ser al menos 20000");
+
+        return !errors.Any();
+    }
+
+    private void ClearForm()
+    {
+        name = "";
+        city = "";
+        description = null;
+        capacity = 0;
+    }
+
+    private void GoToLogin()
+    {
+        Nav.NavigateTo("/login");
+    }
+}
