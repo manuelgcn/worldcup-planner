@@ -1,0 +1,182 @@
+
+@page "/teams"
+@using ProjectCopa
+@using Services
+@using UI
+@inject TeamServices TeamServices
+@inject SessionState Session
+@inject NavigationManager Nav
+
+<PageTitle>Equipos</PageTitle>
+
+<h3>Equipos</h3>
+
+@if (!Session.IsLoggedIn)
+{
+    <p>No estas logueado</p>
+    <button @onclick="GoToLogin">Ir a Login</button>
+}
+else if (!IsAdmin)
+{
+    <p>No tenes permisos para administrar equipos</p>
+}
+else
+{
+    if (errors.Any())
+    {
+        <ul style="color:red">
+            @foreach (var error in errors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+    }
+
+    if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <p style="color:green">@successMessage</p>
+    }
+
+    <h4>Crear Equipo</h4>
+
+    <input placeholder="Nombre" @bind="nombre" />
+    <br />
+    <input placeholder="Ranking FIFA" type="number" @bind="rankingFifa" />
+    <br />
+    <select @bind="confederation">
+        @foreach (var c in Enum.GetValues<Confederation>())
+        {
+            <option value="@c">@c</option>
+        }
+    </select>
+    <br />
+
+    <button @onclick="Create">Crear</button>
+
+    <hr />
+
+    <h4>Equipos existentes</h4>
+
+    @if (!equipos.Any())
+    {
+        <p>No hay equipos cargados</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Ranking</th>
+                    <th>Confederación</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var equipo in equipos)
+                {
+                    <tr>
+                        <td>@equipo.Nombre</td>
+                        <td>@equipo.RankingFifa</td>
+                        <td>@equipo.Confederation</td>
+                        <td>
+                            <button @onclick="() => Remove(equipo.Nombre)">
+                                Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private string nombre = "";
+    private int rankingFifa;
+    private Confederation confederation;
+
+    private readonly List<string> errors = new();
+    private string? successMessage;
+
+    private IReadOnlyCollection<Team> equipos = Array.Empty<Team>();
+
+    private bool IsAdmin =>
+        Session.CurrentUser!.Roles.Contains(UserRoles.Admin);
+
+    protected override void OnInitialized()
+    {
+        LoadTeams();
+    }
+
+    private void LoadTeams()
+    {
+        equipos = TeamServices.ObtenerEquipos();
+    }
+
+    private void Create()
+    {
+        errors.Clear();
+        successMessage = null;
+
+        if (!ValidateInput())
+            return;
+
+        try
+        {
+            var equipo = new Team(nombre, rankingFifa, false, confederation);
+            TeamServices.AgregarEquipo(equipo);
+            successMessage = "Equipo creado correctamente";
+            ClearForm();
+            LoadTeams();
+        }
+        catch (InvalidOperationException ex)
+        {
+            errors.Add(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void Remove(string nombreEquipo)
+    {
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            TeamServices.EliminarEquipo(nombreEquipo);
+            successMessage = "Equipo eliminado correctamente";
+            LoadTeams();
+        }
+        catch (InvalidOperationException ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private bool ValidateInput()
+    {
+        if (string.IsNullOrWhiteSpace(nombre))
+            errors.Add("El nombre es obligatorio");
+
+        if (rankingFifa < 300 || rankingFifa > 2500)
+            errors.Add("El ranking FIFA debe estar entre 300 y 2500");
+
+        return !errors.Any();
+    }
+
+    private void ClearForm()
+    {
+        nombre = "";
+        rankingFifa = 0;
+        confederation = default;
+    }
+
+    private void GoToLogin()
+    {
+        Nav.NavigateTo("/login");
+    }
+}

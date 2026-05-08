@@ -8,8 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+
 builder.Services.AddSingleton<UserServices>();
 builder.Services.AddSingleton<StadiumServices>();
+builder.Services.AddSingleton<TeamServices>();
 builder.Services.AddScoped<SessionState>();
 
 var app = builder.Build();
