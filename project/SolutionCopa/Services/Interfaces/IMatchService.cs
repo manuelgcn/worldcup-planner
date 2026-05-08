@@ -15,4 +15,5 @@ public interface IMatchService
     void AddGoal(int matchId, bool isHomeTeam);
     void RemoveGoal(int matchId, bool isHomeTeam);
     void PublishResult(int matchId);
+    void SimulateMatch(int matchId);
 }

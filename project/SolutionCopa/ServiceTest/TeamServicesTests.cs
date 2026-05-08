@@ -44,7 +44,7 @@ public sealed class TeamServicesTests
     [TestMethod]
     public void CannotAddTeamWithLongName()
     {
-        var longName = new string('A', 61);
+        string longName = new string('A', 61);
 
         Assert.ThrowsException<ArgumentException>(() => new ProjectCopa.Team(longName, 2000, false, Confederation.CONMEBOL));
     }
@@ -162,18 +162,18 @@ public sealed class TeamServicesTests
     [TestMethod]
     public void FixtureOrderingWithSameSeedProducesSameOrderWhenRankingHasTies()
     {
-        var teams = new List<ProjectCopa.Team>();
+        List<Team> teams = new List<ProjectCopa.Team>();
 
         for (int i = 0; i < 48; i++)
         {
-            var ranking = 2500 - (i / 4) * 10;
+            int ranking = 2500 - (i / 4) * 10;
             var conf = (Confederation)(i % 6);
 
             teams.Add(new ProjectCopa.Team($"Team{i + 1}", ranking, false, conf));
         }
 
-        var firstOrder = _service.OrdenarParaFixture(teams, 2026).Select(t => t.Nombre).ToList();
-        var secondOrder = _service.OrdenarParaFixture(teams, 2026).Select(t => t.Nombre).ToList();
+        List<string> firstOrder = _service.OrdenarParaFixture(teams, 2026).Select(t => t.Nombre).ToList();
+        List<string> secondOrder = _service.OrdenarParaFixture(teams, 2026).Select(t => t.Nombre).ToList();
 
         Assert.AreEqual(48, firstOrder.Count);
         CollectionAssert.AreEqual(firstOrder, secondOrder);
