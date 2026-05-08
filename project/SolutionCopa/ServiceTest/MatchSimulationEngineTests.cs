@@ -68,6 +68,49 @@ public sealed class MatchSimulationEngineTests
     }
 
     [TestMethod]
+    public void Simulate_WithDifferentSeeds_GeneratesDifferentResults()
+    {
+        // Arrange
+        HashSet<string> results = new HashSet<string>();
+
+        // Act
+        for (int seed = 1; seed <= 20; seed++)
+        {
+            Match match = CreateMatch(1500, 1600);
+            _simulationEngine.Simulate(match, seed);
+
+            string result = string.Format("{0}-{1}", match.HomeGoals, match.AwayGoals);
+            results.Add(result);
+        }
+
+        // Assert
+        Assert.IsTrue(results.Count > 1);
+    }
+
+    [TestMethod]
+    public void Simulate_WithNullMatch_ThrowsArgumentNullException()
+    {
+        // Arrange
+
+        // Act & Assert
+        Assert.ThrowsException<ArgumentNullException>(() => _simulationEngine.Simulate(null!, 123));
+    }
+
+    [TestMethod]
+    public void Simulate_DoesNotGenerateAbsurdGoalCounts()
+    {
+        // Arrange
+        Match match = CreateMatch(2200, 400);
+
+        // Act
+        _simulationEngine.Simulate(match, 123);
+
+        // Assert
+        Assert.IsTrue(match.HomeGoals <= 15);
+        Assert.IsTrue(match.AwayGoals <= 15);
+    }
+
+    [TestMethod]
     public void Simulate_StrongerTeamWinsMoreOften()
     {
         // Arrange

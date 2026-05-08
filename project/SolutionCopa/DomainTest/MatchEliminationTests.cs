@@ -1,5 +1,6 @@
 using ProjectCopa;
 using ProjectCopa.Exceptions;
+using ServiceTest.TestDoubles.Fakes_Stubs;
 using Match = ProjectCopa.Match;
 
 namespace DomainTest;
@@ -21,7 +22,7 @@ public class MatchEliminationTests
         Team sourceAwayTeam = new Team(nombre: "SourceAway", rankingFifa: 900, esFicticio: true, confederation: Confederation.CONMEBOL);
         Stadium sourceStadium = new Stadium(name: "SourceStadium", city: "Test City", description: null, capacity: 50000);
 
-        return new TestMatch(matchId, MatchDate, sourceHomeTeam, sourceAwayTeam, sourceStadium);
+        return new MockMatch(matchId, MatchDate, sourceHomeTeam, sourceAwayTeam, sourceStadium);
     }
 
     private MatchElimination CreateValidMatchElimination(

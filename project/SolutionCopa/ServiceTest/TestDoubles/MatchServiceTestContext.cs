@@ -3,12 +3,14 @@ using ProjectCopa;
 using Services;
 using Services.DTOs;
 using ServiceTest.TestDoubles.Fakes_Stubs;
+using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest.TestDoubles;
 
 public sealed class MatchServiceTestContext
 {
     public MockMatchRepository MatchRepository { get; } = new();
+    public MockMatchSimulationEngine SimulationEngine { get; } = new();
     
     private readonly Dictionary<int, Team> _teams = new();
     private readonly Dictionary<int, Stadium> _stadiums = new();
@@ -59,7 +61,7 @@ public sealed class MatchServiceTestContext
             GroupRepository,
             JourneyRepository,
             TournamentSettingsRepository,
-            new MatchSimulationEngine(),
+            SimulationEngine,
             UnitOfWork);
     }
 
