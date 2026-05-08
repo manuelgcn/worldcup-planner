@@ -5,14 +5,14 @@ using ProjectCopa;
 namespace DataAccessTest;
 
 [TestClass]
-public class MatchRepositoryListTests
+public class MatchRepositoryTests
 {
-    private MatchRepositoryList _repository = null!;
+    private MatchRepository _repository = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        _repository = new MatchRepositoryList();
+        _repository = new MatchRepository();
     }
 
     [TestMethod]
@@ -184,7 +184,7 @@ public class MatchRepositoryListTests
         Team awayTeam = new Team(nombre: $"Team-{matchId}-A", rankingFifa: 900 + matchId, esFicticio: true, confederation: Confederation.CONMEBOL);
         Stadium stadium = new Stadium(name: $"Stadium-{matchId}", city: "Test City", description: null, capacity: 50000);
         Group group = new Group(name: groupName);
-        Journey journey = new Journey(number: journeyNumber);
+        Journey journey = Journey.CreateInstance(number: journeyNumber);
 
         return MatchGroup.CreateInstance(matchId, date, homeTeam, awayTeam, stadium, group, journey);
     }

@@ -14,6 +14,7 @@ public class MatchService(
     IJourneyRepository journeyRepository,
     ITournamentSettingsRepository tournamentSettingsRepository,
     IMatchSimulationEngine matchSimulationEngine,
+    IAuditLogService auditLogService,
     IUnitOfWork unitOfWork)
     : IMatchService
 {
@@ -46,6 +47,12 @@ public class MatchService(
 
         Match match = BuildMatch(request);
         matchRepository.Add(match);
+        auditLogService.Log(
+            action: AuditActions.CreateMatch,
+            details: $"MatchId={match.MatchId}",
+            tournamentSettingsId: request.TournamentSettingsId ?? 1,
+            affectedEntityType: nameof(Match),
+            affectedEntityId: match.MatchId);
         unitOfWork.Commit();
 
         return MapToDto(match);
@@ -170,7 +177,7 @@ public class MatchService(
         Team homeTeam = GetTeamOrThrow(request.HomeTeamId);
         Team awayTeam = GetTeamOrThrow(request.AwayTeamId);
         Stadium stadium = GetStadiumOrThrow(request.StadiumId);
-        TournamentSettings? tournamentSettings = GetTournamentSettingsOrNull(request.ChampionshipConfigurationId);
+        TournamentSettings? tournamentSettings = GetTournamentSettingsOrNull(request.TournamentSettingsId);
 
         if (request.IsElimination)
         {

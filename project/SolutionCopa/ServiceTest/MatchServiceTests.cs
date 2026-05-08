@@ -692,7 +692,7 @@ public sealed class MatchServiceTest
             HomeTeamId = homeTeamId,
             AwayTeamId = awayTeamId,
             StadiumId = stadiumId,
-            ChampionshipConfigurationId = championshipConfigurationId,
+            TournamentSettingsId = championshipConfigurationId,
             GroupId = groupId,
             JourneyId = journeyId
         };
@@ -720,7 +720,7 @@ public sealed class MatchServiceTest
             AwayTeamId = awayTeamId,
             StadiumId = stadiumId,
             IsElimination = true,
-            ChampionshipConfigurationId = championshipConfigurationId,
+            TournamentSettingsId = championshipConfigurationId,
             Phase = phase,
             MatchCode = matchCode,
             MatchHomeId = matchHomeId,

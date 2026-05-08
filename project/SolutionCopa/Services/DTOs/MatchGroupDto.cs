@@ -4,7 +4,7 @@ namespace Services.DTOs;
 
 public sealed class MatchGroupDto
 {
-    public MatchGroupDto(int matchId, DateTime? matchDate, Team homeTeamId, Team awayTeamId, Stadium stadiumId, int homeGoals, int awayGoals, Group group, Journey journey)
+    private MatchGroupDto(int matchId, DateTime? matchDate, Team homeTeamId, Team awayTeamId, Stadium stadiumId, int homeGoals, int awayGoals, Group group, Journey journey)
     {
         MatchId = matchId;
         MatchDate = matchDate;
@@ -15,6 +15,11 @@ public sealed class MatchGroupDto
         AwayGoals = awayGoals;
         Group = group;
         Journey = journey;
+    }
+
+    public static MatchGroupDto CreateInstance(int matchId, DateTime? matchDate, Team homeTeamId, Team awayTeamId, Stadium stadiumId, int homeGoals, int awayGoals, Group group, Journey journey)
+    {
+        return new MatchGroupDto(matchId, matchDate, homeTeamId, awayTeamId, stadiumId, homeGoals, awayGoals, group, journey);
     }
 
     public int MatchId { get; init; }

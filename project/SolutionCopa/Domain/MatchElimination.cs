@@ -1,5 +1,4 @@
 using ProjectCopa.Exceptions;
-using ProjectCopa.Interfaces;
 
 namespace ProjectCopa;
 

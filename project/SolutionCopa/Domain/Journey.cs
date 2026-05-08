@@ -1,13 +1,16 @@
-using ProjectCopa.Interfaces;
-
 namespace ProjectCopa;
 
-public class Journey : IJourney
+public class Journey
 {
     public int Number { get; }
 
-    public Journey(int number = 0)
+    private Journey(int number = 0)
     {
         Number = number;
+    }
+
+    public static Journey CreateInstance(int number = 0)
+    {
+        return new Journey(number);
     }
 }

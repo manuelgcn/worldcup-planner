@@ -9,7 +9,7 @@ public sealed class CreateMatchRequestDto
     public int HomeTeamId { get; init; }
     public int AwayTeamId { get; init; }
     public int StadiumId { get; init; }
-    public int? ChampionshipConfigurationId { get; init; }
+    public int? TournamentSettingsId { get; init; }
 
     public bool IsElimination { get; init; }
     public int? GroupId { get; init; }

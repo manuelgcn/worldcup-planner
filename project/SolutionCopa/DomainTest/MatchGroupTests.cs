@@ -45,7 +45,7 @@ public class MatchGroupTests
         _awayTeam = new Team(nombre: "Team B", rankingFifa: 900, esFicticio: true, confederation: Confederation.CONMEBOL);
         _stadium = new Stadium(name: "Test Stadium", city: "Test City", description: "A test stadium", capacity: 50000);
         _group = new Group(name: "A");
-        _journey = new Journey(number: 1);
+        _journey = Journey.CreateInstance(number: 1);
         _tournamentSettings = new TournamentSettings();
     }
 

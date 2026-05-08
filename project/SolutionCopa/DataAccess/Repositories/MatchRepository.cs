@@ -3,9 +3,9 @@ using ProjectCopa;
 
 namespace DataAccess.Repositories;
 
-public class MatchRepositoryList : IMatchRepository
+public class MatchRepository : IMatchRepository
 {
-    private readonly List<Match> _matches = new();
+    private readonly List<Match> _matches = new List<Match>();
 
     public bool ExistsById(int matchId)
     {

@@ -9,32 +9,46 @@ namespace ServiceTest.TestDoubles;
 
 public sealed class MatchServiceTestContext
 {
-    public MockMatchRepository MatchRepository { get; } = new();
-    public MockMatchSimulationEngine SimulationEngine { get; } = new();
     
     private readonly Dictionary<int, Team> _teams = new();
     private readonly Dictionary<int, Stadium> _stadiums = new();
     private readonly Dictionary<int, Group> _groups = new();
     private readonly Dictionary<int, Journey> _journeys = new();
     private readonly Dictionary<int, TournamentSettings> _tournamentSettings = new();
+    private readonly List<AuditLog> _auditLog = new();
 
-    private ITeamRepository TeamRepository { get; }
-    private IStadiumRepository StadiumRepository { get; }
-    private IGroupRepository GroupRepository { get; }
-    private IJourneyRepository JourneyRepository { get; }
-    private ITournamentSettingsRepository TournamentSettingsRepository { get; }
-
+    private ITeamRepository TeamRepository { get; set; } = null!;
+    private IStadiumRepository StadiumRepository { get; set; } = null!;
+    private IGroupRepository GroupRepository { get; set; } = null!;
+    private IJourneyRepository JourneyRepository { get; set; } = null!;
+    private ITournamentSettingsRepository TournamentSettingsRepository { get; set; } = null!;
+    private IAuditLogRepository AuditLogRepository { get; set; } = null!;
+    
+    public MockMatchRepository MatchRepository { get; } = new();
+    public MockMatchSimulationEngine SimulationEngine { get; } = new();
     public MockUnitOfWork UnitOfWork { get; } = new();
-    public MatchService Service { get; }
+
+    private AuditLogService AuditLogService { get; set; } = null!;
+    public MatchService Service { get; set; } = null!;
 
     public MatchServiceTestContext()
     {
-        // Setup test data
+        SeedData();
+        BuildRepositories();
+        BuildServices();
+    }
+    
+    private void SeedData()
+    {
         _teams[10] = new Team("Home Team", 1500, false, Confederation.CONCACAF);
         _teams[20] = new Team("Away Team", 1600, false, Confederation.UEFA);
+
         _stadiums[30] = new Stadium("Main Stadium", "Main City", "None", 25000);
+
         _groups[40] = new Group("A");
-        _journeys[50] = new Journey(1);
+
+        _journeys[50] = Journey.CreateInstance(1);
+
         TournamentSettings defaultSettings = new TournamentSettings(
             1,
             new DateTime(2026, 6, 1),
@@ -44,15 +58,29 @@ public sealed class MatchServiceTestContext
             456,
             789,
             999);
+
         _tournamentSettings[1] = defaultSettings;
         _tournamentSettings[60] = defaultSettings;
-
-        // Create simple repository adapters
+    }
+    
+    private void BuildRepositories()
+    {
         TeamRepository = new SimpleTeamRepository(_teams);
+
         StadiumRepository = new SimpleStadiumRepository(_stadiums);
+
         GroupRepository = new SimpleGroupRepository(_groups);
+
         JourneyRepository = new SimpleJourneyRepository(_journeys);
+
         TournamentSettingsRepository = new SimpleTournamentSettingsRepository(_tournamentSettings);
+
+        AuditLogRepository = new SimpleAuditLogRepository(_auditLog);
+    }
+    
+    private void BuildServices()
+    {
+        AuditLogService = new AuditLogService(AuditLogRepository);
 
         Service = new MatchService(
             MatchRepository,
@@ -62,6 +90,7 @@ public sealed class MatchServiceTestContext
             JourneyRepository,
             TournamentSettingsRepository,
             SimulationEngine,
+            AuditLogService,
             UnitOfWork);
     }
 
@@ -105,6 +134,19 @@ public sealed class MatchServiceTestContext
             return settings.GetValueOrDefault(tournamentSettingsId);
         }
     }
+    
+    private sealed class SimpleAuditLogRepository(List<AuditLog> auditLogs) : IAuditLogRepository
+    {
+        public void Add(AuditLog auditLog)
+        {
+            auditLogs.Add(auditLog);
+        }
+
+        public List<AuditLog> GetAll()
+        {
+            return auditLogs;
+        }
+    }
 
     public static CreateMatchRequestDto NewGroupMatchRequest(int id = 1)
     {
@@ -130,7 +172,7 @@ public sealed class MatchServiceTestContext
             AwayTeamId = 20,
             StadiumId = 30,
             IsElimination = true,
-            ChampionshipConfigurationId = 60,
+            TournamentSettingsId = 60,
             Phase = Phase.RoundOf16,
             MatchCode = "A1",
             MatchHomeId = 100,
