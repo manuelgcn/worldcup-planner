@@ -1,19 +1,19 @@
 using ProjectCopa;
 
-namespace DomainTest;
+namespace DomainTest.TestDoubles;
 
-public sealed class TestMatch : Match
+public sealed class MockMatch : Match
 {
-    public TestMatch()
+    public MockMatch()
     {
     }
 
-    public TestMatch(int id, DateTime matchDate, Team homeTeam, Team awayTeam, Stadium stadium)
+    public MockMatch(int id, DateTime matchDate, Team homeTeam, Team awayTeam, Stadium stadium)
         : base(id, matchDate, homeTeam, awayTeam, stadium)
     {
     }
 
-    public TestMatch(
+    public MockMatch(
         int id,
         DateTime matchDate,
         Team homeTeam,

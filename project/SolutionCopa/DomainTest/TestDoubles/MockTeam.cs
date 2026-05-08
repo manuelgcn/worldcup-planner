@@ -2,12 +2,12 @@ using ProjectCopa.Interfaces;
 
 namespace DomainTest.TestDoubles;
 
-public class StubTeam : ITeam
+public class MockTeam : ITeam
 {
     public int TeamId { get; }
     public string Name { get; }
 
-    public StubTeam(int teamId = 1, string name = "Team")
+    public MockTeam(int teamId = 1, string name = "Team")
     {
         TeamId = teamId;
         Name = name;

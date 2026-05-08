@@ -2,11 +2,11 @@ using ProjectCopa.Interfaces;
 
 namespace DomainTest.TestDoubles;
 
-public class StubJourney : IJourney
+public class MockJourney : IJourney
 {
     public int Number { get; }
 
-    public StubJourney(int number = 1)
+    public MockJourney(int number = 1)
     {
         Number = number;
     }

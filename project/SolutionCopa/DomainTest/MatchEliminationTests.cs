@@ -1,6 +1,6 @@
 using ProjectCopa;
 using ProjectCopa.Exceptions;
-using ServiceTest.TestDoubles.Fakes_Stubs;
+using DomainTest.TestDoubles;
 using Match = ProjectCopa.Match;
 
 namespace DomainTest;

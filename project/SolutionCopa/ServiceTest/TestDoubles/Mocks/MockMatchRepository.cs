@@ -3,7 +3,7 @@ using ProjectCopa;
 using System;
 using System.Collections.Generic;
 
-namespace ServiceTest.TestDoubles.Fakes_Stubs;
+namespace ServiceTest.TestDoubles.Mocks;
 
 public sealed class MockMatchRepository : IMatchRepository
 {

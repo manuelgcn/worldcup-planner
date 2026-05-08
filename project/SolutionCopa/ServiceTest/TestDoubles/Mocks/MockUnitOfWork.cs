@@ -1,6 +1,6 @@
 using DataAccess.Interfaces;
 
-namespace ServiceTest.TestDoubles.Fakes_Stubs;
+namespace ServiceTest.TestDoubles.Mocks;
 
 public sealed class MockUnitOfWork : IUnitOfWork
 {
