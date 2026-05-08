@@ -45,46 +45,23 @@ public sealed class MatchSimulationEngineTests
     }
 
     [TestMethod]
-    public void Simulate_UpdatesMatchScore()
+    public void Simulate_GeneratesMultiplePossibleScores()
     {
         // Arrange
-        bool scoreChanged = false;
+        HashSet<string> generatedScores = [];
 
         // Act
-        for (int seed = 1; seed <= 200; seed++)
+        for (int seed = 1; seed <= 100; seed++)
         {
-            Match match = CreateMatch(2200, 400);
+            Match match = CreateMatch(1500, 1500);
+
             _simulationEngine.Simulate(match, seed);
 
-            if (match.HomeGoals > 0 || match.AwayGoals > 0)
-            {
-                scoreChanged = true;
-                break;
-            }
+            generatedScores.Add($"{match.HomeGoals}-{match.AwayGoals}");
         }
 
         // Assert
-        Assert.IsTrue(scoreChanged);
-    }
-
-    [TestMethod]
-    public void Simulate_WithDifferentSeeds_GeneratesDifferentResults()
-    {
-        // Arrange
-        HashSet<string> results = new HashSet<string>();
-
-        // Act
-        for (int seed = 1; seed <= 20; seed++)
-        {
-            Match match = CreateMatch(1500, 1600);
-            _simulationEngine.Simulate(match, seed);
-
-            string result = string.Format("{0}-{1}", match.HomeGoals, match.AwayGoals);
-            results.Add(result);
-        }
-
-        // Assert
-        Assert.IsTrue(results.Count > 1);
+        Assert.IsTrue(generatedScores.Count >= 5);
     }
 
     [TestMethod]
@@ -139,6 +116,94 @@ public sealed class MatchSimulationEngineTests
 
         // Assert
         Assert.IsTrue(strongTeamWins > weakTeamWins);
+    }
+    
+    [TestMethod]
+    public void Simulate_WithVeryWeakTeam_UsesMinimumScoringChance()
+    {
+        // Arrange
+        Match match = CreateMatch(300, 2500);
+
+        // Act
+        _simulationEngine.Simulate(match, 123);
+
+        // Assert
+        Assert.IsTrue(match.HomeGoals >= 0);
+        Assert.IsTrue(match.AwayGoals >= 0);
+    }
+
+    [TestMethod]
+    public void Simulate_WithEqualRankings_GeneratesValidResult()
+    {
+        // Arrange
+        Match match = CreateMatch(1500, 1500);
+
+        // Act
+        _simulationEngine.Simulate(match, 456);
+
+        // Assert
+        Assert.IsTrue(match.HomeGoals >= 0);
+        Assert.IsTrue(match.AwayGoals >= 0);
+    }
+
+    [TestMethod]
+    public void Simulate_WithExtremeRankingDifference_FavorsStrongTeam()
+    {
+        // Arrange
+        int strongTeamVictories = 0;
+
+        // Act
+        for (int seed = 1; seed <= 500; seed++)
+        {
+            Match match = CreateMatch(2500, 300);
+
+            _simulationEngine.Simulate(match, seed);
+
+            if (match.HasHomeTeamWon())
+            {
+                strongTeamVictories++;
+            }
+        }
+
+        // Assert
+        Assert.IsTrue(strongTeamVictories > 300);
+    }
+
+    [TestMethod]
+    public void Simulate_WithVeryStrongAwayTeam_FavorsAwayTeam()
+    {
+        // Arrange
+        int awayTeamVictories = 0;
+
+        // Act
+        for (int seed = 1; seed <= 500; seed++)
+        {
+            Match match = CreateMatch(300, 2500);
+
+            _simulationEngine.Simulate(match, seed);
+
+            if (match.HasAwayTeamWon())
+            {
+                awayTeamVictories++;
+            }
+        }
+
+        // Assert
+        Assert.IsTrue(awayTeamVictories > 300);
+    }
+
+    [TestMethod]
+    public void Simulate_NeverExceedsMaximumGoals()
+    {
+        // Arrange
+        Match match = CreateMatch(2500, 300);
+
+        // Act
+        _simulationEngine.Simulate(match, 999);
+
+        // Assert
+        Assert.IsTrue(match.HomeGoals <= 15);
+        Assert.IsTrue(match.AwayGoals <= 15);
     }
 
     private static Match CreateMatch(int homeRanking, int awayRanking)

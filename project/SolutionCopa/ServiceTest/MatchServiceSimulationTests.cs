@@ -14,7 +14,7 @@ public sealed class MatchServiceSimulationTests
     public void TestInitialize()
     {
         _context = new MatchServiceTestContext();
-        _createMatchRequest = _context.NewGroupMatchRequest(id: 1);
+        _createMatchRequest = MatchServiceTestContext.NewGroupMatchRequest(id: 1);
     }
 
     [TestMethod]

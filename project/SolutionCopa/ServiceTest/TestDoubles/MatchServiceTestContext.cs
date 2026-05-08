@@ -106,7 +106,7 @@ public sealed class MatchServiceTestContext
         }
     }
 
-    public CreateMatchRequestDto NewGroupMatchRequest(int id = 1)
+    public static CreateMatchRequestDto NewGroupMatchRequest(int id = 1)
     {
         return new CreateMatchRequestDto
         {
@@ -120,7 +120,7 @@ public sealed class MatchServiceTestContext
         };
     }
 
-    public CreateMatchRequestDto NewEliminationMatchRequest(int id = 2)
+    public static CreateMatchRequestDto NewEliminationMatchRequest(int id = 2)
     {
         return new CreateMatchRequestDto
         {

@@ -6,8 +6,9 @@ namespace Services;
 public class MatchSimulationEngine : IMatchSimulationEngine
 {
     private const int MaxGoals = 15;
+    private const double GoalDecayFactor = 0.75;
     private const double BaseScoringChance = 0.25;
-    private const double RankingWeightFactor = 0.0002;
+    private const double RankingWeightFactor = 0.0003;
     private const double MinimumScoringChance = 0.10;
     private const double MaximumScoringChance = 0.80;
     private const string HomeTeamRequiredMessage = "Home team is required for simulation.";
@@ -39,9 +40,9 @@ public class MatchSimulationEngine : IMatchSimulationEngine
         {
             goals++;
 
-            currentChance *= 0.75;
+            currentChance *= GoalDecayFactor;
 
-            if (currentChance < 0.01)
+            if (currentChance < MinimumScoringChance)
             {
                 break;
             }
