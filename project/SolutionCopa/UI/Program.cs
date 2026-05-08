@@ -1,6 +1,7 @@
 using Services;
 using UI;
 using UI.Components;
+using ProjectCopa;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddSingleton<UserServices>();
+builder.Services.AddSingleton<StadiumServices>();
 builder.Services.AddScoped<SessionState>();
 
 var app = builder.Build();
@@ -22,6 +24,20 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
+
+var userServices = app.Services.GetRequiredService<UserServices>();
+
+User admin = new User(
+    1,
+    "Admin",
+    "Sistema",
+    "admin@copa.com",
+    "Admin@123",
+    new DateTime(1990, 1, 1)
+);
+
+admin.AddRole(UserRoles.Admin);
+userServices.AddUser(admin);
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
