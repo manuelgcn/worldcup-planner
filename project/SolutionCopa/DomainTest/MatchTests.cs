@@ -1,6 +1,6 @@
-using DomainTest.TestDoubles;
 using ProjectCopa;
 using ProjectCopa.Exceptions;
+using DomainTest.TestDoubles;
 using Match = ProjectCopa.Match;
 
 namespace DomainTest;
@@ -17,7 +17,7 @@ public class MatchTests
 
     private Match CreateMatchWithData()
     {
-        return new TestMatch(1, MatchDate, _homeTeam, _awayTeam, _stadium);
+        return new MockMatch(1, MatchDate, _homeTeam, _awayTeam, _stadium);
     }
 
     [TestInitialize]
@@ -26,7 +26,7 @@ public class MatchTests
         _homeTeam = new Team(nombre: "Home Team", rankingFifa: 1000, esFicticio: true, confederation: Confederation.CONMEBOL);
         _awayTeam = new Team(nombre: "Away Team", rankingFifa: 900, esFicticio: true, confederation: Confederation.UEFA);
         _stadium = new Stadium(name: "Test Stadium", city: "Test City", description: "A test stadium", capacity: 50000);
-        _match = new TestMatch();
+        _match = new MockMatch();
     }
 
     [TestMethod]
@@ -96,7 +96,7 @@ public class MatchTests
         Team sameTeam = new Team(nombre: "Same Team", rankingFifa: 800, esFicticio: true, confederation: Confederation.CONMEBOL);
 
         Assert.ThrowsException<MatchException>(() =>
-            new TestMatch(1, MatchDate, sameTeam, sameTeam, _stadium));
+            new MockMatch(1, MatchDate, sameTeam, sameTeam, _stadium));
     }
 
     [TestMethod]
@@ -106,14 +106,14 @@ public class MatchTests
         var invalidDate = MatchDate.AddDays(-1);
 
         Assert.ThrowsException<MatchException>(() =>
-            new TestMatch(1, invalidDate, _homeTeam, _awayTeam, _stadium, tournamentSettings));
+            new MockMatch(1, invalidDate, _homeTeam, _awayTeam, _stadium, tournamentSettings));
     }
 
     [TestMethod]
     public void MatchRejectsNullChampionshipConfiguration()
     {
         Assert.ThrowsException<MatchException>(() =>
-            new TestMatch(1, MatchDate, _homeTeam, _awayTeam, _stadium, null!));
+            new MockMatch(1, MatchDate, _homeTeam, _awayTeam, _stadium, null!));
     }
 
     [TestMethod]
@@ -122,7 +122,7 @@ public class MatchTests
         DateTime validDate = new(2026, 6, 21);
         TournamentSettings tournamentSettings = new TournamentSettings();
 
-        _match = new TestMatch(1, validDate, _homeTeam, _awayTeam, _stadium, tournamentSettings);
+        _match = new MockMatch(1, validDate, _homeTeam, _awayTeam, _stadium, tournamentSettings);
 
         Assert.AreEqual(validDate, _match.MatchDate);
     }
@@ -131,7 +131,7 @@ public class MatchTests
     public void MatchRejectsNullStadium()
     {
         Assert.ThrowsException<MatchException>(() =>
-            new TestMatch(1, MatchDate, _homeTeam, _awayTeam, null!));
+            new MockMatch(1, MatchDate, _homeTeam, _awayTeam, null!));
     }
 
     [TestMethod]
@@ -188,7 +188,7 @@ public class MatchTests
         var invalidDate = MatchDate.AddDays(-1);
 
         Assert.ThrowsException<MatchException>(() =>
-            new TestMatch(1, invalidDate, _homeTeam, _awayTeam, _stadium));
+            new MockMatch(1, invalidDate, _homeTeam, _awayTeam, _stadium));
     }
 
     [TestMethod]
