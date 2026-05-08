@@ -33,7 +33,7 @@ public sealed class MatchServiceTestContext
         _stadiums[30] = new Stadium("Main Stadium", "Main City", "None", 25000);
         _groups[40] = new Group("A");
         _journeys[50] = new Journey(1);
-        _tournamentSettings[60] = new TournamentSettings(
+        TournamentSettings defaultSettings = new TournamentSettings(
             1,
             new DateTime(2026, 6, 1),
             3,
@@ -42,6 +42,8 @@ public sealed class MatchServiceTestContext
             456,
             789,
             999);
+        _tournamentSettings[1] = defaultSettings;
+        _tournamentSettings[60] = defaultSettings;
 
         // Create simple repository adapters
         TeamRepository = new SimpleTeamRepository(_teams);
@@ -57,6 +59,7 @@ public sealed class MatchServiceTestContext
             GroupRepository,
             JourneyRepository,
             TournamentSettingsRepository,
+            new MatchSimulationEngine(),
             UnitOfWork);
     }
 

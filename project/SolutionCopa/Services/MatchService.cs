@@ -13,16 +13,35 @@ public class MatchService(
     IGroupRepository groupRepository,
     IJourneyRepository journeyRepository,
     ITournamentSettingsRepository tournamentSettingsRepository,
+    IMatchSimulationEngine matchSimulationEngine,
     IUnitOfWork unitOfWork)
     : IMatchService
 {
+    private const int SimulationTournamentSettingsId = 1;
+    private const string MatchIdAlreadyExistsMessage = "Match ID already exists";
+    private const string GroupNameRequiredMessage = "Group name is required";
+    private const string FromMustBeLessOrEqualToMessage = "'from' must be less than or equal to 'to'";
+    private const string PhaseRequiredMessage = "Phase is required";
+    private const string MatchCodeRequiredMessage = "MatchCode is required";
+    private const string MatchHomeIdRequiredMessage = "MatchHomeId is required";
+    private const string MatchAwayIdRequiredMessage = "MatchAwayId is required";
+    private const string GroupIdRequiredMessage = "GroupId is required";
+    private const string JourneyIdRequiredMessage = "JourneyId is required";
+    private const string MatchNotFoundMessage = "Match not found";
+    private const string TeamNotFoundMessage = "Team not found";
+    private const string StadiumNotFoundMessage = "Stadium not found";
+    private const string GroupNotFoundMessage = "Group not found";
+    private const string JourneyNotFoundMessage = "Journey not found";
+    private const string TournamentSettingsNotFoundMessage = "Tournament settings not found";
+    private const string ValueRequiredMessage = "Value is required";
+
     public MatchDto CreateMatch(CreateMatchRequestDto request)
     {
         ValidateRequired(request);
 
         if (matchRepository.ExistsById(request.MatchId))
         {
-            throw new MatchServicesException("Match ID already exists");
+            throw new MatchServicesException(MatchIdAlreadyExistsMessage);
         }
 
         Match match = BuildMatch(request);
@@ -40,7 +59,7 @@ public class MatchService(
 
         if (request.StadiumId.HasValue)
         {
-            var stadium = GetStadiumOrThrow(request.StadiumId.Value);
+            Stadium stadium = GetStadiumOrThrow(request.StadiumId.Value);
             match.ChangeStadium(stadium);
         }
 
@@ -66,7 +85,7 @@ public class MatchService(
     {
         if (string.IsNullOrWhiteSpace(groupName))
         {
-            throw new MatchServicesException("Group name is required");
+            throw new MatchServicesException(GroupNameRequiredMessage);
         }
 
         return matchRepository.GetByGroup(groupName).Select(MapToDto).ToList();
@@ -81,7 +100,7 @@ public class MatchService(
     {
         if (from > to)
         {
-            throw new MatchServicesException("'from' must be less than or equal to 'to'");
+            throw new MatchServicesException(FromMustBeLessOrEqualToMessage);
         }
 
         return matchRepository.GetByDateRange(from, to).Select(MapToDto).ToList();
@@ -89,7 +108,7 @@ public class MatchService(
 
     public void SetGoals(int matchId, int homeGoals, int awayGoals)
     {
-        var match = GetMatchOrThrow(matchId);
+        Match match = GetMatchOrThrow(matchId);
         match.SetGoals(homeGoals, awayGoals);
         matchRepository.Update(match);
         unitOfWork.Commit();
@@ -131,7 +150,17 @@ public class MatchService(
 
     public void PublishResult(int matchId)
     {
-        var match = GetMatchOrThrow(matchId);
+        Match match = GetMatchOrThrow(matchId);
+        matchRepository.Update(match);
+        unitOfWork.Commit();
+    }
+
+    public void SimulateMatch(int matchId)
+    {
+        Match match = GetMatchOrThrow(matchId);
+        TournamentSettings tournamentSettings = GetSimulationTournamentSettingsOrThrow();
+
+        matchSimulationEngine.Simulate(match, tournamentSettings.SimulationSeed);
         matchRepository.Update(match);
         unitOfWork.Commit();
     }
@@ -145,10 +174,10 @@ public class MatchService(
 
         if (request.IsElimination)
         {
-            Phase phase = request.Phase ?? throw new MatchServicesException("Phase is required");
-            string matchCode = request.MatchCode ?? throw new MatchServicesException("MatchCode is required");
-            int sourceHomeId = request.MatchHomeId ?? throw new MatchServicesException("MatchHomeId is required");
-            int sourceAwayId = request.MatchAwayId ?? throw new MatchServicesException("MatchAwayId is required");
+            Phase phase = request.Phase ?? throw new MatchServicesException(PhaseRequiredMessage);
+            string matchCode = request.MatchCode ?? throw new MatchServicesException(MatchCodeRequiredMessage);
+            int sourceHomeId = request.MatchHomeId ?? throw new MatchServicesException(MatchHomeIdRequiredMessage);
+            int sourceAwayId = request.MatchAwayId ?? throw new MatchServicesException(MatchAwayIdRequiredMessage);
             Match sourceHome = GetMatchOrThrow(sourceHomeId);
             Match sourceAway = GetMatchOrThrow(sourceAwayId);
 
@@ -179,8 +208,8 @@ public class MatchService(
                 sourceAway);
         }
 
-        int groupId = request.GroupId ?? throw new MatchServicesException("GroupId is required");
-        int journeyId = request.JourneyId ?? throw new MatchServicesException("JourneyId is required");
+        int groupId = request.GroupId ?? throw new MatchServicesException(GroupIdRequiredMessage);
+        int journeyId = request.JourneyId ?? throw new MatchServicesException(JourneyIdRequiredMessage);
         Group group = GetGroupOrThrow(groupId);
         Journey journey = GetJourneyOrThrow(journeyId);
 
@@ -218,27 +247,27 @@ public class MatchService(
 
     private Match GetMatchOrThrow(int matchId)
     {
-        return matchRepository.GetById(matchId) ?? throw new MatchServicesException("Match not found");
+        return matchRepository.GetById(matchId) ?? throw new MatchServicesException(MatchNotFoundMessage);
     }
 
     private Team GetTeamOrThrow(int teamId)
     {
-        return teamRepository.GetById(teamId) ?? throw new MatchServicesException("Team not found");
+        return teamRepository.GetById(teamId) ?? throw new MatchServicesException(TeamNotFoundMessage);
     }
 
     private Stadium GetStadiumOrThrow(int stadiumId)
     {
-        return stadiumRepository.GetById(stadiumId) ?? throw new MatchServicesException("Stadium not found");
+        return stadiumRepository.GetById(stadiumId) ?? throw new MatchServicesException(StadiumNotFoundMessage);
     }
 
     private Group GetGroupOrThrow(int groupId)
     {
-        return groupRepository.GetById(groupId) ?? throw new MatchServicesException("Group not found");
+        return groupRepository.GetById(groupId) ?? throw new MatchServicesException(GroupNotFoundMessage);
     }
 
     private Journey GetJourneyOrThrow(int journeyId)
     {
-        return journeyRepository.GetById(journeyId) ?? throw new MatchServicesException("Journey not found");
+        return journeyRepository.GetById(journeyId) ?? throw new MatchServicesException(JourneyNotFoundMessage);
     }
 
     private TournamentSettings? GetTournamentSettingsOrNull(int? tournamentSettingsId)
@@ -248,15 +277,25 @@ public class MatchService(
             return null;
         }
 
-        return tournamentSettingsRepository.GetById(tournamentSettingsId.Value)
-               ?? throw new MatchServicesException("Tournament settings not found");
+        return GetTournamentSettingsOrThrow(tournamentSettingsId.Value);
+    }
+
+    private TournamentSettings GetSimulationTournamentSettingsOrThrow()
+    {
+        return GetTournamentSettingsOrThrow(SimulationTournamentSettingsId);
+    }
+
+    private TournamentSettings GetTournamentSettingsOrThrow(int tournamentSettingsId)
+    {
+        return tournamentSettingsRepository.GetById(tournamentSettingsId)
+               ?? throw new MatchServicesException(TournamentSettingsNotFoundMessage);
     }
 
     private static void ValidateRequired(object? value)
     {
         if (value == null)
         {
-            throw new MatchServicesException("Value is required");
+            throw new MatchServicesException(ValueRequiredMessage);
         }
     }
 }
