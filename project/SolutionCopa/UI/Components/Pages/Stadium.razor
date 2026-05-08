@@ -1,5 +1,5 @@
 
-@page "/stadiums/create"
+@page "/stadiums"
 @using ProjectCopa
 @using Services
 @using UI
@@ -7,9 +7,9 @@
 @inject SessionState Session
 @inject NavigationManager Nav
 
-<PageTitle>Crear Estadio</PageTitle>
+<PageTitle>Estadios</PageTitle>
 
-<h3>Crear Estadio</h3>
+<h3>Estadios</h3>
 
 @if (!Session.IsLoggedIn)
 {
@@ -18,14 +18,14 @@
 }
 else if (!IsAdmin)
 {
-    <p>No tenes permisos para crear estadios</p>
+    <p>No tenes permisos para administrar estadios</p>
 }
 else
 {
     if (errors.Any())
     {
         <ul style="color:red">
-            @foreach (string error in errors)
+            @foreach (var error in errors)
             {
                 <li>@error</li>
             }
@@ -37,7 +37,9 @@ else
         <p style="color:green">@successMessage</p>
     }
 
-    <input placeholder="Nombre del estadio" @bind="name" />
+    <h4>Crear Estadio</h4>
+
+    <input placeholder="Nombre" @bind="name" />
     <br />
     <input placeholder="Ciudad" @bind="city" />
     <br />
@@ -47,6 +49,43 @@ else
     <br />
 
     <button @onclick="Create">Crear</button>
+
+    <hr />
+
+    <h4>Estadios existentes</h4>
+
+    @if (!stadiums.Any())
+    {
+        <p>No hay estadios cargados</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Ciudad</th>
+                    <th>Capacidad</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var stadium in stadiums)
+                {
+                    <tr>
+                        <td>@stadium.Name</td>
+                        <td>@stadium.City</td>
+                        <td>@stadium.Capacity</td>
+                        <td>
+                            <button @onclick="() => Remove(stadium.Name)">
+                                Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 }
 
 @code {
@@ -54,11 +93,25 @@ else
     private string city = "";
     private string? description;
     private int capacity;
+
     private readonly List<string> errors = new();
     private string? successMessage;
 
+    private IReadOnlyCollection<ProjectCopa.Stadium> stadiums =
+        Array.Empty<ProjectCopa.Stadium>();
+
     private bool IsAdmin =>
         Session.CurrentUser!.Roles.Contains(UserRoles.Admin);
+
+    protected override void OnInitialized()
+    {
+        LoadStadiums();
+    }
+
+    private void LoadStadiums()
+    {
+        stadiums = StadiumServices.GetAllStadiums();
+    }
 
     private void Create()
     {
@@ -70,7 +123,7 @@ else
 
         try
         {
-            Stadium stadium = new Stadium(
+            ProjectCopa.Stadium stadium = new ProjectCopa.Stadium(
                 name,
                 city,
                 description,
@@ -78,9 +131,26 @@ else
             );
 
             StadiumServices.AddStadium(stadium);
-
             successMessage = "Estadio creado correctamente";
             ClearForm();
+            LoadStadiums();
+        }
+        catch (ArgumentException ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void Remove(string name)
+    {
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            StadiumServices.Remove(name);
+            successMessage = "Estadio eliminado correctamente";
+            LoadStadiums();
         }
         catch (ArgumentException ex)
         {
