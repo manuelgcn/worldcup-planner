@@ -2,25 +2,47 @@ namespace ProjectCopa;
 
 public class Team
 {
+    private static int nextGeneratedId;
     private const int MaxNameLength = 60;
     private const int MinFifaRanking = 300;
     private const int MaxFifaRanking = 2500;
     private const string InvalidNameMessage = "Team name cannot be empty.";
     private const string FifaRankingOutOfRangeMessage = "FIFA ranking must be between {0} and {1}.";
 
+    public int Id { get; }
     public string Name { get; }
     public int FifaRanking { get; }
     public bool IsFictitious { get; }
     public Confederation Confederation { get; }
 
     public Team(string name, int fifaRanking, bool isFictitious, Confederation confederation)
+        : this(GenerateId(), name, fifaRanking, isFictitious, confederation)
     {
+    }
+
+    public Team(int id, string name, int fifaRanking, bool isFictitious, Confederation confederation)
+    {
+        ValidateId(id);
         ValidateName(name);
         ValidateFifaRanking(fifaRanking);
+        Id = id;
         Name = name;
         FifaRanking = fifaRanking;
         IsFictitious = isFictitious;
         Confederation = confederation;
+    }
+
+    private static int GenerateId()
+    {
+        return Interlocked.Increment(ref nextGeneratedId);
+    }
+
+    private static void ValidateId(int id)
+    {
+        if (id <= 0)
+        {
+            throw new ArgumentException("Team id must be greater than zero.", nameof(id));
+        }
     }
 
     private static void ValidateName(string name)

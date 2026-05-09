@@ -16,7 +16,7 @@ public sealed class TeamTests
     [TestMethod]
     public void TeamHasAnId()
     {
-        var team = new ProjectCopa.Team("Argentina", 2400, false, Confederation.CONMEBOL);
+        var team = new ProjectCopa.Team(1, "Argentina", 2400, false, Confederation.CONMEBOL);
 
         Assert.AreEqual(1, team.Id);
     }
