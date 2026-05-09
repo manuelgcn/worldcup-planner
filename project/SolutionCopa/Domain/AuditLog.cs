@@ -36,9 +36,9 @@ public sealed class AuditLog
         }
     }
 
-    private static string NormalizeAction(string action)
+    private static string TrimAction(string action)
     {
-        return action.Trim().ToUpperInvariant();
+        return action.Trim();
     }
 
     public static AuditLog Create(
@@ -50,7 +50,7 @@ public sealed class AuditLog
     {
         EnsureActionIsValid(action);
 
-        string cleanAction = NormalizeAction(action);
+        string cleanAction = TrimAction(action);
         string cleanDetails = details ?? string.Empty;
         DateTime timestampUtc = DateTime.UtcNow;
 
