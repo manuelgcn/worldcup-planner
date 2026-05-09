@@ -1,4 +1,3 @@
-using System;
 using ProjectCopa.Exceptions;
 
 namespace ProjectCopa;
@@ -42,7 +41,7 @@ public sealed class AuditLog
     }
 
     public static AuditLog Create(
-        string action,
+        string? action,
         string? details,
         int tournamentSettingsId,
         string? affectedEntityType = null,
