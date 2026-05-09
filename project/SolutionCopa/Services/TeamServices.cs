@@ -103,7 +103,7 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
     {
         if (teamCount != FixtureTeamCount)
         {
-            throw new InvalidOperationException(FixtureRequires48TeamsMessage);
+            throw new TeamServicesException(FixtureRequires48TeamsMessage);
         }
     }
 
