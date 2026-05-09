@@ -149,6 +149,8 @@ public sealed class MatchServiceTestContext
     {
         public void Add(AuditLog auditLog)
         {
+            int nextId = auditLogs.Count == 0 ? 1 : auditLogs.Max(a => a.Id) + 1;
+            auditLog.SetId(nextId);
             auditLogs.Add(auditLog);
         }
 

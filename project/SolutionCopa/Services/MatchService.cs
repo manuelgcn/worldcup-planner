@@ -52,13 +52,12 @@ public class MatchService(
 
         Match match = GetMatchOrThrow(matchId);
 
-        // La fábrica se encarga de inyectar dependencias secundarias (como el Estadio)
         matchFactory.ApplyUpdate(match, request);
         
         LogAuditAction(
             AuditActions.UpdateMatch, 
             $"Match updated for MatchId={match.MatchId}.", 
-            1, // Ajusta esto si el UpdateDto llega a recibir un TournamentSettingsId
+            SimulationTournamentSettingsId,
             match.MatchId);
 
         matchRepository.Update(match);
@@ -91,7 +90,7 @@ public class MatchService(
         LogAuditAction(
             AuditActions.UpdateMatch, 
             $"Goal added to {teamStr} team in MatchId={matchId}.", 
-            1, 
+            SimulationTournamentSettingsId, 
             matchId);
 
         matchRepository.Update(match);
@@ -108,7 +107,7 @@ public class MatchService(
         LogAuditAction(
             AuditActions.UpdateMatch, 
             $"Goal removed from {teamStr} team in MatchId={matchId}.", 
-            1, 
+            SimulationTournamentSettingsId, 
             matchId);
 
         matchRepository.Update(match);
@@ -169,8 +168,6 @@ public class MatchService(
         matchRepository.Update(match);
         unitOfWork.Commit();
     }
-
-    // --- MÉTODOS PRIVADOS DE AYUDA ---
 
     private void LogAuditAction(string action, string details, int tournamentSettingsId, int affectedEntityId)
     {
