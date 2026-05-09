@@ -198,4 +198,17 @@ public sealed class TeamServicesTests
         Assert.AreEqual(48, firstOrder.Count);
         CollectionAssert.AreEqual(firstOrder, secondOrder);
     }
+
+    [TestMethod]
+    public void OrderForFixtureThrowsTeamServicesExceptionWhenTeamCountIsNot48()
+    {
+        List<Team> teams = new List<ProjectCopa.Team>();
+
+        for (int i = 0; i < 47; i++)
+        {
+            teams.Add(new ProjectCopa.Team($"Team{i + 1}", 2500 - i, false, Confederation.UEFA));
+        }
+
+        Assert.ThrowsException<TeamServicesException>(() => _service.OrderForFixture(teams, 2026));
+    }
 }
