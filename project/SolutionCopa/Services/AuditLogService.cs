@@ -4,90 +4,99 @@ using DataAccess.Interfaces;
 using Services.DTOs;
 using Services.Interfaces;
 
-namespace Services
+namespace Services;
+
+public sealed class AuditLogService : IAuditLogService
 {
-    public sealed class AuditLogService : IAuditLogService
+    private readonly IAuditLogRepository _repository;
+
+    private AuditLogService(IAuditLogRepository repository)
     {
-        private readonly IAuditLogRepository _repository;
+        _repository = repository;
+    }
 
-        public AuditLogService(IAuditLogRepository repository)
+    public static AuditLogService CreateInstance(IAuditLogRepository repository)
+    {
+        return new AuditLogService(repository);
+    }
+
+    public void Log(string action, string details, int tournamentSettingsId, string? entityType = null, int? entityId = null)
+    {
+        AuditLog log = AuditLog.Create(action, details, tournamentSettingsId, entityType, entityId);
+        _repository.Add(log);
+    }
+
+    public List<AuditLogDto> GetAll()
+    {
+        List<AuditLog> logs = _repository.GetAll();
+        return logs
+            .Select(MapToDto)
+            .ToList();
+    }
+
+    public List<AuditLogDto> GetByTournamentSettings(int tournamentSettingsId)
+    {
+        List<AuditLog> logs = _repository.GetAll();
+        List<AuditLog> filtered = logs
+            .Where(l => l.TournamentSettingsId == tournamentSettingsId)
+            .ToList();
+        return filtered
+            .Select(MapToDto)
+            .ToList();
+    }
+
+    public string ExportAsText(int? tournamentSettingsId = null)
+    {
+        IEnumerable<AuditLog> toExport = GetLogsToExport(tournamentSettingsId);
+
+        StringBuilder sb = new StringBuilder();
+        foreach (AuditLog log in toExport.OrderBy(l => l.Timestamp))
         {
-            _repository = repository;
+            sb.AppendLine(FormatLogLine(log));
         }
 
-        public void Log(string action, string details, int tournamentSettingsId, string? entityType = null, int? entityId = null)
-        {
-            AuditLog log = AuditLog.Create(action, details, tournamentSettingsId, entityType, entityId);
-            _repository.Add(log);
-        }
+        return sb.ToString().TrimEnd(); 
+    }
 
-        public List<AuditLogDto> GetAll()
+    private IEnumerable<AuditLog> GetLogsToExport(int? tournamentSettingsId)
+    {
+        List<AuditLog> logs = _repository.GetAll();
+        if (tournamentSettingsId.HasValue)
         {
-            List<AuditLog> logs = _repository.GetAll();
             return logs
-                .Select(MapToDto)
-                .ToList();
+                .Where(l => l.TournamentSettingsId == tournamentSettingsId.Value);
         }
 
-        public List<AuditLogDto> GetByTournamentSettings(int tournamentSettingsId)
+        return logs;
+    }
+
+    private static string FormatLogLine(AuditLog log)
+    {
+        string entityPart = string.Empty;
+            
+        if (ExistLogEntity(log))
         {
-            List<AuditLog> logs = _repository.GetAll();
-            List<AuditLog> filtered = logs
-                .Where(l => l.TournamentSettingsId == tournamentSettingsId)
-                .ToList();
-            return filtered
-                .Select(MapToDto)
-                .ToList();
+            entityPart = $" | Entity: {log.AffectedEntityType} - ID: {log.AffectedEntityId!.Value}";
         }
 
-        public string ExportAsText(int? tournamentSettingsId = null)
+        return $"[{log.Timestamp:yyyy-MM-dd HH:mm:ss}] Action: {log.Action} | Details: {log.Details} | TournamentID: {log.TournamentSettingsId}{entityPart}";
+    }
+
+    private static bool ExistLogEntity(AuditLog log)
+    {
+        return !string.IsNullOrWhiteSpace(log.AffectedEntityType) && log.AffectedEntityId.HasValue;
+    }
+
+    private static AuditLogDto MapToDto(AuditLog log)
+    {
+        return new AuditLogDto
         {
-            IEnumerable<AuditLog> toExport = GetLogsToExport(tournamentSettingsId);
-
-            StringBuilder sb = new StringBuilder();
-            foreach (AuditLog log in toExport
-                         .OrderBy(l => l.Timestamp))
-            {
-                sb.AppendLine(FormatLogLine(log));
-            }
-
-            return sb.ToString();
-        }
-
-        private IEnumerable<AuditLog> GetLogsToExport(int? tournamentSettingsId)
-        {
-            List<AuditLog> logs = _repository.GetAll();
-            if (tournamentSettingsId.HasValue)
-            {
-                return logs
-                    .Where(l => l.TournamentSettingsId == tournamentSettingsId.Value);
-            }
-
-            return logs;
-        }
-
-        private static string FormatLogLine(AuditLog log)
-        {
-            string entityPart = string.Empty;
-            if (!string.IsNullOrWhiteSpace(log.AffectedEntityType) && log.AffectedEntityId.HasValue)
-            {
-                entityPart = $" | {log.AffectedEntityType}Id={log.AffectedEntityId.Value}";
-            }
-
-            return $"[{log.Timestamp:yyyy-MM-dd HH:mm:ss}] ACTION={log.Action} | Tournament={log.TournamentSettingsId}{entityPart} | {log.Details}";
-        }
-
-        private static AuditLogDto MapToDto(AuditLog log)
-        {
-            return new AuditLogDto
-            {
-                Timestamp = log.Timestamp,
-                Action = log.Action,
-                Details = log.Details,
-                TournamentSettingsId = log.TournamentSettingsId,
-                EntityType = log.AffectedEntityType,
-                EntityId = log.AffectedEntityId
-            };
-        }
+            Timestamp = log.Timestamp,
+            Action = log.Action,
+            Details = log.Details,
+            TournamentSettingsId = log.TournamentSettingsId,
+            EntityType = log.AffectedEntityType,
+            EntityId = log.AffectedEntityId
+        };
     }
 }

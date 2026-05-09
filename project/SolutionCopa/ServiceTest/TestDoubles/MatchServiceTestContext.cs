@@ -83,7 +83,7 @@ public sealed class MatchServiceTestContext
     
     private void BuildServices()
     {
-        AuditLogService = new AuditLogService(AuditLogRepository);
+        AuditLogService = AuditLogService.CreateInstance(AuditLogRepository);
 
         // 1. Construimos la fábrica con sus responsabilidades de lectura, incluyendo IStadiumRepository
         MatchFactory = new MatchFactory(
