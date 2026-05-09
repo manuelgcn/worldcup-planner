@@ -1,8 +1,11 @@
+using DataAccess.Interfaces;
 using ProjectCopa;
+using Services.Exceptions;
+using Services.Interfaces;
 
 namespace Services;
 
-public class TeamServices
+public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork) : ITeamService
 {
     private const int FixtureTeamCount = 48;
     private const int AfcQuota = 8;
@@ -26,42 +29,38 @@ public class TeamServices
         { Confederation.CONCACAF, ConcacafQuota }
     };
 
-    private readonly List<Team> _equipos = new();
-
     public void AddTeam(Team team)
     {
         ArgumentNullException.ThrowIfNull(team);
-        ValidateUniqueName(team);
-        ValidateConfederationQuota(team);
+        ValidateUniqueName(team.Name);
+        ValidateConfederationQuota(team.Confederation);
 
-        _equipos.Add(team);
+        teamRepository.Add(team);
+        unitOfWork.Commit();
     }
 
     public IReadOnlyCollection<Team> GetTeams()
     {
-        return _equipos.AsReadOnly();
+        return teamRepository.GetAll();
     }
 
     public Team FindByName(string name)
     {
         ArgumentNullException.ThrowIfNull(name);
 
-        return _equipos.FirstOrDefault(team => team.Name == name)
-            ?? throw new InvalidOperationException(TeamNotFoundMessage);
+        return teamRepository.GetByName(name)
+            ?? throw new TeamServicesException(TeamNotFoundMessage);
     }
 
     public void RemoveTeam(string name)
     {
         ArgumentNullException.ThrowIfNull(name);
 
-        var team = _equipos.FirstOrDefault(existingTeam => existingTeam.Name == name);
+        Team team = teamRepository.GetByName(name)
+            ?? throw new TeamServicesException(CannotDeleteTeamMessage);
 
-        if (team is null)
-        {
-            throw new InvalidOperationException(CannotDeleteTeamMessage);
-        }
-
-        _equipos.Remove(team);
+        teamRepository.Delete(team);
+        unitOfWork.Commit();
     }
 
     public IReadOnlyList<Team> OrderForFixture(IReadOnlyCollection<Team> teams, int fixtureSeed)
@@ -72,31 +71,21 @@ public class TeamServices
         return BuildFixtureOrder(teams, fixtureSeed);
     }
 
-    private void ValidateUniqueName(Team team)
+    private void ValidateUniqueName(string name)
     {
-        if (HasDuplicateName(team.Name))
+        if (teamRepository.ExistsByName(name))
         {
-            throw new InvalidOperationException(DuplicateTeamNameMessage);
+            throw new TeamServicesException(DuplicateTeamNameMessage);
         }
     }
 
-    private void ValidateConfederationQuota(Team team)
+    private void ValidateConfederationQuota(Confederation confederation)
     {
-        if (QuotasByConfederation.TryGetValue(team.Confederation, out int quota) &&
-            CountTeamsByConfederation(team.Confederation) >= quota)
+        if (QuotasByConfederation.TryGetValue(confederation, out int quota) &&
+            teamRepository.CountByConfederation(confederation) >= quota)
         {
-            throw new InvalidOperationException(string.Format(QuotaExceededMessage, team.Confederation));
+            throw new TeamServicesException(string.Format(QuotaExceededMessage, confederation));
         }
-    }
-
-    private bool HasDuplicateName(string name)
-    {
-        return _equipos.Any(existingTeam => existingTeam.Name == name);
-    }
-
-    private int CountTeamsByConfederation(Confederation confederation)
-    {
-        return _equipos.Count(existingTeam => existingTeam.Confederation == confederation);
     }
 
     private static void ShuffleDeterministically(IList<Team> teams, int seed)
