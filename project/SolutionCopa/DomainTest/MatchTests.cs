@@ -23,8 +23,8 @@ public class MatchTests
     [TestInitialize]
     public void Setup()
     {
-        _homeTeam = new Team(name: "Home Team", fifaRanking: 1000, isFictitious: true, confederation: Confederation.CONMEBOL);
-        _awayTeam = new Team(name: "Away Team", fifaRanking: 900, isFictitious: true, confederation: Confederation.UEFA);
+        _homeTeam = new Team(1, name: "Home Team", fifaRanking: 1000, isFictitious: true, confederation: Confederation.CONMEBOL);
+        _awayTeam = new Team(2, name: "Away Team", fifaRanking: 900, isFictitious: true, confederation: Confederation.UEFA);
         _stadium = new Stadium(name: "Test Stadium", city: "Test City", description: "A test stadium", capacity: 50000);
         _match = new MockMatch();
     }
@@ -93,7 +93,7 @@ public class MatchTests
     [TestMethod]
     public void MatchRejectsSameHomeAndAwayTeam()
     {
-        Team sameTeam = new Team(name: "Same Team", fifaRanking: 800, isFictitious: true, confederation: Confederation.CONMEBOL);
+        Team sameTeam = new Team(1, name: "Same Team", fifaRanking: 800, isFictitious: true, confederation: Confederation.CONMEBOL);
 
         Assert.ThrowsException<MatchException>(() =>
             new MockMatch(1, MatchDate, sameTeam, sameTeam, _stadium));

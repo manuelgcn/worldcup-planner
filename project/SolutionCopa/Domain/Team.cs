@@ -2,7 +2,6 @@ namespace ProjectCopa;
 
 public class Team
 {
-    private static int nextGeneratedId;
     private const int MaxNameLength = 60;
     private const int MinFifaRanking = 300;
     private const int MaxFifaRanking = 2500;
@@ -15,11 +14,6 @@ public class Team
     public bool IsFictitious { get; }
     public Confederation Confederation { get; }
 
-    public Team(string name, int fifaRanking, bool isFictitious, Confederation confederation)
-        : this(GenerateId(), name, fifaRanking, isFictitious, confederation)
-    {
-    }
-
     public Team(int id, string name, int fifaRanking, bool isFictitious, Confederation confederation)
     {
         ValidateId(id);
@@ -30,11 +24,6 @@ public class Team
         FifaRanking = fifaRanking;
         IsFictitious = isFictitious;
         Confederation = confederation;
-    }
-
-    private static int GenerateId()
-    {
-        return Interlocked.Increment(ref nextGeneratedId);
     }
 
     private static void ValidateId(int id)

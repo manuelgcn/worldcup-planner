@@ -126,7 +126,8 @@ else
 
         try
         {
-            var team = new Team(nombre, rankingFifa, false, confederation);
+            var nextId = TeamServices.GetTeams().Select(t => t.Id).DefaultIfEmpty(0).Max() + 1;
+            var team = new Team(nextId, nombre, rankingFifa, false, confederation);
             TeamServices.AddTeam(team);
             successMessage = "Equipo creado correctamente";
             ClearForm();
