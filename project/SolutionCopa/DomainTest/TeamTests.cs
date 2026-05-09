@@ -22,6 +22,12 @@ public sealed class TeamTests
     }
 
     [TestMethod]
+    public void TeamHasOnlyOnePublicConstructor()
+    {
+        Assert.AreEqual(1, typeof(ProjectCopa.Team).GetConstructors().Length);
+    }
+
+    [TestMethod]
     public void TeamIsCreatedWithValidFifaRanking()
     {
         const int rankingFifa = 2400;
