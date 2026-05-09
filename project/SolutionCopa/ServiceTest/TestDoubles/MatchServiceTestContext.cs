@@ -2,6 +2,7 @@ using DataAccess.Interfaces;
 using ProjectCopa;
 using Services;
 using Services.DTOs;
+using Services.Interfaces;
 using ServiceTest.TestDoubles.Mocks;
 using MockMatch = DomainTest.TestDoubles.MockMatch;
 
@@ -29,7 +30,9 @@ public sealed class MatchServiceTestContext
     public MockUnitOfWork UnitOfWork { get; } = new();
 
     private AuditLogService AuditLogService { get; set; } = null!;
-    public MatchService Service { get; set; } = null!;
+    
+    public IMatchService Service { get; set; } = null!;
+    private IMatchFactory MatchFactory { get; set; } = null!;
 
     public MatchServiceTestContext()
     {
@@ -82,15 +85,22 @@ public sealed class MatchServiceTestContext
     {
         AuditLogService = new AuditLogService(AuditLogRepository);
 
-        Service = new MatchService(
-            MatchRepository,
+        // 1. Construimos la fábrica con sus responsabilidades de lectura, incluyendo IStadiumRepository
+        MatchFactory = new MatchFactory(
             TeamRepository,
             StadiumRepository,
             GroupRepository,
             JourneyRepository,
             TournamentSettingsRepository,
+            MatchRepository);
+
+        // 2. Construimos el servicio core limpio, inyectando la fábrica y el log directamente
+        Service = new MatchService(
+            MatchRepository,
+            TournamentSettingsRepository,
+            MatchFactory,
             SimulationEngine,
-            AuditLogService,
+            AuditLogService, // <-- Inyectado directamente en el servicio
             UnitOfWork);
     }
 
