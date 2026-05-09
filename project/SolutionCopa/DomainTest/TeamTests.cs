@@ -14,6 +14,14 @@ public sealed class TeamTests
     }
 
     [TestMethod]
+    public void TeamHasAnId()
+    {
+        var team = new ProjectCopa.Team("Argentina", 2400, false, Confederation.CONMEBOL);
+
+        Assert.AreEqual(1, team.Id);
+    }
+
+    [TestMethod]
     public void TeamIsCreatedWithValidFifaRanking()
     {
         const int rankingFifa = 2400;
