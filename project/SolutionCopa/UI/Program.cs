@@ -1,4 +1,6 @@
 using Services;
+using DataAccess.Interfaces;
+using DataAccess.Repositories;
 using UI;
 using UI.Components;
 using ProjectCopa;
@@ -9,6 +11,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 
+builder.Services.AddSingleton<ITeamRepository, TeamRepositoryList>();
+builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkList>();
 builder.Services.AddSingleton<UserServices>();
 builder.Services.AddSingleton<StadiumServices>();
 builder.Services.AddSingleton<TeamServices>();
