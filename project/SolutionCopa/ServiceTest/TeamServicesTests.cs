@@ -23,15 +23,12 @@ public sealed class TeamServicesTests
     [TestMethod]
     public void AddTeamCallsRepositoryAndCommits()
     {
-        MockTeamRepository repo = new();
-        MockUnitOfWork uow = new();
-        TeamServices service = new(repo, uow);
         Team team = new Team(1, "Uruguay", 2000, false, Confederation.CONMEBOL);
 
-        service.AddTeam(team);
+        _service.AddTeam(team);
 
-        Assert.AreEqual(1, repo.AddCalls);
-        Assert.AreEqual(1, uow.CommitCalls);
+        Assert.AreEqual(1, _repo.AddCalls);
+        Assert.AreEqual(1, _uow.CommitCalls);
     }
 
     [TestMethod]
