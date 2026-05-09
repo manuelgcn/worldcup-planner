@@ -1,5 +1,6 @@
 using ProjectCopa;
 using Services;
+using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest;
 
@@ -12,6 +13,20 @@ public sealed class TeamServicesTests
     public void Setup()
     {
         _service = new TeamServices();
+    }
+
+    [TestMethod]
+    public void AddTeamCallsRepositoryAndCommits()
+    {
+        MockTeamRepository repo = new();
+        MockUnitOfWork uow = new();
+        TeamServices service = new(repo, uow);
+        Team team = new Team(1, "Uruguay", 2000, false, Confederation.CONMEBOL);
+
+        service.AddTeam(team);
+
+        Assert.AreEqual(1, repo.AddCalls);
+        Assert.AreEqual(1, uow.CommitCalls);
     }
 
     [TestMethod]
