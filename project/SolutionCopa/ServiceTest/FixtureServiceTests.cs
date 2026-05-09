@@ -131,7 +131,7 @@ public class FixtureServiceTests
 
         Group firstGroup = groups.First();
         
-        Assert.AreEqual("HighRank", firstGroup.Teams.First().Nombre);
+        Assert.AreEqual("HighRank", firstGroup.Teams.First().Name);
     }
 
 
@@ -174,8 +174,8 @@ public class FixtureServiceTests
         IReadOnlyCollection<Group> groups1 = service1.CreateFixture();
         IReadOnlyCollection<Group> groups2 = service2.CreateFixture();
 
-        List<string> firstTeamsRun1 = groups1.Select(g => g.Teams.First().Nombre).ToList();
-        List<string> firstTeamsRun2 = groups2.Select(g => g.Teams.First().Nombre).ToList();
+        List<string> firstTeamsRun1 = groups1.Select(g => g.Teams.First().Name).ToList();
+        List<string> firstTeamsRun2 = groups2.Select(g => g.Teams.First().Name).ToList();
 
         
         CollectionAssert.AreEqual(firstTeamsRun1, firstTeamsRun2);
@@ -243,7 +243,7 @@ public class FixtureServiceTests
         foreach (Group group in groups)
         {
             List<int> rankings = group.Teams
-                .Select(t => t.RankingFifa)
+                .Select(t => t.FifaRanking)
                 .OrderByDescending(r => r)
                 .ToList();
 

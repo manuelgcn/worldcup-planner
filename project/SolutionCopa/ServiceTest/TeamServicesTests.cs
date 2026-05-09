@@ -19,9 +19,9 @@ public sealed class TeamServicesTests
     {
         var team = new ProjectCopa.Team("Uruguay", 2000, false, Confederation.CONMEBOL);
 
-        _service.AgregarEquipo(team);
+        _service.AddTeam(team);
 
-        Assert.AreEqual(1, _service.ObtenerEquipos().Count);
+        Assert.AreEqual(1, _service.GetTeams().Count);
     }
 
     [TestMethod]
@@ -30,9 +30,9 @@ public sealed class TeamServicesTests
         var t1 = new ProjectCopa.Team("Uruguay", 2000, false, Confederation.CONMEBOL);
         var t2 = new ProjectCopa.Team("Uruguay", 1800, false, Confederation.CONMEBOL);
 
-        _service.AgregarEquipo(t1);
+        _service.AddTeam(t1);
 
-        Assert.ThrowsException<InvalidOperationException>(() => _service.AgregarEquipo(t2));
+        Assert.ThrowsException<InvalidOperationException>(() => _service.AddTeam(t2));
     }
 
     [TestMethod]
@@ -50,13 +50,13 @@ public sealed class TeamServicesTests
     }
 
     [TestMethod]
-    public void CannotAddTeamWithLowRanking()
+    public void CannotAddTeamWithLowFifaRanking()
     {
         Assert.ThrowsException<ArgumentException>(() => new ProjectCopa.Team("Uruguay", 299, false, Confederation.CONMEBOL));
     }
 
     [TestMethod]
-    public void CannotAddTeamWithHighRanking()
+    public void CannotAddTeamWithHighFifaRanking()
     {
         Assert.ThrowsException<ArgumentException>(() => new ProjectCopa.Team("Uruguay", 2501, false, Confederation.CONMEBOL));
     }
@@ -66,9 +66,9 @@ public sealed class TeamServicesTests
     {
         var team = new ProjectCopa.Team("Uruguay", 2000, false, Confederation.CONMEBOL);
 
-        _service.AgregarEquipo(team);
+        _service.AddTeam(team);
 
-        var found = _service.BuscarPorNombre("Uruguay");
+        var found = _service.FindByName("Uruguay");
 
         Assert.AreEqual(team, found);
     }
@@ -76,7 +76,7 @@ public sealed class TeamServicesTests
     [TestMethod]
     public void GetTeamByNameThrowsIfNotFound()
     {
-        Assert.ThrowsException<InvalidOperationException>(() => _service.BuscarPorNombre("NoExiste"));
+        Assert.ThrowsException<InvalidOperationException>(() => _service.FindByName("NoExiste"));
     }
 
     [TestMethod]
@@ -84,16 +84,16 @@ public sealed class TeamServicesTests
     {
         var team = new ProjectCopa.Team("Uruguay", 2000, false, Confederation.CONMEBOL);
 
-        _service.AgregarEquipo(team);
-        _service.EliminarEquipo("Uruguay");
+        _service.AddTeam(team);
+        _service.RemoveTeam("Uruguay");
 
-        Assert.AreEqual(0, _service.ObtenerEquipos().Count);
+        Assert.AreEqual(0, _service.GetTeams().Count);
     }
 
     [TestMethod]
     public void CannotRemoveNonExistingTeam()
     {
-        Assert.ThrowsException<InvalidOperationException>(() => _service.EliminarEquipo("NoExiste"));
+        Assert.ThrowsException<InvalidOperationException>(() => _service.RemoveTeam("NoExiste"));
     }
 
     [TestMethod]
@@ -101,10 +101,10 @@ public sealed class TeamServicesTests
     {
         for (int i = 1; i <= 16; i++)
         {
-            _service.AgregarEquipo(new ProjectCopa.Team($"UEFA{i}", 1000 + i, false, Confederation.UEFA));
+            _service.AddTeam(new ProjectCopa.Team($"UEFA{i}", 1000 + i, false, Confederation.UEFA));
         }
 
-        Assert.ThrowsException<InvalidOperationException>(() => _service.AgregarEquipo(new ProjectCopa.Team("UEFA17", 1100, false, Confederation.UEFA)));
+        Assert.ThrowsException<InvalidOperationException>(() => _service.AddTeam(new ProjectCopa.Team("UEFA17", 1100, false, Confederation.UEFA)));
     }
 
     [TestMethod]
@@ -112,10 +112,10 @@ public sealed class TeamServicesTests
     {
         for (int i = 1; i <= 7; i++)
         {
-            _service.AgregarEquipo(new ProjectCopa.Team($"CONMEBOL{i}", 1400 + i, false, Confederation.CONMEBOL));
+            _service.AddTeam(new ProjectCopa.Team($"CONMEBOL{i}", 1400 + i, false, Confederation.CONMEBOL));
         }
 
-        Assert.ThrowsException<InvalidOperationException>(() => _service.AgregarEquipo(new ProjectCopa.Team("CONMEBOL8", 1500, false, Confederation.CONMEBOL)));
+        Assert.ThrowsException<InvalidOperationException>(() => _service.AddTeam(new ProjectCopa.Team("CONMEBOL8", 1500, false, Confederation.CONMEBOL)));
     }
 
     [TestMethod]
@@ -123,10 +123,10 @@ public sealed class TeamServicesTests
     {
         for (int i = 1; i <= 7; i++)
         {
-            _service.AgregarEquipo(new ProjectCopa.Team($"CONCACAF{i}", 1600 + i, false, Confederation.CONCACAF));
+            _service.AddTeam(new ProjectCopa.Team($"CONCACAF{i}", 1600 + i, false, Confederation.CONCACAF));
         }
 
-        Assert.ThrowsException<InvalidOperationException>(() => _service.AgregarEquipo(new ProjectCopa.Team("CONCACAF8", 1700, false, Confederation.CONCACAF)));
+        Assert.ThrowsException<InvalidOperationException>(() => _service.AddTeam(new ProjectCopa.Team("CONCACAF8", 1700, false, Confederation.CONCACAF)));
     }
 
     [TestMethod]
@@ -134,10 +134,10 @@ public sealed class TeamServicesTests
     {
         for (int i = 1; i <= 9; i++)
         {
-            _service.AgregarEquipo(new ProjectCopa.Team($"CAF{i}", 1800 + i, false, Confederation.CAF));
+            _service.AddTeam(new ProjectCopa.Team($"CAF{i}", 1800 + i, false, Confederation.CAF));
         }
 
-        Assert.ThrowsException<InvalidOperationException>(() => _service.AgregarEquipo(new ProjectCopa.Team("CAF10", 1900, false, Confederation.CAF)));
+        Assert.ThrowsException<InvalidOperationException>(() => _service.AddTeam(new ProjectCopa.Team("CAF10", 1900, false, Confederation.CAF)));
     }
 
     [TestMethod]
@@ -145,18 +145,18 @@ public sealed class TeamServicesTests
     {
         for (int i = 1; i <= 8; i++)
         {
-            _service.AgregarEquipo(new ProjectCopa.Team($"AFC{i}", 2000 + i, false, Confederation.AFC));
+            _service.AddTeam(new ProjectCopa.Team($"AFC{i}", 2000 + i, false, Confederation.AFC));
         }
 
-        Assert.ThrowsException<InvalidOperationException>(() => _service.AgregarEquipo(new ProjectCopa.Team("AFC9", 2100, false, Confederation.AFC)));
+        Assert.ThrowsException<InvalidOperationException>(() => _service.AddTeam(new ProjectCopa.Team("AFC9", 2100, false, Confederation.AFC)));
     }
 
     [TestMethod]
     public void CannotAddTeamBeyondOfcQuota()
     {
-        _service.AgregarEquipo(new ProjectCopa.Team("OFC1", 2200, false, Confederation.OFC));
+        _service.AddTeam(new ProjectCopa.Team("OFC1", 2200, false, Confederation.OFC));
 
-        Assert.ThrowsException<InvalidOperationException>(() => _service.AgregarEquipo(new ProjectCopa.Team("OFC2", 2300, false, Confederation.OFC)));
+        Assert.ThrowsException<InvalidOperationException>(() => _service.AddTeam(new ProjectCopa.Team("OFC2", 2300, false, Confederation.OFC)));
     }
 
     [TestMethod]
@@ -172,8 +172,8 @@ public sealed class TeamServicesTests
             teams.Add(new ProjectCopa.Team($"Team{i + 1}", ranking, false, conf));
         }
 
-        List<string> firstOrder = _service.OrdenarParaFixture(teams, 2026).Select(t => t.Nombre).ToList();
-        List<string> secondOrder = _service.OrdenarParaFixture(teams, 2026).Select(t => t.Nombre).ToList();
+        List<string> firstOrder = _service.OrderForFixture(teams, 2026).Select(t => t.Name).ToList();
+        List<string> secondOrder = _service.OrderForFixture(teams, 2026).Select(t => t.Name).ToList();
 
         Assert.AreEqual(48, firstOrder.Count);
         CollectionAssert.AreEqual(firstOrder, secondOrder);

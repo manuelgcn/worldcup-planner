@@ -180,8 +180,8 @@ public class MatchRepositoryListTests
 
     private static MatchGroup CreateGroupMatch(int matchId, string groupName, int journeyNumber, DateTime date)
     {
-        Team homeTeam = new Team(nombre: $"Team-{matchId}-H", rankingFifa: 1000 + matchId, esFicticio: true, confederation: Confederation.CONMEBOL);
-        Team awayTeam = new Team(nombre: $"Team-{matchId}-A", rankingFifa: 900 + matchId, esFicticio: true, confederation: Confederation.CONMEBOL);
+        Team homeTeam = new Team(name: $"Team-{matchId}-H", fifaRanking: 1000 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
+        Team awayTeam = new Team(name: $"Team-{matchId}-A", fifaRanking: 900 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
         Stadium stadium = new Stadium(name: $"Stadium-{matchId}", city: "Test City", description: null, capacity: 50000);
         Group group = new Group(name: groupName);
         Journey journey = new Journey(number: journeyNumber);
@@ -193,8 +193,8 @@ public class MatchRepositoryListTests
     {
         MatchGroup sourceHome = CreateGroupMatch(matchId: matchId + 100, groupName: "X", journeyNumber: 1, date: date.AddDays(-1));
         MatchGroup sourceAway = CreateGroupMatch(matchId: matchId + 200, groupName: "Y", journeyNumber: 1, date: date.AddDays(-1));
-        Team homeTeam = new Team(nombre: $"Elim-Team-{matchId}-H", rankingFifa: 1200 + matchId, esFicticio: true, confederation: Confederation.CONMEBOL);
-        Team awayTeam = new Team(nombre: $"Elim-Team-{matchId}-A", rankingFifa: 1100 + matchId, esFicticio: true, confederation: Confederation.CONMEBOL);
+        Team homeTeam = new Team(name: $"Elim-Team-{matchId}-H", fifaRanking: 1200 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
+        Team awayTeam = new Team(name: $"Elim-Team-{matchId}-A", fifaRanking: 1100 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
         Stadium stadium = new Stadium(name: $"Elim-Stadium-{matchId}", city: "Test City", description: null, capacity: 60000);
 
         return MatchElimination.Create(

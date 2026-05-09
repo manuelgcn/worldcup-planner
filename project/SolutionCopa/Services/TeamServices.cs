@@ -28,115 +28,115 @@ public class TeamServices
 
     private readonly List<Team> _equipos = new();
 
-    public void AgregarEquipo(Team equipo)
+    public void AddTeam(Team team)
     {
-        ArgumentNullException.ThrowIfNull(equipo);
-        ValidarNombreUnico(equipo);
-        ValidarCupoConfederacion(equipo);
+        ArgumentNullException.ThrowIfNull(team);
+        ValidateUniqueName(team);
+        ValidateConfederationQuota(team);
 
-        _equipos.Add(equipo);
+        _equipos.Add(team);
     }
 
-    public IReadOnlyCollection<Team> ObtenerEquipos()
+    public IReadOnlyCollection<Team> GetTeams()
     {
         return _equipos.AsReadOnly();
     }
 
-    public Team BuscarPorNombre(string nombre)
+    public Team FindByName(string name)
     {
-        ArgumentNullException.ThrowIfNull(nombre);
+        ArgumentNullException.ThrowIfNull(name);
 
-        return _equipos.FirstOrDefault(equipo => equipo.Nombre == nombre)
+        return _equipos.FirstOrDefault(team => team.Name == name)
             ?? throw new InvalidOperationException(TeamNotFoundMessage);
     }
 
-    public void EliminarEquipo(string nombre)
+    public void RemoveTeam(string name)
     {
-        ArgumentNullException.ThrowIfNull(nombre);
+        ArgumentNullException.ThrowIfNull(name);
 
-        var equipo = _equipos.FirstOrDefault(existingTeam => existingTeam.Nombre == nombre);
+        var team = _equipos.FirstOrDefault(existingTeam => existingTeam.Name == name);
 
-        if (equipo is null)
+        if (team is null)
         {
             throw new InvalidOperationException(CannotDeleteTeamMessage);
         }
 
-        _equipos.Remove(equipo);
+        _equipos.Remove(team);
     }
 
-    public IReadOnlyList<Team> OrdenarParaFixture(IReadOnlyCollection<Team> equipos, int semillaFixture)
+    public IReadOnlyList<Team> OrderForFixture(IReadOnlyCollection<Team> teams, int fixtureSeed)
     {
-        ArgumentNullException.ThrowIfNull(equipos);
-        ValidarCantidadEquiposParaFixture(equipos.Count);
+        ArgumentNullException.ThrowIfNull(teams);
+        ValidateFixtureTeamCount(teams.Count);
 
-        return ConstruirOrdenFixture(equipos, semillaFixture);
+        return BuildFixtureOrder(teams, fixtureSeed);
     }
 
-    private void ValidarNombreUnico(Team equipo)
+    private void ValidateUniqueName(Team team)
     {
-        if (ExisteNombreDuplicado(equipo.Nombre))
+        if (HasDuplicateName(team.Name))
         {
             throw new InvalidOperationException(DuplicateTeamNameMessage);
         }
     }
 
-    private void ValidarCupoConfederacion(Team equipo)
+    private void ValidateConfederationQuota(Team team)
     {
-        if (QuotasByConfederation.TryGetValue(equipo.Confederation, out int quota) &&
-            CantidadEquiposPorConfederacion(equipo.Confederation) >= quota)
+        if (QuotasByConfederation.TryGetValue(team.Confederation, out int quota) &&
+            CountTeamsByConfederation(team.Confederation) >= quota)
         {
-            throw new InvalidOperationException(string.Format(QuotaExceededMessage, equipo.Confederation));
+            throw new InvalidOperationException(string.Format(QuotaExceededMessage, team.Confederation));
         }
     }
 
-    private bool ExisteNombreDuplicado(string nombre)
+    private bool HasDuplicateName(string name)
     {
-        return _equipos.Any(existingTeam => existingTeam.Nombre == nombre);
+        return _equipos.Any(existingTeam => existingTeam.Name == name);
     }
 
-    private int CantidadEquiposPorConfederacion(Confederation confederation)
+    private int CountTeamsByConfederation(Confederation confederation)
     {
         return _equipos.Count(existingTeam => existingTeam.Confederation == confederation);
     }
 
-    private static void FisherYatesDeterministico(IList<Team> equipos, int semilla)
+    private static void ShuffleDeterministically(IList<Team> teams, int seed)
     {
-        var random = new Random(semilla);
+        var random = new Random(seed);
 
-        for (int i = equipos.Count - 1; i > 0; i--)
+        for (int i = teams.Count - 1; i > 0; i--)
         {
             int j = random.Next(i + 1);
-            (equipos[i], equipos[j]) = (equipos[j], equipos[i]);
+            (teams[i], teams[j]) = (teams[j], teams[i]);
         }
     }
 
-    private static void ValidarCantidadEquiposParaFixture(int cantidadEquipos)
+    private static void ValidateFixtureTeamCount(int teamCount)
     {
-        if (cantidadEquipos != FixtureTeamCount)
+        if (teamCount != FixtureTeamCount)
         {
             throw new InvalidOperationException(FixtureRequires48TeamsMessage);
         }
     }
 
-    private static IReadOnlyList<Team> ConstruirOrdenFixture(IEnumerable<Team> equipos, int semillaFixture)
+    private static IReadOnlyList<Team> BuildFixtureOrder(IEnumerable<Team> teams, int fixtureSeed)
     {
-        List<Team> ordenados = new List<Team>(capacity: FixtureTeamCount);
-        List<IGrouping<int, Team>> gruposPorRanking = equipos
-            .GroupBy(equipo => equipo.RankingFifa)
-            .OrderByDescending(grupo => grupo.Key)
+        List<Team> orderedTeams = new List<Team>(capacity: FixtureTeamCount);
+        List<IGrouping<int, Team>> groupsByRanking = teams
+            .GroupBy(team => team.FifaRanking)
+            .OrderByDescending(group => group.Key)
             .ToList();
 
-        int indiceGrupo = 0;
+        int groupIndex = 0;
 
-        foreach (IGrouping<int, Team> grupoEmpatado in gruposPorRanking)
+        foreach (IGrouping<int, Team> tiedGroup in groupsByRanking)
         {
-            List<Team> equiposEmpatados = grupoEmpatado.ToList();
-            FisherYatesDeterministico(equiposEmpatados, semillaFixture + indiceGrupo);
-            ordenados.AddRange(equiposEmpatados);
-            indiceGrupo++;
+            List<Team> tiedTeams = tiedGroup.ToList();
+            ShuffleDeterministically(tiedTeams, fixtureSeed + groupIndex);
+            orderedTeams.AddRange(tiedTeams);
+            groupIndex++;
         }
 
-        return ordenados;
+        return orderedTeams;
     }
 }
 

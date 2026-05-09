@@ -77,11 +77,11 @@ else
                 @foreach (var equipo in equipos)
                 {
                     <tr>
-                        <td>@equipo.Nombre</td>
-                        <td>@equipo.RankingFifa</td>
+                        <td>@equipo.Name</td>
+                        <td>@equipo.FifaRanking</td>
                         <td>@equipo.Confederation</td>
                         <td>
-                            <button @onclick="() => Remove(equipo.Nombre)">
+                            <button @onclick="() => Remove(equipo.Name)">
                                 Eliminar
                             </button>
                         </td>
@@ -112,7 +112,7 @@ else
 
     private void LoadTeams()
     {
-        equipos = TeamServices.ObtenerEquipos();
+            equipos = TeamServices.GetTeams();
     }
 
     private void Create()
@@ -125,8 +125,8 @@ else
 
         try
         {
-            var equipo = new Team(nombre, rankingFifa, false, confederation);
-            TeamServices.AgregarEquipo(equipo);
+            var team = new Team(nombre, rankingFifa, false, confederation);
+            TeamServices.AddTeam(team);
             successMessage = "Equipo creado correctamente";
             ClearForm();
             LoadTeams();
@@ -148,7 +148,7 @@ else
 
         try
         {
-            TeamServices.EliminarEquipo(nombreEquipo);
+            TeamServices.RemoveTeam(nombreEquipo);
             successMessage = "Equipo eliminado correctamente";
             LoadTeams();
         }

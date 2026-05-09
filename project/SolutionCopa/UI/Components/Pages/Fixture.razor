@@ -34,9 +34,9 @@ else
             @foreach (Team team in group.Teams)
             {
                 <li>
-                    @team.Nombre -
+                    @team.Name -
                     @team.Confederation -
-                    Ranking @team.RankingFifa
+                    Ranking @team.FifaRanking
                 </li>
             }
         </ul>
@@ -54,7 +54,7 @@ else
         try
         {
             FixtureService fixtureService = new FixtureService(
-                TeamServices.ObtenerEquipos(),
+                TeamServices.GetTeams(),
                 StadiumServices.GetAllStadiums(),
                 seed: 42
             );
