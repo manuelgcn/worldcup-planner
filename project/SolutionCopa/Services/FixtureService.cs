@@ -120,7 +120,7 @@ public class FixtureService
         Random random = new Random(seed);
 
         return teams
-            .GroupBy(t => t.RankingFifa)
+            .GroupBy(t => t.FifaRanking)
             .OrderByDescending(g => g.Key)
             .SelectMany(group =>
             {

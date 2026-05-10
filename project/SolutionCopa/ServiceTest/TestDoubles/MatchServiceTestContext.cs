@@ -44,9 +44,8 @@ public sealed class MatchServiceTestContext
     
     private void SeedData()
     {
-        _teams[10] = new Team("Home Team", 1500, false, Confederation.CONCACAF);
-        _teams[20] = new Team("Away Team", 1600, false, Confederation.UEFA);
-
+        _teams[10] = new Team(10, "Home Team", 1500, false, Confederation.CONCACAF);
+        _teams[20] = new Team(20, "Away Team", 1600, false, Confederation.UEFA);
         _stadiums[30] = new Stadium("Main Stadium", "Main City", "None", 25000);
 
         _groups[40] = new Group("A");
@@ -108,9 +107,44 @@ public sealed class MatchServiceTestContext
     // Simple concrete repository implementations
     private sealed class SimpleTeamRepository(Dictionary<int, Team> teams) : ITeamRepository
     {
+        public void Add(Team team)
+        {
+            teams[team.Id] = team;
+        }
+
+        public void Update(Team team)
+        {
+            teams[team.Id] = team;
+        }
+
+        public void Delete(Team team)
+        {
+            teams.Remove(team.Id);
+        }
+
         public Team? GetById(int teamId)
         {
             return teams.GetValueOrDefault(teamId);
+        }
+
+        public Team? GetByName(string name)
+        {
+            return teams.Values.FirstOrDefault(team => team.Name == name);
+        }
+
+        public bool ExistsByName(string name)
+        {
+            return teams.Values.Any(team => team.Name == name);
+        }
+
+        public IReadOnlyCollection<Team> GetAll()
+        {
+            return teams.Values.ToList();
+        }
+
+        public int CountByConfederation(Confederation confederation)
+        {
+            return teams.Values.Count(team => team.Confederation == confederation);
         }
     }
 
@@ -198,15 +232,15 @@ public sealed class MatchServiceTestContext
         MatchRepository.Add(new MockMatch(
             100,
             new DateTime(2026, 6, 20),
-            new Team("Team 1", 1700, false, Confederation.CONCACAF),
-            new Team("Team 2", 1800, false, Confederation.UEFA),
+            new Team(100, "Team 1", 1700, false, Confederation.CONCACAF),
+            new Team(200, "Team 2", 1800, false, Confederation.UEFA),
             new Stadium("Stadium 1", "City 1", "None", 25000)));
 
         MatchRepository.Add(new MockMatch(
             200,
             new DateTime(2026, 6, 20),
-            new Team("Team 3", 1900, false, Confederation.CONCACAF),
-            new Team("Team 4", 2000, false, Confederation.UEFA),
+            new Team(300, "Team 3", 1900, false, Confederation.CONCACAF),
+            new Team(400, "Team 4", 2000, false, Confederation.UEFA),
             new Stadium("Stadium 2", "City 2", "None", 25000)));
     }
 }

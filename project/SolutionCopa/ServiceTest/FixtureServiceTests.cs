@@ -56,6 +56,7 @@ public class FixtureServiceTests
         for (int i = 0; i < 48; i++)
         {
             teams.Add(new Team(
+                i + 1,
                 "Team" + i,
                 1000 + i,
                 false,
@@ -124,14 +125,15 @@ public class FixtureServiceTests
     {
         List<Team> teams = new List<Team>
         {
-            new Team("MidRank", 1500, false, Confederation.UEFA),
-            new Team("HighRank", 2000, false, Confederation.UEFA),
-            new Team("LowRank", 1000, false, Confederation.UEFA)
+            new Team(1, "MidRank", 1500, false, Confederation.UEFA),
+            new Team(2, "HighRank", 2000, false, Confederation.UEFA),
+            new Team(3, "LowRank", 1000, false, Confederation.UEFA)
         };
         
         for (int i = 3; i < 48; i++)
         {
             teams.Add(new Team(
+                i + 1,
                 "Team" + i,
                 500,
                 false,
@@ -147,7 +149,7 @@ public class FixtureServiceTests
 
         Group firstGroup = groups.First();
         
-        Assert.AreEqual("HighRank", firstGroup.Teams.First().Nombre);
+        Assert.AreEqual("HighRank", firstGroup.Teams.First().Name);
     }
 
 
@@ -162,6 +164,7 @@ public class FixtureServiceTests
         for (int i = 0; i < 12; i++)
         {
             teams.Add(new Team(
+                i + 1,
                 "TeamEqual" + i,
                 1500,
                 false,
@@ -173,6 +176,7 @@ public class FixtureServiceTests
         for (int i = 12; i < 48; i++)
         {
             teams.Add(new Team(
+                i + 1,
                 "Team" + i,
                 1000,
                 false,
@@ -190,8 +194,8 @@ public class FixtureServiceTests
         IReadOnlyCollection<Group> groups1 = service1.CreateFixture();
         IReadOnlyCollection<Group> groups2 = service2.CreateFixture();
 
-        List<string> firstTeamsRun1 = groups1.Select(g => g.Teams.First().Nombre).ToList();
-        List<string> firstTeamsRun2 = groups2.Select(g => g.Teams.First().Nombre).ToList();
+        List<string> firstTeamsRun1 = groups1.Select(g => g.Teams.First().Name).ToList();
+        List<string> firstTeamsRun2 = groups2.Select(g => g.Teams.First().Name).ToList();
 
         
         CollectionAssert.AreEqual(firstTeamsRun1, firstTeamsRun2);
@@ -208,6 +212,7 @@ public class FixtureServiceTests
         for (int i = 0; i < 12; i++)
         {
             teams.Add(new Team(
+                i + 1,
                 "B1_Team" + i,
                 2400 - i,
                 false,
@@ -219,6 +224,7 @@ public class FixtureServiceTests
         for (int i = 0; i < 12; i++)
         {
             teams.Add(new Team(
+                i + 1,
                 "B2_Team" + i,
                 2000 - i,
                 false,
@@ -230,6 +236,7 @@ public class FixtureServiceTests
         for (int i = 0; i < 12; i++)
         {
             teams.Add(new Team(
+                i + 1,
                 "B4_Team" + i,
                 1200 - i,
                 false,
@@ -241,6 +248,7 @@ public class FixtureServiceTests
         for (int i = 0; i < 12; i++)
         {
             teams.Add(new Team(
+                i + 1,
                 "B3_Team" + i,
                 1600 - i,
                 false,
@@ -259,7 +267,7 @@ public class FixtureServiceTests
         foreach (Group group in groups)
         {
             List<int> rankings = group.Teams
-                .Select(t => t.RankingFifa)
+                .Select(t => t.FifaRanking)
                 .OrderByDescending(r => r)
                 .ToList();
 
@@ -285,6 +293,7 @@ public class FixtureServiceTests
         for (int i = 24; i < 48; i++)
         {
             teams.Add(new Team(
+                i + 1,
                 "CONMEBOL_Team" + i,
                 2000 - i,
                 false,
@@ -294,6 +303,7 @@ public class FixtureServiceTests
         for (int i = 0; i < 24; i++)
         {
             teams.Add(new Team(
+                i + 1,
                 "UEFA_Team" + i,
                 2400 - i,
                 false,

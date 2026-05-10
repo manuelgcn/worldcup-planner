@@ -23,8 +23,8 @@ public class MatchSimulationEngine : IMatchSimulationEngine
         Team homeTeam = match.HomeTeam ?? throw new InvalidOperationException(HomeTeamRequiredMessage);
         Team awayTeam = match.AwayTeam ?? throw new InvalidOperationException(AwayTeamRequiredMessage);
 
-        int homeGoals = GenerateGoals(random, homeTeam.RankingFifa, awayTeam.RankingFifa);
-        int awayGoals = GenerateGoals(random, awayTeam.RankingFifa, homeTeam.RankingFifa);
+        int homeGoals = GenerateGoals(random, homeTeam.FifaRanking, awayTeam.FifaRanking);
+        int awayGoals = GenerateGoals(random, awayTeam.FifaRanking, homeTeam.FifaRanking);
 
         match.SetGoals(homeGoals, awayGoals);
     }

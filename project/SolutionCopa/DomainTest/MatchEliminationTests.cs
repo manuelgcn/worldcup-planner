@@ -18,8 +18,8 @@ public class MatchEliminationTests
     
     private static Match CreateSourceMatch(int matchId)
     {
-        Team sourceHomeTeam = new Team(nombre: "SourceHome", rankingFifa: 1000, esFicticio: true, confederation: Confederation.CONMEBOL);
-        Team sourceAwayTeam = new Team(nombre: "SourceAway", rankingFifa: 900, esFicticio: true, confederation: Confederation.CONMEBOL);
+        Team sourceHomeTeam = new Team(matchId + 1, name: "SourceHome", fifaRanking: 1000, isFictitious: true, confederation: Confederation.CONMEBOL);
+        Team sourceAwayTeam = new Team(matchId + 2, name: "SourceAway", fifaRanking: 900, isFictitious: true, confederation: Confederation.CONMEBOL);
         Stadium sourceStadium = new Stadium(name: "SourceStadium", city: "Test City", description: null, capacity: 50000);
 
         return new MockMatch(matchId, MatchDate, sourceHomeTeam, sourceAwayTeam, sourceStadium);
@@ -65,8 +65,8 @@ public class MatchEliminationTests
     [TestInitialize]
     public void Setup()
     {
-        _homeTeam = new Team(nombre: "Team A", rankingFifa: 1000, esFicticio: true, confederation: Confederation.CONMEBOL);
-        _awayTeam = new Team(nombre: "Team B", rankingFifa: 900, esFicticio: true, confederation: Confederation.CONMEBOL);
+        _homeTeam = new Team(1, name: "Team A", fifaRanking: 1000, isFictitious: true, confederation: Confederation.CONMEBOL);
+        _awayTeam = new Team(2, name: "Team B", fifaRanking: 900, isFictitious: true, confederation: Confederation.CONMEBOL);
         _stadium = new Stadium(name: "Test Stadium", city: "Test City", description: "A test stadium", capacity: 50000);
         _tournamentSettings = new TournamentSettings();
     }

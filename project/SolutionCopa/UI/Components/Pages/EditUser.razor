@@ -1,0 +1,114 @@
+
+@page "/edit-user"
+@using Services
+@using UI
+@inject SessionState Session
+@inject UserServices UserServices
+@inject NavigationManager Nav
+
+<PageTitle>Editar Usuario</PageTitle>
+
+<h3>Mi perfil</h3>
+
+@if (errors.Any())
+{
+    <ul style="color:red">
+        @foreach (string error in errors)
+        {
+            <li>@error</li>
+        }
+    </ul>
+}
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <p style="color:green">@successMessage</p>
+}
+
+@if (!Session.IsLoggedIn)
+{
+    <p>No estas logueado</p>
+    <button @onclick="GoToLogin">Ir a Login</button>
+}
+else
+{
+    <p>Email actual: @Session.CurrentUser!.email</p>
+
+    <input placeholder="Nombre" @bind="name" />
+    <br />
+    <input placeholder="Apellido" @bind="lastname" />
+    <br />
+    <input placeholder="Email" @bind="email" />
+    <br />
+
+    <button @onclick="Save">Guardar cambios</button>
+}
+
+@code {
+    private string name = "";
+    private string lastname = "";
+    private string email = "";
+    private string? successMessage;
+    private readonly List<string> errors = new();
+
+    protected override void OnInitialized()
+    {
+        LoadCurrentUser();
+    }
+
+    private void LoadCurrentUser()
+    {
+        if (Session.CurrentUser is null)
+            return;
+
+        name = Session.CurrentUser.name;
+        lastname = Session.CurrentUser.lastname ?? "";
+        email = Session.CurrentUser.email;
+    }
+
+    private void Save()
+    {
+        errors.Clear();
+        successMessage = null;
+
+        if (!ValidateInput())
+            return;
+
+        try
+        {
+            UserServices.UpdateUser(
+                Session.CurrentUser!.idUser,
+                name,
+                lastname,
+                email
+            );
+
+            successMessage = "Usuario actualizado correctamente";
+        }
+        catch (ArgumentException ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private bool ValidateInput()
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            errors.Add("Nombre es obligatorio");
+
+        if (string.IsNullOrWhiteSpace(lastname))
+            errors.Add("Apellido es obligatorio");
+
+        if (string.IsNullOrWhiteSpace(email))
+            errors.Add("Email es obligatorio");
+        else if (!email.Contains("@") || !email.Contains("."))
+            errors.Add("Email invalido");
+
+        return !errors.Any();
+    }
+
+    private void GoToLogin()
+    {
+        Nav.NavigateTo("/login");
+    }
+}

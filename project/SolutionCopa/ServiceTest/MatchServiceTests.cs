@@ -248,8 +248,8 @@ public sealed class MatchServiceTest
         // Add only the away source match (ID 200)
         _context.MatchRepository.Add(BuildMockMatch(
             id: 200,
-            homeTeam: new Team("Team 1", 1000, false, Confederation.CONCACAF),
-            awayTeam: new Team("Team 2", 2000, false, Confederation.UEFA),
+            homeTeam: new Team(1, "Team 1", 1000, false, Confederation.CONCACAF),
+            awayTeam: new Team(2, "Team 2", 2000, false, Confederation.UEFA),
             stadium: new Stadium("Stadium 1", "City 1", "None", 25000)));
 
         CreateMatchRequestDto request = BuildEliminationMatchRequest();
@@ -262,8 +262,8 @@ public sealed class MatchServiceTest
         // Add only the home source match (ID 100)
         _context.MatchRepository.Add(BuildMockMatch(
             id: 100,
-            homeTeam: new Team("Team 3", 350, false, Confederation.CONCACAF),
-            awayTeam: new Team("Team 4", 400, false, Confederation.UEFA),
+            homeTeam: new Team(3, "Team 3", 350, false, Confederation.CONCACAF),
+            awayTeam: new Team(4, "Team 4", 400, false, Confederation.UEFA),
             stadium: new Stadium("Stadium 2", "City 2", "None", 25000)));
 
         CreateMatchRequestDto request = BuildEliminationMatchRequest();
