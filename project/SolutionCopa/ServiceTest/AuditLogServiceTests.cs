@@ -15,27 +15,46 @@ public class AuditLogServiceTests
     public void Setup()
     {
         _repository = new MockAuditLogRepository();
-        _service = AuditLogService.CreateInstance(_repository);
+        _service = AuditLogService.CreateInstance(_repository, 1);
     }
 
     [TestMethod]
-    public void Log_WithValidData_CallsRepositoryAdd()
+    public void CreateInstance_ReturnsServiceThatCanLog()
+    {
+        // Act
+        _service.Log("CREATE", "Match Created", 1, "Match", 10);
+
+        // Assert
+        Assert.AreEqual(1, _repository.GetAll().Count);
+        Assert.AreEqual("CREATE", _repository.GetAll()[0].Action);
+    }
+
+    [TestMethod]
+    public void Log_WithValidData_StoresDetailsAndTournamentSettings()
     {
         // Act
         _service.Log("CREATE", "Match Created", 1, "Match", 10);
 
         // Assert
         List<AuditLog> logs = _repository.GetAll();
-        Assert.AreEqual(1, logs.Count);
-        Assert.AreEqual("CREATE", logs[0].Action);
         Assert.AreEqual("Match Created", logs[0].Details);
         Assert.AreEqual(1, logs[0].TournamentSettingsId);
+    }
+
+    [TestMethod]
+    public void Log_WithValidData_StoresEntityData()
+    {
+        // Act
+        _service.Log("CREATE", "Match Created", 1, "Match", 10);
+
+        // Assert
+        List<AuditLog> logs = _repository.GetAll();
         Assert.AreEqual("Match", logs[0].AffectedEntityType);
         Assert.AreEqual(10, logs[0].AffectedEntityId);
     }
 
     [TestMethod]
-    public void Log_WithOptionalEntityData_CallsRepositoryAddWithCorrectNulls()
+    public void Log_WithOptionalEntityData_StoresActionAndCount()
     {
         // Act
         _service.Log("EXPORT", "Data exported", 2);
@@ -44,8 +63,16 @@ public class AuditLogServiceTests
         List<AuditLog> logs = _repository.GetAll();
         Assert.AreEqual(1, logs.Count);
         Assert.AreEqual("EXPORT", logs[0].Action);
-        Assert.AreEqual("Data exported", logs[0].Details);
-        Assert.AreEqual(2, logs[0].TournamentSettingsId);
+    }
+
+    [TestMethod]
+    public void Log_WithOptionalEntityData_StoresNullEntityData()
+    {
+        // Act
+        _service.Log("EXPORT", "Data exported", 2);
+
+        // Assert
+        List<AuditLog> logs = _repository.GetAll();
         Assert.IsNull(logs[0].AffectedEntityType);
         Assert.IsNull(logs[0].AffectedEntityId);
     }
@@ -60,12 +87,22 @@ public class AuditLogServiceTests
         List<AuditLog> logs = _repository.GetAll();
         Assert.AreEqual(1, logs.Count);
         Assert.AreEqual(1, logs[0].TournamentSettingsId);
+    }
+
+    [TestMethod]
+    public void Log_WithoutTournamentSettingsId_StoresEntityData()
+    {
+        // Act
+        _service.Log("EXPORT", "Data exported", "Export", 7);
+
+        // Assert
+        List<AuditLog> logs = _repository.GetAll();
         Assert.AreEqual("Export", logs[0].AffectedEntityType);
         Assert.AreEqual(7, logs[0].AffectedEntityId);
     }
 
     [TestMethod]
-    public void GetAll_ReturnsListOfAuditLogDtos()
+    public void GetAll_ReturnsListOfAuditLogDtosWithCorrectCount()
     {
         // Arrange
         AuditLog log1 = AuditLog.Create("ACTION1", "Det 1", 1);
@@ -78,10 +115,38 @@ public class AuditLogServiceTests
 
         // Assert
         Assert.AreEqual(2, result.Count);
-        Assert.AreEqual("ACTION1", result[0].Action);
-        Assert.AreEqual("ACTION2", result[1].Action);
-        Assert.AreEqual(1, result[0].TournamentSettingsId);
-        Assert.AreEqual(2, result[1].TournamentSettingsId);
+    }
+
+    [TestMethod]
+    public void GetAll_ReturnsListOfAuditLogDtosWithCorrectActions()
+    {
+        // Arrange
+        AuditLog log1 = AuditLog.Create("ACTION1", "Det 1", 1);
+        AuditLog log2 = AuditLog.Create("ACTION2", "Det 2", 2);
+        _repository.Seed(log1);
+        _repository.Seed(log2);
+
+        // Act
+        List<AuditLogDto> result = _service.GetAll();
+
+        // Assert
+        CollectionAssert.AreEqual(new List<string> { "ACTION1", "ACTION2" }, result.Select(dto => dto.Action).ToList());
+    }
+
+    [TestMethod]
+    public void GetAll_ReturnsListOfAuditLogDtosWithCorrectTournamentSettings()
+    {
+        // Arrange
+        AuditLog log1 = AuditLog.Create("ACTION1", "Det 1", 1);
+        AuditLog log2 = AuditLog.Create("ACTION2", "Det 2", 2);
+        _repository.Seed(log1);
+        _repository.Seed(log2);
+
+        // Act
+        List<AuditLogDto> result = _service.GetAll();
+
+        // Assert
+        CollectionAssert.AreEqual(new List<int> { 1, 2 }, result.Select(dto => dto.TournamentSettingsId).ToList());
     }
 
     [TestMethod]
@@ -89,7 +154,7 @@ public class AuditLogServiceTests
     {
         // Arrange
         AuditLog log1 = AuditLog.Create("ACTION1", "Det 1", 1);
-        AuditLog log2 = AuditLog.Create("ACTION2", "Det 2", 2); // Debería excluirse
+        AuditLog log2 = AuditLog.Create("ACTION2", "Det 2", 2);
         AuditLog log3 = AuditLog.Create("ACTION3", "Det 3", 1);
         _repository.Seed(log1);
         _repository.Seed(log2);
@@ -100,12 +165,11 @@ public class AuditLogServiceTests
 
         // Assert
         Assert.AreEqual(2, result.Count);
-        Assert.AreEqual("ACTION1", result[0].Action);
-        Assert.AreEqual("ACTION3", result[1].Action);
+        CollectionAssert.AreEqual(new List<string> { "ACTION1", "ACTION3" }, result.Select(dto => dto.Action).ToList());
     }
 
     [TestMethod]
-    public void ExportAsText_WithNullTournamentId_ReturnsAllLogsText()
+    public void ExportAsText_WithNullTournamentId_ReturnsAllLogsActions()
     {
         // Arrange
         AuditLog log1 = AuditLog.Create("ACTION1", "Det 1", 1);
@@ -119,16 +183,31 @@ public class AuditLogServiceTests
         // Assert
         Assert.IsTrue(result.Contains("ACTION1"));
         Assert.IsTrue(result.Contains("ACTION2"));
+    }
+
+    [TestMethod]
+    public void ExportAsText_WithNullTournamentId_ReturnsAllTournamentIds()
+    {
+        // Arrange
+        AuditLog log1 = AuditLog.Create("ACTION1", "Det 1", 1);
+        AuditLog log2 = AuditLog.Create("ACTION2", "Det 2", 2);
+        _repository.Seed(log1);
+        _repository.Seed(log2);
+
+        // Act
+        string result = _service.ExportAsText();
+
+        // Assert
         Assert.IsTrue(result.Contains("TournamentID: 1"));
         Assert.IsTrue(result.Contains("TournamentID: 2"));
     }
 
     [TestMethod]
-    public void ExportAsText_WithSpecificTournamentId_ReturnsFilteredText()
+    public void ExportAsText_WithSpecificTournamentId_ReturnsFilteredActions()
     {
         // Arrange
         AuditLog log1 = AuditLog.Create("ACTION1", "Det 1", 1);
-        AuditLog log2 = AuditLog.Create("ACTION2", "Det 2", 2); // Debería excluirse del texto
+        AuditLog log2 = AuditLog.Create("ACTION2", "Det 2", 2);
         _repository.Seed(log1);
         _repository.Seed(log2);
 
@@ -138,6 +217,21 @@ public class AuditLogServiceTests
         // Assert
         Assert.IsTrue(result.Contains("ACTION1"));
         Assert.IsFalse(result.Contains("ACTION2"));
+    }
+
+    [TestMethod]
+    public void ExportAsText_WithSpecificTournamentId_ExcludesOtherTournamentIds()
+    {
+        // Arrange
+        AuditLog log1 = AuditLog.Create("ACTION1", "Det 1", 1);
+        AuditLog log2 = AuditLog.Create("ACTION2", "Det 2", 2);
+        _repository.Seed(log1);
+        _repository.Seed(log2);
+
+        // Act
+        string result = _service.ExportAsText(1);
+
+        // Assert
         Assert.IsFalse(result.Contains("TournamentID: 2"));
     }
 

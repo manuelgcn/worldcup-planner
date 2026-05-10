@@ -28,14 +28,53 @@ public class UserServicesTests
     public void AddUser_LogsAuditEntry()
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
-        UserServices auditedService = new UserServices(Services.AuditLogService.CreateInstance(repository));
+        UserServices auditedService = new UserServices(AuditLogService.CreateInstance(repository, 1));
         User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
 
         auditedService.AddUser(user);
 
-        List<ProjectCopa.AuditLog> logs = repository.GetAll();
+        List<AuditLog> logs = repository.GetAll();
         Assert.AreEqual(1, logs.Count);
         Assert.AreEqual("CREATE_USER", logs[0].Action);
+    }
+
+    [TestMethod]
+    public void UpdateUser_LogsAuditEntry()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        UserServices auditedService = new UserServices(AuditLogService.CreateInstance(repository, 1));
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        auditedService.AddUser(user);
+
+        auditedService.UpdateUser(1, "Juan Carlos", "Perez", "juan.c@mail.com");
+
+        Assert.IsTrue(repository.GetAll().Any(log => log.Action == "UPDATE_USER"));
+    }
+
+    [TestMethod]
+    public void RemoveUser_LogsAuditEntry()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        UserServices auditedService = new UserServices(AuditLogService.CreateInstance(repository, 1));
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        auditedService.AddUser(user);
+
+        auditedService.RemoveUser(1);
+
+        Assert.IsTrue(repository.GetAll().Any(log => log.Action == "DELETE_USER"));
+    }
+
+    [TestMethod]
+    public void AssignRole_LogsAuditEntry()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        UserServices auditedService = new UserServices(AuditLogService.CreateInstance(repository, 1));
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        auditedService.AddUser(user);
+
+        auditedService.AssignRole(1, UserRoles.Admin);
+
+        Assert.IsTrue(repository.GetAll().Any(log => log.Action == "ASSIGN_USER_ROLE"));
     }
     
     

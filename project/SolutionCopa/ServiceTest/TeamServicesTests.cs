@@ -29,14 +29,27 @@ public sealed class TeamServicesTests
     public void AddTeam_LogsAuditEntry()
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
-        TeamServices auditedService = new TeamServices(Services.AuditLogService.CreateInstance(repository));
-        Team team = new ProjectCopa.Team("Uruguay", 2000, false, Confederation.CONMEBOL);
+        TeamServices auditedService = new TeamServices(Services.AuditLogService.CreateInstance(repository, 1));
+        Team team = new Team("Uruguay", 2000, false, Confederation.CONMEBOL);
 
         auditedService.AgregarEquipo(team);
 
-        List<ProjectCopa.AuditLog> logs = repository.GetAll();
+        List<AuditLog> logs = repository.GetAll();
         Assert.AreEqual(1, logs.Count);
         Assert.AreEqual("CREATE_TEAM", logs[0].Action);
+    }
+
+    [TestMethod]
+    public void RemoveTeam_LogsAuditEntry()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        TeamServices auditedService = new TeamServices(Services.AuditLogService.CreateInstance(repository, 1));
+        Team team = new Team("Uruguay", 2000, false, Confederation.CONMEBOL);
+
+        auditedService.AgregarEquipo(team);
+        auditedService.EliminarEquipo("Uruguay");
+
+        Assert.IsTrue(repository.GetAll().Any(log => log.Action == "DELETE_TEAM"));
     }
 
     [TestMethod]

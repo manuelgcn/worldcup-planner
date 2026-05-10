@@ -8,17 +8,18 @@ namespace Services;
 
 public sealed class AuditLogService : IAuditLogService
 {
-    private const int DefaultTournamentSettingsId = 1;
+    private readonly int _defaultTournamentSettingsId;
     private readonly IAuditLogRepository _repository;
 
-    private AuditLogService(IAuditLogRepository repository)
+    private AuditLogService(IAuditLogRepository repository, int defaultTournamentSettingsId)
     {
         _repository = repository;
+        _defaultTournamentSettingsId = defaultTournamentSettingsId;
     }
 
-    public static AuditLogService CreateInstance(IAuditLogRepository repository)
+    public static AuditLogService CreateInstance(IAuditLogRepository repository, int defaultTournamentSettingsId)
     {
-        return new AuditLogService(repository);
+        return new AuditLogService(repository, defaultTournamentSettingsId);
     }
 
     public void Log(string action, string details, int tournamentSettingsId, string? entityType = null, int? entityId = null)
@@ -29,7 +30,7 @@ public sealed class AuditLogService : IAuditLogService
 
     public void Log(string action, string details, string? entityType = null, int? entityId = null)
     {
-        Log(action, details, DefaultTournamentSettingsId, entityType, entityId);
+        Log(action, details, _defaultTournamentSettingsId, entityType, entityId);
     }
 
     public List<AuditLogDto> GetAll()

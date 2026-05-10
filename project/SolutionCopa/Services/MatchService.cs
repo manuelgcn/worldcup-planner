@@ -38,8 +38,8 @@ public class MatchService(
         LogAuditAction(
             AuditActions.CreateMatch,
             $"MatchId={match.MatchId} created.",
-            request.TournamentSettingsId,
-            match.MatchId);
+            match.MatchId,
+            request.TournamentSettingsId);
 
         unitOfWork.Commit();
 
@@ -57,8 +57,8 @@ public class MatchService(
         LogAuditAction(
             AuditActions.UpdateMatch,
             $"Match updated for MatchId={match.MatchId}.",
-            request.TournamentSettingsId,
-            match.MatchId);
+            match.MatchId,
+            request.TournamentSettingsId);
 
         matchRepository.Update(match);
         unitOfWork.Commit();
@@ -74,7 +74,6 @@ public class MatchService(
         LogAuditAction(
             AuditActions.DeleteMatch,
             $"MatchId={matchId} deleted.",
-            null,
             matchId);
 
         unitOfWork.Commit();
@@ -90,7 +89,6 @@ public class MatchService(
         LogAuditAction(
             AuditActions.UpdateMatch,
             $"Goal added to {teamStr} team in MatchId={matchId}.",
-            null,
             matchId);
 
         matchRepository.Update(match);
@@ -107,7 +105,6 @@ public class MatchService(
         LogAuditAction(
             AuditActions.UpdateMatch,
             $"Goal removed from {teamStr} team in MatchId={matchId}.",
-            null,
             matchId);
 
         matchRepository.Update(match);
@@ -120,7 +117,6 @@ public class MatchService(
         LogAuditAction(
             AuditActions.PublishMatchResult,
             $"MatchId={matchId} published.",
-            null,
             matchId);
         matchRepository.Update(match);
         unitOfWork.Commit();
@@ -135,7 +131,6 @@ public class MatchService(
         LogAuditAction(
             AuditActions.SimulateMatch,
             $"MatchId={matchId} simulated with seed {tournamentSettings.SimulationSeed}.",
-            null,
             matchId);
         matchRepository.Update(match);
         unitOfWork.Commit();
@@ -178,13 +173,12 @@ public class MatchService(
         LogAuditAction(
             AuditActions.UpdateMatch,
             $"MatchId={matchId} goals set to {homeGoals}-{awayGoals}.",
-            null,
             matchId);
         matchRepository.Update(match);
         unitOfWork.Commit();
     }
 
-    private void LogAuditAction(string action, string details, int? tournamentSettingsId, int affectedEntityId)
+    private void LogAuditAction(string action, string details, int affectedEntityId, int? tournamentSettingsId = null)
     {
         if (tournamentSettingsId.HasValue)
         {
