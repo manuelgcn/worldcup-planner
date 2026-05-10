@@ -49,7 +49,7 @@ public sealed class AuditLog
     {
         EnsureActionIsValid(action);
 
-        string cleanAction = TrimAction(action);
+        string cleanAction = TrimAction(action!);
         string cleanDetails = details ?? string.Empty;
         DateTime timestampUtc = DateTime.UtcNow;
 
