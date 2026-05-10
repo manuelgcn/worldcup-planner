@@ -2,51 +2,62 @@ namespace ProjectCopa;
 
 public class Team
 {
-    private const int MaxNombreLength = 60;
-    private const int MinRankingFifa = 300;
-    private const int MaxRankingFifa = 2500;
-    private const string NombreInvalidoMessage = "El nombre del equipo no puede ser vacío.";
-    private const string RankingFueraDeRangoMessage = "El ranking FIFA debe estar entre {0} y {1}.";
+    private const int MaxNameLength = 60;
+    private const int MinFifaRanking = 300;
+    private const int MaxFifaRanking = 2500;
+    private const string InvalidNameMessage = "Team name cannot be empty.";
+    private const string FifaRankingOutOfRangeMessage = "FIFA ranking must be between {0} and {1}.";
 
-    public string Nombre { get; }
-    public int RankingFifa { get; }
-    public bool EsFicticio { get; }
+    public int Id { get; }
+    public string Name { get; }
+    public int FifaRanking { get; }
+    public bool IsFictitious { get; }
     public Confederation Confederation { get; }
 
-    public Team(string nombre, int rankingFifa, bool esFicticio, Confederation confederation)
+    public Team(int id, string name, int fifaRanking, bool isFictitious, Confederation confederation)
     {
-        ValidarNombre(nombre);
-        ValidarRankingFifa(rankingFifa);
-        Nombre = nombre;
-        RankingFifa = rankingFifa;
-        EsFicticio = esFicticio;
+        ValidateId(id);
+        ValidateName(name);
+        ValidateFifaRanking(fifaRanking);
+        Id = id;
+        Name = name;
+        FifaRanking = fifaRanking;
+        IsFictitious = isFictitious;
         Confederation = confederation;
     }
 
-    private static void ValidarNombre(string nombre)
+    private static void ValidateId(int id)
     {
-        if (NombreEsInvalido(nombre))
+        if (id <= 0)
         {
-            throw new ArgumentException(NombreInvalidoMessage, nameof(nombre));
+            throw new ArgumentException("Team id must be greater than zero.", nameof(id));
         }
     }
 
-    private static void ValidarRankingFifa(int rankingFifa)
+    private static void ValidateName(string name)
     {
-        if (RankingFifaFueraDeRango(rankingFifa))
+        if (IsNameInvalid(name))
         {
-            throw new ArgumentException(string.Format(RankingFueraDeRangoMessage, MinRankingFifa, MaxRankingFifa), nameof(rankingFifa));
+            throw new ArgumentException(InvalidNameMessage, nameof(name));
         }
     }
 
-    private static bool NombreEsInvalido(string nombre)
+    private static void ValidateFifaRanking(int fifaRanking)
     {
-        return string.IsNullOrEmpty(nombre) || nombre.Length > MaxNombreLength;
+        if (IsFifaRankingOutOfRange(fifaRanking))
+        {
+            throw new ArgumentException(string.Format(FifaRankingOutOfRangeMessage, MinFifaRanking, MaxFifaRanking), nameof(fifaRanking));
+        }
     }
 
-    private static bool RankingFifaFueraDeRango(int rankingFifa)
+    private static bool IsNameInvalid(string name)
     {
-        return rankingFifa < MinRankingFifa || rankingFifa > MaxRankingFifa;
+        return string.IsNullOrEmpty(name) || name.Length > MaxNameLength;
+    }
+
+    private static bool IsFifaRankingOutOfRange(int fifaRanking)
+    {
+        return fifaRanking < MinFifaRanking || fifaRanking > MaxFifaRanking;
     }
 }
 
