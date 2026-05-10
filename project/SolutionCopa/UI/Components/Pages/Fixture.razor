@@ -1,0 +1,74 @@
+@page "/fixture"
+@using ProjectCopa
+@using Services
+@using UI
+@inject TeamServices TeamServices
+@inject StadiumServices StadiumServices
+@inject SessionState Session
+@inject NavigationManager Nav
+
+<PageTitle>Fixture</PageTitle>
+
+<h3>Fixture - Fase de Grupos</h3>
+
+@if (!Session.IsLoggedIn)
+{
+    <p>No estas logueado</p>
+    <button @onclick="GoToLogin">Ir a Login</button>
+}
+else if (errorMessage is not null)
+{
+    <p style="color:red">@errorMessage</p>
+}
+else if (groups is null)
+{
+    <button @onclick="GenerateFixture">Ver Fixture</button>
+}
+else
+{
+    @foreach (Group group in groups)
+    {
+        <h4>Grupo @group.Name</h4>
+
+        <ul>
+            @foreach (Team team in group.Teams)
+            {
+                <li>
+                    @team.Name -
+                    @team.Confederation -
+                    Ranking @team.FifaRanking
+                </li>
+            }
+        </ul>
+    }
+}
+
+@code {
+    private IReadOnlyCollection<Group>? groups;
+    private string? errorMessage;
+
+    private void GenerateFixture()
+    {
+        errorMessage = null;
+
+        try
+        {
+            FixtureService fixtureService = new FixtureService(
+                TeamServices.GetTeams(),
+                StadiumServices.GetAllStadiums(),
+                seed: 42
+            );
+
+            groups = fixtureService.CreateFixture();
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private void GoToLogin()
+    {
+        Nav.NavigateTo("/login");
+    }
+}

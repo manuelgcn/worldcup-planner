@@ -208,8 +208,8 @@ public sealed class MatchSimulationEngineTests
 
     private static Match CreateMatch(int homeRanking, int awayRanking)
     {
-        Team homeTeam = new Team("Home Team", homeRanking, false, Confederation.CONCACAF);
-        Team awayTeam = new Team("Away Team", awayRanking, false, Confederation.UEFA);
+        Team homeTeam = new Team(1, "Home Team", homeRanking, false, Confederation.CONCACAF);
+        Team awayTeam = new Team(2, "Away Team", awayRanking, false, Confederation.UEFA);
         Stadium stadium = new Stadium("Main Stadium", "Main City", "None", 25000);
         Group group = new Group("A");
         Journey journey = new Journey(1);

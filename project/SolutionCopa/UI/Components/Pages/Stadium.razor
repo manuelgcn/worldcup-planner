@@ -1,0 +1,187 @@
+
+@page "/stadiums"
+@using ProjectCopa
+@using Services
+@using UI
+@inject StadiumServices StadiumServices
+@inject SessionState Session
+@inject NavigationManager Nav
+
+<PageTitle>Estadios</PageTitle>
+
+<h3>Estadios</h3>
+
+@if (!Session.IsLoggedIn)
+{
+    <p>No estas logueado</p>
+    <button @onclick="GoToLogin">Ir a Login</button>
+}
+else if (!IsAdmin)
+{
+    <p>No tenes permisos para administrar estadios</p>
+}
+else
+{
+    if (errors.Any())
+    {
+        <ul style="color:red">
+            @foreach (var error in errors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+    }
+
+    if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <p style="color:green">@successMessage</p>
+    }
+
+    <h4>Crear Estadio</h4>
+
+    <input placeholder="Nombre" @bind="name" />
+    <br />
+    <input placeholder="Ciudad" @bind="city" />
+    <br />
+    <input placeholder="Descripcion (opcional)" @bind="description" />
+    <br />
+    <input placeholder="Capacidad" type="number" @bind="capacity" />
+    <br />
+
+    <button @onclick="Create">Crear</button>
+
+    <hr />
+
+    <h4>Estadios existentes</h4>
+
+    @if (!stadiums.Any())
+    {
+        <p>No hay estadios cargados</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Ciudad</th>
+                    <th>Capacidad</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var stadium in stadiums)
+                {
+                    <tr>
+                        <td>@stadium.Name</td>
+                        <td>@stadium.City</td>
+                        <td>@stadium.Capacity</td>
+                        <td>
+                            <button @onclick="() => Remove(stadium.Name)">
+                                Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private string name = "";
+    private string city = "";
+    private string? description;
+    private int capacity;
+
+    private readonly List<string> errors = new();
+    private string? successMessage;
+
+    private IReadOnlyCollection<ProjectCopa.Stadium> stadiums =
+        Array.Empty<ProjectCopa.Stadium>();
+
+    private bool IsAdmin =>
+        Session.CurrentUser!.Roles.Contains(UserRoles.Admin);
+
+    protected override void OnInitialized()
+    {
+        LoadStadiums();
+    }
+
+    private void LoadStadiums()
+    {
+        stadiums = StadiumServices.GetAllStadiums();
+    }
+
+    private void Create()
+    {
+        errors.Clear();
+        successMessage = null;
+
+        if (!ValidateInput())
+            return;
+
+        try
+        {
+            ProjectCopa.Stadium stadium = new ProjectCopa.Stadium(
+                name,
+                city,
+                description,
+                capacity
+            );
+
+            StadiumServices.AddStadium(stadium);
+            successMessage = "Estadio creado correctamente";
+            ClearForm();
+            LoadStadiums();
+        }
+        catch (ArgumentException ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void Remove(string name)
+    {
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            StadiumServices.Remove(name);
+            successMessage = "Estadio eliminado correctamente";
+            LoadStadiums();
+        }
+        catch (ArgumentException ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private bool ValidateInput()
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            errors.Add("El nombre es obligatorio");
+
+        if (string.IsNullOrWhiteSpace(city))
+            errors.Add("La ciudad es obligatoria");
+
+        if (capacity < 20000)
+            errors.Add("La capacidad debe ser al menos 20000");
+
+        return !errors.Any();
+    }
+
+    private void ClearForm()
+    {
+        name = "";
+        city = "";
+        description = null;
+        capacity = 0;
+    }
+
+    private void GoToLogin()
+    {
+        Nav.NavigateTo("/login");
+    }
+}
