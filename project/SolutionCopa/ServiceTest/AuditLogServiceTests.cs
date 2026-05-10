@@ -169,6 +169,32 @@ public class AuditLogServiceTests
     }
 
     [TestMethod]
+    public void GetByTournamentSettings_ReturnsEmptyListWhenNoLogsMatch()
+    {
+        // Arrange
+        AuditLog log1 = AuditLog.Create("ACTION1", "Det 1", 1);
+        AuditLog log2 = AuditLog.Create("ACTION2", "Det 2", 2);
+        _repository.Seed(log1);
+        _repository.Seed(log2);
+
+        // Act
+        List<AuditLogDto> result = _service.GetByTournamentSettings(99);
+
+        // Assert
+        Assert.AreEqual(0, result.Count);
+    }
+
+    [TestMethod]
+    public void GetByTournamentSettings_ReturnsEmptyListWhenRepositoryIsEmpty()
+    {
+        // Act
+        List<AuditLogDto> result = _service.GetByTournamentSettings(1);
+
+        // Assert
+        Assert.AreEqual(0, result.Count);
+    }
+
+    [TestMethod]
     public void ExportAsText_WithNullTournamentId_ReturnsAllLogsActions()
     {
         // Arrange

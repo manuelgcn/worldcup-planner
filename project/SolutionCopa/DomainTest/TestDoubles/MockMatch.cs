@@ -8,6 +8,12 @@ public sealed class MockMatch : Match
     {
     }
 
+    public static bool CanUseSourceMatches(Match? homeMatch, Match? awayMatch)
+    {
+        EnsureDifferentSourceMatches(homeMatch, awayMatch);
+        return true;
+    }
+
     public MockMatch(int id, DateTime matchDate, Team homeTeam, Team awayTeam, Stadium stadium)
         : base(id, matchDate, homeTeam, awayTeam, stadium)
     {

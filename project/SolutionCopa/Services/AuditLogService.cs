@@ -43,13 +43,18 @@ public sealed class AuditLogService : IAuditLogService
 
     public List<AuditLogDto> GetByTournamentSettings(int tournamentSettingsId)
     {
+        List<AuditLogDto> filtered = new List<AuditLogDto>();
         List<AuditLog> logs = _repository.GetAll();
-        List<AuditLog> filtered = logs
-            .Where(l => l.TournamentSettingsId == tournamentSettingsId)
-            .ToList();
-        return filtered
-            .Select(MapToDto)
-            .ToList();
+
+        foreach (AuditLog log in logs)
+        {
+            if (log.TournamentSettingsId == tournamentSettingsId)
+            {
+                filtered.Add(MapToDto(log));
+            }
+        }
+
+        return filtered;
     }
 
     public string ExportAsText(int? tournamentSettingsId = null)
