@@ -9,7 +9,7 @@ public sealed class UpdateMatchRequestDto
     public int? AwayTeamId { get; init; }
     public int? StadiumId { get; init; }
 
-    public int? ChampionshipConfigurationId { get; init; }
+    public int? TournamentSettingsId { get; init; }
     public int? GroupId { get; init; }
     public int? JourneyId { get; init; }
     public Phase? Phase { get; init; }

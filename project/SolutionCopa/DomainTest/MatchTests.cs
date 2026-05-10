@@ -100,6 +100,22 @@ public class MatchTests
     }
 
     [TestMethod]
+    public void MatchAllowsNullHomeSourceMatchInSourceValidation()
+    {
+        Match sourceAwayMatch = CreateMatchWithData();
+
+        Assert.IsTrue(MockMatch.CanUseSourceMatches(null, sourceAwayMatch));
+    }
+
+    [TestMethod]
+    public void MatchAllowsNullAwaySourceMatchInSourceValidation()
+    {
+        Match sourceHomeMatch = CreateMatchWithData();
+
+        Assert.IsTrue(MockMatch.CanUseSourceMatches(sourceHomeMatch, null));
+    }
+
+    [TestMethod]
     public void MatchRejectsInvalidDate()
     {
         TournamentSettings tournamentSettings = new TournamentSettings();

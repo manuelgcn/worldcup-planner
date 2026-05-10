@@ -1,5 +1,6 @@
 using ProjectCopa;
 using Services;
+using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest;
 
@@ -31,6 +32,21 @@ public class FixtureServiceTests
         IReadOnlyCollection<Group> groups = service.CreateFixture();
         
         Assert.AreEqual(12, groups.Count);
+    }
+
+    [TestMethod]
+    public void CreateFixture_LogsAuditEntry()
+    {
+        List<Team> teams = Create48ValidTeams();
+        List<Stadium> stadiums = Create4ValidStadiums();
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        FixtureService service = new FixtureService(teams, stadiums, auditLogService: AuditLogService.CreateInstance(repository, 1));
+
+        service.CreateFixture();
+
+        List<AuditLog> logs = repository.GetAll();
+        Assert.AreEqual(1, logs.Count);
+        Assert.AreEqual("GENERATE_FIXTURE", logs[0].Action);
     }
 
     private List<Team> Create48ValidTeams()

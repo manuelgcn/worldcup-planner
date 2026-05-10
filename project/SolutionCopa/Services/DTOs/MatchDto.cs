@@ -22,5 +22,5 @@ public sealed class MatchDto
     public int? MatchHomeId { get; set; }
     public int? MatchAwayId { get; set; }
 
-    public int? ChampionshipConfigurationId { get; set; }
+    public int? TournamentSettingsId { get; set; }
 }

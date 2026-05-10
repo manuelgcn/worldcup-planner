@@ -1,177 +1,322 @@
 # WorldCupPlanner 2026
 
-A domain-driven C# application for planning and tracking FIFA World Cup 2026 matches.
+WorldCupPlanner 2026 es una solucion .NET 8 por capas para modelar y administrar un torneo mundial: usuarios, equipos, estadios, grupos, partidos, fixture, cruces y auditoria.
 
----
+## Proposito
 
-## Project Description
+El objetivo del proyecto es mantener la logica de negocio en el dominio y la orquestacion en servicios, con reglas explicitas y tests MSTest. La solucion busca ser deterministica en todo lo que dependa de semillas, y fail-fast ante datos invalidos.
 
-**WorldCupPlanner 2026** (`SolutionCopa`) is a layered .NET 8 application that models World Cup match scheduling, scoring, and bracket progression. The domain enforces strict invariants via domain exceptions, and all behavior is developed following TDD with MSTest.
+## Estructura de la solucion
 
----
-
-## Architecture
-
-The solution follows a layered architecture (located in `project/SolutionCopa/`):
-
-| Layer | Project | Responsibility |
+| Capa | Proyecto | Rol |
 |---|---|---|
-| Domain | `Domain` | Entities, value validation, domain exceptions, interfaces |
-| Services | `Services` | Use-case orchestration; depends on domain contracts |
-| Data Access | `DataAccess` | Persistence and infrastructure implementations |
-| Controllers | `Controllers` | Entry points / adapters |
-| DTOs | `Dtos` | Transport contracts between layers and boundaries |
-| Tests | `DomainTest`, `ServiceTest` | Unit tests for domain and service behavior |
+| Dominio | `Domain` | Entidades, invariantes, enums y excepciones del negocio |
+| Servicios | `Services` | Casos de uso, coordinacion, DTOs y auditoria |
+| Datos | `DataAccess` | Contratos de repositorio y unidad de trabajo |
+| UI / Controladores | `UI`, `Controllers` | Puntos de entrada y adaptadores |
+| Pruebas | `DomainTest`, `ServiceTest`, `DataAccessTest` | Validacion con MSTest |
 
----
+Namespaces principales:
 
-## Domain Model
+- `ProjectCopa` en dominio.
+- `Services` en servicios.
+- `DataAccess` en acceso a datos.
+- `DomainTest` y `ServiceTest` en pruebas.
+
+## Clases principales del dominio
+
+### `User`
+
+Representa un usuario del sistema.
+
+Condiciones:
+
+- `email` obligatorio y con formato valido basico.
+- `password` con minimo 8 caracteres, mayuscula, numero y caracter especial.
+- La contrasena se guarda cifrada con SHA256, no en texto plano.
+- Permite asignar roles no excluyentes.
+
+Propiedades relevantes:
+
+- `idUser`
+- `name`
+- `lastname`
+- `email`
+- `password`
+- `dateOfBirth`
+- `Roles`
+
+### `Team`
+
+Representa una seleccion/equipo del torneo.
+
+Condiciones:
+
+- Nombre obligatorio.
+- Longitud maxima: 60 caracteres.
+- Ranking FIFA entre 300 y 2500.
+- Se asocia a una `Confederation`.
+
+### `Stadium`
+
+Representa un estadio del torneo.
+
+Condiciones:
+
+- `Name` obligatorio y maximo 80 caracteres.
+- `City` obligatoria y maximo 60 caracteres.
+- `Capacity` minimo 20000.
+
+### `Group`
+
+Representa un grupo del torneo.
+
+Condiciones:
+
+- `Name` obligatorio.
+- Maximo 4 equipos por grupo.
+
+### `Journey`
+
+Representa una jornada/fecha del fixture de grupos.
+
+### `TournamentSettings`
+
+Centraliza la configuracion deterministica del torneo.
+
+Propiedades:
+
+- `Id`
+- `StartDate`
+- `MaxMatchesPerDay`
+- `DaysBetweenJourneys`
+- `FixtureSeed`
+- `CrossingsSeed`
+- `SimulationSeed`
+- `CompletionSeed`
+
+Condiciones:
+
+- `MaxMatchesPerDay` entre 1 y 3.
+- `DaysBetweenJourneys` mayor o igual a 1.
+- Valores por defecto:
+  - inicio: `2026-06-01`
+  - max por dia: `3`
+  - separacion entre jornadas: `3`
+  - semillas: `0`
 
 ### `Match`
-Base class representing a match between two teams in a stadium on a given date.
 
-**Properties:** `MatchId`, `MatchDate`, `HomeTeam`, `AwayTeam`, `HomeGoals`, `AwayGoals`, `Stadium`
+Clase abstracta base para cualquier partido.
 
-**Invariants:**
-- Home and away teams must be different.
-- Stadium is required.
-- Match date must be ≥ tournament start date.
-- Goals can never be negative.
-- Removing a goal when the current count is 0 is invalid.
+Responsabilidades:
 
-**Behaviors:**
-- `ChangeStadium(IStadium)` — change the match venue.
-- `SetGoals(int homeGoals, int awayGoals)` — set both scores at once.
-- `AddHomeGoal()`, `AddAwayGoal()` — increment scores.
-- `RemoveHomeGoal()`, `RemoveAwayGoal()` — decrement scores.
-- `HasHomeTeamWon()`, `HasAwayTeamWon()`, `IsDraw()` — result queries.
-- `GetWinner()` — returns winning `ITeam` or `null` if draw.
+- Validar fecha contra el inicio del torneo.
+- Mantener equipos, goles, estadio y ganador.
+- Permitir cambio de estadio y manejo de goles.
 
-### `MatchGroup : Match`
-Extends `Match` for the group stage. Adds:
-- `IGroup Group` — the group this match belongs to.
-- `IJourney Journey` — the matchday/round within the group.
+Condiciones:
 
-### `MatchElimination : Match`
-Extends `Match` for the knockout stage. Adds:
-- `MatchCode` (required) — e.g. "QF1", "SF2".
-- `MatchHome` / `MatchAway` — source matches for bracket progression.
+- Home team y away team no pueden ser el mismo.
+- El estadio es obligatorio.
+- Los goles no pueden ser negativos.
+- No se puede quitar un gol si el marcador esta en cero.
 
----
+Metodos relevantes:
 
-## Features
+- `ChangeStadium`
+- `SetGoals`
+- `SetHomeGoals`
+- `SetAwayGoals`
+- `AddHomeGoal`
+- `AddAwayGoal`
+- `RemoveHomeGoal`
+- `RemoveAwayGoal`
+- `GetWinner`
 
-- Full match model with group-stage and knockout-stage support.
-- Strict domain invariant enforcement via exceptions.
-- Individual goal management with full traceability.
-- Team, Stadium, Group, Journey, and TournamentSettings models.
-- Repository pattern for persistence abstraction.
+### `MatchGroup`
 
----
+Especializa `Match` para fase de grupos.
 
-## Technology Stack
+Agrega:
 
-- **Language:** C# 12
-- **Runtime:** .NET 8
-- **Testing:** MSTest 3
-- **Architecture:** Layered + DDD-oriented domain model
-- **IDE:** JetBrains Rider / Visual Studio
+- `Group`
+- `Journey`
 
----
+### `MatchElimination`
 
-## Prerequisites
+Especializa `Match` para fase eliminatoria.
 
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- Any IDE with C# support (Visual Studio 2022, Rider, VS Code + C# Dev Kit)
+Agrega:
 
----
+- `Phase`
+- `MatchCode`
+- `MatchHome`
+- `MatchAway`
 
-## Setup and Run
+Condiciones:
+
+- `Phase` valida.
+- `MatchCode` obligatorio.
+- Los partidos fuente no pueden ser nulos.
+- Los partidos fuente no pueden ser el mismo objeto.
+
+### `AuditLog`
+
+Entidad de auditoria del backend.
+
+Campos:
+
+- `Timestamp`
+- `Action`
+- `Details`
+- `TournamentSettingsId`
+- `AffectedEntityType`
+- `AffectedEntityId`
+
+Se usa para registrar acciones de negocio y cambios de estado.
+
+## Capa de servicios
+
+### `UserServices`
+
+Gestiona altas, bajas, cambios y roles de usuarios.
+
+Reglas:
+
+- No permite emails duplicados.
+- No permite ids duplicados.
+- Expone busqueda por email e id.
+- Dispara auditoria en operaciones mutantes cuando el logger esta inyectado.
+
+### `TeamServices`
+
+Gestiona equipos del sistema.
+
+Reglas:
+
+- Nombre unico.
+- Cupos por confederacion.
+- Busqueda y eliminacion por nombre.
+- Orden deterministico para fixture con Fisher-Yates y semilla.
+- Exige exactamente 48 equipos para ordenar fixture.
+
+### `StadiumServices`
+
+Gestiona estadios.
+
+Reglas:
+
+- Nombre unico.
+- Alta, baja, consulta y actualizacion.
+- Dispara auditoria en mutaciones.
+
+### `FixtureService`
+
+Construye el fixture de grupos.
+
+Reglas:
+
+- Exige 48 equipos.
+- Exige al menos 4 estadios.
+- Crea 12 grupos: `A` a `L`.
+- Ordena equipos por ranking FIFA.
+- Rompe empates de forma deterministica usando semilla.
+- Distribuye 4 bombos de 12 equipos.
+
+### `MatchFactory`
+
+Fabrica instancias de partidos segun el tipo.
+
+Responsabilidades:
+
+- Crear partidos de grupo o eliminatoria.
+- Resolver equipos, estadio, grupo, jornada y configuracion del torneo.
+- Aplicar cambios de estadio en actualizaciones.
+
+### `MatchService`
+
+Orquesta el ciclo de vida de los partidos.
+
+Casos de uso:
+
+- crear partido
+- actualizar partido
+- eliminar partido
+- agregar gol
+- quitar gol
+- fijar marcador
+- publicar resultado
+- simular partido
+- buscar por id, grupo, jornada o rango de fechas
+
+Tambien registra auditoria de las operaciones mutantes y usa la configuracion deterministica del torneo.
+
+### `AuditLogService`
+
+Guarda y exporta registros de auditoria.
+
+Funcionalidades:
+
+- crear logs
+- listar todos
+- filtrar por `TournamentSettingsId`
+- exportar a texto
+
+### `AuditActions`
+
+Constantes de acciones de auditoria para evitar strings sueltos.
+
+## Auditoria en backend
+
+La auditoria backend existe y cubre varios flujos de mutacion:
+
+- usuarios
+- equipos
+- estadios
+- fixture
+- partidos
+
+Cada log guarda accion, detalle, entidad afectada y contexto del torneo. Parte del flujo sigue dependiendo de un contexto por defecto para la configuracion del torneo, por lo que la cobertura es funcional pero todavia no uniforme en todos los caminos.
+
+## Reglas y condiciones clave
+
+- El dominio usa excepciones especificas para reglas de negocio.
+- Los servicios usan validaciones explicitas y fallan rapido ante datos invalidos.
+- El ordenamiento y simulacion usan semillas para reproducibilidad.
+- Las pruebas deben ser deterministicas.
+- La UI no debe contener logica de negocio.
+
+## Pruebas
+
+La solucion usa MSTest.
+
+Comandos:
 
 ```bash
-# Clone the repository
-git clone https://github.com/IngSoft-DA1/255503---330734---326829.git
-cd 255503---330734---326829
-
-# Restore dependencies
 dotnet restore project/SolutionCopa/SolutionCopa.sln
-
-# Build the solution
 dotnet build project/SolutionCopa/SolutionCopa.sln
+dotnet test project/SolutionCopa/SolutionCopa.sln
 ```
 
----
-
-## Test Execution
+Pruebas focalizadas:
 
 ```bash
-# Run all tests
-dotnet test project/SolutionCopa/SolutionCopa.sln
-
-# Run only domain tests
 dotnet test project/SolutionCopa/DomainTest/DomainTest.csproj
-
-# Run a specific test class
-dotnet test project/SolutionCopa/DomainTest/DomainTest.csproj --filter "FullyQualifiedName~MatchTests"
-
-# Run service tests
 dotnet test project/SolutionCopa/ServiceTest/ServiceTest.csproj
+dotnet test project/SolutionCopa/DataAccessTest/DataAccessTest.csproj
 ```
 
----
+## Estado actual
 
-## TDD Workflow
+- El dominio principal esta modelado.
+- Los servicios base estan implementados.
+- La capa de auditoria existe y ya registra parte de las mutaciones.
+- UI y controladores siguen siendo superficiales/scaffold en el estado actual.
 
-This repository follows a strict **Red → Green → Refactor** cycle:
+## Recomendaciones de contribucion
 
-1. **RED** — Write one failing test for one rule or behavior.
-2. **GREEN** — Write the minimum code to make the test pass.
-3. **REFACTOR** — Improve readability without changing behavior.
-
-No phase is skipped. Each domain rule has a dedicated test.
-
----
-
-## Error Handling
-
-Domain rule violations throw custom exceptions (`MatchException`, `MatchServicesException`). Guards are explicit and fail-fast with named constant messages.
-
----
-
-## Repository Structure
-
-```
-255503---330734---326829/
-├── .github/
-│   ├── workflows/
-│   ├── skills/
-│   └── copilot-instructions.md
-├── project/
-│   └── SolutionCopa/
-│       ├── Domain/
-│       ├── Services/
-│       ├── DataAccess/
-│       ├── Controllers/
-│       ├── Dtos/
-│       ├── DomainTest/
-│       ├── ServiceTest/
-│       └── SolutionCopa.sln
-├── AGENTS.md
-└── README.md (this file)
-```
-
----
-
-## Contribution Guidelines
-
-- Follow the TDD workflow.
-- Keep each PR scoped to one feature or fix.
-- Use domain exceptions for all rule violations.
-- Prefer interface-first modeling at domain boundaries.
-- Use explicit guards and fail-fast patterns.
-
----
-
-## License
-
-TBD
+- Mantener TDD: red, green, refactor.
+- Conservar nombres y contratos existentes.
+- No mover reglas de negocio a UI ni controladores.
+- Preferir constantes y helpers compartidos antes que literales repetidos.

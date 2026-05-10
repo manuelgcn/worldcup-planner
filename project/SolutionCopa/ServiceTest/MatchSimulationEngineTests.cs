@@ -212,7 +212,7 @@ public sealed class MatchSimulationEngineTests
         Team awayTeam = new Team(2, "Away Team", awayRanking, false, Confederation.UEFA);
         Stadium stadium = new Stadium("Main Stadium", "Main City", "None", 25000);
         Group group = new Group("A");
-        Journey journey = new Journey(1);
+        Journey journey = Journey.CreateInstance(1);
 
         return MatchGroup.CreateInstance(
             1,

@@ -12,7 +12,7 @@ builder.Services.AddRazorComponents()
 
 
 builder.Services.AddSingleton<ITeamRepository, TeamRepositoryList>();
-builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkList>();
+builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 builder.Services.AddSingleton<UserServices>();
 builder.Services.AddSingleton<StadiumServices>();
 builder.Services.AddSingleton<TeamServices>();
