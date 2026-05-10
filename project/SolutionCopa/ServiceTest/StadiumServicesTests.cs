@@ -1,5 +1,6 @@
 using ProjectCopa;
 using Services;
+using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest;
 
@@ -29,6 +30,20 @@ public class StadiumServicesTests
         service.AddStadium(stadium);
 
         Assert.AreEqual(1, service.GetAllStadiums().Count);
+    }
+
+    [TestMethod]
+    public void AddStadium_LogsAuditEntry()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        StadiumServices auditedService = new StadiumServices(Services.AuditLogService.CreateInstance(repository));
+        Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
+
+        auditedService.AddStadium(stadium);
+
+        List<ProjectCopa.AuditLog> logs = repository.GetAll();
+        Assert.AreEqual(1, logs.Count);
+        Assert.AreEqual("CREATE_STADIUM", logs[0].Action);
     }
 
     

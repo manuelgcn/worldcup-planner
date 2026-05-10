@@ -1,5 +1,6 @@
 using ProjectCopa;
 using Services;
+using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest;
 
@@ -22,6 +23,20 @@ public sealed class TeamServicesTests
         _service.AgregarEquipo(team);
 
         Assert.AreEqual(1, _service.ObtenerEquipos().Count);
+    }
+
+    [TestMethod]
+    public void AddTeam_LogsAuditEntry()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        TeamServices auditedService = new TeamServices(Services.AuditLogService.CreateInstance(repository));
+        Team team = new ProjectCopa.Team("Uruguay", 2000, false, Confederation.CONMEBOL);
+
+        auditedService.AgregarEquipo(team);
+
+        List<ProjectCopa.AuditLog> logs = repository.GetAll();
+        Assert.AreEqual(1, logs.Count);
+        Assert.AreEqual("CREATE_TEAM", logs[0].Action);
     }
 
     [TestMethod]

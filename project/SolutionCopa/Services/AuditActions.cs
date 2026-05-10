@@ -2,6 +2,14 @@ namespace Services;
 
 public static class AuditActions
 {
+    public const string CreateUser = "CREATE_USER";
+
+    public const string UpdateUser = "UPDATE_USER";
+
+    public const string DeleteUser = "DELETE_USER";
+
+    public const string AssignUserRole = "ASSIGN_USER_ROLE";
+
     public const string CreateMatch = "CREATE_MATCH";
 
     public const string UpdateMatch = "UPDATE_MATCH";
@@ -17,6 +25,12 @@ public static class AuditActions
     public const string UpdateTeam = "UPDATE_TEAM";
 
     public const string DeleteTeam = "DELETE_TEAM";
+
+    public const string CreateStadium = "CREATE_STADIUM";
+
+    public const string UpdateStadium = "UPDATE_STADIUM";
+
+    public const string DeleteStadium = "DELETE_STADIUM";
 
     public const string GenerateFixture = "GENERATE_FIXTURE";
 }

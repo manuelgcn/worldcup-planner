@@ -15,7 +15,7 @@ public class MatchService(
     IUnitOfWork unitOfWork)
     : IMatchService
 {
-    private const int SimulationTournamentSettingsId = 1;
+    private const int DefaultTournamentSettingsId = 1;
     private const string MatchIdAlreadyExistsMessage = "Match ID already exists";
     private const string GroupNameRequiredMessage = "Group name is required";
     private const string FromMustBeLessOrEqualToMessage = "'from' must be less than or equal to 'to'";
@@ -34,13 +34,13 @@ public class MatchService(
 
         Match match = matchFactory.Create(request);
         matchRepository.Add(match);
-        
+
         LogAuditAction(
-            AuditActions.CreateMatch, 
-            $"MatchId={match.MatchId} created.", 
-            request.TournamentSettingsId ?? 1, 
+            AuditActions.CreateMatch,
+            $"MatchId={match.MatchId} created.",
+            request.TournamentSettingsId,
             match.MatchId);
-            
+
         unitOfWork.Commit();
 
         return MapToDto(match);
@@ -53,11 +53,11 @@ public class MatchService(
         Match match = GetMatchOrThrow(matchId);
 
         matchFactory.ApplyUpdate(match, request);
-        
+
         LogAuditAction(
-            AuditActions.UpdateMatch, 
-            $"Match updated for MatchId={match.MatchId}.", 
-            SimulationTournamentSettingsId,
+            AuditActions.UpdateMatch,
+            $"Match updated for MatchId={match.MatchId}.",
+            request.TournamentSettingsId,
             match.MatchId);
 
         matchRepository.Update(match);
@@ -70,13 +70,13 @@ public class MatchService(
     {
         Match match = GetMatchOrThrow(matchId);
         matchRepository.Delete(match);
-        
+
         LogAuditAction(
-            AuditActions.DeleteMatch, 
-            $"MatchId={matchId} deleted.", 
-            1, 
+            AuditActions.DeleteMatch,
+            $"MatchId={matchId} deleted.",
+            null,
             matchId);
-            
+
         unitOfWork.Commit();
     }
 
@@ -88,9 +88,9 @@ public class MatchService(
 
         string teamStr = isHomeTeam ? "Home" : "Away";
         LogAuditAction(
-            AuditActions.UpdateMatch, 
-            $"Goal added to {teamStr} team in MatchId={matchId}.", 
-            SimulationTournamentSettingsId, 
+            AuditActions.UpdateMatch,
+            $"Goal added to {teamStr} team in MatchId={matchId}.",
+            null,
             matchId);
 
         matchRepository.Update(match);
@@ -105,9 +105,9 @@ public class MatchService(
 
         string teamStr = isHomeTeam ? "Home" : "Away";
         LogAuditAction(
-            AuditActions.UpdateMatch, 
-            $"Goal removed from {teamStr} team in MatchId={matchId}.", 
-            SimulationTournamentSettingsId, 
+            AuditActions.UpdateMatch,
+            $"Goal removed from {teamStr} team in MatchId={matchId}.",
+            null,
             matchId);
 
         matchRepository.Update(match);
@@ -117,6 +117,11 @@ public class MatchService(
     public void PublishResult(int matchId)
     {
         Match match = GetMatchOrThrow(matchId);
+        LogAuditAction(
+            AuditActions.PublishMatchResult,
+            $"MatchId={matchId} published.",
+            null,
+            matchId);
         matchRepository.Update(match);
         unitOfWork.Commit();
     }
@@ -127,6 +132,11 @@ public class MatchService(
         TournamentSettings tournamentSettings = GetSimulationTournamentSettingsOrThrow();
 
         matchSimulationEngine.Simulate(match, tournamentSettings.SimulationSeed);
+        LogAuditAction(
+            AuditActions.SimulateMatch,
+            $"MatchId={matchId} simulated with seed {tournamentSettings.SimulationSeed}.",
+            null,
+            matchId);
         matchRepository.Update(match);
         unitOfWork.Commit();
     }
@@ -165,16 +175,31 @@ public class MatchService(
     {
         Match match = GetMatchOrThrow(matchId);
         match.SetGoals(homeGoals, awayGoals);
+        LogAuditAction(
+            AuditActions.UpdateMatch,
+            $"MatchId={matchId} goals set to {homeGoals}-{awayGoals}.",
+            null,
+            matchId);
         matchRepository.Update(match);
         unitOfWork.Commit();
     }
 
-    private void LogAuditAction(string action, string details, int tournamentSettingsId, int affectedEntityId)
+    private void LogAuditAction(string action, string details, int? tournamentSettingsId, int affectedEntityId)
     {
+        if (tournamentSettingsId.HasValue)
+        {
+            auditLogService.Log(
+                action: action,
+                details: details,
+                tournamentSettingsId: tournamentSettingsId.Value,
+                affectedEntityType: nameof(Match),
+                affectedEntityId: affectedEntityId);
+            return;
+        }
+
         auditLogService.Log(
             action: action,
             details: details,
-            tournamentSettingsId: tournamentSettingsId,
             affectedEntityType: nameof(Match),
             affectedEntityId: affectedEntityId);
     }
@@ -197,7 +222,7 @@ public class MatchService(
 
     private TournamentSettings GetSimulationTournamentSettingsOrThrow()
     {
-        return tournamentSettingsRepository.GetById(SimulationTournamentSettingsId)
+        return tournamentSettingsRepository.GetById(DefaultTournamentSettingsId)
                ?? throw new MatchServicesException(TournamentSettingsNotFoundMessage);
     }
     

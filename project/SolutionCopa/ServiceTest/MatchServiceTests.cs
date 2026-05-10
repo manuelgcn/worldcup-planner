@@ -52,6 +52,17 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
+    public void CreateGroupMatch_WithValidData_LogsAuditEntry()
+    {
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+
+        _context.Service.CreateMatch(request);
+
+        Assert.AreEqual(1, _context.AuditLogs.Count);
+        Assert.AreEqual("CREATE_MATCH", _context.AuditLogs.First().Action);
+    }
+
+    [TestMethod]
     public void CreateGroupMatch_WithChampionshipConfiguration_Succeeds()
     {
         // Arrange
@@ -667,6 +678,17 @@ public sealed class MatchServiceTest
         // Assert
         Assert.AreEqual(initialUpdateCalls + 1, _context.MatchRepository.UpdateCalls);
         Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);
+    }
+
+    [TestMethod]
+    public void PublishResult_WithValidMatchId_LogsAuditEntry()
+    {
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+
+        _context.Service.PublishResult(matchId: 1);
+
+        Assert.IsTrue(_context.AuditLogs.Any(log => log.Action == "PUBLISH_MATCH_RESULT"));
     }
 
     [TestMethod]

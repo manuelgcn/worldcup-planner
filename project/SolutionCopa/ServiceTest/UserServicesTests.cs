@@ -1,5 +1,6 @@
 using ProjectCopa;
 using Services;
+using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest;
 [TestClass]
@@ -21,6 +22,20 @@ public class UserServicesTests
         User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15) );
         service.AddUser(user);
         Assert.AreEqual(1, service.GetAllUsers().Count);
+    }
+
+    [TestMethod]
+    public void AddUser_LogsAuditEntry()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        UserServices auditedService = new UserServices(Services.AuditLogService.CreateInstance(repository));
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        auditedService.AddUser(user);
+
+        List<ProjectCopa.AuditLog> logs = repository.GetAll();
+        Assert.AreEqual(1, logs.Count);
+        Assert.AreEqual("CREATE_USER", logs[0].Action);
     }
     
     

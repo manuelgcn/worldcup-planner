@@ -8,6 +8,7 @@ namespace Services;
 
 public sealed class AuditLogService : IAuditLogService
 {
+    private const int DefaultTournamentSettingsId = 1;
     private readonly IAuditLogRepository _repository;
 
     private AuditLogService(IAuditLogRepository repository)
@@ -24,6 +25,11 @@ public sealed class AuditLogService : IAuditLogService
     {
         AuditLog log = AuditLog.Create(action, details, tournamentSettingsId, entityType, entityId);
         _repository.Add(log);
+    }
+
+    public void Log(string action, string details, string? entityType = null, int? entityId = null)
+    {
+        Log(action, details, DefaultTournamentSettingsId, entityType, entityId);
     }
 
     public List<AuditLogDto> GetAll()

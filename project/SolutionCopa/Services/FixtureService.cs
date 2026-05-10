@@ -1,4 +1,5 @@
 using ProjectCopa;
+using Services.Interfaces;
 namespace Services;
 
 public class FixtureService
@@ -6,6 +7,7 @@ public class FixtureService
    
     private readonly IReadOnlyCollection<Team> teams;
     private readonly IReadOnlyCollection<Stadium> stadiums;
+    private readonly IAuditLogService? _auditLogService;
 
     
     
@@ -15,11 +17,13 @@ public class FixtureService
     public FixtureService(
         IReadOnlyCollection<Team> teams,
         IReadOnlyCollection<Stadium> stadiums,
-        int? seed = null)
+        int? seed = null,
+        IAuditLogService? auditLogService = null)
     {
         this.teams = teams;
         this.stadiums = stadiums;
         this.seed = seed ?? 0; 
+        this._auditLogService = auditLogService;
     }
 
 
@@ -32,6 +36,10 @@ public class FixtureService
 
         List<Group> groups = CreateGroups();
         AssignTeamsToGroups(groups);
+        _auditLogService?.Log(
+            AuditActions.GenerateFixture,
+            $"Fixture created with {groups.Count} groups and {teams.Count} teams using seed {seed}.",
+            nameof(Group));
 
         return groups;
     }

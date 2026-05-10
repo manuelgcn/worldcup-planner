@@ -51,6 +51,20 @@ public class AuditLogServiceTests
     }
 
     [TestMethod]
+    public void Log_WithoutTournamentSettingsId_UsesDefaultContext()
+    {
+        // Act
+        _service.Log("EXPORT", "Data exported", "Export", 7);
+
+        // Assert
+        List<AuditLog> logs = _repository.GetAll();
+        Assert.AreEqual(1, logs.Count);
+        Assert.AreEqual(1, logs[0].TournamentSettingsId);
+        Assert.AreEqual("Export", logs[0].AffectedEntityType);
+        Assert.AreEqual(7, logs[0].AffectedEntityId);
+    }
+
+    [TestMethod]
     public void GetAll_ReturnsListOfAuditLogDtos()
     {
         // Arrange

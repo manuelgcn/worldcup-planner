@@ -28,6 +28,7 @@ public sealed class MatchServiceTestContext
     public MockMatchRepository MatchRepository { get; } = new();
     public MockMatchSimulationEngine SimulationEngine { get; } = new();
     public MockUnitOfWork UnitOfWork { get; } = new();
+    public IReadOnlyCollection<AuditLog> AuditLogs => _auditLog.AsReadOnly();
 
     private AuditLogService AuditLogService { get; set; } = null!;
     
@@ -160,7 +161,7 @@ public sealed class MatchServiceTestContext
         }
     }
 
-    public static CreateMatchRequestDto NewGroupMatchRequest(int id = 1)
+    public static CreateMatchRequestDto NewGroupMatchRequest(int id)
     {
         return new CreateMatchRequestDto
         {

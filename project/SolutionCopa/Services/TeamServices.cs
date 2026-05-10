@@ -1,4 +1,5 @@
 using ProjectCopa;
+using Services.Interfaces;
 
 namespace Services;
 
@@ -16,6 +17,7 @@ public class TeamServices
     private const string DuplicateTeamNameMessage = "Team name must be unique in the system.";
     private const string QuotaExceededMessage = "{0} team quota exceeded.";
     private const string FixtureRequires48TeamsMessage = "Fixture ordering requires exactly 48 teams.";
+    private readonly IAuditLogService? _auditLogService;
     private static readonly IReadOnlyDictionary<Confederation, int> QuotasByConfederation = new Dictionary<Confederation, int>
     {
         { Confederation.AFC, AfcQuota },
@@ -28,6 +30,11 @@ public class TeamServices
 
     private readonly List<Team> _equipos = new();
 
+    public TeamServices(IAuditLogService? auditLogService = null)
+    {
+        this._auditLogService = auditLogService;
+    }
+
     public void AgregarEquipo(Team equipo)
     {
         ArgumentNullException.ThrowIfNull(equipo);
@@ -35,6 +42,10 @@ public class TeamServices
         ValidarCupoConfederacion(equipo);
 
         _equipos.Add(equipo);
+        _auditLogService?.Log(
+            AuditActions.CreateTeam,
+            $"Team '{equipo.Nombre}' added with ranking {equipo.RankingFifa}.",
+            nameof(Team));
     }
 
     public IReadOnlyCollection<Team> ObtenerEquipos()
@@ -62,6 +73,10 @@ public class TeamServices
         }
 
         _equipos.Remove(equipo);
+        _auditLogService?.Log(
+            AuditActions.DeleteTeam,
+            $"Team '{equipo.Nombre}' removed.",
+            nameof(Team));
     }
 
     public IReadOnlyList<Team> OrdenarParaFixture(IReadOnlyCollection<Team> equipos, int semillaFixture)
@@ -101,7 +116,7 @@ public class TeamServices
 
     private static void FisherYatesDeterministico(IList<Team> equipos, int semilla)
     {
-        var random = new Random(semilla);
+        Random random = new Random(semilla);
 
         for (int i = equipos.Count - 1; i > 0; i--)
         {
