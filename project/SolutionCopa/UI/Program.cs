@@ -15,6 +15,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddSingleton<ITeamRepository, TeamRepositoryList>();
 builder.Services.AddSingleton<IMatchRepository, MatchRepository>();
 builder.Services.AddSingleton<IStadiumRepository, StadiumRepository>();
+builder.Services.AddSingleton<IGroupRepository, GroupRepository>();
 builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 
 
@@ -22,6 +23,8 @@ builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 builder.Services.AddSingleton<UserServices>();
 builder.Services.AddSingleton<IStadiumService, StadiumServices>();
 builder.Services.AddSingleton<StadiumServices>();
+builder.Services.AddSingleton<GroupServices>();
+builder.Services.AddSingleton<IGroupService>(sp => sp.GetRequiredService<GroupServices>());
 builder.Services.AddSingleton<TeamServices>();
 
 
