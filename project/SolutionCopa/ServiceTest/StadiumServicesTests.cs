@@ -1,7 +1,8 @@
 using ProjectCopa;
 using Services;
 using ServiceTest.TestDoubles.Mocks;
-using DataAccess.Interfaces
+using DataAccess.Interfaces;
+using DataAccess.Repositories;
 
 namespace ServiceTest;
 
@@ -9,12 +10,12 @@ namespace ServiceTest;
 public class StadiumServicesTests
 {
     
-    private StadiumServices service;
+    private StadiumServices service = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        service = new StadiumServices();
+        service = new StadiumServices(new StadiumRepository());
     }
 
     
@@ -37,7 +38,9 @@ public class StadiumServicesTests
     public void AddStadium_LogsAuditEntry()
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
-        StadiumServices auditedService = new StadiumServices(AuditLogService.CreateInstance(repository, 1));
+        StadiumServices auditedService = new StadiumServices(
+            new StadiumRepository(),
+            AuditLogService.CreateInstance(repository, 1));
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         auditedService.AddStadium(stadium);
@@ -51,11 +54,14 @@ public class StadiumServicesTests
     public void UpdateStadium_LogsAuditEntry()
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
-        StadiumServices auditedService = new StadiumServices(AuditLogService.CreateInstance(repository, 1));
+        StadiumServices auditedService = new StadiumServices(
+            new StadiumRepository(),
+            AuditLogService.CreateInstance(repository, 1));
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         auditedService.AddStadium(stadium);
-        auditedService.Update("Centenario", "Montevideo Nuevo", "Estadio remodelado", 65000);
+        int stadiumId = auditedService.GetByName("Centenario").Id;
+        auditedService.UpdateById(stadiumId, "Montevideo Nuevo", "Estadio remodelado", 65000);
 
         Assert.IsTrue(repository.GetAll().Any(log => log.Action == "UPDATE_STADIUM"));
     }
@@ -64,11 +70,14 @@ public class StadiumServicesTests
     public void RemoveStadium_LogsAuditEntry()
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
-        StadiumServices auditedService = new StadiumServices(AuditLogService.CreateInstance(repository, 1));
+        StadiumServices auditedService = new StadiumServices(
+            new StadiumRepository(),
+            AuditLogService.CreateInstance(repository, 1));
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         auditedService.AddStadium(stadium);
-        auditedService.Remove("Centenario");
+        int stadiumId = auditedService.GetByName("Centenario").Id;
+        auditedService.RemoveById(stadiumId);
 
         Assert.IsTrue(repository.GetAll().Any(log => log.Action == "DELETE_STADIUM"));
     }
@@ -122,7 +131,8 @@ public class StadiumServicesTests
         );
 
         service.AddStadium(stadium);
-        service.Remove("Centenario");
+        int stadiumId = service.GetByName("Centenario").Id;
+        service.RemoveById(stadiumId);
 
         Assert.AreEqual(0, service.GetAllStadiums().Count);
     }
@@ -131,7 +141,7 @@ public class StadiumServicesTests
     [TestMethod]
     public void CannotRemoveNonExistingStadium()
     {
-        Assert.ThrowsException<ArgumentException>(() => service.Remove("NoExiste"));
+        Assert.ThrowsException<ArgumentException>(() => service.RemoveById(-1));
     }
 
     
@@ -147,8 +157,9 @@ public class StadiumServicesTests
 
         service.AddStadium(stadium);
 
-        service.Update(
-            "Centenario",
+        int stadiumId = service.GetByName("Centenario").Id;
+        service.UpdateById(
+            stadiumId,
             "Montevideo Nuevo",
             "Estadio remodelado",
             65000
@@ -164,7 +175,7 @@ public class StadiumServicesTests
     public void CannotUpdateNonExistingStadium()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            service.Update("NoExiste", "Ciudad", null, 30000));
+            service.UpdateById(-1, "Ciudad", null, 30000));
     }
 
     
