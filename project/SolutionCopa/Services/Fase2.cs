@@ -26,16 +26,15 @@ namespace Services
             _unitOfWork = unitOfWork;
             _auditLog = auditLog;
         }
-
-        // Simulate elimination matches by match IDs. Uses TournamentSettings.SimulationSeed as base.
+        
         public void SimulateEliminationMatches(IEnumerable<int> matchIds)
         {
-            var settings = _settingsRepository.GetById(1) ?? new TournamentSettings();
+            TournamentSettings settings = _settingsRepository.GetById(1) ?? new TournamentSettings();
             int baseSeed = settings.SimulationSeed;
 
             foreach (int matchId in matchIds)
             {
-                var match = _matchRepository.GetById(matchId);
+                Match match = _matchRepository.GetById(matchId);
                 if (match == null) continue;
 
                 int seed = baseSeed + matchId;
