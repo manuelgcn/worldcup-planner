@@ -3,7 +3,7 @@ using ProjectCopa;
 
 namespace DataAccess.Repositories;
 
-public class TeamRepositoryList : ITeamRepository
+public class TeamRepository : ITeamRepository
 {
     private readonly List<Team> _teams = new();
 
