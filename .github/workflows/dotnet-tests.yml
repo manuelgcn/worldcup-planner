@@ -73,6 +73,7 @@ jobs:
           format: markdown
           output: both
           thresholds: '85 90'
+          summaryfile: code-coverage-results.md
 
       - name: Add coverage to PR
         uses: marocchino/sticky-pull-request-comment@v2
