@@ -129,7 +129,7 @@ else
 
     private string selectedGroup = "";
     private List<Match> matches = new();
-    private IReadOnlyCollection<Stadium> stadiums = Array.Empty<Stadium>();
+    private IReadOnlyCollection<ProjectCopa.Stadium> stadiums = Array.Empty<ProjectCopa.Stadium>();
     
     private readonly List<string> errors = new();
     private string? successMessage;
@@ -185,7 +185,7 @@ else
     {
         try
         {
-            stadiums = StadiumServices.GetAllStadiums() as IReadOnlyCollection<Stadium>;
+            stadiums = StadiumServices.GetAllStadiums();
         }
         catch (StadiumServicesException ex)
         {

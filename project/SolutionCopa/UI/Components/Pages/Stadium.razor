@@ -97,7 +97,7 @@ else
     private readonly List<string> errors = new();
     private string? successMessage;
 
-    private IReadOnlyCollection<Stadium> stadiums = Array.Empty<Stadium>();
+    private IReadOnlyCollection<ProjectCopa.Stadium> stadiums = Array.Empty<ProjectCopa.Stadium>();
 
     private bool IsAdmin =>
         Session.CurrentUser!.Roles.Contains(UserRoles.Admin);
@@ -122,7 +122,7 @@ else
 
         try
         {
-            Stadium stadium = new Stadium(
+            ProjectCopa.Stadium stadium = new ProjectCopa.Stadium(
                 name,
                 city,
                 description,
