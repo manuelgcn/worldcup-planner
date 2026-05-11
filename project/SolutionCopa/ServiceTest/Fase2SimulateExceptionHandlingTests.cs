@@ -15,7 +15,7 @@ namespace ServiceTest
         {
             var simulation = new ServiceTest.TestDoubles.Mocks.MockMatchSimulationEngine();
             var throwingRepo = new ThrowingMatchRepository();
-            var settingsRepo = new ServiceTest.TestDoubles.Mocks.MockTournamentSettingsRepository();
+            var settingsRepo = new DataAccess.Repositories.TournamentSettingsRepository();
             settingsRepo.Add(new TournamentSettings(1, new DateTime(2026,6,1), 3, 3, 0, 0, 10, 0));
             var uow = new ServiceTest.TestDoubles.Mocks.MockUnitOfWork();
             var auditRepo = new ServiceTest.TestDoubles.Mocks.MockAuditLogRepository();
