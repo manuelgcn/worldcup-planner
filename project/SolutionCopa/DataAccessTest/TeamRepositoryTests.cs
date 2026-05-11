@@ -5,14 +5,14 @@ using ProjectCopa;
 namespace DataAccessTest;
 
 [TestClass]
-public class TeamRepositoryListTests
+public class TeamRepositoryTests
 {
-    private TeamRepositoryList _repository = null!;
+    private TeamRepository _repository = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        _repository = new TeamRepositoryList();
+        _repository = new TeamRepository();
     }
 
     [TestMethod]
