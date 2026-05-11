@@ -39,4 +39,10 @@ public sealed class JourneyServicesTests
         Assert.ThrowsException<JourneyServicesException>(() =>
             _service.AddJourney(Journey.CreateInstance(1)));
     }
+
+    [TestMethod]
+    public void GetByNumberThrowsWhenJourneyNotFound()
+    {
+        Assert.ThrowsException<JourneyServicesException>(() => _service.GetByNumber(999));
+    }
 }
