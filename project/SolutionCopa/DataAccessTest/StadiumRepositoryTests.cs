@@ -108,7 +108,7 @@ public class StadiumRepositoryTests
 
     private static Stadium CreateStadium(int id, string name, string city, int capacity)
     {
-        Stadium stadium = new Stadium(name, city, null, capacity);
+        Stadium stadium = new Stadium(name: name, city: city, description: null, capacity: capacity);
         stadium.Id = id;
         return stadium;
     }

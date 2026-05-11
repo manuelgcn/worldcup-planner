@@ -162,7 +162,23 @@ public class StadiumServicesTests
         Assert.ThrowsException<StadiumServicesException>(() => service.RemoveById(-1));
     }
 
-    
+    [TestMethod]
+    public void StadiumServices_RemoveByIdDeletesViaRepository()
+    {
+        MockStadiumRepository repository = new MockStadiumRepository();
+        MockUnitOfWork unitOfWork = new MockUnitOfWork();
+        StadiumServices localService = new StadiumServices(repository, unitOfWork);
+        Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
+
+        localService.AddStadium(stadium);
+        int stadiumId = localService.GetByName("Centenario").Id;
+        localService.RemoveById(stadiumId);
+
+        Assert.AreEqual(1, repository.DeleteCalls);
+        Assert.AreEqual(2, unitOfWork.CommitCalls);
+    }
+
+     
     [TestMethod]
     public void CanUpdateStadium()
     {
