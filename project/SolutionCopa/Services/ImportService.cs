@@ -37,8 +37,8 @@ public sealed class ImportService : IImportService
         ArgumentNullException.ThrowIfNull(fileStream);
 
         List<TeamImportDto> rows = _teamParser.Parse(fileStream);
-        HashSet<string> importedNames = new(StringComparer.OrdinalIgnoreCase);
-        List<Team> importedTeams = new();
+        HashSet<string> importedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        List<Team> importedTeams = new List<Team>();
         int nextTeamId = GetNextTeamId();
 
         foreach (TeamImportDto row in rows)
@@ -52,7 +52,7 @@ public sealed class ImportService : IImportService
             int ranking = ParseRanking(rankingText, row.RowNumber);
             ValidateDuplicate(name, row.RowNumber, importedNames);
 
-            Team team = new(nextTeamId, name, ranking, false, confederation);
+            Team team = new Team(nextTeamId, name, ranking, false, confederation);
             _teamRepository.Add(team);
             importedTeams.Add(team);
             importedNames.Add(name);

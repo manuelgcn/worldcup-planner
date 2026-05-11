@@ -6,7 +6,7 @@ namespace Services;
 public class StadiumServices
 {
     private readonly IAuditLogService? _auditLogService;
-    private List<Stadium> stadiums = new();
+    private List<Stadium> stadiums = new List<Stadium>();
 
     public StadiumServices(IAuditLogService? auditLogService = null)
     {

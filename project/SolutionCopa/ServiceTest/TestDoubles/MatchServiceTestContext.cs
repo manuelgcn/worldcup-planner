@@ -11,12 +11,12 @@ namespace ServiceTest.TestDoubles;
 public sealed class MatchServiceTestContext
 {
     
-    private readonly Dictionary<int, Team> _teams = new();
-    private readonly Dictionary<int, Stadium> _stadiums = new();
-    private readonly Dictionary<int, Group> _groups = new();
-    private readonly Dictionary<int, Journey> _journeys = new();
-    private readonly Dictionary<int, TournamentSettings> _tournamentSettings = new();
-    private readonly List<AuditLog> _auditLog = new();
+    private readonly Dictionary<int, Team> _teams = new Dictionary<int, Team>();
+    private readonly Dictionary<int, Stadium> _stadiums = new Dictionary<int, Stadium>();
+    private readonly Dictionary<int, Group> _groups = new Dictionary<int, Group>();
+    private readonly Dictionary<int, Journey> _journeys = new Dictionary<int, Journey>();
+    private readonly Dictionary<int, TournamentSettings> _tournamentSettings = new Dictionary<int, TournamentSettings>();
+    private readonly List<AuditLog> _auditLog = new List<AuditLog>();
 
     private ITeamRepository TeamRepository { get; set; } = null!;
     private IStadiumRepository StadiumRepository { get; set; } = null!;
@@ -25,9 +25,9 @@ public sealed class MatchServiceTestContext
     private ITournamentSettingsRepository TournamentSettingsRepository { get; set; } = null!;
     private IAuditLogRepository AuditLogRepository { get; set; } = null!;
     
-    public MockMatchRepository MatchRepository { get; } = new();
-    public MockMatchSimulationEngine SimulationEngine { get; } = new();
-    public MockUnitOfWork UnitOfWork { get; } = new();
+    public MockMatchRepository MatchRepository { get; } = new MockMatchRepository();
+    public MockMatchSimulationEngine SimulationEngine { get; } = new MockMatchSimulationEngine();
+    public MockUnitOfWork UnitOfWork { get; } = new MockUnitOfWork();
     public IReadOnlyCollection<AuditLog> AuditLogs => _auditLog.AsReadOnly();
 
     private AuditLogService AuditLogService { get; set; } = null!;

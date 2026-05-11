@@ -9,8 +9,8 @@ public sealed class CsvStreamTeamParser : ITeamParser
     {
         ArgumentNullException.ThrowIfNull(fileStream);
 
-        List<TeamImportDto> teams = new();
-        using StreamReader reader = new(fileStream, leaveOpen: true);
+        List<TeamImportDto> teams = new List<TeamImportDto>();
+        using StreamReader reader = new StreamReader(fileStream, leaveOpen: true);
 
         int rowNumber = 0;
         while (!reader.EndOfStream)
@@ -51,7 +51,7 @@ public sealed class CsvStreamTeamParser : ITeamParser
                 ranking = rankingColumn.Trim();
             }
 
-            TeamImportDto team = new()
+            TeamImportDto team = new TeamImportDto
             {
                 RowNumber = rowNumber,
                 Name = name,

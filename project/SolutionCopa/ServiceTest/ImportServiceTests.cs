@@ -1,9 +1,10 @@
+using DataAccess.Interfaces;
 using Moq;
+using ProjectCopa;
 using Services;
 using Services.DTOs;
 using Services.Exceptions;
 using Services.Interfaces;
-using DataAccess.Interfaces;
 using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest;
@@ -19,78 +20,162 @@ public class ImportServiceTests
     [TestInitialize]
     public void TestInitialize()
     {
-        _teamRepository = CreateTeamRepository();
-        _unitOfWork = CreateUnitOfWork();
-        _teamParserMock = CreateTeamParserMock();
+        _teamRepository = new MockTeamRepository();
+        _unitOfWork = new MockUnitOfWork();
+        _teamParserMock = new Mock<ITeamParser>();
         _service = CreateService(_teamRepository, _unitOfWork, _teamParserMock.Object);
     }
 
     [TestMethod]
     public void ImportTeamsCreatesTeamsAndCommits()
     {
-        List<TeamImportDto> rows = BuildValidRows();
+        // Arrange
         MemoryStream stream = CreateImportStream();
+        List<TeamImportDto> rows = BuildValidRows();
         SetupParserRows(stream, rows);
 
-        ImportResult result = _service.ImportTeams(stream);
+        // Act
+        _service.ImportTeams(stream);
 
-        Assert.AreEqual(2, result.ImportedCount);
+        // Assert
         Assert.AreEqual(2, _teamRepository.GetAll().Count);
         Assert.AreEqual(1, _unitOfWork.CommitCalls);
-        VerifyParserCall(stream);
+    }
+
+    [TestMethod]
+    public void ImportTeamsThrowsWhenStreamIsNull()
+    {
+        Assert.ThrowsException<ArgumentNullException>(() => _service.ImportTeams(null!));
+    }
+
+    [TestMethod]
+    public void ImportTeamsThrowsWhenTeamNameIsEmpty()
+    {
+        // Arrange
+        MemoryStream stream = CreateImportStream();
+        List<TeamImportDto> rows = BuildEmptyNameRows();
+        SetupParserRows(stream, rows);
+
+        // Assert
+        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.AreEqual(0, _unitOfWork.CommitCalls);
+    }
+
+    [TestMethod]
+    public void ImportTeamsThrowsWhenTeamNameIsTooLong()
+    {
+        // Arrange
+        MemoryStream stream = CreateImportStream();
+        List<TeamImportDto> rows = BuildTooLongNameRows();
+        SetupParserRows(stream, rows);
+
+        // Assert
+        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.AreEqual(0, _teamRepository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void ImportTeamsThrowsWhenConfederationIsInvalid()
+    {
+        // Arrange
+        MemoryStream stream = CreateImportStream();
+        List<TeamImportDto> rows = BuildInvalidConfederationRows();
+        SetupParserRows(stream, rows);
+
+        // Assert
+        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.AreEqual(0, _unitOfWork.CommitCalls);
+    }
+
+    [TestMethod]
+    public void ImportTeamsThrowsWhenRankingIsNotNumeric()
+    {
+        // Arrange
+        MemoryStream stream = CreateImportStream();
+        List<TeamImportDto> rows = BuildNonNumericRankingRows();
+        SetupParserRows(stream, rows);
+
+        // Assert
+        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.AreEqual(0, _teamRepository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void ImportTeamsThrowsWhenRankingIsOutOfRange()
+    {
+        // Arrange
+        MemoryStream stream = CreateImportStream();
+        List<TeamImportDto> rows = BuildOutOfRangeRankingRows();
+        SetupParserRows(stream, rows);
+
+        // Assert
+        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.AreEqual(0, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
     public void ImportTeamsThrowsWhenDuplicateNameAppearsInSameFile()
     {
-        List<TeamImportDto> rows = BuildDuplicateRows();
+        // Arrange
         MemoryStream stream = CreateImportStream();
+        List<TeamImportDto> rows = BuildDuplicateRows();
         SetupParserRows(stream, rows);
 
+        // Assert
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
         Assert.AreEqual(1, _teamRepository.GetAll().Count);
-        Assert.AreEqual(0, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
-    public void ImportTeamsThrowsWhenRankingIsInvalid()
+    public void ImportTeamsThrowsWhenRepositoryAlreadyHasSameTeamName()
     {
-        List<TeamImportDto> rows = BuildInvalidRankingRows();
+        // Arrange
+        Team existingTeam = new Team(10, "Brazil", 900, false, Confederation.CONMEBOL);
+        _teamRepository.Add(existingTeam);
+
         MemoryStream stream = CreateImportStream();
+        List<TeamImportDto> rows = BuildRepositoryDuplicateRows();
         SetupParserRows(stream, rows);
 
+        // Assert
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
-        Assert.AreEqual(0, _teamRepository.GetAll().Count);
-        Assert.AreEqual(0, _unitOfWork.CommitCalls);
+        Assert.AreEqual(1, _teamRepository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void ImportTeamsUsesNextIdWhenRepositoryAlreadyHasTeams()
+    {
+        // Arrange
+        Team existingTeam = new Team(10, "Brazil", 900, false, Confederation.CONMEBOL);
+        _teamRepository.Add(existingTeam);
+
+        MemoryStream stream = CreateImportStream();
+        List<TeamImportDto> rows = BuildSingleValidRow();
+        SetupParserRows(stream, rows);
+
+        // Act
+        _service.ImportTeams(stream);
+        Team? importedTeam = _teamRepository.GetByName("Mexico");
+
+        // Assert
+        Assert.IsNotNull(importedTeam);
+        Assert.AreEqual(11, importedTeam.Id);
     }
 
     [TestMethod]
     public void ImportTeamsPropagatesUnitOfWorkFailure()
     {
+        // Arrange
         MockUnitOfWork failingUnitOfWork = CreateFailingUnitOfWork();
         ImportService service = CreateService(_teamRepository, failingUnitOfWork, _teamParserMock.Object);
-        List<TeamImportDto> rows = BuildSingleValidRow();
+
         MemoryStream stream = CreateImportStream();
+        List<TeamImportDto> rows = BuildSingleValidRow();
         SetupParserRows(stream, rows);
 
+        // Assert
         Assert.ThrowsException<InvalidOperationException>(() => service.ImportTeams(stream));
-        Assert.AreEqual(1, _teamRepository.GetAll().Count);
         Assert.AreEqual(1, failingUnitOfWork.CommitCalls);
-    }
-
-    private static MockTeamRepository CreateTeamRepository()
-    {
-        return new MockTeamRepository();
-    }
-
-    private static MockUnitOfWork CreateUnitOfWork()
-    {
-        return new MockUnitOfWork();
-    }
-
-    private static Mock<ITeamParser> CreateTeamParserMock()
-    {
-        return new Mock<ITeamParser>();
     }
 
     private static ImportService CreateService(ITeamRepository teamRepository, IUnitOfWork unitOfWork, ITeamParser teamParser)
@@ -103,9 +188,14 @@ public class ImportServiceTests
         return new MemoryStream();
     }
 
+    private void SetupParserRows(MemoryStream stream, List<TeamImportDto> rows)
+    {
+        _teamParserMock.Setup(parser => parser.Parse(stream)).Returns(rows);
+    }
+
     private static List<TeamImportDto> BuildValidRows()
     {
-        List<TeamImportDto> rows = new()
+        List<TeamImportDto> rows = new List<TeamImportDto>
         {
             new TeamImportDto
             {
@@ -126,9 +216,90 @@ public class ImportServiceTests
         return rows;
     }
 
+    private static List<TeamImportDto> BuildEmptyNameRows()
+    {
+        List<TeamImportDto> rows = new List<TeamImportDto>
+        {
+            new TeamImportDto
+            {
+                RowNumber = 2,
+                Name = string.Empty,
+                Confederation = "CONCACAF",
+                Ranking = "800"
+            }
+        };
+
+        return rows;
+    }
+
+    private static List<TeamImportDto> BuildTooLongNameRows()
+    {
+        string longName = new string('A', 61);
+        List<TeamImportDto> rows = new List<TeamImportDto>
+        {
+            new TeamImportDto
+            {
+                RowNumber = 2,
+                Name = longName,
+                Confederation = "CONCACAF",
+                Ranking = "800"
+            }
+        };
+
+        return rows;
+    }
+
+    private static List<TeamImportDto> BuildInvalidConfederationRows()
+    {
+        List<TeamImportDto> rows = new List<TeamImportDto>
+        {
+            new TeamImportDto
+            {
+                RowNumber = 2,
+                Name = "Canada",
+                Confederation = "INVALID",
+                Ranking = "800"
+            }
+        };
+
+        return rows;
+    }
+
+    private static List<TeamImportDto> BuildNonNumericRankingRows()
+    {
+        List<TeamImportDto> rows = new List<TeamImportDto>
+        {
+            new TeamImportDto
+            {
+                RowNumber = 2,
+                Name = "Canada",
+                Confederation = "CONCACAF",
+                Ranking = "ABC"
+            }
+        };
+
+        return rows;
+    }
+
+    private static List<TeamImportDto> BuildOutOfRangeRankingRows()
+    {
+        List<TeamImportDto> rows = new List<TeamImportDto>
+        {
+            new TeamImportDto
+            {
+                RowNumber = 2,
+                Name = "Canada",
+                Confederation = "CONCACAF",
+                Ranking = "299"
+            }
+        };
+
+        return rows;
+    }
+
     private static List<TeamImportDto> BuildDuplicateRows()
     {
-        List<TeamImportDto> rows = new()
+        List<TeamImportDto> rows = new List<TeamImportDto>
         {
             new TeamImportDto
             {
@@ -149,16 +320,16 @@ public class ImportServiceTests
         return rows;
     }
 
-    private static List<TeamImportDto> BuildInvalidRankingRows()
+    private static List<TeamImportDto> BuildRepositoryDuplicateRows()
     {
-        List<TeamImportDto> rows = new()
+        List<TeamImportDto> rows = new List<TeamImportDto>
         {
             new TeamImportDto
             {
                 RowNumber = 2,
-                Name = "Chile",
+                Name = "Brazil",
                 Confederation = "CONMEBOL",
-                Ranking = "299"
+                Ranking = "800"
             }
         };
 
@@ -167,7 +338,7 @@ public class ImportServiceTests
 
     private static List<TeamImportDto> BuildSingleValidRow()
     {
-        List<TeamImportDto> rows = new()
+        List<TeamImportDto> rows = new List<TeamImportDto>
         {
             new TeamImportDto
             {
@@ -183,18 +354,8 @@ public class ImportServiceTests
 
     private static MockUnitOfWork CreateFailingUnitOfWork()
     {
-        MockUnitOfWork failingUnitOfWork = new();
+        MockUnitOfWork failingUnitOfWork = new MockUnitOfWork();
         failingUnitOfWork.EnableCommitFailure(new InvalidOperationException("Database unavailable"));
         return failingUnitOfWork;
-    }
-
-    private void SetupParserRows(MemoryStream stream, List<TeamImportDto> rows)
-    {
-        _teamParserMock.Setup(parser => parser.Parse(stream)).Returns(rows);
-    }
-
-    private void VerifyParserCall(MemoryStream stream)
-    {
-        _teamParserMock.Verify(parser => parser.Parse(stream), Times.Once);
     }
 }

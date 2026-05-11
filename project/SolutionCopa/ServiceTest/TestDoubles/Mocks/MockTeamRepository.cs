@@ -5,7 +5,7 @@ namespace ServiceTest.TestDoubles.Mocks;
 
 public sealed class MockTeamRepository : ITeamRepository
 {
-    private readonly Dictionary<int, Team> _teams = new();
+    private readonly Dictionary<int, Team> _teams = new Dictionary<int, Team>();
 
     public int AddCalls { get; private set; }
     public int UpdateCalls { get; private set; }

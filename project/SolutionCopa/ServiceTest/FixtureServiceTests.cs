@@ -51,7 +51,7 @@ public class FixtureServiceTests
 
     private List<Team> Create48ValidTeams()
     {
-        List<Team> teams = new();
+        List<Team> teams = new List<Team>();
 
         for (int i = 0; i < 48; i++)
         {
@@ -118,7 +118,6 @@ public class FixtureServiceTests
             allTeamsInGroups.Distinct().Count()
         );
     }
-    
     
     [TestMethod]
     public void CreateFixtureAssignsTeamsByDescendingFifaRanking()
