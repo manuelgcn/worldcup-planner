@@ -60,7 +60,7 @@ public class FixtureService
 
         for (char c = 'A'; c <= 'L'; c++)
         {
-            groups.Add(new Group(c.ToString()));
+            groups.Add(new Group(c - 'A' + 1, c.ToString()));
         }
         
         return groups;

@@ -48,7 +48,7 @@ public sealed class MatchServiceTestContext
         _teams[20] = new Team(20, "Away Team", 1600, false, Confederation.UEFA);
         _stadiums[30] = new Stadium("Main Stadium", "Main City", "None", 25000);
 
-        _groups[40] = new Group("A");
+        _groups[40] = new Group(40, "A");
 
         _journeys[50] = Journey.CreateInstance(1);
 

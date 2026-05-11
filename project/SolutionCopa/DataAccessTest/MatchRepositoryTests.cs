@@ -183,7 +183,8 @@ public class MatchRepositoryTests
         Team homeTeam = new Team(matchId + 1, name: $"Team-{matchId}-H", fifaRanking: 1000 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
         Team awayTeam = new Team(matchId + 2, name: $"Team-{matchId}-A", fifaRanking: 900 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
         Stadium stadium = new Stadium(name: $"Stadium-{matchId}", city: "Test City", description: null, capacity: 50000);
-        Group group = new Group(name: groupName);
+        int groupId = groupName[0] - 'A' + 1;
+        Group group = new Group(id: groupId, name: groupName);
         Journey journey = Journey.CreateInstance(number: journeyNumber);
 
         return MatchGroup.CreateInstance(matchId, date, homeTeam, awayTeam, stadium, group, journey);

@@ -211,7 +211,7 @@ public sealed class MatchSimulationEngineTests
         Team homeTeam = new Team(1, "Home Team", homeRanking, false, Confederation.CONCACAF);
         Team awayTeam = new Team(2, "Away Team", awayRanking, false, Confederation.UEFA);
         Stadium stadium = new Stadium("Main Stadium", "Main City", "None", 25000);
-        Group group = new Group("A");
+        Group group = new Group(1, "A");
         Journey journey = Journey.CreateInstance(1);
 
         return MatchGroup.CreateInstance(
