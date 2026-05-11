@@ -4,7 +4,7 @@ using Services.Interfaces;
 
 namespace Services;
 
-public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork unitOfWork, IAuditLogService? auditLogService = null)
+public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork unitOfWork, IAuditLogService? auditLogService = null) : IStadiumService
 {
     private int nextId = 1;
 

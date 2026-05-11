@@ -20,6 +20,7 @@ builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 
 
 builder.Services.AddSingleton<UserServices>();
+builder.Services.AddSingleton<IStadiumService, StadiumServices>();
 builder.Services.AddSingleton<StadiumServices>();
 builder.Services.AddSingleton<TeamServices>();
 
