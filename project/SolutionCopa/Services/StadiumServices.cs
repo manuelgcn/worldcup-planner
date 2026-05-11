@@ -9,7 +9,6 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
 {
     private const string DuplicateStadiumNameMessage = "Stadium name must be unique in the system.";
     private const string StadiumNotFoundMessage = "Stadium was not found.";
-    private int nextId = 1;
 
     public IReadOnlyCollection<Stadium> GetAllStadiums()
     {
@@ -25,7 +24,6 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
             throw new StadiumServicesException(DuplicateStadiumNameMessage);
         }
 
-        stadium.Id = nextId++;
         stadiumRepository.Add(stadium);
         
         auditLogService?.Log(

@@ -6,9 +6,16 @@ namespace DataAccess.Repositories;
 public class StadiumRepository : IStadiumRepository
 {
     private readonly List<Stadium> _stadiums = new List<Stadium>();
+    private int _nextId = 1;
 
     public void Add(Stadium stadium)
     {
+        if (stadium.Id <= 0)
+        {
+            stadium.Id = _nextId;
+        }
+
+        _nextId = Math.Max(_nextId, stadium.Id + 1);
         _stadiums.Add(stadium);
     }
 
@@ -21,6 +28,12 @@ public class StadiumRepository : IStadiumRepository
         }
         else
         {
+            if (stadium.Id <= 0)
+            {
+                stadium.Id = _nextId;
+            }
+
+            _nextId = Math.Max(_nextId, stadium.Id + 1);
             _stadiums.Add(stadium);
         }
     }
