@@ -5,6 +5,20 @@ namespace DomainTest;
 public class GroupTest
 {
     [TestMethod]
+    public void GroupExposesIdProvidedInConstructor()
+    {
+        Group group = new Group(1, "A");
+
+        Assert.AreEqual(1, group.Id);
+    }
+
+    [TestMethod]
+    public void GroupRejectsNonPositiveId()
+    {
+        Assert.ThrowsException<ArgumentException>(() => new Group(0, "A"));
+    }
+
+    [TestMethod]
     public void GroupCanBeCreatedWithName()
     {
         Group group = new Group("A");
