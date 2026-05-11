@@ -3,6 +3,7 @@ using Services;
 using ServiceTest.TestDoubles.Mocks;
 using DataAccess.Interfaces;
 using DataAccess.Repositories;
+using Services.Exceptions;
 
 namespace ServiceTest;
 
@@ -107,7 +108,7 @@ public class StadiumServicesTests
         Stadium s2 = new Stadium("Centenario", "Otra", null, 50000);
 
         service.AddStadium(s1);
-        Assert.ThrowsException<ArgumentException>(() => service.AddStadium(s2));
+        Assert.ThrowsException<StadiumServicesException>(() => service.AddStadium(s2));
     }
 
     
@@ -133,7 +134,7 @@ public class StadiumServicesTests
     [TestMethod]
     public void GetStadiumByNameThrowsIfNotFound()
     {
-        Assert.ThrowsException<ArgumentException>(() => service.GetByName("NoExiste"));
+        Assert.ThrowsException<StadiumServicesException>(() => service.GetByName("NoExiste"));
     }
 
     
@@ -158,7 +159,7 @@ public class StadiumServicesTests
     [TestMethod]
     public void CannotRemoveNonExistingStadium()
     {
-        Assert.ThrowsException<ArgumentException>(() => service.RemoveById(-1));
+        Assert.ThrowsException<StadiumServicesException>(() => service.RemoveById(-1));
     }
 
     
@@ -191,7 +192,7 @@ public class StadiumServicesTests
     [TestMethod]
     public void CannotUpdateNonExistingStadium()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsException<StadiumServicesException>(() =>
             service.UpdateById(-1, "Ciudad", null, 30000));
     }
 
