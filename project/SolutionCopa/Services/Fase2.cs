@@ -67,7 +67,7 @@ namespace Services
             EliminationOrchestrator orchestrator = new EliminationOrchestrator(eliminationRepo, _auditLog ?? throw new InvalidOperationException("AuditLogService required"));
             orchestrator.OrchestrateEliminationPhase(entries, stadiums, settings, crossingsSeedOverride);
 
-            IReadOnlyCollection<Match> allMatches = eliminationRepo.GetAll();
+            var allMatches = eliminationRepo.GetAll().ToList();
             foreach (Match m in allMatches)
             {
                 _simulationEngine.Simulate(m, settings.SimulationSeed + m.MatchId);
