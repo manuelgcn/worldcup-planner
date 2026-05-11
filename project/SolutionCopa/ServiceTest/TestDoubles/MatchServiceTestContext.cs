@@ -150,9 +150,39 @@ public sealed class MatchServiceTestContext
 
     private sealed class SimpleStadiumRepository(Dictionary<int, Stadium> stadiums) : IStadiumRepository
     {
+        public void Add(Stadium stadium)
+        {
+            stadiums[stadium.Id] = stadium;
+        }
+
+        public void Update(Stadium stadium)
+        {
+            stadiums[stadium.Id] = stadium;
+        }
+
+        public void Delete(Stadium stadium)
+        {
+            stadiums.Remove(stadium.Id);
+        }
+
         public Stadium? GetById(int stadiumId)
         {
             return stadiums.GetValueOrDefault(stadiumId);
+        }
+
+        public Stadium? GetByName(string name)
+        {
+            return stadiums.Values.FirstOrDefault(stadium => stadium.Name == name);
+        }
+
+        public bool ExistsByName(string name)
+        {
+            return stadiums.Values.Any(stadium => stadium.Name == name);
+        }
+
+        public IReadOnlyCollection<Stadium> GetAll()
+        {
+            return stadiums.Values.ToList();
         }
     }
 
