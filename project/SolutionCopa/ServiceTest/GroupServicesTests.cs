@@ -44,4 +44,15 @@ public sealed class GroupServicesTests
     {
         Assert.ThrowsException<GroupServicesException>(() => _service.GetById(999));
     }
+
+    [TestMethod]
+    public void GroupServices_RemoveByIdDeletesViaRepository()
+    {
+        _service.AddGroup(new Group(1, "A"));
+
+        _service.RemoveById(1);
+
+        Assert.AreEqual(1, _repo.DeleteCalls);
+        Assert.AreEqual(2, _uow.CommitCalls);
+    }
 }
