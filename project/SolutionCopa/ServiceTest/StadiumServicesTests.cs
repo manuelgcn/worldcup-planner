@@ -190,6 +190,22 @@ public class StadiumServicesTests
     }
 
     [TestMethod]
+    public void StadiumServices_UpdateByIdPersistsViaRepository()
+    {
+        MockStadiumRepository repository = new MockStadiumRepository();
+        MockUnitOfWork unitOfWork = new MockUnitOfWork();
+        StadiumServices localService = new StadiumServices(repository, unitOfWork);
+        Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
+
+        localService.AddStadium(stadium);
+        int stadiumId = localService.GetByName("Centenario").Id;
+        localService.UpdateById(stadiumId, "NuevaCiudad", null, 30000);
+
+        Assert.AreEqual(1, repository.UpdateCalls);
+        Assert.AreEqual(2, unitOfWork.CommitCalls);
+    }
+
+    [TestMethod]
     public void CannotUpdateNonExistingStadium()
     {
         Assert.ThrowsException<StadiumServicesException>(() =>
