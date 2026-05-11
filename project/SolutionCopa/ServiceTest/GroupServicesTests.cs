@@ -38,4 +38,10 @@ public sealed class GroupServicesTests
 
         Assert.ThrowsException<GroupServicesException>(() => _service.AddGroup(new Group(2, "A")));
     }
+
+    [TestMethod]
+    public void GetByIdThrowsWhenGroupNotFound()
+    {
+        Assert.ThrowsException<GroupServicesException>(() => _service.GetById(999));
+    }
 }
