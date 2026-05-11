@@ -1,8 +1,6 @@
 using ProjectCopa;
 using Services;
 using ServiceTest.TestDoubles.Mocks;
-using DataAccess.Interfaces;
-using DataAccess.Repositories;
 using Services.Exceptions;
 
 namespace ServiceTest;
@@ -10,13 +8,16 @@ namespace ServiceTest;
 [TestClass]
 public class StadiumServicesTests
 {
-    
-    private StadiumServices service = null!;
+    private MockStadiumRepository _repository = null!;
+    private MockUnitOfWork _unitOfWork = null!;
+    private StadiumServices _service = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        service = new StadiumServices(new StadiumRepository(), new UnitOfWorkRepository());
+        _repository = new MockStadiumRepository();
+        _unitOfWork = new MockUnitOfWork();
+        _service = new StadiumServices(_repository, _unitOfWork);
     }
 
     
@@ -44,19 +45,16 @@ public class StadiumServicesTests
             60000
         );
 
-        service.AddStadium(stadium);
+        _service.AddStadium(stadium);
 
-        Assert.AreEqual(1, service.GetAllStadiums().Count);
+        Assert.AreEqual(1, _service.GetAllStadiums().Count);
     }
 
     [TestMethod]
     public void AddStadium_LogsAuditEntry()
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
-        StadiumServices auditedService = new StadiumServices(
-            new StadiumRepository(),
-            new UnitOfWorkRepository(),
-            AuditLogService.CreateInstance(repository, 1));
+        StadiumServices auditedService = CreateAuditedService(repository);
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         auditedService.AddStadium(stadium);
@@ -70,10 +68,7 @@ public class StadiumServicesTests
     public void UpdateStadium_LogsAuditEntry()
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
-        StadiumServices auditedService = new StadiumServices(
-            new StadiumRepository(),
-            new UnitOfWorkRepository(),
-            AuditLogService.CreateInstance(repository, 1));
+        StadiumServices auditedService = CreateAuditedService(repository);
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         auditedService.AddStadium(stadium);
@@ -87,10 +82,7 @@ public class StadiumServicesTests
     public void RemoveStadium_LogsAuditEntry()
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
-        StadiumServices auditedService = new StadiumServices(
-            new StadiumRepository(),
-            new UnitOfWorkRepository(),
-            AuditLogService.CreateInstance(repository, 1));
+        StadiumServices auditedService = CreateAuditedService(repository);
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         auditedService.AddStadium(stadium);
@@ -107,8 +99,8 @@ public class StadiumServicesTests
         Stadium s1 = new Stadium("Centenario", "Montevideo", null, 60000);
         Stadium s2 = new Stadium("Centenario", "Otra", null, 50000);
 
-        service.AddStadium(s1);
-        Assert.ThrowsException<StadiumServicesException>(() => service.AddStadium(s2));
+        _service.AddStadium(s1);
+        Assert.ThrowsException<StadiumServicesException>(() => _service.AddStadium(s2));
     }
 
     
@@ -122,9 +114,9 @@ public class StadiumServicesTests
             60000
         );
 
-        service.AddStadium(stadium);
+        _service.AddStadium(stadium);
 
-        Stadium result = service.GetByName("Centenario");
+        Stadium result = _service.GetByName("Centenario");
 
         Assert.AreEqual(stadium, result);
     }
@@ -134,7 +126,7 @@ public class StadiumServicesTests
     [TestMethod]
     public void GetStadiumByNameThrowsIfNotFound()
     {
-        Assert.ThrowsException<StadiumServicesException>(() => service.GetByName("NoExiste"));
+        Assert.ThrowsException<StadiumServicesException>(() => _service.GetByName("NoExiste"));
     }
 
     
@@ -148,18 +140,18 @@ public class StadiumServicesTests
             60000
         );
 
-        service.AddStadium(stadium);
-        int stadiumId = service.GetByName("Centenario").Id;
-        service.RemoveById(stadiumId);
+        _service.AddStadium(stadium);
+        int stadiumId = _service.GetByName("Centenario").Id;
+        _service.RemoveById(stadiumId);
 
-        Assert.AreEqual(0, service.GetAllStadiums().Count);
+        Assert.AreEqual(0, _service.GetAllStadiums().Count);
     }
 
    
     [TestMethod]
     public void CannotRemoveNonExistingStadium()
     {
-        Assert.ThrowsException<StadiumServicesException>(() => service.RemoveById(-1));
+        Assert.ThrowsException<StadiumServicesException>(() => _service.RemoveById(-1));
     }
 
     [TestMethod]
@@ -189,17 +181,17 @@ public class StadiumServicesTests
             60000
         );
 
-        service.AddStadium(stadium);
+        _service.AddStadium(stadium);
 
-        int stadiumId = service.GetByName("Centenario").Id;
-        service.UpdateById(
+        int stadiumId = _service.GetByName("Centenario").Id;
+        _service.UpdateById(
             stadiumId,
             "Montevideo Nuevo",
             "Estadio remodelado",
             65000
         );
 
-        Stadium updated = service.GetByName("Centenario");
+        Stadium updated = _service.GetByName("Centenario");
 
         Assert.AreEqual("Montevideo Nuevo", updated.City);
         Assert.AreEqual(65000, updated.Capacity);
@@ -225,9 +217,14 @@ public class StadiumServicesTests
     public void CannotUpdateNonExistingStadium()
     {
         Assert.ThrowsException<StadiumServicesException>(() =>
-            service.UpdateById(-1, "Ciudad", null, 30000));
+            _service.UpdateById(-1, "Ciudad", null, 30000));
     }
 
-    
-    
+    private static StadiumServices CreateAuditedService(MockAuditLogRepository repository)
+    {
+        return new StadiumServices(
+            new MockStadiumRepository(),
+            new MockUnitOfWork(),
+            AuditLogService.CreateInstance(repository, 1));
+    }
 }
