@@ -1,5 +1,6 @@
 using ProjectCopa;
 using Services;
+using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest;
 
@@ -29,6 +30,46 @@ public class StadiumServicesTests
         service.AddStadium(stadium);
 
         Assert.AreEqual(1, service.GetAllStadiums().Count);
+    }
+
+    [TestMethod]
+    public void AddStadium_LogsAuditEntry()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        StadiumServices auditedService = new StadiumServices(AuditLogService.CreateInstance(repository, 1));
+        Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
+
+        auditedService.AddStadium(stadium);
+
+        List<AuditLog> logs = repository.GetAll();
+        Assert.AreEqual(1, logs.Count);
+        Assert.AreEqual("CREATE_STADIUM", logs[0].Action);
+    }
+
+    [TestMethod]
+    public void UpdateStadium_LogsAuditEntry()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        StadiumServices auditedService = new StadiumServices(AuditLogService.CreateInstance(repository, 1));
+        Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
+
+        auditedService.AddStadium(stadium);
+        auditedService.Update("Centenario", "Montevideo Nuevo", "Estadio remodelado", 65000);
+
+        Assert.IsTrue(repository.GetAll().Any(log => log.Action == "UPDATE_STADIUM"));
+    }
+
+    [TestMethod]
+    public void RemoveStadium_LogsAuditEntry()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        StadiumServices auditedService = new StadiumServices(AuditLogService.CreateInstance(repository, 1));
+        Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
+
+        auditedService.AddStadium(stadium);
+        auditedService.Remove("Centenario");
+
+        Assert.IsTrue(repository.GetAll().Any(log => log.Action == "DELETE_STADIUM"));
     }
 
     

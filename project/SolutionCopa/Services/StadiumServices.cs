@@ -1,12 +1,18 @@
 using ProjectCopa;
+using Services.Interfaces;
 
 namespace Services;
 
 public class StadiumServices
 {
-    
+    private readonly IAuditLogService? _auditLogService;
     private List<Stadium> stadiums = new();
-    
+
+    public StadiumServices(IAuditLogService? auditLogService = null)
+    {
+        this._auditLogService = auditLogService;
+    }
+
     public IReadOnlyCollection<Stadium> GetAllStadiums()
     {
         return stadiums.AsReadOnly();
@@ -18,6 +24,10 @@ public class StadiumServices
             throw new ArgumentException("Este Nombre de estadio ya existe");
 
         stadiums.Add(stadium);
+        _auditLogService?.Log(
+            AuditActions.CreateStadium,
+            $"Stadium '{stadium.Name}' created in {stadium.City}.",
+            nameof(Stadium));
     }
     
     
@@ -36,12 +46,20 @@ public class StadiumServices
     {
         Stadium stadium = GetByName(name);
         stadiums.Remove(stadium);
+        _auditLogService?.Log(
+            AuditActions.DeleteStadium,
+            $"Stadium '{stadium.Name}' removed.",
+            nameof(Stadium));
     }
     
     public void Update(string name, string city, string? description, int capacity)
     {
         Stadium stadium = GetByName(name);
         stadium.Update(city, description, capacity);
+        _auditLogService?.Log(
+            AuditActions.UpdateStadium,
+            $"Stadium '{stadium.Name}' updated.",
+            nameof(Stadium));
     }
 
 

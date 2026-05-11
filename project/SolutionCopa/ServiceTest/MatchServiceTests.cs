@@ -52,6 +52,29 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
+    public void CreateGroupMatch_WithValidData_LogsAuditEntry()
+    {
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+
+        _context.Service.CreateMatch(request);
+
+        Assert.AreEqual(1, _context.AuditLogs.Count);
+        Assert.AreEqual("CREATE_MATCH", _context.AuditLogs.First().Action);
+    }
+
+    [TestMethod]
+    public void UpdateMatch_WithStadiumChange_LogsAuditEntry()
+    {
+        CreateMatchRequestDto createRequest = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(createRequest);
+        UpdateMatchRequestDto updateRequest = new UpdateMatchRequestDto { StadiumId = 30 };
+
+        _context.Service.UpdateMatch(matchId: 1, request: updateRequest);
+
+        Assert.IsTrue(_context.AuditLogs.Any(log => log.Details.Contains("Match updated")));
+    }
+
+    [TestMethod]
     public void CreateGroupMatch_WithChampionshipConfiguration_Succeeds()
     {
         // Arrange
@@ -329,6 +352,17 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
+    public void DeleteMatch_WithValidId_LogsAuditEntry()
+    {
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+
+        _context.Service.DeleteMatch(matchId: 1);
+
+        Assert.IsTrue(_context.AuditLogs.Any(log => log.Action == "DELETE_MATCH"));
+    }
+
+    [TestMethod]
     public void DeleteMatch_WithNonexistentMatch_ThrowsException()
     {
         Assert.ThrowsException<MatchServicesException>(() => _context.Service.DeleteMatch(matchId: 999));
@@ -497,6 +531,17 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
+    public void SetGoals_WithValidMatchId_LogsAuditEntry()
+    {
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+
+        _context.Service.SetGoals(matchId: 1, homeGoals: 3, awayGoals: 2);
+
+        Assert.IsTrue(_context.AuditLogs.Any(log => log.Details.Contains("goals set to 3-2")));
+    }
+
+    [TestMethod]
     public void SetGoals_WithNonexistentMatch_ThrowsException()
     {
         Assert.ThrowsException<MatchServicesException>(() => _context.Service.SetGoals(matchId: 999, homeGoals: 1, awayGoals: 1));
@@ -533,6 +578,28 @@ public sealed class MatchServiceTest
         // Assert
         Assert.AreEqual(initialUpdateCalls + 1, _context.MatchRepository.UpdateCalls);
         Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);
+    }
+
+    [TestMethod]
+    public void AddGoal_ForHomeTeam_LogsAuditEntry()
+    {
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+
+        _context.Service.AddGoal(matchId: 1, isHomeTeam: true);
+
+        Assert.IsTrue(_context.AuditLogs.Any(log => log.Details.Contains("Goal added to Home")));
+    }
+
+    [TestMethod]
+    public void AddGoal_ForAwayTeam_LogsAuditEntry()
+    {
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+
+        _context.Service.AddGoal(matchId: 1, isHomeTeam: false);
+
+        Assert.IsTrue(_context.AuditLogs.Any(log => log.Details.Contains("Goal added to Away")));
     }
 
     [TestMethod]
@@ -613,6 +680,30 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
+    public void RemoveGoal_FromHomeTeam_LogsAuditEntry()
+    {
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+        _context.Service.AddGoal(matchId: 1, isHomeTeam: true);
+
+        _context.Service.RemoveGoal(matchId: 1, isHomeTeam: true);
+
+        Assert.IsTrue(_context.AuditLogs.Any(log => log.Details.Contains("Goal removed from Home")));
+    }
+
+    [TestMethod]
+    public void RemoveGoal_FromAwayTeam_LogsAuditEntry()
+    {
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+        _context.Service.AddGoal(matchId: 1, isHomeTeam: false);
+
+        _context.Service.RemoveGoal(matchId: 1, isHomeTeam: false);
+
+        Assert.IsTrue(_context.AuditLogs.Any(log => log.Details.Contains("Goal removed from Away")));
+    }
+
+    [TestMethod]
     public void RemoveGoal_FromAwayTeam_DecrementsAwayGoals()
     {
         // Arrange
@@ -670,6 +761,17 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
+    public void PublishResult_WithValidMatchId_LogsAuditEntry()
+    {
+        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(request);
+
+        _context.Service.PublishResult(matchId: 1);
+
+        Assert.IsTrue(_context.AuditLogs.Any(log => log.Action == "PUBLISH_MATCH_RESULT"));
+    }
+
+    [TestMethod]
     public void PublishResult_WithNonexistentMatch_ThrowsException()
     {
         Assert.ThrowsException<MatchServicesException>(() => _context.Service.PublishResult(matchId: 999));
@@ -692,7 +794,7 @@ public sealed class MatchServiceTest
             HomeTeamId = homeTeamId,
             AwayTeamId = awayTeamId,
             StadiumId = stadiumId,
-            ChampionshipConfigurationId = championshipConfigurationId,
+            TournamentSettingsId = championshipConfigurationId,
             GroupId = groupId,
             JourneyId = journeyId
         };
@@ -720,7 +822,7 @@ public sealed class MatchServiceTest
             AwayTeamId = awayTeamId,
             StadiumId = stadiumId,
             IsElimination = true,
-            ChampionshipConfigurationId = championshipConfigurationId,
+            TournamentSettingsId = championshipConfigurationId,
             Phase = phase,
             MatchCode = matchCode,
             MatchHomeId = matchHomeId,

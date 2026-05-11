@@ -7,6 +7,7 @@ namespace ServiceTest;
 [TestClass]
 public sealed class MatchServiceSimulationTests
 {
+    private const int MatchId = 1;
     private MatchServiceTestContext _context = null!;
     private CreateMatchRequestDto _createMatchRequest = null!;
 
@@ -14,7 +15,7 @@ public sealed class MatchServiceSimulationTests
     public void TestInitialize()
     {
         _context = new MatchServiceTestContext();
-        _createMatchRequest = MatchServiceTestContext.NewGroupMatchRequest(id: 1);
+        _createMatchRequest = MatchServiceTestContext.NewGroupMatchRequest(MatchId);
     }
 
     [TestMethod]
@@ -24,7 +25,7 @@ public sealed class MatchServiceSimulationTests
         _context.Service.CreateMatch(_createMatchRequest);
 
         // Act
-        _context.Service.SimulateMatch(matchId: 1);
+        _context.Service.SimulateMatch(MatchId);
 
         // Assert
         Assert.IsTrue(_context.SimulationEngine.SimulateWasCalled);
@@ -38,7 +39,7 @@ public sealed class MatchServiceSimulationTests
         _context.Service.CreateMatch(_createMatchRequest);
 
         // Act
-        _context.Service.SimulateMatch(matchId: 1);
+        _context.Service.SimulateMatch(MatchId);
 
         // Assert
         Assert.AreEqual(789, _context.SimulationEngine.LastSeedReceived);
@@ -52,10 +53,23 @@ public sealed class MatchServiceSimulationTests
         int initialUpdateCalls = _context.MatchRepository.UpdateCalls;
 
         // Act
-        _context.Service.SimulateMatch(matchId: 1);
+        _context.Service.SimulateMatch(MatchId);
 
         // Assert
         Assert.AreEqual(initialUpdateCalls + 1, _context.MatchRepository.UpdateCalls);
+    }
+
+    [TestMethod]
+    public void SimulateMatch_LogsAuditEntry()
+    {
+        // Arrange
+        _context.Service.CreateMatch(_createMatchRequest);
+
+        // Act
+        _context.Service.SimulateMatch(MatchId);
+
+        // Assert
+        Assert.IsTrue(_context.AuditLogs.Any(log => log.Action == "SIMULATE_MATCH"));
     }
 
     [TestMethod]
@@ -66,7 +80,7 @@ public sealed class MatchServiceSimulationTests
         int initialCommitCalls = _context.UnitOfWork.CommitCalls;
 
         // Act
-        _context.Service.SimulateMatch(matchId: 1);
+        _context.Service.SimulateMatch(MatchId);
 
         // Assert
         Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);

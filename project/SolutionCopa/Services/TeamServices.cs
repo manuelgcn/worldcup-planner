@@ -5,7 +5,7 @@ using Services.Interfaces;
 
 namespace Services;
 
-public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork) : ITeamService
+public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork, IAuditLogService? auditLogService = null) : ITeamService
 {
     private const int FixtureTeamCount = 48;
     private const int AfcQuota = 8;
@@ -36,6 +36,11 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
         ValidateConfederationQuota(team.Confederation);
 
         teamRepository.Add(team);
+        auditLogService?.Log(
+            AuditActions.CreateTeam,
+            $"Team '{team.Name}' added with ranking {team.FifaRanking}.",
+            nameof(Team),
+            team.Id);
         unitOfWork.Commit();
     }
 
@@ -60,6 +65,11 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
             ?? throw new TeamServicesException(CannotDeleteTeamMessage);
 
         teamRepository.Delete(team);
+        auditLogService?.Log(
+            AuditActions.DeleteTeam,
+            $"Team '{team.Name}' removed.",
+            nameof(Team),
+            team.Id);
         unitOfWork.Commit();
     }
 
@@ -128,7 +138,3 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
         return orderedTeams;
     }
 }
-
-
-
-

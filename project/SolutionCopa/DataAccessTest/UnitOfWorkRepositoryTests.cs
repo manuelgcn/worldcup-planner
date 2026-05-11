@@ -4,14 +4,14 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace DataAccessTest;
 
 [TestClass]
-public class UnitOfWorkListTests
+public class UnitOfWorkRepositoryTests
 {
-    private UnitOfWorkList _unitOfWork = null!;
+    private UnitOfWorkRepository _unitOfWork = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        _unitOfWork = new UnitOfWorkList();
+        _unitOfWork = new UnitOfWorkRepository();
     }
 
     [TestMethod]

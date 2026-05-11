@@ -2,7 +2,7 @@ using DataAccess.Interfaces;
 
 namespace DataAccess.Repositories;
 
-public class UnitOfWorkList : IUnitOfWork
+public class UnitOfWorkRepository : IUnitOfWork
 {
     public void Commit()
     {
