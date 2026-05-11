@@ -11,7 +11,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 
-builder.Services.AddSingleton<ITeamRepository, TeamRepositoryList>();
+builder.Services.AddSingleton<ITeamRepository, TeamRepository>();
 builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 builder.Services.AddSingleton<UserServices>();
 builder.Services.AddSingleton<StadiumServices>();
