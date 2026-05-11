@@ -70,18 +70,4 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
         unitOfWork.Commit();
     }
     
-    public string GetCity(string stadiumName)
-    {
-        return GetByName(stadiumName).City;
-    }
-
-    public int GetCapacity(string stadiumName)
-    {
-        return GetByName(stadiumName).Capacity;
-    }
-
-    public int GetId(string stadiumName)
-    {
-        return GetByName(stadiumName).Id;
-    }
 }
