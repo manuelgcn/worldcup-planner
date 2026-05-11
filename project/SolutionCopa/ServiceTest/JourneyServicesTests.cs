@@ -1,5 +1,6 @@
 using ProjectCopa;
 using Services;
+using Services.Exceptions;
 using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest;
@@ -28,5 +29,14 @@ public sealed class JourneyServicesTests
 
         Assert.AreEqual(1, _repo.AddCalls);
         Assert.AreEqual(1, _uow.CommitCalls);
+    }
+
+    [TestMethod]
+    public void CannotAddJourneyWithDuplicateNumber()
+    {
+        _service.AddJourney(Journey.CreateInstance(1));
+
+        Assert.ThrowsException<JourneyServicesException>(() =>
+            _service.AddJourney(Journey.CreateInstance(1)));
     }
 }
