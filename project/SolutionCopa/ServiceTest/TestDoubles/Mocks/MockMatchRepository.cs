@@ -5,7 +5,7 @@ namespace ServiceTest.TestDoubles.Mocks;
 
 public sealed class MockMatchRepository : IMatchRepository
 {
-    private readonly Dictionary<int, Match> _matches = new();
+    private readonly Dictionary<int, Match> _matches = new Dictionary<int, Match>();
 
     public int AddCalls { get; private set; }
     public int UpdateCalls { get; private set; }

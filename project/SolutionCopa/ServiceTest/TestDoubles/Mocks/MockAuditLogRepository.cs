@@ -5,7 +5,7 @@ namespace ServiceTest.TestDoubles.Mocks;
 
 public class MockAuditLogRepository: IAuditLogRepository
 {
-    private readonly List<AuditLog> _logs = new();
+    private readonly List<AuditLog> _logs = new List<AuditLog>();
 
     public void Add(AuditLog log)
     {

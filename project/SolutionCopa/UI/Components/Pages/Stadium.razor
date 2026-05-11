@@ -94,7 +94,7 @@ else
     private string? description;
     private int capacity;
 
-    private readonly List<string> errors = new();
+    private readonly List<string> errors = new List<string>();
     private string? successMessage;
 
     private IReadOnlyCollection<ProjectCopa.Stadium> stadiums =
