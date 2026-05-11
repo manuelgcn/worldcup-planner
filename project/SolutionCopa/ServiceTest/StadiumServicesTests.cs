@@ -1,6 +1,7 @@
 using ProjectCopa;
 using Services;
 using ServiceTest.TestDoubles.Mocks;
+using DataAccess.Interfaces
 
 namespace ServiceTest;
 

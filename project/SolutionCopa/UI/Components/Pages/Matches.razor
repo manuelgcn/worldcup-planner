@@ -1,0 +1,290 @@
+@page "/matches"
+@using ProjectCopa
+@using Services
+@using UI
+@using DataAccess.Interfaces
+@inject IMatchRepository MatchRepository
+@inject IUnitOfWork UnitOfWork
+@inject StadiumServices StadiumServices
+@inject SessionState Session
+@inject NavigationManager Nav
+
+<PageTitle>Partidos</PageTitle>
+
+<h3>Partidos - Fase de Grupos</h3>
+
+@if (!Session.IsLoggedIn)
+{
+    <p>No estás logueado</p>
+    <button @onclick="GoToLogin">Ir a Login</button>
+}
+else
+{
+    @if (errors.Any())
+    {
+        <ul style="color:red">
+            @foreach (var error in errors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <p style="color:green">@successMessage</p>
+    }
+
+    <div>
+        <label>Seleccionar Grupo:</label>
+        <select @onchange="OnGroupChanged">
+            <option value="">-- Seleccione grupo --</option>
+            @foreach (string g in groups)
+            {
+                <option value="@g">Grupo @g</option>
+            }
+        </select>
+    </div>
+
+    <hr />
+
+    @if (matches.Any())
+    {
+        <h4>Partidos del Grupo @selectedGroup</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Equipos</th>
+                    <th>Estadio</th>
+                    <th>Resultado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Match match in matches)
+                {
+                    @if (editingMatchId == match.MatchId)
+                    {
+                        <tr style="background-color: #fff3cd;">
+                            <td>@match.MatchId</td>
+                            <td>
+                                <input type="datetime-local" @bind="editingMatchDate" />
+                            </td>
+                            <td>
+                                @match.HomeTeam?.Name vs @match.AwayTeam?.Name
+                            </td>
+                            <td>
+                                <select @bind="editingStadiumId">
+                                    <option value="0">-- Seleccione estadio --</option>
+                                    @foreach (var stadium in stadiums)
+                                    {
+                                        <option value="@stadium.Id">@stadium.Name</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <input type="number" @bind="editingHomeGoals" min="0" style="width: 40px;" />
+                                -
+                                <input type="number" @bind="editingAwayGoals" min="0" style="width: 40px;" />
+                            </td>
+                            
+                            <td>
+                                <button @onclick="() => SaveEdit(match)">Guardar</button>
+                                <button @onclick="CancelEdit">Cancelar</button>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        <tr>
+                            <td>@match.MatchId</td>
+                            <td>@match.MatchDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@match.HomeTeam?.Name vs @match.AwayTeam?.Name</td>
+                            <td>@match.Stadium?.Name</td>
+                            <td>@match.HomeGoals - @match.AwayGoals</td>
+                            
+                            <td>
+                                <button @onclick="() => StartEdit(match)">Editar</button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    else if (!string.IsNullOrWhiteSpace(selectedGroup))
+    {
+        <p>No hay partidos para el grupo seleccionado</p>
+    }
+}
+
+@code {
+    private readonly List<string> groups = new()
+    {
+        "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"
+    };
+
+    private string selectedGroup = "";
+    private List<Match> matches = new();
+    private IReadOnlyCollection<Stadium> stadiums = Array.Empty<Stadium>();
+    
+    private readonly List<string> errors = new();
+    private string? successMessage;
+
+    
+    private int? editingMatchId;
+    private DateTime editingMatchDate;
+    private int editingStadiumId;
+    private int editingHomeGoals;
+    private int editingAwayGoals;
+
+    protected override void OnInitialized()
+    {
+        LoadStadiums();
+        LoadMatches();
+    }
+
+    private void OnGroupChanged(ChangeEventArgs e)
+    {
+        selectedGroup = e.Value?.ToString() ?? "";
+        LoadMatches();
+    }
+
+    private void LoadMatches()
+    {
+        errors.Clear();
+        successMessage = null;
+        matches.Clear();
+        CancelEdit();
+
+        if (string.IsNullOrWhiteSpace(selectedGroup))
+            return;
+
+        try
+        {
+            matches = MatchRepository.GetByGroup(selectedGroup);
+        }
+        catch (ArgumentException ex)
+        {
+            errors.Add(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            errors.Add("Error al cargar los partidos: " + ex.Message);
+        }
+    }
+
+    private void LoadStadiums()
+    {
+        try
+        {
+            stadiums = StadiumServices.GetAllStadiums() as IReadOnlyCollection<Stadium>;
+        }
+        catch (ArgumentException ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void StartEdit(Match match)
+    {
+        errors.Clear();
+        successMessage = null;
+        
+        editingMatchId = match.MatchId;
+        editingMatchDate = match.MatchDate;
+        editingStadiumId = match.Stadium?.Id ?? 0;
+        editingHomeGoals = match.HomeGoals;
+        editingAwayGoals = match.AwayGoals;
+    }
+
+    private void CancelEdit()
+    {
+        editingMatchId = null;
+        editingMatchDate = default;
+        editingStadiumId = 0;
+        editingHomeGoals = 0;
+        editingAwayGoals = 0;
+    }
+
+    private void SaveEdit(Match match)
+    {
+        errors.Clear();
+        successMessage = null;
+
+        if (!ValidateEdit())
+            return;
+
+        try
+        {
+            UpdateMatch(match);
+            PersistChanges();
+            
+            successMessage = "Partido actualizado correctamente";
+            CancelEdit();
+            LoadMatches();
+        }
+        catch (ArgumentException ex)
+        {
+            errors.Add(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            errors.Add("Error al actualizar el partido: " + ex.Message);
+        }
+    }
+
+    private void UpdateMatch(Match match)
+    {
+        
+        match.ChangeDate(editingMatchDate);
+
+        
+        match.SetGoals(editingHomeGoals, editingAwayGoals);
+
+        
+        if (editingStadiumId > 0)
+        {
+            ProjectCopa.Stadium selectedStadium = StadiumServices.GetById(editingStadiumId);
+            match.ChangeStadium(selectedStadium);
+        }
+    }
+
+    private void PersistChanges()
+    {
+        MatchRepository.Update(match: FindEditingMatch());
+        UnitOfWork.Commit();
+    }
+
+    private Match FindEditingMatch()
+    {
+        return matches.First(m => m.MatchId == editingMatchId);
+    }
+
+    private bool ValidateEdit()
+    {
+        if (editingMatchDate == default)
+        {
+            errors.Add("La fecha es obligatoria");
+        }
+
+        if (editingStadiumId <= 0)
+        {
+            errors.Add("Debe seleccionar un estadio");
+        }
+
+        if (editingHomeGoals < 0 || editingAwayGoals < 0)
+        {
+            errors.Add("Los goles no pueden ser negativos");
+        }
+
+        return !errors.Any();
+    }
+
+    private void GoToLogin()
+    {
+        Nav.NavigateTo("/login");
+    }
+}

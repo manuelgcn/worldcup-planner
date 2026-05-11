@@ -4,6 +4,7 @@ using DataAccess.Repositories;
 using UI;
 using UI.Components;
 using ProjectCopa;
+using Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,10 +13,17 @@ builder.Services.AddRazorComponents()
 
 
 builder.Services.AddSingleton<ITeamRepository, TeamRepositoryList>();
+builder.Services.AddSingleton<IMatchRepository, MatchRepository>();
+builder.Services.AddSingleton<IStadiumRepository, StadiumRepository>();
 builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
+
+
+
 builder.Services.AddSingleton<UserServices>();
 builder.Services.AddSingleton<StadiumServices>();
 builder.Services.AddSingleton<TeamServices>();
+
+
 builder.Services.AddScoped<SessionState>();
 
 var app = builder.Build();
