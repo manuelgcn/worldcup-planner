@@ -174,9 +174,29 @@ public sealed class MatchServiceTestContext
 
     private sealed class SimpleTournamentSettingsRepository(Dictionary<int, TournamentSettings> settings) : ITournamentSettingsRepository
     {
+        public void Add(TournamentSettings tournamentSettings)
+        {
+            settings[tournamentSettings.Id] = tournamentSettings;
+        }
+
+        public void Update(TournamentSettings tournamentSettings)
+        {
+            settings[tournamentSettings.Id] = tournamentSettings;
+        }
+
+        public void Delete(TournamentSettings tournamentSettings)
+        {
+            settings.Remove(tournamentSettings.Id);
+        }
+
         public TournamentSettings? GetById(int tournamentSettingsId)
         {
             return settings.GetValueOrDefault(tournamentSettingsId);
+        }
+
+        public IReadOnlyCollection<TournamentSettings> GetAll()
+        {
+            return settings.Values.ToList();
         }
     }
     
