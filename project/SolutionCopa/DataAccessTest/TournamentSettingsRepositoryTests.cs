@@ -29,7 +29,7 @@ public class TournamentSettingsRepositoryTests
     [TestMethod]
     public void UpdateReplacesExistingSettingsWithSameId()
     {
-        TournamentSettings originalSettings = CreateSettings(id: 2, maxMatchesPerDay: 3, daysBetweenJourneys: 3);
+        TournamentSettings originalSettings = CreateSettings(id: 2);
         TournamentSettings updatedSettings = CreateSettings(id: 2, maxMatchesPerDay: 2, daysBetweenJourneys: 1);
         _repository.Add(originalSettings);
 
@@ -74,6 +74,7 @@ public class TournamentSettingsRepositoryTests
 
         TournamentSettings? storedSettings = _repository.GetById(5);
         Assert.IsNotNull(storedSettings);
+        Assert.AreSame(existingSettings, storedSettings);
     }
 
     [TestMethod]
@@ -105,8 +106,7 @@ public class TournamentSettingsRepositoryTests
         TournamentSettings settings = CreateSettings(id: 8);
         _repository.Add(settings);
 
-        IReadOnlyCollection<TournamentSettings> allSettings = _repository.GetAll();
-        List<TournamentSettings> localCopy = allSettings.ToList();
+        List<TournamentSettings> localCopy = _repository.GetAll().ToList();
         localCopy.Clear();
 
         Assert.AreEqual(expected: 1, actual: _repository.GetAll().Count);
