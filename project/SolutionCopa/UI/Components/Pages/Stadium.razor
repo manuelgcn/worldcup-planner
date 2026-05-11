@@ -97,15 +97,10 @@ else
     private readonly List<string> errors = new();
     private string? successMessage;
 
-    private IReadOnlyCollection<ProjectCopa.Stadium> stadiums =
-        Array.Empty<ProjectCopa.Stadium>();
+    private IReadOnlyCollection<Stadium> stadiums = Array.Empty<Stadium>();
 
     private bool IsAdmin =>
         Session.CurrentUser!.Roles.Contains(UserRoles.Admin);
-
-    public object Id { get; set; }
-    public object Name { get; set; }
-
 
     protected override void OnInitialized()
     {
@@ -114,7 +109,7 @@ else
 
     private void LoadStadiums()
     {
-        stadiums = (IReadOnlyCollection<ProjectCopa.Stadium>)StadiumServices.GetAllStadiums();
+        stadiums = StadiumServices.GetAllStadiums();
     }
 
     private void Create()
@@ -127,7 +122,7 @@ else
 
         try
         {
-            ProjectCopa.Stadium stadium = new ProjectCopa.Stadium(
+            Stadium stadium = new Stadium(
                 name,
                 city,
                 description,
