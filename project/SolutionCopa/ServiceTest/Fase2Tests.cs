@@ -25,91 +25,37 @@ namespace ServiceTest
 
             var elimMatch = MatchElimination.Create(matchId, DateTime.Now.AddDays(1), team1, team2, stadium, Phase.RoundOf16, "R16-1", source1, source2);
 
-            var repo = new FakeMatchRepository(elimMatch);
-            var settingsRepo = new FakeSettingsRepository(new TournamentSettings(id:1, startDate: new DateTime(2026,6,1), maxMatchesPerDay:3, daysBetweenJourneys:3, fixtureSeed:0, crossingsSeed:0, simulationSeed:42, completionSeed:0));
-            var simulation = new FakeSimulationEngine();
-            var uow = new FakeUnitOfWork();
-            var audit = new FakeAuditLogService();
+            // Use existing test doubles
+            var repo = new ServiceTest.TestDoubles.Mocks.MockMatchRepository();
+            repo.Add(elimMatch);
 
-            var fase2 = new Fase2(simulation, repo, settingsRepo, uow, audit);
+            var settingsRepo = new DataAccess.Repositories.TournamentSettingsRepository();
+            var ts = new TournamentSettings(1, new DateTime(2026,6,1), 3, 3, 0, 0, 42, 0);
+            settingsRepo.Add(ts);
+
+            var simulation = new ServiceTest.TestDoubles.Mocks.MockMatchSimulationEngine();
+            var uow = new ServiceTest.TestDoubles.Mocks.MockUnitOfWork();
+
+            var auditRepo = new ServiceTest.TestDoubles.Mocks.MockAuditLogRepository();
+            var auditService = AuditLogService.CreateInstance(auditRepo, defaultTournamentSettingsId: 99);
+
+            var fase2 = new Fase2(simulation, repo, settingsRepo, uow, auditService);
 
             // Act
             fase2.SimulateEliminationMatches(new[] { matchId });
 
             // Assert
-            Assert.AreEqual(1, simulation.Calls.Count, "Simulation should be called once");
-            Assert.AreEqual(matchId, simulation.Calls[0].Match.MatchId);
-            Assert.AreEqual(42 + matchId, simulation.Calls[0].Seed);
-            Assert.IsTrue(repo.UpdatedCalled, "Repository Update should be called");
-            Assert.AreEqual(1, uow.CommitCount, "Commit should be called once");
-            Assert.IsTrue(audit.Logs.Count == 1, "Audit should have one entry");
+            Assert.IsTrue(simulation.SimulateWasCalled, "Simulation should be called");
+            Assert.AreEqual(42 + matchId, simulation.LastSeedReceived);
+            Assert.IsNotNull(simulation.LastMatchReceived);
+            Assert.AreEqual(matchId, simulation.LastMatchReceived!.MatchId);
+            Assert.AreEqual(1, repo.UpdateCalls, "Repository Update should be called once");
+            Assert.AreEqual(1, uow.CommitCalls, "Commit should be called once");
+            var logs = auditRepo.GetAll();
+            Assert.AreEqual(1, logs.Count);
+            Assert.AreEqual(matchId, logs[0].TournamentSettingsId);
         }
 
-        // Fake implementations
-        private class FakeMatchRepository : IMatchRepository
-        {
-            private readonly Match _match;
-            public bool UpdatedCalled { get; private set; }
-
-            public FakeMatchRepository(Match match)
-            {
-                _match = match;
-            }
-
-            public bool ExistsById(int matchId) => _match.MatchId == matchId;
-            public void Add(Match match) => throw new NotImplementedException();
-            public void Update(Match match) { UpdatedCalled = true; }
-            public void Delete(Match match) => throw new NotImplementedException();
-            public Match? GetById(int matchId) => _match.MatchId == matchId ? _match : null;
-            public List<Match> GetByGroup(string groupName) => new List<Match>();
-            public List<Match> GetByJourney(int journeyNumber) => new List<Match>();
-            public List<Match> GetByDateRange(DateTime from, DateTime to) => new List<Match> { _match };
-        }
-
-        private class FakeSettingsRepository : ITournamentSettingsRepository
-        {
-            private readonly TournamentSettings _settings;
-            public FakeSettingsRepository(TournamentSettings settings) { _settings = settings; }
-            public TournamentSettings? GetById(int id) => _settings;
-            public void Add(TournamentSettings settings) => throw new NotImplementedException();
-            public void Update(TournamentSettings settings) => throw new NotImplementedException();
-            public void Delete(TournamentSettings settings) => throw new NotImplementedException();
-            public IReadOnlyCollection<TournamentSettings> GetAll() => new List<TournamentSettings> { _settings };
-        }
-
-        private class FakeSimulationEngine : IMatchSimulationEngine
-        {
-            public List<(Match Match, int Seed)> Calls { get; } = new();
-            public void Simulate(Match match, int simulationSeed)
-            {
-                Calls.Add((match, simulationSeed));
-                // simple deterministic effect: set some goals
-                match.SetGoals(1, 0);
-            }
-        }
-
-        private class FakeUnitOfWork : IUnitOfWork
-        {
-            public int CommitCount { get; private set; }
-            public void Commit() => CommitCount++;
-        }
-
-        private class FakeAuditLogService : IAuditLogService
-        {
-            public List<string> Logs { get; } = new();
-            public void Log(string action, string details, int tournamentSettingsId, string? affectedEntityType = null, int? affectedEntityId = null)
-            {
-                Logs.Add($"{action}:{details}");
-            }
-
-            public void Log(string action, string details, string? affectedEntityType = null, int? affectedEntityId = null)
-            {
-                Logs.Add($"{action}:{details}");
-            }
-
-            public List<Services.DTOs.AuditLogDto> GetAll() => new List<Services.DTOs.AuditLogDto>();
-            public List<Services.DTOs.AuditLogDto> GetByTournamentSettings(int tournamentSettingsId) => new List<Services.DTOs.AuditLogDto>();
-            public string ExportAsText(int? tournamentSettingsId = null) => string.Empty;
-        }
+        
     }
 }
