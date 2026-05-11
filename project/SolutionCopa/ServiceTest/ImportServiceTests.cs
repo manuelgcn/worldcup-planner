@@ -6,6 +6,7 @@ using Services.DTOs;
 using Services.Exceptions;
 using Services.Interfaces;
 using ServiceTest.TestDoubles.Mocks;
+// ReSharper disable UseCollectionExpression
 
 namespace ServiceTest;
 
