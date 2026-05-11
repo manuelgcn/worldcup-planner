@@ -1,6 +1,7 @@
 @page "/stadiums"
 @using ProjectCopa
 @using Services
+@using Services.Exceptions
 @using UI
 @inject StadiumServices StadiumServices
 @inject SessionState Session
@@ -138,6 +139,10 @@ else
             ClearForm();
             LoadStadiums();
         }
+        catch (StadiumServicesException ex)
+        {
+            errors.Add(ex.Message);
+        }
         catch (ArgumentException ex)
         {
             errors.Add(ex.Message);
@@ -154,6 +159,10 @@ else
             StadiumServices.RemoveById(id);
             successMessage = "Estadio eliminado correctamente";
             LoadStadiums();
+        }
+        catch (StadiumServicesException ex)
+        {
+            errors.Add(ex.Message);
         }
         catch (ArgumentException ex)
         {

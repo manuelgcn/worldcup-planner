@@ -1,6 +1,7 @@
 @page "/matches"
 @using ProjectCopa
 @using Services
+@using Services.Exceptions
 @using UI
 @using DataAccess.Interfaces
 @inject IMatchRepository MatchRepository
@@ -166,6 +167,10 @@ else
         {
             matches = MatchRepository.GetByGroup(selectedGroup);
         }
+        catch (StadiumServicesException ex)
+        {
+            errors.Add(ex.Message);
+        }
         catch (ArgumentException ex)
         {
             errors.Add(ex.Message);
@@ -181,6 +186,10 @@ else
         try
         {
             stadiums = StadiumServices.GetAllStadiums() as IReadOnlyCollection<Stadium>;
+        }
+        catch (StadiumServicesException ex)
+        {
+            errors.Add(ex.Message);
         }
         catch (ArgumentException ex)
         {
