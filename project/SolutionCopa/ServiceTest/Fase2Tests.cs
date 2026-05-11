@@ -14,7 +14,7 @@ namespace ServiceTest
         [TestMethod]
         public void SimulateEliminationMatches_CallsSimulationAndCommits()
         {
-            // Arrange
+           
             var matchId = 20;
             var team1 = new Team(1, "TeamA", 1200, false, Confederation.UEFA);
             var team2 = new Team(2, "TeamB", 1100, false, Confederation.UEFA);
@@ -56,15 +56,14 @@ namespace ServiceTest
                 _match = match;
             }
 
+            public bool ExistsById(int matchId) => _match.MatchId == matchId;
             public void Add(Match match) => throw new NotImplementedException();
-            public void Delete(Match match) => throw new NotImplementedException();
-            public IReadOnlyCollection<Match> GetAll() => new[] { _match };
-            public Match? GetById(int id) => _match.MatchId == id ? _match : null;
-            public IReadOnlyCollection<Match> GetByGroup(string groupName) => throw new NotImplementedException();
-            public IReadOnlyCollection<Match> GetByJourney(int journeyNumber) => throw new NotImplementedException();
-            public IReadOnlyCollection<Match> GetByPhase(Phase phase) => throw new NotImplementedException();
             public void Update(Match match) { UpdatedCalled = true; }
-            public bool ExistsById(int id) => _match.MatchId == id;
+            public void Delete(Match match) => throw new NotImplementedException();
+            public Match? GetById(int matchId) => _match.MatchId == matchId ? _match : null;
+            public List<Match> GetByGroup(string groupName) => new List<Match>();
+            public List<Match> GetByJourney(int journeyNumber) => new List<Match>();
+            public List<Match> GetByDateRange(DateTime from, DateTime to) => new List<Match> { _match };
         }
 
         private class FakeSettingsRepository : ITournamentSettingsRepository
@@ -74,6 +73,8 @@ namespace ServiceTest
             public TournamentSettings? GetById(int id) => _settings;
             public void Add(TournamentSettings settings) => throw new NotImplementedException();
             public void Update(TournamentSettings settings) => throw new NotImplementedException();
+            public void Delete(TournamentSettings settings) => throw new NotImplementedException();
+            public IReadOnlyCollection<TournamentSettings> GetAll() => new List<TournamentSettings> { _settings };
         }
 
         private class FakeSimulationEngine : IMatchSimulationEngine
@@ -96,10 +97,19 @@ namespace ServiceTest
         private class FakeAuditLogService : IAuditLogService
         {
             public List<string> Logs { get; } = new();
-            public void Log(string action, string details, int affectedEntityId, int tournamentSettingsId = 0, string? affectedEntityType = null)
+            public void Log(string action, string details, int tournamentSettingsId, string? affectedEntityType = null, int? affectedEntityId = null)
             {
                 Logs.Add($"{action}:{details}");
             }
+
+            public void Log(string action, string details, string? affectedEntityType = null, int? affectedEntityId = null)
+            {
+                Logs.Add($"{action}:{details}");
+            }
+
+            public List<Services.DTOs.AuditLogDto> GetAll() => new List<Services.DTOs.AuditLogDto>();
+            public List<Services.DTOs.AuditLogDto> GetByTournamentSettings(int tournamentSettingsId) => new List<Services.DTOs.AuditLogDto>();
+            public string ExportAsText(int? tournamentSettingsId = null) => string.Empty;
         }
     }
 }
