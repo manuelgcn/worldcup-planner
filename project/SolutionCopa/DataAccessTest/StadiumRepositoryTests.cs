@@ -1,4 +1,5 @@
 using DataAccess.Repositories;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProjectCopa;
 
 namespace DataAccessTest;
@@ -107,7 +108,7 @@ public class StadiumRepositoryTests
 
     private static Stadium CreateStadium(int id, string name, string city, int capacity)
     {
-        Stadium stadium = new Stadium(name, city, description: null, capacity);
+        Stadium stadium = new Stadium(name, city, null, capacity);
         stadium.Id = id;
         return stadium;
     }
