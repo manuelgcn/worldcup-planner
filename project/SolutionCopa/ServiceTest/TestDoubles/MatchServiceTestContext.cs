@@ -188,9 +188,39 @@ public sealed class MatchServiceTestContext
 
     private sealed class SimpleGroupRepository(Dictionary<int, Group> groups) : IGroupRepository
     {
+        public void Add(Group group)
+        {
+            groups[group.Id] = group;
+        }
+
+        public void Update(Group group)
+        {
+            groups[group.Id] = group;
+        }
+
+        public void Delete(Group group)
+        {
+            groups.Remove(group.Id);
+        }
+
         public Group? GetById(int groupId)
         {
             return groups.GetValueOrDefault(groupId);
+        }
+
+        public Group? GetByName(string name)
+        {
+            return groups.Values.FirstOrDefault(group => group.Name == name);
+        }
+
+        public bool ExistsByName(string name)
+        {
+            return groups.Values.Any(group => group.Name == name);
+        }
+
+        public IReadOnlyCollection<Group> GetAll()
+        {
+            return groups.Values.ToList();
         }
     }
 
