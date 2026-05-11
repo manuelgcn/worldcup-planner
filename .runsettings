@@ -11,6 +11,7 @@
       <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
           <Format>cobertura</Format>
+          <Exclude>[DomainTest]*,[ServiceTest]*,[DataAccessTest]*</Exclude>
         </Configuration>
       </DataCollector>
     </DataCollectors>
