@@ -23,7 +23,7 @@ public sealed class JourneyServicesTests
     [TestMethod]
     public void AddJourneyCallsRepositoryAndCommits()
     {
-        Journey journey = Journey.CreateInstance(1);
+        Journey journey = CreateJourney(1);
 
         _service.AddJourney(journey);
 
@@ -34,10 +34,10 @@ public sealed class JourneyServicesTests
     [TestMethod]
     public void CannotAddJourneyWithDuplicateNumber()
     {
-        _service.AddJourney(Journey.CreateInstance(1));
+        _service.AddJourney(CreateJourney(1));
 
         Assert.ThrowsException<JourneyServicesException>(() =>
-            _service.AddJourney(Journey.CreateInstance(1)));
+            _service.AddJourney(CreateJourney(1)));
     }
 
     [TestMethod]
@@ -49,11 +49,16 @@ public sealed class JourneyServicesTests
     [TestMethod]
     public void JourneyServices_RemoveByNumberDeletesViaRepository()
     {
-        _service.AddJourney(Journey.CreateInstance(1));
+        _service.AddJourney(CreateJourney(1));
 
         _service.RemoveByNumber(1);
 
         Assert.AreEqual(1, _repo.DeleteCalls);
         Assert.AreEqual(2, _uow.CommitCalls);
+    }
+
+    private static Journey CreateJourney(int number)
+    {
+        return Journey.CreateInstance(number);
     }
 }
