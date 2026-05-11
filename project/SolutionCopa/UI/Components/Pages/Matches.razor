@@ -2,11 +2,12 @@
 @using ProjectCopa
 @using Services
 @using Services.Exceptions
+@using Services.Interfaces
 @using UI
 @using DataAccess.Interfaces
 @inject IMatchRepository MatchRepository
 @inject IUnitOfWork UnitOfWork
-@inject StadiumServices StadiumServices
+@inject IStadiumService StadiumServices
 @inject SessionState Session
 @inject NavigationManager Nav
 
