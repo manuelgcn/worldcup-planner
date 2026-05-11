@@ -785,7 +785,7 @@ public sealed class MatchServiceTest
         int stadiumId = 30,
         int? championshipConfigurationId = null,
         int? groupId = 40,
-        int? journeyId = 50)
+        int? journeyId = 1)
     {
         return new CreateMatchRequestDto
         {
