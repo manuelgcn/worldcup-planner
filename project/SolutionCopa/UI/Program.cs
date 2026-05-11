@@ -22,8 +22,8 @@ builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 
 
 builder.Services.AddSingleton<UserServices>();
-builder.Services.AddSingleton<IStadiumService, StadiumServices>();
 builder.Services.AddSingleton<StadiumServices>();
+builder.Services.AddSingleton<IStadiumService>(sp => sp.GetRequiredService<StadiumServices>());
 builder.Services.AddSingleton<GroupServices>();
 builder.Services.AddSingleton<JourneyServices>();
 builder.Services.AddSingleton<IGroupService>(sp => sp.GetRequiredService<GroupServices>());

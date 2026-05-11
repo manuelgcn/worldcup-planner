@@ -44,8 +44,8 @@ public class StadiumServicesTests
         ServiceCollection services = new ServiceCollection();
         services.AddSingleton<IStadiumRepository, MockStadiumRepository>();
         services.AddSingleton<IUnitOfWork, MockUnitOfWork>();
-        services.AddSingleton<IStadiumService, StadiumServices>();
         services.AddSingleton<StadiumServices>();
+        services.AddSingleton<IStadiumService>(sp => sp.GetRequiredService<StadiumServices>());
 
         ServiceProvider sp = services.BuildServiceProvider();
 
