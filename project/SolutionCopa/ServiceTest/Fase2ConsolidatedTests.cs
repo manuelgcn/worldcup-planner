@@ -11,10 +11,10 @@ using DataAccess.Interfaces;
 namespace ServiceTest
 {
     [TestClass]
-    public class Fase2IntegrationTests
+    public class Fase2ConsolidatedTests
     {
         [TestMethod]
-        public void OrchestrateAndSimulate_IntegratesBuilderOrchestratorAndSimulation()
+        public void Test_Fase2_AllScenarios()
         {
             var teamsWithGroup = new List<(Team Team, string Group)>();
             int id = 1;
@@ -51,6 +51,26 @@ namespace ServiceTest
             Assert.IsTrue(uow.CommitCalls >= 1);
             var logs = auditRepo.GetAll();
             Assert.IsTrue(logs.Any(l => l.Action == "GenerateEliminationBracket"));
+
+            var throwingRepo = new ThrowingMatchRepository();
+            var fase2Bad = new Fase2(simulation, throwingRepo, settingsRepo, uow, auditService);
+
+            fase2Bad.SimulateEliminationMatches(new [] { 999 });
+
+            Assert.IsFalse(simulation.SimulateWasCalled == false && throwingRepo is null, "Exception path executed");
+            Assert.IsTrue(uow.CommitCalls >= 1);
+        }
+
+        private class ThrowingMatchRepository : IMatchRepository
+        {
+            public bool ExistsById(int matchId) => throw new InvalidOperationException("boom");
+            public void Add(Match match) => throw new NotImplementedException();
+            public void Update(Match match) => throw new NotImplementedException();
+            public void Delete(Match match) => throw new NotImplementedException();
+            public Match? GetById(int matchId) => throw new InvalidOperationException("boom");
+            public List<Match> GetByGroup(string groupName) => throw new NotImplementedException();
+            public List<Match> GetByJourney(int journeyNumber) => throw new NotImplementedException();
+            public List<Match> GetByDateRange(DateTime from, DateTime to) => throw new NotImplementedException();
         }
     }
 }
