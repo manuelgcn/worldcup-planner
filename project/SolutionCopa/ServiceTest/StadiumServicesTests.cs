@@ -1,7 +1,10 @@
 using ProjectCopa;
+using DataAccess.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using Services;
 using ServiceTest.TestDoubles.Mocks;
 using Services.Exceptions;
+using Services.Interfaces;
 
 namespace ServiceTest;
 
@@ -33,6 +36,22 @@ public class StadiumServicesTests
 
         Assert.AreEqual(1, repository.AddCalls);
         Assert.AreEqual(1, unitOfWork.CommitCalls);
+    }
+
+    [TestMethod]
+    public void DI_RegistersStadiumServicesAsSameInstance()
+    {
+        ServiceCollection services = new ServiceCollection();
+        services.AddSingleton<IStadiumRepository, MockStadiumRepository>();
+        services.AddSingleton<IUnitOfWork, MockUnitOfWork>();
+        services.AddSingleton<IStadiumService, StadiumServices>();
+        services.AddSingleton<StadiumServices>();
+
+        ServiceProvider sp = services.BuildServiceProvider();
+
+        Assert.AreSame(
+            sp.GetRequiredService<StadiumServices>(),
+            sp.GetRequiredService<IStadiumService>());
     }
 
     [TestMethod]
