@@ -106,7 +106,7 @@ public class MatchFactory(
 
     private Journey GetJourneyOrThrow(int journeyId)
     {
-        return journeyRepository.GetById(journeyId) ?? throw new MatchServicesException(JourneyNotFoundMessage);
+        return journeyRepository.GetByNumber(journeyId) ?? throw new MatchServicesException(JourneyNotFoundMessage);
     }
 
     private TournamentSettings? GetTournamentSettingsOrNull(int? tournamentSettingsId)

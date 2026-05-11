@@ -4,5 +4,10 @@ namespace DataAccess.Interfaces;
 
 public interface IJourneyRepository
 {
-    Journey? GetById(int journeyId);
+    void Add(Journey journey);
+    void Update(Journey journey);
+    void Delete(Journey journey);
+    Journey? GetByNumber(int number);
+    bool ExistsByNumber(int number);
+    IReadOnlyCollection<Journey> GetAll();
 }

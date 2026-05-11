@@ -50,7 +50,7 @@ public sealed class MatchServiceTestContext
 
         _groups[40] = new Group(40, "A");
 
-        _journeys[50] = Journey.CreateInstance(1);
+        _journeys[1] = Journey.CreateInstance(1);
 
         TournamentSettings defaultSettings = new TournamentSettings(
             1,
@@ -226,9 +226,34 @@ public sealed class MatchServiceTestContext
 
     private sealed class SimpleJourneyRepository(Dictionary<int, Journey> journeys) : IJourneyRepository
     {
-        public Journey? GetById(int journeyId)
+        public void Add(Journey journey)
         {
-            return journeys.GetValueOrDefault(journeyId);
+            journeys[journey.Number] = journey;
+        }
+
+        public void Update(Journey journey)
+        {
+            journeys[journey.Number] = journey;
+        }
+
+        public void Delete(Journey journey)
+        {
+            journeys.Remove(journey.Number);
+        }
+
+        public Journey? GetByNumber(int number)
+        {
+            return journeys.GetValueOrDefault(number);
+        }
+
+        public bool ExistsByNumber(int number)
+        {
+            return journeys.ContainsKey(number);
+        }
+
+        public IReadOnlyCollection<Journey> GetAll()
+        {
+            return journeys.Values.ToList();
         }
     }
 
@@ -265,7 +290,7 @@ public sealed class MatchServiceTestContext
             AwayTeamId = 20,
             StadiumId = 30,
             GroupId = 40,
-            JourneyId = 50
+            JourneyId = 1
         };
     }
 
