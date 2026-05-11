@@ -45,4 +45,15 @@ public sealed class JourneyServicesTests
     {
         Assert.ThrowsException<JourneyServicesException>(() => _service.GetByNumber(999));
     }
+
+    [TestMethod]
+    public void JourneyServices_RemoveByNumberDeletesViaRepository()
+    {
+        _service.AddJourney(Journey.CreateInstance(1));
+
+        _service.RemoveByNumber(1);
+
+        Assert.AreEqual(1, _repo.DeleteCalls);
+        Assert.AreEqual(2, _uow.CommitCalls);
+    }
 }
