@@ -34,7 +34,7 @@ namespace Services
 
             foreach (int matchId in matchIds)
             {
-                Match match = _matchRepository.GetById(matchId);
+                Match match = _match_repository_GetById(matchId);
                 if (match == null) continue;
 
                 int seed = baseSeed + matchId;
@@ -42,6 +42,37 @@ namespace Services
 
                 _matchRepository.Update(match);
                 _auditLog?.Log(AuditActions.SimulateMatch, $"Simulated elimination match {matchId} with seed {seed}.", match.MatchId);
+            }
+
+            _unitOfWork.Commit();
+        }
+
+        private Match? _match_repository_GetById(int matchId)
+        {
+            try
+            {
+                return _matchRepository.GetById(matchId);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public void OrchestrateAndSimulateEliminationPhase(IEnumerable<(Team Team, string Group)> qualifiedWithGroups, IReadOnlyCollection<Stadium> stadiums, TournamentSettings settings, IEliminationMatchRepository eliminationRepo, int? crossingsSeedOverride = null)
+        {
+            if (qualifiedWithGroups == null) throw new ArgumentNullException(nameof(qualifiedWithGroups));
+            var entries = qualifiedWithGroups.ToList();
+            if (entries.Count != 32) throw new ArgumentException("Requires 32 qualified teams with group info");
+
+            var orchestrator = new EliminationOrchestrator(eliminationRepo, _auditLog ?? throw new InvalidOperationException("AuditLogService required"));
+            orchestrator.OrchestrateEliminationPhase(entries, stadiums, settings, crossingsSeedOverride);
+
+            var allMatches = eliminationRepo.GetAll();
+            foreach (var m in allMatches)
+            {
+                _simulationEngine.Simulate(m, settings.SimulationSeed + m.MatchId);
+                eliminationRepo.Update(m);
             }
 
             _unitOfWork.Commit();
