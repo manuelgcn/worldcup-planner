@@ -20,6 +20,20 @@ public class StadiumServicesTests
 
     
     [TestMethod]
+    public void AddStadiumCallsRepositoryAndCommits()
+    {
+        MockStadiumRepository repository = new MockStadiumRepository();
+        MockUnitOfWork unitOfWork = new MockUnitOfWork();
+        StadiumServices localService = new StadiumServices(repository, unitOfWork);
+        Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
+
+        localService.AddStadium(stadium);
+
+        Assert.AreEqual(1, repository.AddCalls);
+        Assert.AreEqual(1, unitOfWork.CommitCalls);
+    }
+
+    [TestMethod]
     public void CanAddStadium()
     {
         Stadium stadium = new Stadium(
