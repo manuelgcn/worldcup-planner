@@ -1,7 +1,5 @@
-using DataAccess.Interfaces;
 using ProjectCopa;
 using Services.DTOs;
-using Services.Exceptions;
 
 namespace Services.Interfaces;
 

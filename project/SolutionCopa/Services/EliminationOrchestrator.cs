@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using DataAccess.Interfaces;
 using ProjectCopa;
 using Services.Interfaces;
@@ -21,13 +18,13 @@ namespace Services
         public void OrchestrateEliminationPhase(IEnumerable<(Team Team, string Group)> qualifiedWithGroups, IReadOnlyCollection<Stadium> stadiums, TournamentSettings settings, int? crossingsSeedOverride = null)
         {
             if (qualifiedWithGroups == null) throw new ArgumentNullException(nameof(qualifiedWithGroups));
-            var entries = qualifiedWithGroups.ToList();
+            List<(Team Team, string Group)> entries = qualifiedWithGroups.ToList();
             if (entries.Count != 32) throw new ArgumentException("Requires 32 qualified teams with group info");
 
-            var builder = new EliminationBuilderV2();
+            EliminationBuilder builder = new EliminationBuilder();
             int crossingsSeed = crossingsSeedOverride ?? settings.CrossingsSeed;
 
-            var stadiumList = stadiums?.ToList() ?? new List<Stadium> { new Stadium("Default", "City", null, 30000) };
+            List<Stadium> stadiumList = stadiums?.ToList() ?? new List<Stadium> { new Stadium("Default", "City", null, 30000) };
             int maxPerDay = settings.MaxMatchesPerDay;
             int daysBetween = settings.DaysBetweenJourneys;
 
@@ -44,14 +41,14 @@ namespace Services
                 };
             }
 
-            var roundOf32 = builder.CreateRoundOf32(entries, stadiums, settings, crossingsSeed, stadiumProvider, makeDateProvider(roundStart));
-            foreach (var m in roundOf32) _eliminationRepo.Add(m);
+            List<MatchElimination> roundOf32 = builder.CreateRoundOf32(entries, stadiums, settings, crossingsSeed, stadiumProvider, makeDateProvider(roundStart));
+            foreach (MatchElimination m in roundOf32) _eliminationRepo.Add(m);
 
             _auditLog.Log("GenerateEliminationBracket", $"RoundOf32 generated with seed {crossingsSeed}.", settings.Id);
 
-            var currentRound = roundOf32.Cast<Match>().ToList();
+            List<Match> currentRound = roundOf32.Cast<Match>().ToList();
 
-            var rounds = new (Phase phase, int matchCount)[]
+            (Phase phase, int matchCount)[] rounds = new (Phase phase, int matchCount)[]
             {
                 (Phase.RoundOf16, 8),
                 (Phase.QuarterFinals, 4),
@@ -62,8 +59,8 @@ namespace Services
             for (int r = 0; r < rounds.Length; r++)
             {
                 roundStart = roundStart.AddDays(daysBetween);
-                var nextMatches = builder.CreateNextRoundFromMatches(currentRound, rounds[r].phase, stadiums, settings, stadiumProvider, makeDateProvider(roundStart));
-                foreach (var nm in nextMatches) _eliminationRepo.Add(nm);
+                List<MatchElimination> nextMatches = builder.CreateNextRoundFromMatches(currentRound, rounds[r].phase, stadiums, settings, stadiumProvider, makeDateProvider(roundStart));
+                foreach (MatchElimination nm in nextMatches) _eliminationRepo.Add(nm);
                 _auditLog.Log("GenerateEliminationBracket", $"{rounds[r].phase} generated.", settings.Id);
                 currentRound = nextMatches.Cast<Match>().ToList();
             }

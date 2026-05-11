@@ -16,7 +16,7 @@ public class UserServices
 
     public UserServices(IAuditLogService? auditLogService = null)
     {
-        this._auditLogService = auditLogService;
+        _auditLogService = auditLogService;
     }
 
     public void AddUser(User user)

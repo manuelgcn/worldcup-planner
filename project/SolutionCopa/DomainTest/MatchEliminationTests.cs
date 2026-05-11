@@ -74,10 +74,10 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchEliminationCanGetMatchCode()
     {
-        var sourceHomeMatch = CreateSourceMatch(100);
-        var sourceAwayMatch = CreateSourceMatch(200);
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
 
-        var matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch);
 
         Assert.AreEqual("A1", matchElimination.MatchCode);
     }
@@ -92,10 +92,10 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchEliminationCanGetPhase()
     {
-        var sourceHomeMatch = CreateSourceMatch(100);
-        var sourceAwayMatch = CreateSourceMatch(200);
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
 
-        var matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, phase: Phase.SemiFinal);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, phase: Phase.SemiFinal);
 
         Assert.AreEqual(Phase.SemiFinal, matchElimination.Phase);
     }
@@ -103,10 +103,10 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchEliminationCanGetMatchHome()
     {
-        var sourceHomeMatch = CreateSourceMatch(100);
-        var sourceAwayMatch = CreateSourceMatch(200);
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
 
-        var matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch);
 
         Assert.AreSame(sourceHomeMatch, matchElimination.MatchHome);
     }
@@ -114,10 +114,10 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchEliminationCanGetMatchAway()
     {
-        var sourceHomeMatch = CreateSourceMatch(100);
-        var sourceAwayMatch = CreateSourceMatch(200);
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
 
-        var matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch);
 
         Assert.AreSame(sourceAwayMatch, matchElimination.MatchAway);
     }
@@ -125,10 +125,10 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchEliminationCanBeCreatedWithtournamentSettings()
     {
-        var sourceHomeMatch = CreateSourceMatch(100);
-        var sourceAwayMatch = CreateSourceMatch(200);
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
 
-        var matchElimination = CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch);
+        MatchElimination matchElimination = CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch);
 
         Assert.AreEqual(MatchDate, matchElimination.MatchDate);
     }
@@ -136,10 +136,10 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchEliminationCanGetPhaseWhenUsingtournamentSettings()
     {
-        var sourceHomeMatch = CreateSourceMatch(100);
-        var sourceAwayMatch = CreateSourceMatch(200);
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
 
-        var matchElimination = CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch, phase: Phase.Final);
+        MatchElimination matchElimination = CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch, phase: Phase.Final);
 
         Assert.AreEqual(Phase.Final, matchElimination.Phase);
     }
@@ -152,10 +152,10 @@ public class MatchEliminationTests
     [DataRow(Phase.RoundOf32)]
     public void MatchEliminationAcceptsEveryDefinedPhase(Phase phase)
     {
-        var sourceHomeMatch = CreateSourceMatch(100);
-        var sourceAwayMatch = CreateSourceMatch(200);
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
 
-        var matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, phase: phase);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, phase: phase);
 
         Assert.AreEqual(phase, matchElimination.Phase);
     }
@@ -163,8 +163,8 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchEliminationRejectsInvalidPhase()
     {
-        var sourceHomeMatch = CreateSourceMatch(100);
-        var sourceAwayMatch = CreateSourceMatch(200);
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
 
         Assert.ThrowsException<MatchException>(() =>
             CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, phase: (Phase)999));
@@ -173,8 +173,8 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchEliminationRejectsNullMatchCode()
     {
-        var sourceHomeMatch = CreateSourceMatch(100);
-        var sourceAwayMatch = CreateSourceMatch(200);
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
 
         Assert.ThrowsException<MatchException>(() =>
             CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, matchCode: null!));
@@ -183,8 +183,8 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchEliminationRejectsWhitespaceMatchCode()
     {
-        var sourceHomeMatch = CreateSourceMatch(100);
-        var sourceAwayMatch = CreateSourceMatch(200);
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
 
         Assert.ThrowsException<MatchException>(() =>
             CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, matchCode: "   "));
@@ -193,8 +193,8 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchEliminationRejectsEmptyMatchCode()
     {
-        var sourceHomeMatch = CreateSourceMatch(100);
-        var sourceAwayMatch = CreateSourceMatch(200);
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
 
         Assert.ThrowsException<MatchException>(() =>
             CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, matchCode: string.Empty));
@@ -203,7 +203,7 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchEliminationRejectsNullHomeSourceMatch()
     {
-        var sourceAwayMatch = CreateSourceMatch(200);
+        Match sourceAwayMatch = CreateSourceMatch(200);
 
         Assert.ThrowsException<MatchException>(() =>
             CreateValidMatchElimination(null!, sourceAwayMatch));
@@ -212,7 +212,7 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchEliminationRejectsNullAwaySourceMatch()
     {
-        var sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceHomeMatch = CreateSourceMatch(100);
 
         Assert.ThrowsException<MatchException>(() =>
             CreateValidMatchElimination(sourceHomeMatch, null!));
@@ -221,7 +221,7 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchEliminationRejectsSameSourceMatchForHomeAndAway()
     {
-        var sourceMatch = CreateSourceMatch(100);
+        Match sourceMatch = CreateSourceMatch(100);
 
         Assert.ThrowsException<MatchException>(() =>
             CreateValidMatchElimination(sourceMatch, sourceMatch));
@@ -230,8 +230,8 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchEliminationRejectsNullMatchCodeWhenUsingtournamentSettings()
     {
-        var sourceHomeMatch = CreateSourceMatch(100);
-        var sourceAwayMatch = CreateSourceMatch(200);
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
 
         Assert.ThrowsException<MatchException>(() =>
             CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch, matchCode: null!));
@@ -241,9 +241,9 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchElimination_SetHomeGoals_SetsValue()
     {
-        var sourceHome = CreateSourceMatch(100);
-        var sourceAway = CreateSourceMatch(200);
-        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
         matchElimination.SetHomeGoals(2);
         Assert.AreEqual(2, matchElimination.HomeGoals);
     }
@@ -251,9 +251,9 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchElimination_SetAwayGoals_SetsValue()
     {
-        var sourceHome = CreateSourceMatch(100);
-        var sourceAway = CreateSourceMatch(200);
-        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
         matchElimination.SetAwayGoals(1);
         Assert.AreEqual(1, matchElimination.AwayGoals);
     }
@@ -261,9 +261,9 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchElimination_AddHomeGoal_Increments()
     {
-        var sourceHome = CreateSourceMatch(100);
-        var sourceAway = CreateSourceMatch(200);
-        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
         matchElimination.AddHomeGoal();
         Assert.AreEqual(1, matchElimination.HomeGoals);
     }
@@ -271,9 +271,9 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchElimination_AddAwayGoal_Increments()
     {
-        var sourceHome = CreateSourceMatch(100);
-        var sourceAway = CreateSourceMatch(200);
-        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
         matchElimination.AddAwayGoal();
         Assert.AreEqual(1, matchElimination.AwayGoals);
     }
@@ -281,9 +281,9 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchElimination_RemoveHomeGoal_Decrements()
     {
-        var sourceHome = CreateSourceMatch(100);
-        var sourceAway = CreateSourceMatch(200);
-        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
         matchElimination.AddHomeGoal();
         matchElimination.RemoveHomeGoal();
         Assert.AreEqual(0, matchElimination.HomeGoals);
@@ -292,9 +292,9 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchElimination_RemoveAwayGoal_Decrements()
     {
-        var sourceHome = CreateSourceMatch(100);
-        var sourceAway = CreateSourceMatch(200);
-        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
         matchElimination.AddAwayGoal();
         matchElimination.RemoveAwayGoal();
         Assert.AreEqual(0, matchElimination.AwayGoals);
@@ -303,9 +303,9 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchElimination_HasHomeTeamWon_ReturnsTrue()
     {
-        var sourceHome = CreateSourceMatch(100);
-        var sourceAway = CreateSourceMatch(200);
-        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
         matchElimination.SetGoals(2, 0);
         Assert.IsTrue(matchElimination.HasHomeTeamWon());
     }
@@ -313,9 +313,9 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchElimination_HasAwayTeamWon_ReturnsTrue()
     {
-        var sourceHome = CreateSourceMatch(100);
-        var sourceAway = CreateSourceMatch(200);
-        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
         matchElimination.SetGoals(0, 2);
         Assert.IsTrue(matchElimination.HasAwayTeamWon());
     }
@@ -323,9 +323,9 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchElimination_IsDraw_ReturnsTrueOnEqualGoals()
     {
-        var sourceHome = CreateSourceMatch(100);
-        var sourceAway = CreateSourceMatch(200);
-        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
         matchElimination.SetGoals(1, 1);
         Assert.IsTrue(matchElimination.IsDraw());
     }
@@ -333,9 +333,9 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchElimination_GetGoalDifferenceForHome_ReturnsCorrectValue()
     {
-        var sourceHome = CreateSourceMatch(100);
-        var sourceAway = CreateSourceMatch(200);
-        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
         matchElimination.SetGoals(3, 1);
         Assert.AreEqual(2, matchElimination.GetGoalDifferenceForHome());
     }
@@ -343,9 +343,9 @@ public class MatchEliminationTests
     [TestMethod]
     public void MatchElimination_GetGoalDifferenceForAway_ReturnsCorrectValue()
     {
-        var sourceHome = CreateSourceMatch(100);
-        var sourceAway = CreateSourceMatch(200);
-        var matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
         matchElimination.SetGoals(1, 3);
         Assert.AreEqual(2, matchElimination.GetGoalDifferenceForAway());
     }

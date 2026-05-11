@@ -10,7 +10,7 @@ public class StadiumServices
 
     public StadiumServices(IAuditLogService? auditLogService = null)
     {
-        this._auditLogService = auditLogService;
+        _auditLogService = auditLogService;
     }
 
     public IReadOnlyCollection<Stadium> GetAllStadiums()

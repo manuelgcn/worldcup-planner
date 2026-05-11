@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProjectCopa;
 using Services;
 using DataAccess.Repositories;
@@ -15,7 +11,7 @@ namespace ServiceTest
         [TestMethod]
         public void Orchestrate_Creates_All_Rounds_And_Audits()
         {
-            var teamsWithGroup = new List<(Team Team, string Group)>();
+            List<(Team Team, string Group)> teamsWithGroup = new List<(Team Team, string Group)>();
             int id = 1;
             for (int g = 1; g <= 16; g++)
             {
@@ -23,23 +19,23 @@ namespace ServiceTest
                 teamsWithGroup.Add((new Team(id++, $"T{g}B", 1000 + id, false, Confederation.UEFA), $"G{g}"));
             }
 
-            var stadiums = new List<Stadium>
+            List<Stadium> stadiums = new List<Stadium>
             {
                 new Stadium("S1", "City1", null, 30000),
                 new Stadium("S2", "City2", null, 35000)
             };
 
-            var settings = new TournamentSettings(1, new DateTime(2026,6,1), 3, 3, fixtureSeed:0, crossingsSeed:777, simulationSeed:0, completionSeed:0);
+            TournamentSettings settings = new TournamentSettings(1, new DateTime(2026,6,1), 3, 3, fixtureSeed:0, crossingsSeed:777, simulationSeed:0, completionSeed:0);
 
-            var elimRepo = new EliminationMatchRepository();
-            var auditRepo = new MockAuditLogRepository();
-            var auditService = AuditLogService.CreateInstance(auditRepo, defaultTournamentSettingsId: settings.Id);
+            EliminationMatchRepository elimRepo = new EliminationMatchRepository();
+            MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+            AuditLogService auditService = AuditLogService.CreateInstance(auditRepo, defaultTournamentSettingsId: settings.Id);
 
-            var orchestrator = new EliminationOrchestrator(elimRepo, auditService);
+            EliminationOrchestrator orchestrator = new EliminationOrchestrator(elimRepo, auditService);
 
             orchestrator.OrchestrateEliminationPhase(teamsWithGroup, stadiums, settings);
 
-            var all = elimRepo.GetAll().ToList();
+            List<Match> all = elimRepo.GetAll().ToList();
             Assert.AreEqual(31, all.Count);
 
             Assert.AreEqual(16, all.Count(m => ((MatchElimination)m).Phase == Phase.RoundOf32));
@@ -48,7 +44,7 @@ namespace ServiceTest
             Assert.AreEqual(2, all.Count(m => ((MatchElimination)m).Phase == Phase.SemiFinal));
             Assert.AreEqual(1, all.Count(m => ((MatchElimination)m).Phase == Phase.Final));
 
-            var logs = auditRepo.GetAll();
+            List<AuditLog> logs = auditRepo.GetAll();
             Assert.IsTrue(logs.Any(l => l.Action == "GenerateEliminationBracket"));
         }
     }

@@ -20,10 +20,10 @@ public class User
     
     public User()
     {
-        this.name = "";
-        this.lastname = "";
-        this.email = "";
-        this.password = "";
+        name = "";
+        lastname = "";
+        email = "";
+        password = "";
         
         
     }
@@ -33,7 +33,7 @@ public class User
         ValidateEmail(email);
         ValidatePassword(password);
         
-        this.idUser = id;
+        idUser = id;
         this.name = name;
         this.lastname = lastname;
         this.email = email;

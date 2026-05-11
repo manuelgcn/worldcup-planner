@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using DataAccess.Interfaces;
 using ProjectCopa;
 
@@ -30,7 +28,7 @@ namespace DataAccess.Repositories
 
         public void Update(Match match)
         {
-            var existing = GetById(match.MatchId);
+            Match? existing = GetById(match.MatchId);
             if (existing != null)
             {
                 _storage.Remove(existing);

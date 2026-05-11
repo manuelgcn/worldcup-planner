@@ -70,7 +70,7 @@ public sealed class TournamentSettingsTests
         int id = 10;
 
         // Act
-        var settings = CreateConfiguredSettings(id: id);
+        TournamentSettings settings = CreateConfiguredSettings(id: id);
 
         // Assert
         Assert.AreEqual(id, settings.Id);
@@ -80,10 +80,10 @@ public sealed class TournamentSettingsTests
     public void SettingsCanGetStartDate()
     {
         // Arrange
-        var startDate = new DateTime(2026, 6, 10);
+        DateTime startDate = new DateTime(2026, 6, 10);
 
         // Act
-        var settings = CreateConfiguredSettings(startDate: startDate);
+        TournamentSettings settings = CreateConfiguredSettings(startDate: startDate);
 
         // Assert
         Assert.AreEqual(startDate, settings.StartDate);
@@ -96,7 +96,7 @@ public sealed class TournamentSettingsTests
         const int maxMatchesPerDay = 3;
 
         // Act
-        var settings = CreateConfiguredSettings(maxMatchesPerDay: maxMatchesPerDay);
+        TournamentSettings settings = CreateConfiguredSettings(maxMatchesPerDay: maxMatchesPerDay);
 
         // Assert
         Assert.AreEqual(maxMatchesPerDay, settings.MaxMatchesPerDay);
@@ -109,7 +109,7 @@ public sealed class TournamentSettingsTests
         const int daysBetweenJourneys = 4;
 
         // Act
-        var settings = CreateConfiguredSettings(daysBetweenJourneys: daysBetweenJourneys);
+        TournamentSettings settings = CreateConfiguredSettings(daysBetweenJourneys: daysBetweenJourneys);
 
         // Assert
         Assert.AreEqual(daysBetweenJourneys, settings.DaysBetweenJourneys);
@@ -122,7 +122,7 @@ public sealed class TournamentSettingsTests
         const int fixtureSeed = 11;
 
         // Act
-        var settings = CreateConfiguredSettings(fixtureSeed: fixtureSeed);
+        TournamentSettings settings = CreateConfiguredSettings(fixtureSeed: fixtureSeed);
 
         // Assert
         Assert.AreEqual(fixtureSeed, settings.FixtureSeed);
@@ -135,7 +135,7 @@ public sealed class TournamentSettingsTests
         const int crossingsSeed = 22;
 
         // Act
-        var settings = CreateConfiguredSettings(crossingsSeed: crossingsSeed);
+        TournamentSettings settings = CreateConfiguredSettings(crossingsSeed: crossingsSeed);
 
         // Assert
         Assert.AreEqual(crossingsSeed, settings.CrossingsSeed);
@@ -148,7 +148,7 @@ public sealed class TournamentSettingsTests
         const int simulationSeed = 33;
 
         // Act
-        var settings = CreateConfiguredSettings(simulationSeed: simulationSeed);
+        TournamentSettings settings = CreateConfiguredSettings(simulationSeed: simulationSeed);
 
         // Assert
         Assert.AreEqual(simulationSeed, settings.SimulationSeed);
@@ -161,7 +161,7 @@ public sealed class TournamentSettingsTests
         const int completionSeed = 44;
 
         // Act
-        var settings = CreateConfiguredSettings(completionSeed: completionSeed);
+        TournamentSettings settings = CreateConfiguredSettings(completionSeed: completionSeed);
 
         // Assert
         Assert.AreEqual(completionSeed, settings.CompletionSeed);

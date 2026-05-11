@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using DataAccess.Interfaces;
 using ProjectCopa;
 using Services.Interfaces;
@@ -62,14 +61,14 @@ namespace Services
         public void OrchestrateAndSimulateEliminationPhase(IEnumerable<(Team Team, string Group)> qualifiedWithGroups, IReadOnlyCollection<Stadium> stadiums, TournamentSettings settings, IEliminationMatchRepository eliminationRepo, int? crossingsSeedOverride = null)
         {
             if (qualifiedWithGroups == null) throw new ArgumentNullException(nameof(qualifiedWithGroups));
-            var entries = qualifiedWithGroups.ToList();
+            List<(Team Team, string Group)> entries = qualifiedWithGroups.ToList();
             if (entries.Count != 32) throw new ArgumentException("Requires 32 qualified teams with group info");
 
-            var orchestrator = new EliminationOrchestrator(eliminationRepo, _auditLog ?? throw new InvalidOperationException("AuditLogService required"));
+            EliminationOrchestrator orchestrator = new EliminationOrchestrator(eliminationRepo, _auditLog ?? throw new InvalidOperationException("AuditLogService required"));
             orchestrator.OrchestrateEliminationPhase(entries, stadiums, settings, crossingsSeedOverride);
 
-            var allMatches = eliminationRepo.GetAll();
-            foreach (var m in allMatches)
+            IReadOnlyCollection<Match> allMatches = eliminationRepo.GetAll();
+            foreach (Match m in allMatches)
             {
                 _simulationEngine.Simulate(m, settings.SimulationSeed + m.MatchId);
                 eliminationRepo.Update(m);

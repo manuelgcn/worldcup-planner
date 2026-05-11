@@ -100,7 +100,7 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
 
     private static void ShuffleDeterministically(IList<Team> teams, int seed)
     {
-        var random = new Random(seed);
+        Random random = new Random(seed);
 
         for (int i = teams.Count - 1; i > 0; i--)
         {

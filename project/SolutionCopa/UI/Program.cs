@@ -5,7 +5,7 @@ using UI;
 using UI.Components;
 using ProjectCopa;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -18,7 +18,7 @@ builder.Services.AddSingleton<StadiumServices>();
 builder.Services.AddSingleton<TeamServices>();
 builder.Services.AddScoped<SessionState>();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -31,7 +31,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
-var userServices = app.Services.GetRequiredService<UserServices>();
+UserServices userServices = app.Services.GetRequiredService<UserServices>();
 
 User admin = new User(
     1,

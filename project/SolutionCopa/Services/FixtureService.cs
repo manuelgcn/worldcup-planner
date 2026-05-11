@@ -23,7 +23,7 @@ public class FixtureService
         this.teams = teams;
         this.stadiums = stadiums;
         this.seed = seed ?? 0; 
-        this._auditLogService = auditLogService;
+        _auditLogService = auditLogService;
     }
 
     public IReadOnlyCollection<Group> CreateFixture()

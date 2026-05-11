@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Services;
 using DataAccess.Interfaces;
 using ProjectCopa;
@@ -15,27 +11,27 @@ namespace ServiceTest
         [TestMethod]
         public void Log_GetAll_GetByTournamentSettings_And_ExportAsText()
         {
-            var repo = new FakeAuditLogRepository();
-            var service = AuditLogService.CreateInstance(repo, defaultTournamentSettingsId: 99);
+            FakeAuditLogRepository repo = new FakeAuditLogRepository();
+            AuditLogService service = AuditLogService.CreateInstance(repo, defaultTournamentSettingsId: 99);
 
             // Log with explicit tournament id
             service.Log("Action1", "Details1", 1, "Match", 10);
             // Log with default tournament id overload
             service.Log("Action2", "Details2", "Team", 5);
 
-            var all = service.GetAll();
+            List<AuditLogDto> all = service.GetAll();
             Assert.AreEqual(2, all.Count);
             Assert.IsTrue(all.Any(a => a.Action == "Action1"));
             Assert.IsTrue(all.Any(a => a.Action == "Action2"));
 
-            var filtered = service.GetByTournamentSettings(1);
+            List<AuditLogDto> filtered = service.GetByTournamentSettings(1);
             Assert.AreEqual(1, filtered.Count);
             Assert.AreEqual("Action1", filtered[0].Action);
 
-            var exportAll = service.ExportAsText(null);
+            string exportAll = service.ExportAsText(null);
             Assert.IsTrue(exportAll.Contains("Action1") && exportAll.Contains("Action2"));
 
-            var exportFiltered = service.ExportAsText(1);
+            string exportFiltered = service.ExportAsText(1);
             Assert.IsTrue(exportFiltered.Contains("Action1") && !exportFiltered.Contains("Action2"));
         }
 
