@@ -15,7 +15,7 @@ public class StadiumServicesTests
     [TestInitialize]
     public void Setup()
     {
-        service = new StadiumServices(new StadiumRepository());
+        service = new StadiumServices(new StadiumRepository(), new UnitOfWorkRepository());
     }
 
     
@@ -54,6 +54,7 @@ public class StadiumServicesTests
         MockAuditLogRepository repository = new MockAuditLogRepository();
         StadiumServices auditedService = new StadiumServices(
             new StadiumRepository(),
+            new UnitOfWorkRepository(),
             AuditLogService.CreateInstance(repository, 1));
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
@@ -70,6 +71,7 @@ public class StadiumServicesTests
         MockAuditLogRepository repository = new MockAuditLogRepository();
         StadiumServices auditedService = new StadiumServices(
             new StadiumRepository(),
+            new UnitOfWorkRepository(),
             AuditLogService.CreateInstance(repository, 1));
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
@@ -86,6 +88,7 @@ public class StadiumServicesTests
         MockAuditLogRepository repository = new MockAuditLogRepository();
         StadiumServices auditedService = new StadiumServices(
             new StadiumRepository(),
+            new UnitOfWorkRepository(),
             AuditLogService.CreateInstance(repository, 1));
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
