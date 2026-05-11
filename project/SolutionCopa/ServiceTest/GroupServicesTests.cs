@@ -1,5 +1,6 @@
 using ProjectCopa;
 using Services;
+using Services.Exceptions;
 using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest;
@@ -28,5 +29,13 @@ public sealed class GroupServicesTests
 
         Assert.AreEqual(1, _repo.AddCalls);
         Assert.AreEqual(1, _uow.CommitCalls);
+    }
+
+    [TestMethod]
+    public void CannotAddTwoGroupsWithSameName()
+    {
+        _service.AddGroup(new Group(1, "A"));
+
+        Assert.ThrowsException<GroupServicesException>(() => _service.AddGroup(new Group(2, "A")));
     }
 }
