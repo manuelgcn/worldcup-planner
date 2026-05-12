@@ -1,3 +1,4 @@
+using System.Linq;
 using DataAccess.Interfaces;
 using ProjectCopa;
 using Services.Interfaces;
@@ -28,19 +29,20 @@ namespace Services
         
         public void SimulateEliminationMatches(IEnumerable<int> matchIds)
         {
-            TournamentSettings settings = _settingsRepository.GetById(1) ?? new TournamentSettings();
+            TournamentSettings? settings = _settingsRepository.GetAll().FirstOrDefault();
+            if (settings == null) throw new InvalidOperationException("Tournament settings are required to simulate matches.");
             int baseSeed = settings.SimulationSeed;
 
             foreach (int matchId in matchIds)
             {
-                Match match = _match_repository_GetById(matchId);
+                Match? match = _match_repository_GetById(matchId);
                 if (match == null) continue;
 
                 int seed = baseSeed + matchId;
                 _simulationEngine.Simulate(match, seed);
 
                 _matchRepository.Update(match);
-                _auditLog?.Log(AuditActions.SimulateMatch, $"Simulated elimination match {matchId} with seed {seed}.", match.MatchId);
+                _auditLog?.Log(AuditActions.SimulateMatch, $"Simulated elimination match {matchId} with seed {seed}.", settings.Id, "Match", match.MatchId);
             }
 
             _unitOfWork.Commit();
@@ -67,11 +69,20 @@ namespace Services
             EliminationOrchestrator orchestrator = new EliminationOrchestrator(eliminationRepo, _auditLog ?? throw new InvalidOperationException("AuditLogService required"));
             orchestrator.OrchestrateEliminationPhase(entries, stadiums, settings, crossingsSeedOverride);
 
-            var allMatches = eliminationRepo.GetAll().ToList();
+            List<Match> allMatches = eliminationRepo.GetAll().ToList();
             foreach (Match m in allMatches)
             {
-                _simulationEngine.Simulate(m, settings.SimulationSeed + m.MatchId);
-                eliminationRepo.Update(m);
+                try
+                {
+                    int seed = settings.SimulationSeed + m.MatchId;
+                    _simulationEngine.Simulate(m, seed);
+                    eliminationRepo.Update(m);
+                    _auditLog?.Log(AuditActions.SimulateMatch, $"Simulated elimination match {m.MatchId} with seed {seed}.", settings.Id, "Match", m.MatchId);
+                }
+                catch (Exception ex)
+                {
+                    _auditLog?.Log(AuditActions.SimulateMatch, $"Failed to simulate match {m.MatchId}: {ex.Message}", settings.Id, "Match", m.MatchId);
+                }
             }
 
             _unitOfWork.Commit();
