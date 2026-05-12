@@ -1,9 +1,11 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using DataAccess.Interfaces;
 using ProjectCopa;
 using Services.Interfaces;
 
-namespace Services
+amespace Services
 {
     public class Fase2
     {
@@ -87,5 +89,73 @@ namespace Services
 
             _unitOfWork.Commit();
         }
+
+        public List<(Team Team, string Group)> ComputeQualified32FromGroups(IReadOnlyCollection<Group> groups, TournamentSettings settings)
+        {
+            if (groups == null) throw new ArgumentNullException(nameof(groups));
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
+
+            var qualified = new List<(Team Team, string Group)>();
+            var thirdPlaceCandidates = new List<(Team Team, int Pts, int GD, int GF, string Group)>();
+
+            foreach (Group g in groups)
+            {
+                var matches = _matchRepository.GetByGroup(g.Name) ?? new List<Match>();
+                var stats = new Dictionary<int, (Team Team, int Pts, int GF, int GA)>();
+
+                foreach (Team t in g.Teams)
+                {
+                    if (!stats.ContainsKey(t.Id)) stats[t.Id] = (t, 0, 0, 0);
+                }
+
+                foreach (Match m in matches)
+                {
+                    if (m.HomeTeam == null || m.AwayTeam == null) continue;
+
+                    if (!stats.ContainsKey(m.HomeTeam.Id)) stats[m.HomeTeam.Id] = (m.HomeTeam, 0, 0, 0);
+                    if (!stats.ContainsKey(m.AwayTeam.Id)) stats[m.AwayTeam.Id] = (m.AwayTeam, 0, 0, 0);
+
+                    var home = stats[m.HomeTeam.Id];
+                    var away = stats[m.AwayTeam.Id];
+
+                    home.GF += m.HomeGoals;
+                    home.GA += m.AwayGoals;
+                    away.GF += m.AwayGoals;
+                    away.GA += m.HomeGoals;
+
+                    if (m.HomeGoals > m.AwayGoals) home.Pts += 3;
+                    else if (m.HomeGoals < m.AwayGoals) away.Pts += 3;
+                    else { home.Pts += 1; away.Pts += 1; }
+
+                    stats[m.HomeTeam.Id] = home;
+                    stats[m.AwayTeam.Id] = away;
+                }
+
+                var standings = stats.Values
+                    .Select(s => (s.Team, s.Pts, GD: s.GF - s.GA, GF: s.GF))
+                    .OrderByDescending(s => s.Pts)
+                    .ThenByDescending(s => s.GD)
+                    .ThenByDescending(s => s.GF)
+                    .ThenBy(s => s.Team.Id)
+                    .ToList();
+
+                if (standings.Count >= 1) qualified.Add((standings[0].Team, g.Name));
+                if (standings.Count >= 2) qualified.Add((standings[1].Team, g.Name));
+                if (standings.Count >= 3) thirdPlaceCandidates.Add((standings[2].Team, standings[2].Pts, standings[2].GD, standings[2].GF, g.Name));
+            }
+n            var qualificationService = new QualificationService();
+            var best8 = qualificationService.GetBestEightThirds(thirdPlaceCandidates, settings.CrossingsSeed);
+n            foreach (var t in best8)
+            {
+                var grp = thirdPlaceCandidates.FirstOrDefault(c => c.Team.Id == t.Id).Group;
+                qualified.Add((t, grp));
+            }
+n            if (qualified.Count != 32)
+            {
+                throw new InvalidOperationException($"Computed qualified teams count is {qualified.Count}, expected 32.");
+            }
+n            return qualified;
+        }
     }
 }
+
