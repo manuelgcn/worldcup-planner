@@ -11,7 +11,6 @@ public sealed class GroupFixtureGenerator
     private const int SimultaneousJornadaNumber = 3;
     private const int DefaultMatchId = 0;
     private const string MatchCodePrefix = "M";
-
     private const int TeamAIndex = 0;
     private const int TeamBIndex = 1;
     private const int TeamCIndex = 2;
@@ -22,198 +21,107 @@ public sealed class GroupFixtureGenerator
         new TimeSpan(14, 0, 0), new TimeSpan(18, 0, 0), new TimeSpan(22, 0, 0)
     ];
 
-    private const string AtLeastOneStadiumMessage = "At least one stadium is required.";
-    private const string EachGroupMustHaveFourTeamsMessage = "Each group must contain exactly 4 teams.";
-    private const string NoAvailableJornada3MessageTemplate = "No available timeslot for Jornada 3 of group {0}.";
-    private const string NoAvailableSlotMessageTemplate = "No available timeslot for match number {0} in stadium {1}.";
-
     public List<Match> GenerateMatches(List<Group> groups, List<Stadium> stadiums, DateTime startDate)
     {
         ArgumentNullException.ThrowIfNull(groups);
         ArgumentNullException.ThrowIfNull(stadiums);
             
         if (stadiums.Count == 0) 
-            throw new MatchException(AtLeastOneStadiumMessage);
+            throw new MatchException("At least one stadium is required.");
 
         List<Group> orderedGroups = new List<Group>(groups.OrderBy(g => g.Name));
         List<Stadium> orderedStadiums = new List<Stadium>(stadiums.OrderBy(s => s.Name));
-            
         List<Match> matches = new List<Match>();
         StadiumScheduleTracker tracker = new StadiumScheduleTracker();
+        
         int matchNumber = 0;
         int groupIndex = 0;
 
         foreach (Group group in orderedGroups)
         {
-            ValidateGroup(group);
-            ScheduleGroupMatches(group, orderedStadiums, startDate, tracker, matches, ref matchNumber, groupIndex);
+            if (group.Teams.Count != TeamsPerGroup)
+                throw new MatchException("Each group must contain exactly 4 teams.");
+
+            List<Team> teams = new List<Team>(group.Teams);
+            int groupsPerDay = (orderedStadiums.Count * MaxMatchesPerStadiumPerDay) / 2;
+            int dayOffset = groupIndex / groupsPerDay;
+
+            for (int jornada = 1; jornada <= TotalJornadas; jornada++)
+            {
+                DateTime day = startDate.AddDays(dayOffset + ((jornada - 1) * DaysBetweenJornadas));
+                List<(int home, int away)> pairs = GetPairsForJornada(jornada);
+
+                if (jornada == SimultaneousJornadaNumber)
+                {
+                    ScheduleSimultaneous(group, teams, pairs, day, orderedStadiums, tracker, matches, ref matchNumber);
+                }
+                else
+                {
+                    ScheduleStandard(group, teams, pairs, jornada, day, orderedStadiums, tracker, matches, ref matchNumber);
+                }
+            }
             groupIndex++;
         }
-
         return matches;
     }
 
-    private void ValidateGroup(Group group)
+    private void ScheduleSimultaneous(Group group, List<Team> teams, List<(int home, int away)> pairs, DateTime day, List<Stadium> orderedStadiums, StadiumScheduleTracker tracker, List<Match> matches, ref int matchNumber)
     {
-        if (group.Teams.Count != TeamsPerGroup)
-        {
-            throw new MatchException(EachGroupMustHaveFourTeamsMessage);
-        }
-    }
-
-    private void ScheduleGroupMatches(
-        Group group, 
-        List<Stadium> orderedStadiums, 
-        DateTime startDate, 
-        StadiumScheduleTracker tracker, 
-        List<Match> matches, 
-        ref int matchNumber,
-        int groupIndex)
-    {
-        List<Team> teams = new List<Team>(group.Teams);
-        int groupsPerDay = (orderedStadiums.Count * MaxMatchesPerStadiumPerDay) / 2;
-        int dayOffset = groupIndex / groupsPerDay;
-
-        for (int jornada = 1; jornada <= TotalJornadas; jornada++)
-        {
-            int daysToAdd = dayOffset + ((jornada - 1) * DaysBetweenJornadas);
-            DateTime day = startDate.AddDays(daysToAdd);
-            List<(int home, int away)> pairs = GetPairsForJornada(jornada);
-
-            if (jornada == SimultaneousJornadaNumber)
-            {
-                ScheduleSimultaneousJornada(group, teams, pairs, jornada, day, orderedStadiums, tracker, matches, ref matchNumber);
-            }
-            else
-            {
-                ScheduleStandardJornada(group, teams, pairs, jornada, day, orderedStadiums, tracker, matches, ref matchNumber);
-            }
-        }
-    }
-
-    private void ScheduleSimultaneousJornada(
-        Group group, 
-        List<Team> teams, 
-        List<(int home, int away)> pairs, 
-        int jornada, 
-        DateTime day, 
-        List<Stadium> orderedStadiums, 
-        StadiumScheduleTracker tracker, 
-        List<Match> matches, 
-        ref int matchNumber)
-    {
-        int firstMatchNumber = matchNumber + 1;
-        int secondMatchNumber = matchNumber + 2;
-
-        Stadium stadium1 = GetStadiumForMatch(firstMatchNumber, orderedStadiums);
-        Stadium stadium2 = GetStadiumForMatch(secondMatchNumber, orderedStadiums);
-
+        Stadium stadium1 = GetStadiumForMatch(matchNumber + 1, orderedStadiums);
+        Stadium stadium2 = GetStadiumForMatch(matchNumber + 2, orderedStadiums);
         bool scheduled = false;
 
-        foreach (TimeSpan allowed in AllowedTimes)
+        foreach (TimeSpan time in AllowedTimes)
         {
-            DateTime matchDateTime = day.Date + allowed;
-
-            if (tracker.CanSchedule(stadium1, matchDateTime) && tracker.CanSchedule(stadium2, matchDateTime))
+            DateTime matchTime = day.Date + time;
+            if (tracker.CanSchedule(stadium1, matchTime) && tracker.CanSchedule(stadium2, matchTime))
             {
-                MatchGroup matchA = BuildAndReserveMatch(firstMatchNumber, matchDateTime, group, teams, pairs[0], stadium1, jornada, tracker);
-                MatchGroup matchB = BuildAndReserveMatch(secondMatchNumber, matchDateTime, group, teams, pairs[1], stadium2, jornada, tracker);
-
-                matches.Add(matchA);
-                matches.Add(matchB);
-
+                matches.Add(BuildAndReserve(matchNumber + 1, matchTime, group, teams, pairs[0], stadium1, SimultaneousJornadaNumber, tracker));
+                matches.Add(BuildAndReserve(matchNumber + 2, matchTime, group, teams, pairs[1], stadium2, SimultaneousJornadaNumber, tracker));
                 matchNumber += 2;
                 scheduled = true;
                 break;
             }
         }
-
-        if (!scheduled)
-        {
-            string message = string.Format(NoAvailableJornada3MessageTemplate, group.Name);
-            throw new MatchException(message);
-        }
+        if (!scheduled) throw new MatchException($"No available timeslot for Jornada 3 of group {group.Name}");
     }
 
-    private void ScheduleStandardJornada(
-        Group group, 
-        List<Team> teams, 
-        List<(int home, int away)> pairs, 
-        int jornada, 
-        DateTime day, 
-        List<Stadium> orderedStadiums, 
-        StadiumScheduleTracker tracker, 
-        List<Match> matches, 
-        ref int matchNumber)
+    private void ScheduleStandard(Group group, List<Team> teams, List<(int home, int away)> pairs, int jornada, DateTime day, List<Stadium> orderedStadiums, StadiumScheduleTracker tracker, List<Match> matches, ref int matchNumber)
     {
         foreach ((int home, int away) pair in pairs)
         {
-            int currentMatchNumber = matchNumber + 1;
-            Stadium assignedStadium = GetStadiumForMatch(currentMatchNumber, orderedStadiums);
+            Stadium assignedStadium = GetStadiumForMatch(matchNumber + 1, orderedStadiums);
             bool scheduledMatch = false;
 
-            foreach (TimeSpan allowed in AllowedTimes)
+            foreach (TimeSpan time in AllowedTimes)
             {
-                DateTime matchDateTime = day.Date + allowed;
-
-                if (tracker.CanSchedule(assignedStadium, matchDateTime))
+                DateTime matchTime = day.Date + time;
+                if (tracker.CanSchedule(assignedStadium, matchTime))
                 {
-                    MatchGroup match = BuildAndReserveMatch(currentMatchNumber, matchDateTime, group, teams, pair, assignedStadium, jornada, tracker);
-                    matches.Add(match);
-                        
+                    matches.Add(BuildAndReserve(matchNumber + 1, matchTime, group, teams, pair, assignedStadium, jornada, tracker));
                     matchNumber++;
                     scheduledMatch = true;
                     break;
                 }
             }
-
-            if (!scheduledMatch)
-            {
-                string message = string.Format(NoAvailableSlotMessageTemplate, currentMatchNumber, assignedStadium.Name);
-                throw new MatchException(message);
-            }
+            if (!scheduledMatch) throw new MatchException($"No available timeslot for match in stadium {assignedStadium.Name}");
         }
     }
 
-    private Stadium GetStadiumForMatch(int matchNumber, List<Stadium> orderedStadiums)
+    private Stadium GetStadiumForMatch(int mNum, List<Stadium> orderedStadiums) => orderedStadiums[(mNum - 1) % orderedStadiums.Count];
+
+    private MatchGroup BuildAndReserve(int mNum, DateTime mTime, Group group, List<Team> teams, (int home, int away) pair, Stadium stadium, int jornada, StadiumScheduleTracker tracker)
     {
-        int stadiumIndex = (matchNumber - 1) % orderedStadiums.Count;
-        return orderedStadiums[stadiumIndex];
-    }
-
-    private MatchGroup BuildAndReserveMatch(
-        int matchNumber, 
-        DateTime matchDateTime, 
-        Group group, 
-        List<Team> teams, 
-        (int home, int away) pair, 
-        Stadium stadium, 
-        int jornada, 
-        StadiumScheduleTracker tracker)
-    {
-        Team homeTeam = teams[pair.home];
-        Team awayTeam = teams[pair.away];
-        string matchCode = MatchCodePrefix + matchNumber;
-
-        MatchGroup match = MatchGroup.CreateInstance(DefaultMatchId, matchDateTime, homeTeam, awayTeam, stadium, group, Journey.CreateInstance(jornada));
-        match.SetMatchCode(matchCode);
-        tracker.Reserve(stadium, matchDateTime);
-
+        MatchGroup match = MatchGroup.CreateInstance(DefaultMatchId, mTime, teams[pair.home], teams[pair.away], stadium, group, Journey.CreateInstance(jornada));
+        match.SetMatchCode(MatchCodePrefix + mNum);
+        tracker.Reserve(stadium, mTime);
         return match;
     }
 
     private static List<(int home, int away)> GetPairsForJornada(int jornada)
     {
-        if (jornada == 1)
-        {
-            return new List<(int home, int away)> { (TeamAIndex, TeamDIndex), (TeamBIndex, TeamCIndex) };
-        }
-
-        if (jornada == 2)
-        {
-            return new List<(int home, int away)> { (TeamAIndex, TeamCIndex), (TeamBIndex, TeamDIndex) };
-        }
-
-        return new List<(int home, int away)> { (TeamAIndex, TeamBIndex), (TeamCIndex, TeamDIndex) };
+        if (jornada == 1) return new List<(int, int)> { (TeamAIndex, TeamDIndex), (TeamBIndex, TeamCIndex) };
+        if (jornada == 2) return new List<(int, int)> { (TeamAIndex, TeamCIndex), (TeamBIndex, TeamDIndex) };
+        return new List<(int, int)> { (TeamAIndex, TeamBIndex), (TeamCIndex, TeamDIndex) };
     }
 }
