@@ -13,7 +13,7 @@ namespace Services
             if (entries.Count != 32) throw new ArgumentException("RoundOf32 requires exactly 32 teams");
 
             Random random = new Random(crossingsSeed);
-            // Fisher-Yates shuffle for deterministic randomness
+
             for (int i = entries.Count - 1; i > 0; i--)
             {
                 int j = random.Next(i + 1);
@@ -22,36 +22,39 @@ namespace Services
                 entries[j] = tmp;
             }
 
-            // Build pairs trying to avoid same-group matchups when possible (greedy, deterministic with seed)
+
             int n = entries.Count;
             bool[] used = new bool[n];
             List<(int a, int b)> pairs = new List<(int a, int b)>();
-n            for (int i = 0; i < n; i++)
+
+            for (int i = 0; i < n; i++)
             {
                 if (used[i]) continue;
                 used[i] = true;
 
-                // collect candidates with different group
+
                 List<int> candidates = new List<int>();
                 for (int j = i + 1; j < n; j++)
                 {
                     if (used[j]) continue;
                     if (entries[j].Group != entries[i].Group) candidates.Add(j);
                 }
-n                int selected;
+
+                int selected;
                 if (candidates.Count > 0)
                 {
                     selected = candidates[random.Next(candidates.Count)];
                 }
                 else
                 {
-                    // no different-group candidate, pick any remaining deterministically
+
                     List<int> anyRemaining = new List<int>();
                     for (int j = i + 1; j < n; j++) if (!used[j]) anyRemaining.Add(j);
                     if (anyRemaining.Count == 0) break;
                     selected = anyRemaining[random.Next(anyRemaining.Count)];
                 }
-n                used[selected] = true;
+
+                used[selected] = true;
                 pairs.Add((i, selected));
             }
 

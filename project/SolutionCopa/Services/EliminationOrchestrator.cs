@@ -61,7 +61,6 @@ namespace Services
                 roundStart = roundStart.AddDays(daysBetween);
                 List<MatchElimination> nextMatches = builder.CreateNextRoundFromMatches(currentRound, rounds[r].phase, stadiums, settings, stadiumProvider, makeDateProvider(roundStart));
                 foreach (MatchElimination nm in nextMatches) _eliminationRepo.Add(nm);
-                // Log generation including tournament id and round phase; seed applies to initial crossing only
                 _auditLog.Log("GenerateEliminationBracket", $"{rounds[r].phase} generated.", settings.Id);
                 currentRound = nextMatches.Cast<Match>().ToList();
             }
