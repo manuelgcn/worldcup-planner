@@ -183,16 +183,16 @@ public sealed class MatchServiceTest
     }
     
     [TestMethod]
-    public void CreateGroupMatch_WithMissingGroupId_ThrowsException()
+    public void CreateGroupMatch_WithMissingGroupName_ThrowsException()
     {
-        CreateMatchRequestDto request = BuildGroupMatchRequest(groupId: null);
+        CreateMatchRequestDto request = BuildGroupMatchRequest(groupName: null);
         Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
     public void CreateGroupMatch_WithNonexistentGroup_ThrowsException()
     {
-        CreateMatchRequestDto request = BuildGroupMatchRequest(groupId: 999);
+        CreateMatchRequestDto request = BuildGroupMatchRequest(groupName: "NoExiste");
         Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
