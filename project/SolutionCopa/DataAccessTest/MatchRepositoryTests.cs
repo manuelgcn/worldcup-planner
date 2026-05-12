@@ -178,11 +178,38 @@ public class MatchRepositoryTests
         Assert.AreEqual(expected: 0, actual: result.Count);
     }
 
+    [TestMethod]
+    public void GetByStadiumReturnsOnlyMatchesAtThatStadium()
+    {
+        Stadium s1 = new Stadium("Centenario", "Montevideo", null, 60000) { Id = 1 };
+        Stadium s2 = new Stadium("Maracana", "Rio", null, 78000) { Id = 2 };
+
+        Match m1 = CreateGroupMatchWithStadium(matchId: 1, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 1), stadium: s1);
+        Match m2 = CreateGroupMatchWithStadium(matchId: 2, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 2), stadium: s2);
+        _repository.Add(m1);
+        _repository.Add(m2);
+
+        List<Match> matchesAtS1 = _repository.GetByStadium(stadiumId: 1);
+
+        Assert.AreEqual(1, matchesAtS1.Count);
+        Assert.AreSame(m1, matchesAtS1[0]);
+    }
+
     private static MatchGroup CreateGroupMatch(int matchId, string groupName, int journeyNumber, DateTime date)
     {
         Team homeTeam = new Team(matchId + 1, name: $"Team-{matchId}-H", fifaRanking: 1000 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
         Team awayTeam = new Team(matchId + 2, name: $"Team-{matchId}-A", fifaRanking: 900 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
         Stadium stadium = new Stadium(name: $"Stadium-{matchId}", city: "Test City", description: null, capacity: 50000);
+        Group group = new Group(name: groupName);
+        Journey journey = Journey.CreateInstance(number: journeyNumber);
+
+        return MatchGroup.CreateInstance(matchId, date, homeTeam, awayTeam, stadium, group, journey);
+    }
+
+    private static MatchGroup CreateGroupMatchWithStadium(int matchId, string groupName, int journeyNumber, DateTime date, Stadium stadium)
+    {
+        Team homeTeam = new Team(matchId + 1, name: $"Team-{matchId}-H", fifaRanking: 1000 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
+        Team awayTeam = new Team(matchId + 2, name: $"Team-{matchId}-A", fifaRanking: 900 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
         Group group = new Group(name: groupName);
         Journey journey = Journey.CreateInstance(number: journeyNumber);
 
