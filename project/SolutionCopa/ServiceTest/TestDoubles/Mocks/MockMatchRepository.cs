@@ -91,6 +91,21 @@ public sealed class MockMatchRepository : IMatchRepository
         return result;
     }
 
+    public List<Match> GetByStadium(int stadiumId)
+    {
+        List<Match> result = new List<Match>();
+
+        foreach (Match item in _matches.Values)
+        {
+            if (item.Stadium != null && item.Stadium.Id == stadiumId)
+            {
+                result.Add(item);
+            }
+        }
+
+        return result;
+    }
+
     private static bool BelongsToGroup(Match match, string groupName)
     {
         MatchGroup? groupMatch = match as MatchGroup;

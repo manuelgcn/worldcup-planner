@@ -58,6 +58,13 @@ public class MatchRepository : IMatchRepository
             .ToList();
     }
 
+    public List<Match> GetByStadium(int stadiumId)
+    {
+        return _matches
+            .Where(match => match.Stadium != null && match.Stadium.Id == stadiumId)
+            .ToList();
+    }
+
     public List<Match> GetByDateRange(DateTime from, DateTime to)
     {
         return _matches
