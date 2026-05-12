@@ -1,0 +1,46 @@
+using ProjectCopa;
+using ProjectCopa.Models;
+
+namespace DomainTest;
+
+[TestClass]
+public sealed class QualifiedTeamsTests
+{
+    [TestMethod]
+    public void QualifiedTeamsStartsWithEmptyCollections()
+    {
+        QualifiedTeams qualifiedTeams = new QualifiedTeams();
+
+        Assert.IsNotNull(qualifiedTeams.TopEightFirsts);
+        Assert.IsNotNull(qualifiedTeams.RemainingFourFirsts);
+        Assert.IsNotNull(qualifiedTeams.TopEightSeconds);
+        Assert.IsNotNull(qualifiedTeams.WorstFourSeconds);
+        Assert.IsNotNull(qualifiedTeams.BestEightThirds);
+        Assert.AreEqual(0, qualifiedTeams.TopEightFirsts.Count);
+        Assert.AreEqual(0, qualifiedTeams.RemainingFourFirsts.Count);
+        Assert.AreEqual(0, qualifiedTeams.TopEightSeconds.Count);
+        Assert.AreEqual(0, qualifiedTeams.WorstFourSeconds.Count);
+        Assert.AreEqual(0, qualifiedTeams.BestEightThirds.Count);
+    }
+
+    [TestMethod]
+    public void QualifiedTeamsAllowsSettingCollections()
+    {
+        Team team = new Team(1, "Team", 1500, false, Confederation.CONMEBOL);
+        List<Team> teams = new List<Team> { team };
+        QualifiedTeams qualifiedTeams = new QualifiedTeams
+        {
+            TopEightFirsts = teams,
+            RemainingFourFirsts = teams,
+            TopEightSeconds = teams,
+            WorstFourSeconds = teams,
+            BestEightThirds = teams
+        };
+
+        Assert.AreSame(teams, qualifiedTeams.TopEightFirsts);
+        Assert.AreSame(teams, qualifiedTeams.RemainingFourFirsts);
+        Assert.AreSame(teams, qualifiedTeams.TopEightSeconds);
+        Assert.AreSame(teams, qualifiedTeams.WorstFourSeconds);
+        Assert.AreSame(teams, qualifiedTeams.BestEightThirds);
+    }
+}

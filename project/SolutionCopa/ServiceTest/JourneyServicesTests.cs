@@ -57,6 +57,21 @@ public sealed class JourneyServicesTests
         Assert.AreEqual(2, _uow.CommitCalls);
     }
 
+    [TestMethod]
+    public void GetAllJourneysReturnsStoredJourneys()
+    {
+        Journey firstJourney = CreateJourney(1);
+        Journey secondJourney = CreateJourney(2);
+        _service.AddJourney(firstJourney);
+        _service.AddJourney(secondJourney);
+
+        IReadOnlyCollection<Journey> journeys = _service.GetAllJourneys();
+
+        Assert.AreEqual(2, journeys.Count);
+        Assert.IsTrue(journeys.Contains(firstJourney));
+        Assert.IsTrue(journeys.Contains(secondJourney));
+    }
+
     private static Journey CreateJourney(int number)
     {
         return Journey.CreateInstance(number);
