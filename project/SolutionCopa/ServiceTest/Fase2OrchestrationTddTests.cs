@@ -24,14 +24,14 @@ namespace ServiceTest
                 teamsWithGroup.Add((new Team(id++, $"T{g}A", 1000 + id, false, Confederation.UEFA), $"G{g}"));
                 teamsWithGroup.Add((new Team(id++, $"T{g}B", 1000 + id, false, Confederation.UEFA), $"G{g}"));
             }
-n            List<Stadium> stadiums = new List<Stadium>
+            List<Stadium> stadiums = new List<Stadium>
             {
                 new Stadium("S1", "City1", null, 30000),
                 new Stadium("S2", "City2", null, 35000)
             };
 
             TournamentSettings settings = new TournamentSettings(1, new DateTime(2026,6,1), 3, 3, fixtureSeed:0, crossingsSeed:777, simulationSeed:99, completionSeed:0);
-n            EliminationMatchRepository eliminationRepo = new EliminationMatchRepository();
+            EliminationMatchRepository eliminationRepo = new EliminationMatchRepository();
             MockMatchRepository matchRepo = new MockMatchRepository();
             TournamentSettingsRepository settingsRepo = new TournamentSettingsRepository();
             settingsRepo.Add(settings);
