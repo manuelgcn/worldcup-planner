@@ -13,6 +13,7 @@ namespace Services
             if (entries.Count != 32) throw new ArgumentException("RoundOf32 requires exactly 32 teams");
 
             Random random = new Random(crossingsSeed);
+            // Fisher-Yates shuffle for deterministic randomness
             for (int i = entries.Count - 1; i > 0; i--)
             {
                 int j = random.Next(i + 1);
@@ -21,37 +22,54 @@ namespace Services
                 entries[j] = tmp;
             }
 
-            for (int i = 0; i < entries.Count; i += 2)
+            // Build pairs trying to avoid same-group matchups when possible (greedy, deterministic with seed)
+            int n = entries.Count;
+            bool[] used = new bool[n];
+            List<(int a, int b)> pairs = new List<(int a, int b)>();
+n            for (int i = 0; i < n; i++)
             {
-                if (entries[i].Group == entries[i + 1].Group)
+                if (used[i]) continue;
+                used[i] = true;
+
+                // collect candidates with different group
+                List<int> candidates = new List<int>();
+                for (int j = i + 1; j < n; j++)
                 {
-                    for (int k = i + 2; k < entries.Count; k++)
-                    {
-                        if (entries[k].Group != entries[i].Group)
-                        {
-                            (Team Team, string Group) tmp = entries[i + 1];
-                            entries[i + 1] = entries[k];
-                            entries[k] = tmp;
-                            break;
-                        }
-                    }
+                    if (used[j]) continue;
+                    if (entries[j].Group != entries[i].Group) candidates.Add(j);
                 }
+n                int selected;
+                if (candidates.Count > 0)
+                {
+                    selected = candidates[random.Next(candidates.Count)];
+                }
+                else
+                {
+                    // no different-group candidate, pick any remaining deterministically
+                    List<int> anyRemaining = new List<int>();
+                    for (int j = i + 1; j < n; j++) if (!used[j]) anyRemaining.Add(j);
+                    if (anyRemaining.Count == 0) break;
+                    selected = anyRemaining[random.Next(anyRemaining.Count)];
+                }
+n                used[selected] = true;
+                pairs.Add((i, selected));
             }
 
             List<MatchElimination> result = new List<MatchElimination>();
-
-            for (int i = 0; i < entries.Count; i += 2)
+            int matchIndex = 0;
+            foreach (var p in pairs)
             {
-                Team home = entries[i].Team;
-                Team away = entries[i + 1].Team;
-                Stadium stadium = stadiumProvider(i / 2);
-                DateTime date = dateProvider(i / 2);
+                Team home = entries[p.a].Team;
+                Team away = entries[p.b].Team;
+                Stadium stadium = stadiumProvider(matchIndex);
+                DateTime date = dateProvider(matchIndex);
                 MatchGroup sourceHome = MatchGroup.CreateMatchWithConfig(-_nextMatchId, settings.StartDate, home, away, stadium, settings, new Group("X"), Journey.CreateInstance(1));
                 MatchGroup sourceAway = MatchGroup.CreateMatchWithConfig(-(_nextMatchId + 1), settings.StartDate, away, home, stadium, settings, new Group("Y"), Journey.CreateInstance(1));
                 string matchCode = $"R32-{_nextMatchId}";
                 MatchElimination elim = MatchElimination.CreateMatchWithConfig(_nextMatchId, date, home, away, stadium, settings, Phase.RoundOf32, matchCode, sourceHome, sourceAway);
                 result.Add(elim);
                 _nextMatchId++;
+                matchIndex++;
             }
 
             return result;
