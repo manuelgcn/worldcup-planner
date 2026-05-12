@@ -46,8 +46,8 @@ namespace Services
                 Team away = entries[i + 1].Team;
                 Stadium stadium = stadiumProvider(i / 2);
                 DateTime date = dateProvider(i / 2);
-                MatchGroup sourceHome = MatchGroup.CreateMatchWithConfig(-_nextMatchId, DateTime.UtcNow.AddDays(-1), home, away, stadium, settings, new Group("X"), Journey.CreateInstance(1));
-                MatchGroup sourceAway = MatchGroup.CreateMatchWithConfig(-(_nextMatchId + 1), DateTime.UtcNow.AddDays(-1), away, home, stadium, settings, new Group("Y"), Journey.CreateInstance(1));
+                MatchGroup sourceHome = MatchGroup.CreateMatchWithConfig(-_nextMatchId, settings.StartDate, home, away, stadium, settings, new Group("X"), Journey.CreateInstance(1));
+                MatchGroup sourceAway = MatchGroup.CreateMatchWithConfig(-(_nextMatchId + 1), settings.StartDate, away, home, stadium, settings, new Group("Y"), Journey.CreateInstance(1));
                 string matchCode = $"R32-{_nextMatchId}";
                 MatchElimination elim = MatchElimination.CreateMatchWithConfig(_nextMatchId, date, home, away, stadium, settings, Phase.RoundOf32, matchCode, sourceHome, sourceAway);
                 result.Add(elim);
