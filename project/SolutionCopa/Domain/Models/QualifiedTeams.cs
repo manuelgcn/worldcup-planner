@@ -1,0 +1,14 @@
+namespace ProjectCopa.Models;
+
+public record QualifiedTeams
+{
+    public List<Team> TopEightFirsts { get; init; } = new();
+
+    public List<Team> RemainingFourFirsts { get; init; } = new();
+
+    public List<Team> TopEightSeconds { get; init; } = new();
+
+    public List<Team> WorstFourSeconds { get; init; } = new();
+
+    public List<Team> BestEightThirds { get; init; } = new();
+}

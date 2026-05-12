@@ -25,9 +25,9 @@ public sealed class MatchServiceTestContext
     private ITournamentSettingsRepository TournamentSettingsRepository { get; set; } = null!;
     private IAuditLogRepository AuditLogRepository { get; set; } = null!;
     
-    public MockMatchRepository MatchRepository { get; } = new();
-    public MockMatchSimulationEngine SimulationEngine { get; } = new();
-    public MockUnitOfWork UnitOfWork { get; } = new();
+    public MockMatchRepository MatchRepository { get; } = new MockMatchRepository();
+    public MockMatchSimulationEngine SimulationEngine { get; } = new MockMatchSimulationEngine();
+    public MockUnitOfWork UnitOfWork { get; } = new MockUnitOfWork();
     public IReadOnlyCollection<AuditLog> AuditLogs => _auditLog.AsReadOnly();
 
     private AuditLogService AuditLogService { get; set; } = null!;
@@ -254,9 +254,29 @@ public sealed class MatchServiceTestContext
 
     private sealed class SimpleTournamentSettingsRepository(Dictionary<int, TournamentSettings> settings) : ITournamentSettingsRepository
     {
+        public void Add(TournamentSettings tournamentSettings)
+        {
+            settings[tournamentSettings.Id] = tournamentSettings;
+        }
+
+        public void Update(TournamentSettings tournamentSettings)
+        {
+            settings[tournamentSettings.Id] = tournamentSettings;
+        }
+
+        public void Delete(TournamentSettings tournamentSettings)
+        {
+            settings.Remove(tournamentSettings.Id);
+        }
+
         public TournamentSettings? GetById(int tournamentSettingsId)
         {
             return settings.GetValueOrDefault(tournamentSettingsId);
+        }
+
+        public IReadOnlyCollection<TournamentSettings> GetAll()
+        {
+            return settings.Values.ToList();
         }
     }
     

@@ -12,7 +12,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 
-builder.Services.AddSingleton<ITeamRepository, TeamRepositoryList>();
+builder.Services.AddSingleton<ITeamRepository, TeamRepository>();
 builder.Services.AddSingleton<IMatchRepository, MatchRepository>();
 builder.Services.AddSingleton<IStadiumRepository, StadiumRepository>();
 builder.Services.AddSingleton<IGroupRepository, GroupRepository>();

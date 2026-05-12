@@ -13,7 +13,7 @@ public class MatchTests
     private Stadium _stadium = null!;
     private Match _match = null!;
 
-    private static readonly DateTime MatchDate = new(2022, 11, 21);
+    private static readonly DateTime MatchDate = new DateTime(2022, 11, 21);
 
     private Match CreateMatchWithData()
     {
@@ -135,7 +135,7 @@ public class MatchTests
     [TestMethod]
     public void MatchCanBeCreatedWithChampionshipConfiguration()
     {
-        DateTime validDate = new(2026, 6, 21);
+        DateTime validDate = new DateTime(2026, 6, 21);
         TournamentSettings tournamentSettings = new TournamentSettings();
 
         _match = new MockMatch(1, validDate, _homeTeam, _awayTeam, _stadium, tournamentSettings);

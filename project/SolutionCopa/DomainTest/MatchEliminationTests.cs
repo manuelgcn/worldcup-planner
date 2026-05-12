@@ -8,7 +8,7 @@ namespace DomainTest;
 [TestClass]
 public class MatchEliminationTests
 {
-    private static readonly DateTime MatchDate = new(2026, 6, 21);
+    private static readonly DateTime MatchDate = new DateTime(2026, 6, 21);
 
     private Team _homeTeam = null!;
     private Team _awayTeam = null!;

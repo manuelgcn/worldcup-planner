@@ -26,10 +26,6 @@ public class FixtureService
         this._auditLogService = auditLogService;
     }
 
-
-
-
-   
     public IReadOnlyCollection<Group> CreateFixture()
     {
         ValidatePreconditions();
@@ -56,7 +52,7 @@ public class FixtureService
 
     private List<Group> CreateGroups()
     {
-        List<Group> groups = new();
+        List<Group> groups = new List<Group>();
 
         for (char c = 'A'; c <= 'L'; c++)
         {
@@ -65,24 +61,18 @@ public class FixtureService
         
         return groups;
     }
-
-
-    
-    
-    
     
     private void AssignTeamsToGroups(List<Group> groups)
     {
         List<List<Team>> bombos = CreateBombos();
         DistributeBombosIntoGroups(groups, bombos);
     }
-
     
     private List<List<Team>> CreateBombos()
     {
         List<Team> orderedTeams = OrderTeamsByRankingWithDeterministicTieBreak();
 
-        List<List<Team>> bombos = new();
+        List<List<Team>> bombos = new List<List<Team>>();
 
         for (int i = 0; i < 4; i++)
         {
