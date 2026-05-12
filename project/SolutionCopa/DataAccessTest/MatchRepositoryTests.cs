@@ -209,6 +209,19 @@ public class MatchRepositoryTests
         Assert.AreSame(roundOf16, result[0]);
     }
 
+    [TestMethod]
+    public void GetAllReturnsAllStoredMatches()
+    {
+        Match m1 = CreateGroupMatch(matchId: 1, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 1));
+        Match m2 = CreateGroupMatch(matchId: 2, groupName: "B", journeyNumber: 1, date: new DateTime(2026, 6, 2));
+        _repository.Add(m1);
+        _repository.Add(m2);
+
+        List<Match> all = _repository.GetAll();
+
+        Assert.AreEqual(2, all.Count);
+    }
+
     private static MatchGroup CreateGroupMatch(int matchId, string groupName, int journeyNumber, DateTime date)
     {
         Team homeTeam = new Team(matchId + 1, name: $"Team-{matchId}-H", fifaRanking: 1000 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
