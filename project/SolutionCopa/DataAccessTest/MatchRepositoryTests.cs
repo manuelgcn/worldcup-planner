@@ -195,6 +195,20 @@ public class MatchRepositoryTests
         Assert.AreSame(m1, matchesAtS1[0]);
     }
 
+    [TestMethod]
+    public void GetByPhaseReturnsOnlyEliminationMatchesOfThatPhase()
+    {
+        Match roundOf16 = CreateEliminationMatchWithPhase(matchId: 10, date: new DateTime(2026, 7, 1), phase: Phase.RoundOf16);
+        Match quarter = CreateEliminationMatchWithPhase(matchId: 11, date: new DateTime(2026, 7, 8), phase: Phase.QuarterFinals);
+        _repository.Add(roundOf16);
+        _repository.Add(quarter);
+
+        List<Match> result = _repository.GetByPhase(Phase.RoundOf16);
+
+        Assert.AreEqual(1, result.Count);
+        Assert.AreSame(roundOf16, result[0]);
+    }
+
     private static MatchGroup CreateGroupMatch(int matchId, string groupName, int journeyNumber, DateTime date)
     {
         Team homeTeam = new Team(matchId + 1, name: $"Team-{matchId}-H", fifaRanking: 1000 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
@@ -231,6 +245,26 @@ public class MatchRepositoryTests
             awayTeam: awayTeam,
             stadium: stadium,
             phase: Phase.RoundOf16,
+            matchCode: $"E{matchId}",
+            matchHome: sourceHome,
+            matchAway: sourceAway);
+    }
+
+    private static MatchElimination CreateEliminationMatchWithPhase(int matchId, DateTime date, Phase phase)
+    {
+        MatchGroup sourceHome = CreateGroupMatch(matchId: matchId + 100, groupName: "X", journeyNumber: 1, date: date.AddDays(-1));
+        MatchGroup sourceAway = CreateGroupMatch(matchId: matchId + 200, groupName: "Y", journeyNumber: 1, date: date.AddDays(-1));
+        Team homeTeam = new Team(matchId + 1, name: $"Elim-Team-{matchId}-H", fifaRanking: 1200 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
+        Team awayTeam = new Team(matchId + 2, name: $"Elim-Team-{matchId}-A", fifaRanking: 1100 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
+        Stadium stadium = new Stadium(name: $"Elim-Stadium-{matchId}", city: "Test City", description: null, capacity: 60000);
+
+        return MatchElimination.Create(
+            id: matchId,
+            matchDate: date,
+            homeTeam: homeTeam,
+            awayTeam: awayTeam,
+            stadium: stadium,
+            phase: phase,
             matchCode: $"E{matchId}",
             matchHome: sourceHome,
             matchAway: sourceAway);
