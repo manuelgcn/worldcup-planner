@@ -122,6 +122,11 @@ public sealed class MockMatchRepository : IMatchRepository
         return result;
     }
 
+    public List<Match> GetAll()
+    {
+        return _matches.Values.ToList();
+    }
+
     private static bool BelongsToGroup(Match match, string groupName)
     {
         MatchGroup? groupMatch = match as MatchGroup;

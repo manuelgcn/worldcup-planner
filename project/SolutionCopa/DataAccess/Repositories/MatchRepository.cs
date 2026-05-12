@@ -81,6 +81,11 @@ public class MatchRepository : IMatchRepository
             .ToList();
     }
 
+    public List<Match> GetAll()
+    {
+        return _matches.ToList();
+    }
+
     private static bool IsGroupMatch(MatchGroup matchGroup, string groupName)
     {
         return matchGroup.Group != null && matchGroup.Group.Name == groupName;
