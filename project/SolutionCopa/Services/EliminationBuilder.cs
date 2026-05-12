@@ -46,10 +46,10 @@ namespace Services
                 Team away = entries[i + 1].Team;
                 Stadium stadium = stadiumProvider(i / 2);
                 DateTime date = dateProvider(i / 2);
-                MatchGroup sourceHome = MatchGroup.CreateInstance(-_nextMatchId, DateTime.UtcNow.AddDays(-1), home, away, stadium, new Group("X"), Journey.CreateInstance(1));
-                MatchGroup sourceAway = MatchGroup.CreateInstance(-(_nextMatchId + 1), DateTime.UtcNow.AddDays(-1), away, home, stadium, new Group("Y"), Journey.CreateInstance(1));
+                MatchGroup sourceHome = MatchGroup.CreateMatchWithConfig(-_nextMatchId, DateTime.UtcNow.AddDays(-1), home, away, stadium, settings, new Group("X"), Journey.CreateInstance(1));
+                MatchGroup sourceAway = MatchGroup.CreateMatchWithConfig(-(_nextMatchId + 1), DateTime.UtcNow.AddDays(-1), away, home, stadium, settings, new Group("Y"), Journey.CreateInstance(1));
                 string matchCode = $"R32-{_nextMatchId}";
-                MatchElimination elim = MatchElimination.Create(_nextMatchId, date, home, away, stadium, Phase.RoundOf32, matchCode, sourceHome, sourceAway);
+                MatchElimination elim = MatchElimination.CreateMatchWithConfig(_nextMatchId, date, home, away, stadium, settings, Phase.RoundOf32, matchCode, sourceHome, sourceAway);
                 result.Add(elim);
                 _nextMatchId++;
             }
@@ -71,7 +71,7 @@ namespace Services
                 Stadium stadium = stadiumProvider(i / 2);
                 DateTime date = dateProvider(i / 2);
                 string matchCode = $"{nextPhase}-{_nextMatchId}";
-                MatchElimination elim = MatchElimination.Create(_nextMatchId, date, home, away, stadium, nextPhase, matchCode, sourceHome, sourceAway);
+                MatchElimination elim = MatchElimination.CreateMatchWithConfig(_nextMatchId, date, home, away, stadium, settings, nextPhase, matchCode, sourceHome, sourceAway);
                 result.Add(elim);
                 _nextMatchId++;
             }
