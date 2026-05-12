@@ -27,6 +27,18 @@ public class StadiumRepositoryTests
     }
 
     [TestMethod]
+    public void AddAssignsIdWhenStadiumIdIsNotPositive()
+    {
+        Stadium stadium = new Stadium(name: "Assigned", city: "City", description: null, capacity: 30000);
+        stadium.Id = 0;
+
+        _repository.Add(stadium);
+
+        Assert.AreEqual(1, stadium.Id);
+        Assert.AreSame(stadium, _repository.GetById(1));
+    }
+
+    [TestMethod]
     public void UpdateReplacesExistingStadiumWithSameId()
     {
         Stadium originalStadium = CreateStadium(2, "Madrigal", "Vila-real", 23000);
@@ -48,6 +60,18 @@ public class StadiumRepositoryTests
         _repository.Update(stadium);
 
         Assert.AreSame(stadium, _repository.GetById(3));
+    }
+
+    [TestMethod]
+    public void UpdateAssignsIdWhenAddingNewStadiumWithNonPositiveId()
+    {
+        Stadium stadium = new Stadium(name: "AutoId", city: "City", description: null, capacity: 32000);
+        stadium.Id = 0;
+
+        _repository.Update(stadium);
+
+        Assert.AreEqual(1, stadium.Id);
+        Assert.AreSame(stadium, _repository.GetById(1));
     }
 
     [TestMethod]

@@ -56,6 +56,21 @@ public sealed class GroupServicesTests
         Assert.AreEqual(2, _uow.CommitCalls);
     }
 
+    [TestMethod]
+    public void GetAllGroupsReturnsStoredGroups()
+    {
+        Group firstGroup = CreateGroup("A");
+        Group secondGroup = CreateGroup("B");
+        _service.AddGroup(firstGroup);
+        _service.AddGroup(secondGroup);
+
+        IReadOnlyCollection<Group> groups = _service.GetAllGroups();
+
+        Assert.AreEqual(2, groups.Count);
+        Assert.IsTrue(groups.Contains(firstGroup));
+        Assert.IsTrue(groups.Contains(secondGroup));
+    }
+
     private static Group CreateGroup(string name)
     {
         return new Group(name);
