@@ -5,7 +5,7 @@ using DataAccess.Interfaces;
 using ProjectCopa;
 using Services.Interfaces;
 
-amespace Services
+namespace Services
 {
     public class Fase2
     {
@@ -143,18 +143,18 @@ amespace Services
                 if (standings.Count >= 2) qualified.Add((standings[1].Team, g.Name));
                 if (standings.Count >= 3) thirdPlaceCandidates.Add((standings[2].Team, standings[2].Pts, standings[2].GD, standings[2].GF, g.Name));
             }
-n            var qualificationService = new QualificationService();
+            var qualificationService = new QualificationService();
             var best8 = qualificationService.GetBestEightThirds(thirdPlaceCandidates, settings.CrossingsSeed);
-n            foreach (var t in best8)
+            foreach (var t in best8)
             {
                 var grp = thirdPlaceCandidates.FirstOrDefault(c => c.Team.Id == t.Id).Group;
                 qualified.Add((t, grp));
             }
-n            if (qualified.Count != 32)
+            if (qualified.Count != 32)
             {
                 throw new InvalidOperationException($"Computed qualified teams count is {qualified.Count}, expected 32.");
             }
-n            return qualified;
+            return qualified;
         }
     }
 }
