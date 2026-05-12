@@ -1,67 +1,73 @@
+using DataAccess.Interfaces;
 using ProjectCopa;
+using Services.Exceptions;
 using Services.Interfaces;
 
 namespace Services;
 
-public class StadiumServices
+public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork unitOfWork, IAuditLogService? auditLogService = null) : IStadiumService
 {
-    private readonly IAuditLogService? _auditLogService;
-    private List<Stadium> stadiums = new List<Stadium>();
-
-    public StadiumServices(IAuditLogService? auditLogService = null)
-    {
-        this._auditLogService = auditLogService;
-    }
+    private const string DuplicateStadiumNameMessage = "Stadium name must be unique in the system.";
+    private const string StadiumNotFoundMessage = "Stadium was not found.";
 
     public IReadOnlyCollection<Stadium> GetAllStadiums()
     {
-        return stadiums.AsReadOnly();
+        return stadiumRepository.GetAll();
     }
 
     public void AddStadium(Stadium stadium)
     {
-        if (stadiums.Any(s => s.Name == stadium.Name))
-            throw new ArgumentException("Este Nombre de estadio ya existe");
+        ArgumentNullException.ThrowIfNull(stadium);
 
-        stadiums.Add(stadium);
-        _auditLogService?.Log(
+        if (stadiumRepository.ExistsByName(stadium.Name))
+        {
+            throw new StadiumServicesException(DuplicateStadiumNameMessage);
+        }
+
+        stadiumRepository.Add(stadium);
+        
+        auditLogService?.Log(
             AuditActions.CreateStadium,
             $"Stadium '{stadium.Name}' created in {stadium.City}.",
             nameof(Stadium));
+        unitOfWork.Commit();
     }
     
+    public Stadium GetById(int id)
+    {
+        return stadiumRepository.GetById(id)
+               ?? throw new StadiumServicesException(StadiumNotFoundMessage);
+    }
     
     public Stadium GetByName(string name)
     {
-        Stadium stadium = stadiums.FirstOrDefault(s => s.Name == name);
+        ArgumentNullException.ThrowIfNull(name);
 
-        if (stadium == null)
-            throw new ArgumentException("Stadium not found");
-
-        return stadium;
+        return stadiumRepository.GetByName(name)
+               ?? throw new StadiumServicesException(StadiumNotFoundMessage);
     }
     
-    
-    public void Remove(string name)
+    public void RemoveById(int id)
     {
-        Stadium stadium = GetByName(name);
-        stadiums.Remove(stadium);
-        _auditLogService?.Log(
+        Stadium stadium = GetById(id);
+        stadiumRepository.Delete(stadium);
+        auditLogService?.Log(
             AuditActions.DeleteStadium,
             $"Stadium '{stadium.Name}' removed.",
             nameof(Stadium));
+        unitOfWork.Commit();
     }
     
-    public void Update(string name, string city, string? description, int capacity)
+    public void UpdateById(int id, string city, string? description, int capacity)
     {
-        Stadium stadium = GetByName(name);
+        Stadium stadium = GetById(id);
         stadium.Update(city, description, capacity);
-        _auditLogService?.Log(
+        stadiumRepository.Update(stadium);
+        auditLogService?.Log(
             AuditActions.UpdateStadium,
             $"Stadium '{stadium.Name}' updated.",
             nameof(Stadium));
+        unitOfWork.Commit();
     }
-
-
-
+    
 }

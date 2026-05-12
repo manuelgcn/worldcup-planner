@@ -12,7 +12,7 @@ public sealed class CreateMatchRequestDto
     public int? TournamentSettingsId { get; init; }
 
     public bool IsElimination { get; init; }
-    public int? GroupId { get; init; }
+    public string? GroupName { get; init; }
     public int? JourneyId { get; init; }
 
     public Phase? Phase { get; init; }

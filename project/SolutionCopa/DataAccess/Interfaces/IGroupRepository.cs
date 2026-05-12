@@ -4,5 +4,10 @@ namespace DataAccess.Interfaces;
 
 public interface IGroupRepository
 {
-    Group? GetById(int groupId);
+    void Add(Group group);
+    void Update(Group group);
+    void Delete(Group group);
+    Group? GetByName(string name);
+    bool ExistsByName(string name);
+    IReadOnlyCollection<Group> GetAll();
 }

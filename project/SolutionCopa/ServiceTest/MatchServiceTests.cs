@@ -183,16 +183,16 @@ public sealed class MatchServiceTest
     }
     
     [TestMethod]
-    public void CreateGroupMatch_WithMissingGroupId_ThrowsException()
+    public void CreateGroupMatch_WithMissingGroupName_ThrowsException()
     {
-        CreateMatchRequestDto request = BuildGroupMatchRequest(groupId: null);
+        CreateMatchRequestDto request = BuildGroupMatchRequest(groupName: null);
         Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
     public void CreateGroupMatch_WithNonexistentGroup_ThrowsException()
     {
-        CreateMatchRequestDto request = BuildGroupMatchRequest(groupId: 999);
+        CreateMatchRequestDto request = BuildGroupMatchRequest(groupName: "NoExiste");
         Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
@@ -784,8 +784,8 @@ public sealed class MatchServiceTest
         int awayTeamId = 20,
         int stadiumId = 30,
         int? championshipConfigurationId = null,
-        int? groupId = 40,
-        int? journeyId = 50)
+        string? groupName = "A",
+        int? journeyId = 1)
     {
         return new CreateMatchRequestDto
         {
@@ -795,7 +795,7 @@ public sealed class MatchServiceTest
             AwayTeamId = awayTeamId,
             StadiumId = stadiumId,
             TournamentSettingsId = championshipConfigurationId,
-            GroupId = groupId,
+            GroupName = groupName,
             JourneyId = journeyId
         };
     }

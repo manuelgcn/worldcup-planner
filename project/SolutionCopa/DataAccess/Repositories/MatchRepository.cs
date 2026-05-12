@@ -58,11 +58,32 @@ public class MatchRepository : IMatchRepository
             .ToList();
     }
 
+    public List<Match> GetByStadium(int stadiumId)
+    {
+        return _matches
+            .Where(match => match.Stadium != null && match.Stadium.Id == stadiumId)
+            .ToList();
+    }
+
+    public List<Match> GetByPhase(Phase phase)
+    {
+        return _matches
+            .OfType<MatchElimination>()
+            .Where(elimination => elimination.Phase == phase)
+            .Cast<Match>()
+            .ToList();
+    }
+
     public List<Match> GetByDateRange(DateTime from, DateTime to)
     {
         return _matches
             .Where(match => IsDateInRange(match, from, to))
             .ToList();
+    }
+
+    public List<Match> GetAll()
+    {
+        return _matches.ToList();
     }
 
     private static bool IsGroupMatch(MatchGroup matchGroup, string groupName)

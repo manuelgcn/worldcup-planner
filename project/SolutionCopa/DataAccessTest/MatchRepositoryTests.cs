@@ -178,11 +178,65 @@ public class MatchRepositoryTests
         Assert.AreEqual(expected: 0, actual: result.Count);
     }
 
+    [TestMethod]
+    public void GetByStadiumReturnsOnlyMatchesAtThatStadium()
+    {
+        Stadium s1 = new Stadium("Centenario", "Montevideo", null, 60000) { Id = 1 };
+        Stadium s2 = new Stadium("Maracana", "Rio", null, 78000) { Id = 2 };
+
+        Match m1 = CreateGroupMatchWithStadium(matchId: 1, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 1), stadium: s1);
+        Match m2 = CreateGroupMatchWithStadium(matchId: 2, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 2), stadium: s2);
+        _repository.Add(m1);
+        _repository.Add(m2);
+
+        List<Match> matchesAtS1 = _repository.GetByStadium(stadiumId: 1);
+
+        Assert.AreEqual(1, matchesAtS1.Count);
+        Assert.AreSame(m1, matchesAtS1[0]);
+    }
+
+    [TestMethod]
+    public void GetByPhaseReturnsOnlyEliminationMatchesOfThatPhase()
+    {
+        Match roundOf16 = CreateEliminationMatchWithPhase(matchId: 10, date: new DateTime(2026, 7, 1), phase: Phase.RoundOf16);
+        Match quarter = CreateEliminationMatchWithPhase(matchId: 11, date: new DateTime(2026, 7, 8), phase: Phase.QuarterFinals);
+        _repository.Add(roundOf16);
+        _repository.Add(quarter);
+
+        List<Match> result = _repository.GetByPhase(Phase.RoundOf16);
+
+        Assert.AreEqual(1, result.Count);
+        Assert.AreSame(roundOf16, result[0]);
+    }
+
+    [TestMethod]
+    public void GetAllReturnsAllStoredMatches()
+    {
+        Match m1 = CreateGroupMatch(matchId: 1, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 1));
+        Match m2 = CreateGroupMatch(matchId: 2, groupName: "B", journeyNumber: 1, date: new DateTime(2026, 6, 2));
+        _repository.Add(m1);
+        _repository.Add(m2);
+
+        List<Match> all = _repository.GetAll();
+
+        Assert.AreEqual(2, all.Count);
+    }
+
     private static MatchGroup CreateGroupMatch(int matchId, string groupName, int journeyNumber, DateTime date)
     {
         Team homeTeam = new Team(matchId + 1, name: $"Team-{matchId}-H", fifaRanking: 1000 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
         Team awayTeam = new Team(matchId + 2, name: $"Team-{matchId}-A", fifaRanking: 900 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
         Stadium stadium = new Stadium(name: $"Stadium-{matchId}", city: "Test City", description: null, capacity: 50000);
+        Group group = new Group(name: groupName);
+        Journey journey = Journey.CreateInstance(number: journeyNumber);
+
+        return MatchGroup.CreateInstance(matchId, date, homeTeam, awayTeam, stadium, group, journey);
+    }
+
+    private static MatchGroup CreateGroupMatchWithStadium(int matchId, string groupName, int journeyNumber, DateTime date, Stadium stadium)
+    {
+        Team homeTeam = new Team(matchId + 1, name: $"Team-{matchId}-H", fifaRanking: 1000 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
+        Team awayTeam = new Team(matchId + 2, name: $"Team-{matchId}-A", fifaRanking: 900 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
         Group group = new Group(name: groupName);
         Journey journey = Journey.CreateInstance(number: journeyNumber);
 
@@ -204,6 +258,26 @@ public class MatchRepositoryTests
             awayTeam: awayTeam,
             stadium: stadium,
             phase: Phase.RoundOf16,
+            matchCode: $"E{matchId}",
+            matchHome: sourceHome,
+            matchAway: sourceAway);
+    }
+
+    private static MatchElimination CreateEliminationMatchWithPhase(int matchId, DateTime date, Phase phase)
+    {
+        MatchGroup sourceHome = CreateGroupMatch(matchId: matchId + 100, groupName: "X", journeyNumber: 1, date: date.AddDays(-1));
+        MatchGroup sourceAway = CreateGroupMatch(matchId: matchId + 200, groupName: "Y", journeyNumber: 1, date: date.AddDays(-1));
+        Team homeTeam = new Team(matchId + 1, name: $"Elim-Team-{matchId}-H", fifaRanking: 1200 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
+        Team awayTeam = new Team(matchId + 2, name: $"Elim-Team-{matchId}-A", fifaRanking: 1100 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
+        Stadium stadium = new Stadium(name: $"Elim-Stadium-{matchId}", city: "Test City", description: null, capacity: 60000);
+
+        return MatchElimination.Create(
+            id: matchId,
+            matchDate: date,
+            homeTeam: homeTeam,
+            awayTeam: awayTeam,
+            stadium: stadium,
+            phase: phase,
             matchCode: $"E{matchId}",
             matchHome: sourceHome,
             matchAway: sourceAway);

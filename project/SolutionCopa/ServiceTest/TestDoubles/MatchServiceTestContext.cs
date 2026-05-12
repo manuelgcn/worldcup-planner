@@ -11,12 +11,12 @@ namespace ServiceTest.TestDoubles;
 public sealed class MatchServiceTestContext
 {
     
-    private readonly Dictionary<int, Team> _teams = new Dictionary<int, Team>();
-    private readonly Dictionary<int, Stadium> _stadiums = new Dictionary<int, Stadium>();
-    private readonly Dictionary<int, Group> _groups = new Dictionary<int, Group>();
-    private readonly Dictionary<int, Journey> _journeys = new Dictionary<int, Journey>();
-    private readonly Dictionary<int, TournamentSettings> _tournamentSettings = new Dictionary<int, TournamentSettings>();
-    private readonly List<AuditLog> _auditLog = new List<AuditLog>();
+    private readonly Dictionary<int, Team> _teams = new();
+    private readonly Dictionary<int, Stadium> _stadiums = new();
+    private readonly Dictionary<string, Group> _groups = new();
+    private readonly Dictionary<int, Journey> _journeys = new();
+    private readonly Dictionary<int, TournamentSettings> _tournamentSettings = new();
+    private readonly List<AuditLog> _auditLog = new();
 
     private ITeamRepository TeamRepository { get; set; } = null!;
     private IStadiumRepository StadiumRepository { get; set; } = null!;
@@ -48,9 +48,9 @@ public sealed class MatchServiceTestContext
         _teams[20] = new Team(20, "Away Team", 1600, false, Confederation.UEFA);
         _stadiums[30] = new Stadium("Main Stadium", "Main City", "None", 25000);
 
-        _groups[40] = new Group("A");
+        _groups["A"] = new Group("A");
 
-        _journeys[50] = Journey.CreateInstance(1);
+        _journeys[1] = Journey.CreateInstance(1);
 
         TournamentSettings defaultSettings = new TournamentSettings(
             1,
@@ -150,25 +150,105 @@ public sealed class MatchServiceTestContext
 
     private sealed class SimpleStadiumRepository(Dictionary<int, Stadium> stadiums) : IStadiumRepository
     {
+        public void Add(Stadium stadium)
+        {
+            stadiums[stadium.Id] = stadium;
+        }
+
+        public void Update(Stadium stadium)
+        {
+            stadiums[stadium.Id] = stadium;
+        }
+
+        public void Delete(Stadium stadium)
+        {
+            stadiums.Remove(stadium.Id);
+        }
+
         public Stadium? GetById(int stadiumId)
         {
             return stadiums.GetValueOrDefault(stadiumId);
         }
+
+        public Stadium? GetByName(string name)
+        {
+            return stadiums.Values.FirstOrDefault(stadium => stadium.Name == name);
+        }
+
+        public bool ExistsByName(string name)
+        {
+            return stadiums.Values.Any(stadium => stadium.Name == name);
+        }
+
+        public IReadOnlyCollection<Stadium> GetAll()
+        {
+            return stadiums.Values.ToList();
+        }
     }
 
-    private sealed class SimpleGroupRepository(Dictionary<int, Group> groups) : IGroupRepository
+    private sealed class SimpleGroupRepository(Dictionary<string, Group> groups) : IGroupRepository
     {
-        public Group? GetById(int groupId)
+        public void Add(Group group)
         {
-            return groups.GetValueOrDefault(groupId);
+            groups[group.Name] = group;
+        }
+
+        public void Update(Group group)
+        {
+            groups[group.Name] = group;
+        }
+
+        public void Delete(Group group)
+        {
+            groups.Remove(group.Name);
+        }
+
+        public Group? GetByName(string name)
+        {
+            return groups.GetValueOrDefault(name);
+        }
+
+        public bool ExistsByName(string name)
+        {
+            return groups.ContainsKey(name);
+        }
+
+        public IReadOnlyCollection<Group> GetAll()
+        {
+            return groups.Values.ToList();
         }
     }
 
     private sealed class SimpleJourneyRepository(Dictionary<int, Journey> journeys) : IJourneyRepository
     {
-        public Journey? GetById(int journeyId)
+        public void Add(Journey journey)
         {
-            return journeys.GetValueOrDefault(journeyId);
+            journeys[journey.Number] = journey;
+        }
+
+        public void Update(Journey journey)
+        {
+            journeys[journey.Number] = journey;
+        }
+
+        public void Delete(Journey journey)
+        {
+            journeys.Remove(journey.Number);
+        }
+
+        public Journey? GetByNumber(int number)
+        {
+            return journeys.GetValueOrDefault(number);
+        }
+
+        public bool ExistsByNumber(int number)
+        {
+            return journeys.ContainsKey(number);
+        }
+
+        public IReadOnlyCollection<Journey> GetAll()
+        {
+            return journeys.Values.ToList();
         }
     }
 
@@ -224,8 +304,8 @@ public sealed class MatchServiceTestContext
             HomeTeamId = 10,
             AwayTeamId = 20,
             StadiumId = 30,
-            GroupId = 40,
-            JourneyId = 50
+            GroupName = "A",
+            JourneyId = 1
         };
     }
 

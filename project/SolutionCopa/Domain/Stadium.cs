@@ -2,7 +2,7 @@ namespace ProjectCopa;
 
 public class Stadium
 {
-    
+    public int Id { get; set; }
     public string Name { get; private set; }
     public string City { get; private set; }
     public string? Description { get; private set; }
@@ -20,7 +20,6 @@ public class Stadium
         Capacity = capacity;
     }
 
-    
     private void ValidateName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -54,5 +53,4 @@ public class Stadium
         Description = description;
         Capacity = capacity;
     }
-    
 }
