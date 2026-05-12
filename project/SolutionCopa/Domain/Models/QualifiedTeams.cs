@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace ProjectCopa.Models;
 
+[ExcludeFromCodeCoverage]
 public record QualifiedTeams
 {
     public List<Team> TopEightFirsts { get; init; } = new();

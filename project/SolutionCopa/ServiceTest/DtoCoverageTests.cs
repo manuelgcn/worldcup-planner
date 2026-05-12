@@ -57,7 +57,7 @@ public sealed class DtoCoverageTests
             TournamentSettingsId = 23,
             GroupName = "B",
             JourneyId = 24,
-            Phase = Phase.QuarterFinal,
+            Phase = Phase.QuarterFinals,
             MatchCode = "QF-1",
             MatchHomeId = 25,
             MatchAwayId = 26
@@ -70,7 +70,7 @@ public sealed class DtoCoverageTests
         Assert.AreEqual(23, dto.TournamentSettingsId);
         Assert.AreEqual("B", dto.GroupName);
         Assert.AreEqual(24, dto.JourneyId);
-        Assert.AreEqual(Phase.QuarterFinal, dto.Phase);
+        Assert.AreEqual(Phase.QuarterFinals, dto.Phase);
         Assert.AreEqual("QF-1", dto.MatchCode);
         Assert.AreEqual(25, dto.MatchHomeId);
         Assert.AreEqual(26, dto.MatchAwayId);

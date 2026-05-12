@@ -43,4 +43,31 @@ public sealed class QualifiedTeamsTests
         Assert.AreSame(teams, qualifiedTeams.WorstFourSeconds);
         Assert.AreSame(teams, qualifiedTeams.BestEightThirds);
     }
+
+    [TestMethod]
+    public void QualifiedTeamsRecordSupportsValueEquality()
+    {
+        Team team = new Team(1, "Team", 1500, false, Confederation.CONMEBOL);
+        List<Team> teams = new List<Team> { team };
+        QualifiedTeams first = new QualifiedTeams
+        {
+            TopEightFirsts = teams,
+            RemainingFourFirsts = teams,
+            TopEightSeconds = teams,
+            WorstFourSeconds = teams,
+            BestEightThirds = teams
+        };
+        QualifiedTeams second = new QualifiedTeams
+        {
+            TopEightFirsts = teams,
+            RemainingFourFirsts = teams,
+            TopEightSeconds = teams,
+            WorstFourSeconds = teams,
+            BestEightThirds = teams
+        };
+
+        Assert.IsTrue(first.Equals(second));
+        Assert.AreEqual(first.GetHashCode(), second.GetHashCode());
+        Assert.IsTrue(first.ToString()!.Contains(nameof(QualifiedTeams)));
+    }
 }
