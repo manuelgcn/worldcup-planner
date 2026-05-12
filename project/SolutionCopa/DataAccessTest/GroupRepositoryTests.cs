@@ -106,6 +106,17 @@ public class GroupRepositoryTests
         Assert.IsTrue(groups.Contains(secondGroup));
     }
 
+    [TestMethod]
+    public void AddStoresGroupAndGetByNameReturnsIt_NameOnly()
+    {
+        Group group = new Group("A");
+
+        _repository.Add(group);
+
+        Group? stored = _repository.GetByName("A");
+        Assert.AreSame(group, stored);
+    }
+
     private static Group CreateGroup(int id, string name)
     {
         return new Group(id, name);
