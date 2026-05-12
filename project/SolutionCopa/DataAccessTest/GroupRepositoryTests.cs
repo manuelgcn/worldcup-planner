@@ -16,55 +16,55 @@ public class GroupRepositoryTests
     }
 
     [TestMethod]
-    public void AddStoresGroupAndGetByIdReturnsIt()
+    public void AddStoresGroupAndGetByNameReturnsIt()
     {
-        Group group = CreateGroup(1, "A");
+        Group group = CreateGroup("A");
 
         _repository.Add(group);
 
-        Group? storedGroup = _repository.GetById(1);
+        Group? storedGroup = _repository.GetByName("A");
         Assert.AreSame(group, storedGroup);
     }
 
     [TestMethod]
-    public void UpdateReplacesExistingGroupWithSameId()
+    public void UpdateReplacesExistingGroupWithSameName()
     {
-        Group originalGroup = CreateGroup(2, "B");
-        Group updatedGroup = CreateGroup(2, "C");
+        Group originalGroup = CreateGroup("A");
+        Group updatedGroup = CreateGroup("A");
         _repository.Add(originalGroup);
 
         _repository.Update(updatedGroup);
 
-        Group? storedGroup = _repository.GetById(2);
+        Group? storedGroup = _repository.GetByName("A");
         Assert.IsNotNull(storedGroup);
         Assert.AreSame(updatedGroup, storedGroup);
     }
 
     [TestMethod]
-    public void UpdateAddsGroupWhenIdDoesNotExist()
+    public void UpdateAddsGroupWhenNameDoesNotExist()
     {
-        Group group = CreateGroup(3, "C");
+        Group group = CreateGroup("C");
 
         _repository.Update(group);
 
-        Assert.AreSame(group, _repository.GetById(3));
+        Assert.AreSame(group, _repository.GetByName("C"));
     }
 
     [TestMethod]
     public void DeleteRemovesStoredGroup()
     {
-        Group group = CreateGroup(4, "D");
+        Group group = CreateGroup("D");
         _repository.Add(group);
 
         _repository.Delete(group);
 
-        Assert.IsNull(_repository.GetById(4));
+        Assert.IsNull(_repository.GetByName("D"));
     }
 
     [TestMethod]
     public void GetByNameReturnsStoredGroup()
     {
-        Group group = CreateGroup(5, "E");
+        Group group = CreateGroup("E");
         _repository.Add(group);
 
         Group? storedGroup = _repository.GetByName("E");
@@ -75,7 +75,7 @@ public class GroupRepositoryTests
     [TestMethod]
     public void ExistsByNameReturnsTrueWhenGroupIsStored()
     {
-        Group group = CreateGroup(6, "F");
+        Group group = CreateGroup("F");
         _repository.Add(group);
 
         bool exists = _repository.ExistsByName("F");
@@ -94,8 +94,8 @@ public class GroupRepositoryTests
     [TestMethod]
     public void GetAllReturnsAllStoredGroups()
     {
-        Group firstGroup = CreateGroup(7, "G");
-        Group secondGroup = CreateGroup(8, "H");
+        Group firstGroup = CreateGroup("G");
+        Group secondGroup = CreateGroup("H");
         _repository.Add(firstGroup);
         _repository.Add(secondGroup);
 
@@ -117,8 +117,8 @@ public class GroupRepositoryTests
         Assert.AreSame(group, stored);
     }
 
-    private static Group CreateGroup(int id, string name)
+    private static Group CreateGroup(string name)
     {
-        return new Group(id, name);
+        return new Group(name);
     }
 }

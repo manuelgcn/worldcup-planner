@@ -13,7 +13,7 @@ public sealed class MatchServiceTestContext
     
     private readonly Dictionary<int, Team> _teams = new();
     private readonly Dictionary<int, Stadium> _stadiums = new();
-    private readonly Dictionary<int, Group> _groups = new();
+    private readonly Dictionary<string, Group> _groups = new();
     private readonly Dictionary<int, Journey> _journeys = new();
     private readonly Dictionary<int, TournamentSettings> _tournamentSettings = new();
     private readonly List<AuditLog> _auditLog = new();
@@ -48,7 +48,7 @@ public sealed class MatchServiceTestContext
         _teams[20] = new Team(20, "Away Team", 1600, false, Confederation.UEFA);
         _stadiums[30] = new Stadium("Main Stadium", "Main City", "None", 25000);
 
-        _groups[40] = new Group(40, "A");
+        _groups["A"] = new Group("A");
 
         _journeys[1] = Journey.CreateInstance(1);
 
@@ -186,36 +186,31 @@ public sealed class MatchServiceTestContext
         }
     }
 
-    private sealed class SimpleGroupRepository(Dictionary<int, Group> groups) : IGroupRepository
+    private sealed class SimpleGroupRepository(Dictionary<string, Group> groups) : IGroupRepository
     {
         public void Add(Group group)
         {
-            groups[group.Id] = group;
+            groups[group.Name] = group;
         }
 
         public void Update(Group group)
         {
-            groups[group.Id] = group;
+            groups[group.Name] = group;
         }
 
         public void Delete(Group group)
         {
-            groups.Remove(group.Id);
-        }
-
-        public Group? GetById(int groupId)
-        {
-            return groups.GetValueOrDefault(groupId);
+            groups.Remove(group.Name);
         }
 
         public Group? GetByName(string name)
         {
-            return groups.Values.FirstOrDefault(group => group.Name == name);
+            return groups.GetValueOrDefault(name);
         }
 
         public bool ExistsByName(string name)
         {
-            return groups.Values.Any(group => group.Name == name);
+            return groups.ContainsKey(name);
         }
 
         public IReadOnlyCollection<Group> GetAll()
@@ -289,7 +284,7 @@ public sealed class MatchServiceTestContext
             HomeTeamId = 10,
             AwayTeamId = 20,
             StadiumId = 30,
-            GroupId = 40,
+            GroupName = "A",
             JourneyId = 1
         };
     }

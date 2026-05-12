@@ -23,7 +23,7 @@ public sealed class GroupServicesTests
     [TestMethod]
     public void AddGroupCallsRepositoryAndCommits()
     {
-        Group group = CreateGroup(1, "A");
+        Group group = CreateGroup("A");
 
         _service.AddGroup(group);
 
@@ -34,30 +34,30 @@ public sealed class GroupServicesTests
     [TestMethod]
     public void CannotAddTwoGroupsWithSameName()
     {
-        _service.AddGroup(CreateGroup(1, "A"));
+        _service.AddGroup(CreateGroup("A"));
 
-        Assert.ThrowsException<GroupServicesException>(() => _service.AddGroup(CreateGroup(2, "A")));
+        Assert.ThrowsException<GroupServicesException>(() => _service.AddGroup(CreateGroup("A")));
     }
 
     [TestMethod]
-    public void GetByIdThrowsWhenGroupNotFound()
+    public void GetByNameThrowsWhenGroupNotFound()
     {
-        Assert.ThrowsException<GroupServicesException>(() => _service.GetById(999));
+        Assert.ThrowsException<GroupServicesException>(() => _service.GetByName("NoExiste"));
     }
 
     [TestMethod]
-    public void GroupServices_RemoveByIdDeletesViaRepository()
+    public void GroupServices_RemoveByNameDeletesViaRepository()
     {
-        _service.AddGroup(CreateGroup(1, "A"));
+        _service.AddGroup(CreateGroup("A"));
 
-        _service.RemoveById(1);
+        _service.RemoveByName("A");
 
         Assert.AreEqual(1, _repo.DeleteCalls);
         Assert.AreEqual(2, _uow.CommitCalls);
     }
 
-    private static Group CreateGroup(int id, string name)
+    private static Group CreateGroup(string name)
     {
-        return new Group(id, name);
+        return new Group(name);
     }
 }

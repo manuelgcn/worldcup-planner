@@ -28,15 +28,8 @@ public class GroupServices(IGroupRepository groupRepository, IUnitOfWork unitOfW
         auditLogService?.Log(
             AuditActions.CreateGroup,
             $"Group '{group.Name}' created.",
-            nameof(Group),
-            group.Id);
+            nameof(Group));
         unitOfWork.Commit();
-    }
-
-    public Group GetById(int id)
-    {
-        return groupRepository.GetById(id)
-               ?? throw new GroupServicesException(GroupNotFoundMessage);
     }
 
     public Group GetByName(string name)
@@ -47,15 +40,14 @@ public class GroupServices(IGroupRepository groupRepository, IUnitOfWork unitOfW
                ?? throw new GroupServicesException(GroupNotFoundMessage);
     }
 
-    public void RemoveById(int id)
+    public void RemoveByName(string name)
     {
-        Group group = GetById(id);
+        Group group = GetByName(name);
         groupRepository.Delete(group);
         auditLogService?.Log(
             AuditActions.DeleteGroup,
             $"Group '{group.Name}' removed.",
-            nameof(Group),
-            group.Id);
+            nameof(Group));
         unitOfWork.Commit();
     }
 }

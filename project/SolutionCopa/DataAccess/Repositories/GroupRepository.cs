@@ -14,7 +14,7 @@ public class GroupRepository : IGroupRepository
 
     public void Update(Group group)
     {
-        int index = _groups.FindIndex(existingGroup => existingGroup.Id == group.Id);
+        int index = _groups.FindIndex(existingGroup => existingGroup.Name == group.Name);
 
         if (index >= 0)
         {
@@ -27,12 +27,7 @@ public class GroupRepository : IGroupRepository
 
     public void Delete(Group group)
     {
-        _groups.RemoveAll(existingGroup => existingGroup.Id == group.Id);
-    }
-
-    public Group? GetById(int groupId)
-    {
-        return _groups.FirstOrDefault(group => group.Id == groupId);
+        _groups.RemoveAll(existingGroup => existingGroup.Name == group.Name);
     }
 
     public Group? GetByName(string name)

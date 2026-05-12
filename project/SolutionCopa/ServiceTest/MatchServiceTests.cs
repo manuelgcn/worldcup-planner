@@ -784,7 +784,7 @@ public sealed class MatchServiceTest
         int awayTeamId = 20,
         int stadiumId = 30,
         int? championshipConfigurationId = null,
-        int? groupId = 40,
+        string? groupName = "A",
         int? journeyId = 1)
     {
         return new CreateMatchRequestDto
@@ -795,7 +795,7 @@ public sealed class MatchServiceTest
             AwayTeamId = awayTeamId,
             StadiumId = stadiumId,
             TournamentSettingsId = championshipConfigurationId,
-            GroupId = groupId,
+            GroupName = groupName,
             JourneyId = journeyId
         };
     }
