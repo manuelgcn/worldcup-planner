@@ -35,7 +35,7 @@ namespace Services
 
             foreach (int matchId in matchIds)
             {
-                Match? match = _match_repository_GetById(matchId);
+                Match? match = GetMatchById(matchId);
                 if (match == null) continue;
 
                 int seed = baseSeed + matchId;
@@ -48,7 +48,7 @@ namespace Services
             _unitOfWork.Commit();
         }
 
-        private Match? _match_repository_GetById(int matchId)
+        private Match? GetMatchById(int matchId)
         {
             try
             {
