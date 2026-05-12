@@ -37,22 +37,49 @@ else
         <p style="color:green">@successMessage</p>
     }
 
-    <div>
-        <label>Seleccionar Grupo:</label>
-        <select @onchange="OnGroupChanged">
-            <option value="">-- Seleccione grupo --</option>
-            @foreach (string g in groups)
+    <div class="filters">
+        <label>Desde:</label>
+        <input type="date" @bind="filterFrom" />
+
+        <label>Hasta:</label>
+        <input type="date" @bind="filterTo" />
+
+        <label>Estadio:</label>
+        <select @bind="filterStadiumId">
+            <option value="0">-- Todos --</option>
+            @foreach (Stadium s in stadiums)
             {
-                <option value="@g">Grupo @g</option>
+                <option value="@s.Id">@s.Name</option>
             }
         </select>
+
+        <label>Grupo:</label>
+        <select @bind="filterGroup">
+            <option value="">-- Todos --</option>
+            @foreach (string g in groupOptions)
+            {
+                <option value="@g">@g</option>
+            }
+        </select>
+
+        <label>Fase:</label>
+        <select @bind="filterPhase">
+            <option value="">-- Todas --</option>
+            @foreach (Phase p in Enum.GetValues<Phase>())
+            {
+                <option value="@p">@p</option>
+            }
+        </select>
+
+        <button @onclick="ApplyFilters">Filtrar</button>
+        <button @onclick="ClearFilters">Limpiar</button>
     </div>
 
     <hr />
 
     @if (matches.Any())
     {
-        <h4>Partidos del Grupo @selectedGroup</h4>
+        <h4>Partidos filtrados</h4>
         <table>
             <thead>
                 <tr>
@@ -116,19 +143,22 @@ else
             </tbody>
         </table>
     }
-    else if (!string.IsNullOrWhiteSpace(selectedGroup))
+    else
     {
-        <p>No hay partidos para el grupo seleccionado</p>
+        <p>No hay partidos para los filtros seleccionados</p>
     }
 }
 
 @code {
-    private readonly List<string> groups = new()
-    {
-        "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"
-    };
+    private static readonly string[] groupOptions =
+        Enumerable.Range(0, 12).Select(i => ((char)('A' + i)).ToString()).ToArray();
 
-    private string selectedGroup = "";
+    private DateTime? filterFrom;
+    private DateTime? filterTo;
+    private int filterStadiumId;
+    private string filterGroup = "";
+    private Phase? filterPhase;
+
     private List<Match> matches = new();
     private IReadOnlyCollection<ProjectCopa.Stadium> stadiums = Array.Empty<ProjectCopa.Stadium>();
     
@@ -145,32 +175,41 @@ else
     protected override void OnInitialized()
     {
         LoadStadiums();
-        LoadMatches();
+        ApplyFilters();
     }
 
-    private void OnGroupChanged(ChangeEventArgs e)
-    {
-        selectedGroup = e.Value?.ToString() ?? "";
-        LoadMatches();
-    }
-
-    private void LoadMatches()
+    private void ApplyFilters()
     {
         errors.Clear();
         successMessage = null;
         matches.Clear();
         CancelEdit();
 
-        if (string.IsNullOrWhiteSpace(selectedGroup))
-            return;
-
         try
         {
-            matches = MatchRepository.GetByGroup(selectedGroup);
-        }
-        catch (StadiumServicesException ex)
-        {
-            errors.Add(ex.Message);
+            IEnumerable<Match> result = MatchRepository.GetAll();
+
+            if (filterFrom.HasValue && filterTo.HasValue)
+                result = result.Where(m => m.MatchDate >= filterFrom && m.MatchDate <= filterTo);
+            else if (filterFrom.HasValue)
+                result = result.Where(m => m.MatchDate >= filterFrom);
+            else if (filterTo.HasValue)
+                result = result.Where(m => m.MatchDate <= filterTo);
+
+            if (filterStadiumId > 0)
+                result = result.Where(m => m.Stadium != null && m.Stadium.Id == filterStadiumId);
+
+            if (!string.IsNullOrEmpty(filterGroup))
+                result = result.OfType<MatchGroup>()
+                    .Where(m => m.Group != null && m.Group.Name == filterGroup)
+                    .Cast<Match>();
+
+            if (filterPhase.HasValue)
+                result = result.OfType<MatchElimination>()
+                    .Where(m => m.Phase == filterPhase.Value)
+                    .Cast<Match>();
+
+            matches = result.ToList();
         }
         catch (ArgumentException ex)
         {
@@ -178,8 +217,18 @@ else
         }
         catch (Exception ex)
         {
-            errors.Add("Error al cargar los partidos: " + ex.Message);
+            errors.Add("Error al filtrar: " + ex.Message);
         }
+    }
+
+    private void ClearFilters()
+    {
+        filterFrom = null;
+        filterTo = null;
+        filterStadiumId = 0;
+        filterGroup = "";
+        filterPhase = null;
+        ApplyFilters();
     }
 
     private void LoadStadiums()
@@ -234,7 +283,7 @@ else
             
             successMessage = "Partido actualizado correctamente";
             CancelEdit();
-            LoadMatches();
+            ApplyFilters();
         }
         catch (ArgumentException ex)
         {
