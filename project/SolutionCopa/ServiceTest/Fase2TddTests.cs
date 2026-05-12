@@ -19,7 +19,7 @@ namespace ServiceTest
             var settingsRepo = new TournamentSettingsRepository();
             var settings = new TournamentSettings(1, new DateTime(2026,6,1), 3, 3, fixtureSeed:0, crossingsSeed:0, simulationSeed:42, completionSeed:0);
             settingsRepo.Add(settings);
-n            var stadium = new Stadium("S1", "City", null, 30000);
+            var stadium = new Stadium("S1", "City", null, 30000);
             var home = new Team(1, "Home", 1500, false, Confederation.UEFA);
             var away = new Team(2, "Away", 1400, false, Confederation.UEFA);
             var sourceHome = MatchGroup.CreateInstance(-1, DateTime.UtcNow.AddDays(-1), home, away, stadium, new Group("G1"), Journey.CreateInstance(1));
@@ -32,11 +32,11 @@ namespace ServiceTest
             var uow = new ServiceTest.TestDoubles.Mocks.MockUnitOfWork();
             var auditRepo = new MockAuditLogRepository();
             var auditService = AuditLogService.CreateInstance(auditRepo, defaultTournamentSettingsId: settings.Id);
-n            var fase2 = new Fase2(simulation, matchRepo, settingsRepo, uow, auditService);
+            var fase2 = new Fase2(simulation, matchRepo, settingsRepo, uow, auditService);
 
             // Act
             fase2.SimulateEliminationMatches(new [] { 5 });
-n            // Assert
+            // Assert
             var logs = auditRepo.GetAll();
             Assert.IsTrue(logs.Any(l => l.Action == AuditActions.SimulateMatch && l.TournamentSettingsId == settings.Id && l.AffectedEntityType == "Match" && l.AffectedEntityId == 5));
             var seed = settings.SimulationSeed + 5;
