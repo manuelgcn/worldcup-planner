@@ -47,7 +47,7 @@ else
         <label>Estadio:</label>
         <select @bind="filterStadiumId">
             <option value="0">-- Todos --</option>
-            @foreach (Stadium s in stadiums)
+            @foreach (ProjectCopa.Stadium s in stadiums)
             {
                 <option value="@s.Id">@s.Name</option>
             }
