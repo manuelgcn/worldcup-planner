@@ -106,6 +106,22 @@ public sealed class MockMatchRepository : IMatchRepository
         return result;
     }
 
+    public List<Match> GetByPhase(Phase phase)
+    {
+        List<Match> result = new List<Match>();
+
+        foreach (Match item in _matches.Values)
+        {
+            MatchElimination? eliminationMatch = item as MatchElimination;
+            if (eliminationMatch != null && eliminationMatch.Phase == phase)
+            {
+                result.Add(item);
+            }
+        }
+
+        return result;
+    }
+
     private static bool BelongsToGroup(Match match, string groupName)
     {
         MatchGroup? groupMatch = match as MatchGroup;

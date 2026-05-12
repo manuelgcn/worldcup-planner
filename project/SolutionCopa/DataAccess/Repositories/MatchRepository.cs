@@ -65,6 +65,15 @@ public class MatchRepository : IMatchRepository
             .ToList();
     }
 
+    public List<Match> GetByPhase(Phase phase)
+    {
+        return _matches
+            .OfType<MatchElimination>()
+            .Where(elimination => elimination.Phase == phase)
+            .Cast<Match>()
+            .ToList();
+    }
+
     public List<Match> GetByDateRange(DateTime from, DateTime to)
     {
         return _matches

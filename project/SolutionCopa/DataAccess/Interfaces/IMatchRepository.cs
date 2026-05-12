@@ -12,5 +12,6 @@ public interface IMatchRepository
     List<Match> GetByGroup(string groupName);
     List<Match> GetByJourney(int journeyNumber);
     List<Match> GetByStadium(int stadiumId);
+    List<Match> GetByPhase(Phase phase);
     List<Match> GetByDateRange(DateTime from, DateTime to);
 }
