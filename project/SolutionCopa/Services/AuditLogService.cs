@@ -92,7 +92,7 @@ public sealed class AuditLogService : IAuditLogService
             entityPart = $" | Entity: {log.AffectedEntityType} - ID: {log.AffectedEntityId!.Value}";
         }
 
-        return $"[{log.Timestamp.ToString(\"o\")}] Action: {log.Action} | Details: {log.Details} | TournamentID: {log.TournamentSettingsId}{entityPart}";
+        return $"[{log.Timestamp.ToString("o")}] Action: {log.Action} | Details: {log.Details} | TournamentID: {log.TournamentSettingsId}{entityPart}";
     }
 
     private static bool ExistLogEntity(AuditLog log)
