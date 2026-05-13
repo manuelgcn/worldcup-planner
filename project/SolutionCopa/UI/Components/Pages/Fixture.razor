@@ -23,160 +23,167 @@
 
 <PageTitle>Fixture y Cruces</PageTitle>
 
-<h3>Fixture y Cruces — Mundial 2026</h3>
+<div class="fixture-page">
+    <h3>Fixture y Cruces — Mundial 2026</h3>
 
-@if (!Session.IsLoggedIn)
-{
-    <div class="auth-card">
-        <p>No estás logueado.</p>
-        <button class="btn btn-primary" @onclick="GoToLogin">Ir a Login</button>
-    </div>
-}
-else
-{
-    @if (errors.Any())
+    @if (!Session.IsLoggedIn)
     {
-        <ul style="color:red">
-            @foreach (string error in errors)
-            {
-                <li>@error</li>
-            }
-        </ul>
-    }
-
-    @if (!string.IsNullOrWhiteSpace(successMessage))
-    {
-        <p style="color:green">@successMessage</p>
-    }
-
-    @if (settings is null)
-    {
-        <p style="color:red">No hay configuración del torneo (TournamentSettings) cargada.</p>
+        <div class="auth-card">
+            <p>No estás logueado.</p>
+            <button class="btn btn-primary" @onclick="GoToLogin">Ir a Login</button>
+        </div>
     }
     else
     {
-        <section class="tournament-summary">
-            <h4>Configuración del torneo</h4>
-            <ul>
-                <li><strong>StartDate:</strong> @settings.StartDate.ToString("yyyy-MM-dd")</li>
-                <li><strong>MaxMatchesPerDay:</strong> @settings.MaxMatchesPerDay</li>
-                <li><strong>DaysBetweenJourneys:</strong> @settings.DaysBetweenJourneys</li>
-                <li><strong>FixtureSeed:</strong> @settings.FixtureSeed</li>
-                <li><strong>CompletionSeed:</strong> @settings.CompletionSeed</li>
-                <li><strong>CrossingsSeed:</strong> @settings.CrossingsSeed</li>
-                <li><strong>SimulationSeed:</strong> @settings.SimulationSeed</li>
-            </ul>
-
-            <h4>Estado actual</h4>
-            <ul>
-                <li>Equipos cargados: <strong>@teamCount</strong> / 48</li>
-                <li>Estadios disponibles: <strong>@stadiumCount</strong></li>
-                <li>Partidos de grupos persistidos: <strong>@groupMatches.Count</strong> / 72</li>
-                <li>Partidos pendientes (sin goles): <strong>@pendingGroupMatches</strong></li>
-                <li>Cruces de fase 2 generados: <strong>@(IsKnockoutGenerated ? "sí" : "no")</strong></li>
-            </ul>
-        </section>
-
-        @if (IsAdmin)
+        @if (errors.Any())
         {
-            <section class="admin-actions demo-data">
-                <h4>Datos de prueba</h4>
-                <p>Atajos para probar el flujo sin cargar equipos y estadios a mano.</p>
-                <button class="btn btn-secondary"
-                        disabled="@(teamCount >= 48 || isBusy)"
-                        @onclick="HandleFillTeamsAsync"
-                        title="@FillTeamsTooltip()">
-                    Cargar @(48 - teamCount) equipos demo
-                </button>
-                <button class="btn btn-secondary"
-                        disabled="@(stadiumCount >= 4 || isBusy)"
-                        @onclick="HandleSeedStadiumsAsync"
-                        title="@SeedStadiumsTooltip()">
-                    Cargar estadios demo
-                </button>
-            </section>
-
-            <section class="admin-actions">
-                <h4>Acciones de Administrador</h4>
-                <div class="seed-input">
-                    <label>Override FixtureSeed (opcional):</label>
-                    <input type="number" @bind="fixtureSeedInput" placeholder="@settings.FixtureSeed.ToString()" />
-                </div>
-                @if (!IsFixtureGenerated)
-                {
-                    <button class="btn btn-primary"
-                            disabled="@(!CanGenerateFixture || isBusy)"
-                            @onclick="HandleGenerateFixtureAsync"
-                            title="@GenerateFixtureTooltip()">
-                        Generar fixture
-                    </button>
-                }
-                else
-                {
-                    <button class="btn btn-secondary"
-                            disabled="@(IsKnockoutGenerated || isBusy)"
-                            @onclick="HandleRegenerateFixtureAsync"
-                            title="@RegenerateFixtureTooltip()">
-                        Regenerar fixture
-                    </button>
-                }
-            </section>
+            <div class="alert alert-error">
+                <strong>Error:</strong>
+                <ul>
+                    @foreach (string error in errors)
+                    {
+                        <li>@error</li>
+                    }
+                </ul>
+            </div>
         }
 
-        @if (IsFixtureGenerated)
+        @if (!string.IsNullOrWhiteSpace(successMessage))
         {
-            <section class="groups-section">
-                <h4>Grupos</h4>
-                <div class="groups-grid">
-                    @foreach (Group group in groups)
-                    {
-                        <GroupCard Group="group"
-                                   Standings="@StandingsFor(group.Name)"
-                                   OnSelect="HandleSelectGroup" />
-                    }
-                </div>
-            </section>
+            <div class="alert alert-success">@successMessage</div>
+        }
 
-            @if (selectedGroupName != null)
+        @if (settings is null)
+        {
+            <div class="alert alert-error">No hay configuración del torneo cargada.</div>
+        }
+        else
+        {
+            <div class="wizard-banner @CurrentStep.CssClass">
+                <span class="wizard-step-label">Paso @CurrentStep.Number de 4</span>
+                <span class="wizard-step-title">@CurrentStep.Title</span>
+                <span class="wizard-step-hint">@CurrentStep.Hint</span>
+            </div>
+
+            <details class="status-panel">
+                <summary>Estado del torneo (clic para expandir)</summary>
+                <div class="status-grid">
+                    <div>
+                        <strong>Equipos:</strong> @teamCount / 48
+                        @if (teamCount < 48)
+                        {
+                            <span class="status-warn">(faltan @(48 - teamCount))</span>
+                        }
+                    </div>
+                    <div>
+                        <strong>Estadios:</strong> @stadiumCount
+                        @if (stadiumCount < 4)
+                        {
+                            <span class="status-warn">(mínimo 4)</span>
+                        }
+                    </div>
+                    <div><strong>Partidos de grupos:</strong> @groupMatches.Count / 72</div>
+                    <div><strong>Pendientes (sin simular):</strong> @pendingGroupMatches</div>
+                    <div><strong>Knockout generado:</strong> @(IsKnockoutGenerated ? "sí" : "no")</div>
+                    <div><strong>Fixture seed:</strong> @settings.FixtureSeed</div>
+                    <div><strong>Crossings seed:</strong> @settings.CrossingsSeed</div>
+                    <div><strong>Simulation seed:</strong> @settings.SimulationSeed</div>
+                    <div><strong>Start date:</strong> @settings.StartDate.ToString("yyyy-MM-dd")</div>
+                </div>
+            </details>
+
+            @* PASO 1: cargar equipos y estadios demo *@
+            @if (IsAdmin && (teamCount < 48 || stadiumCount < 4))
             {
-                <section class="group-detail-section">
-                    <GroupDetail GroupName="@selectedGroupName"
-                                 Matches="@MatchesForSelectedGroup()"
-                                 OnBack="HandleClearSelection" />
+                <section class="step-section">
+                    <h4>1. Cargar datos base</h4>
+                    <p class="step-help">Atajo para tener 48 equipos y 4 estadios sin cargarlos a mano.</p>
+                    <div class="step-actions">
+                        <button class="btn btn-primary"
+                                disabled="@(teamCount >= 48 || isBusy)"
+                                @onclick="HandleFillTeamsAsync">
+                            @(teamCount >= 48 ? "✓ 48 equipos listos" : $"Cargar {48 - teamCount} equipos demo")
+                        </button>
+                        <button class="btn btn-primary"
+                                disabled="@(stadiumCount >= 4 || isBusy)"
+                                @onclick="HandleSeedStadiumsAsync">
+                            @(stadiumCount >= 4 ? "✓ Estadios listos" : "Cargar estadios demo")
+                        </button>
+                    </div>
                 </section>
             }
 
-            <section class="knockout-section">
-                <h4>Cruces — Fase 2</h4>
-                @if (!IsKnockoutGenerated)
-                {
-                    @if (!IsGroupStageComplete)
-                    {
-                        <p>
-                            Completá los resultados de fase de grupos para generar los cruces.
-                            Faltan <strong>@pendingGroupMatches</strong> partidos sin resultado.
-                        </p>
-                    }
+            @* PASO 2: generar fixture *@
+            @if (IsAdmin && teamCount >= 48 && stadiumCount >= 4 && !IsFixtureGenerated)
+            {
+                <section class="step-section">
+                    <h4>2. Generar fixture de fase de grupos</h4>
+                    <p class="step-help">Reparte los 48 equipos en 12 grupos y crea los 72 partidos.</p>
+                    <div class="step-actions">
+                        <label>Override FixtureSeed (opcional):</label>
+                        <input type="number" @bind="fixtureSeedInput" placeholder="@settings.FixtureSeed.ToString()" />
+                        <button class="btn btn-primary" disabled="@isBusy" @onclick="HandleGenerateFixtureAsync">
+                            Generar fixture
+                        </button>
+                    </div>
+                </section>
+            }
+
+            @* PASO 3: simular grupos o cargar resultados *@
+            @if (IsFixtureGenerated && !IsKnockoutGenerated)
+            {
+                <section class="step-section">
+                    <h4>3. Jugar fase de grupos</h4>
+                    <p class="step-help">
+                        @if (IsGroupStageComplete)
+                        {
+                            <text>Todos los partidos de grupos están simulados. Podés sortear los cruces de fase 2.</text>
+                        }
+                        else
+                        {
+                            <text>Cargá resultados en <a href="/matches">/matches</a> o usá <a href="/simulator">/simulator</a> para simular automáticamente. Faltan @pendingGroupMatches partidos.</text>
+                        }
+                    </p>
                     @if (IsAdmin)
                     {
-                        <div class="seed-input">
+                        <div class="step-actions">
                             <label>Override CrossingsSeed (opcional):</label>
                             <input type="number" @bind="crossingsSeedInput" placeholder="@settings.CrossingsSeed.ToString()" />
+                            <button class="btn btn-primary"
+                                    disabled="@(!CanGenerateKnockout || isBusy)"
+                                    @onclick="HandleGenerateKnockoutAsync"
+                                    title="@GenerateKnockoutTooltip()">
+                                Sortear cruces (R32)
+                            </button>
+                            <button class="btn btn-secondary"
+                                    disabled="@(IsKnockoutGenerated || isBusy)"
+                                    @onclick="HandleRegenerateFixtureAsync"
+                                    title="@RegenerateFixtureTooltip()">
+                                Regenerar fixture
+                            </button>
                         </div>
-                        <button class="btn btn-primary"
-                                disabled="@(!CanGenerateKnockout || isBusy)"
-                                @onclick="HandleGenerateKnockoutAsync"
-                                title="@GenerateKnockoutTooltip()">
-                            Sortear cruces (R32)
-                        </button>
                     }
-                }
-                else
-                {
-                    <KnockoutBracket AllElimMatches="@eliminationMatches" />
+                </section>
+            }
+
+            @* PASO 4: simular knockout *@
+            @if (IsKnockoutGenerated)
+            {
+                <section class="step-section">
+                    <h4>4. Simular bracket eliminatorio</h4>
+                    <p class="step-help">
+                        @if (IsBracketFullySimulated)
+                        {
+                            <text>El torneo está completo. ¡Hay campeón!</text>
+                        }
+                        else
+                        {
+                            <text>Simulá ronda por ronda o de un saque hasta el final.</text>
+                        }
+                    </p>
                     @if (IsAdmin)
                     {
-                        <div class="bracket-actions">
+                        <div class="step-actions">
                             <button class="btn btn-secondary"
                                     disabled="@(IsBracketFullySimulated || isBusy)"
                                     @onclick="HandleSimulateNextRoundAsync">
@@ -189,11 +196,45 @@ else
                             </button>
                         </div>
                     }
+                </section>
+            }
+
+            @* SECCIÓN GRUPOS — visible una vez generado el fixture *@
+            @if (IsFixtureGenerated)
+            {
+                <section class="groups-section">
+                    <h4>Grupos</h4>
+                    <div class="groups-grid">
+                        @foreach (Group group in groups)
+                        {
+                            <GroupCard Group="group"
+                                       Standings="@StandingsFor(group.Name)"
+                                       OnSelect="HandleSelectGroup" />
+                        }
+                    </div>
+                </section>
+
+                @if (selectedGroupName != null)
+                {
+                    <section class="group-detail-section">
+                        <GroupDetail GroupName="@selectedGroupName"
+                                     Matches="@MatchesForSelectedGroup()"
+                                     OnBack="HandleClearSelection" />
+                    </section>
                 }
-            </section>
+            }
+
+            @* SECCIÓN BRACKET — visible una vez sorteados los cruces *@
+            @if (IsKnockoutGenerated)
+            {
+                <section class="bracket-section">
+                    <h4>Bracket eliminatorio</h4>
+                    <KnockoutBracket AllElimMatches="@eliminationMatches" />
+                </section>
+            }
         }
     }
-}
+</div>
 
 @code {
     private TournamentSettings? settings;
@@ -218,9 +259,6 @@ else
     private bool IsKnockoutGenerated => KnockoutGenerator.IsBracketGenerated();
     private bool IsGroupStageComplete => StandingsService.IsGroupStageComplete();
 
-    private bool CanGenerateFixture =>
-        teamCount == 48 && stadiumCount >= 4 && !IsFixtureGenerated;
-
     private bool CanGenerateKnockout =>
         IsFixtureGenerated && IsGroupStageComplete && !IsKnockoutGenerated;
 
@@ -233,6 +271,34 @@ else
             bool hasThird = eliminationMatches.Any(match => match.Phase == Phase.ThirdPlace);
             if (!hasFinal || !hasThird) return false;
             return eliminationMatches.All(match => match.WasSimulated);
+        }
+    }
+
+    private WizardStep CurrentStep
+    {
+        get
+        {
+            if (teamCount < 48 || stadiumCount < 4)
+            {
+                return new WizardStep(1, "Cargar datos base", "Necesitás 48 equipos y al menos 4 estadios antes de generar el fixture.", "step-1");
+            }
+            if (!IsFixtureGenerated)
+            {
+                return new WizardStep(2, "Generar fixture", "Hacé clic en Generar fixture para crear los 12 grupos y los 72 partidos.", "step-2");
+            }
+            if (!IsKnockoutGenerated)
+            {
+                if (IsGroupStageComplete)
+                {
+                    return new WizardStep(3, "Sortear cruces de fase 2", "Todos los partidos de grupos están simulados. Sortear R32.", "step-3");
+                }
+                return new WizardStep(3, "Jugar fase de grupos", $"Faltan {pendingGroupMatches} partidos por simular. Andá a /simulator o /matches.", "step-3");
+            }
+            if (!IsBracketFullySimulated)
+            {
+                return new WizardStep(4, "Simular bracket", "Avanzá las rondas eliminatorias hasta el final.", "step-4");
+            }
+            return new WizardStep(4, "Torneo completo", "El bracket está simulado de punta a punta.", "step-done");
         }
     }
 
@@ -339,18 +405,6 @@ else
             "Estadios demo cargados.");
     }
 
-    private string FillTeamsTooltip()
-    {
-        if (teamCount >= 48) return "Ya hay 48 equipos cargados.";
-        return $"Genera {48 - teamCount} equipos ficticios para completar los cupos por confederación.";
-    }
-
-    private string SeedStadiumsTooltip()
-    {
-        if (stadiumCount >= 4) return "Ya hay 4 o más estadios cargados.";
-        return "Carga 4 estadios reales del Mundial 2026 para que la generación de fixture funcione.";
-    }
-
     private async Task RunAdminActionAsync(Action action, string successText)
     {
         errors.Clear();
@@ -376,14 +430,6 @@ else
         }
     }
 
-    private string GenerateFixtureTooltip()
-    {
-        if (teamCount != 48) return $"Se necesitan 48 equipos. Hay {teamCount}.";
-        if (stadiumCount < 4) return $"Se necesitan al menos 4 estadios. Hay {stadiumCount}.";
-        if (IsFixtureGenerated) return "El fixture ya está generado. Usá Regenerar.";
-        return "Generá el fixture inicial con los 48 equipos cargados.";
-    }
-
     private string RegenerateFixtureTooltip()
     {
         if (IsKnockoutGenerated) return "No se puede regenerar: ya hay cruces de fase 2.";
@@ -392,8 +438,7 @@ else
 
     private string GenerateKnockoutTooltip()
     {
-        if (!IsFixtureGenerated) return "Generá el fixture primero.";
-        if (!IsGroupStageComplete) return $"Faltan {pendingGroupMatches} partidos de fase de grupos por jugar.";
+        if (!IsGroupStageComplete) return $"Faltan {pendingGroupMatches} partidos de fase de grupos por simular.";
         if (IsKnockoutGenerated) return "Los cruces ya están generados.";
         return "Sortea los 16 cruces de Round of 32.";
     }
@@ -402,4 +447,6 @@ else
     {
         Nav.NavigateTo("/login");
     }
+
+    private sealed record WizardStep(int Number, string Title, string Hint, string CssClass);
 }
