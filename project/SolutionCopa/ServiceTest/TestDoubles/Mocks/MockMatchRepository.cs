@@ -134,6 +134,11 @@ public sealed class MockMatchRepository : IMatchRepository
         return _matches.Values.ToList();
     }
 
+    public void Clear()
+    {
+        _matches.Clear();
+    }
+
     private static bool BelongsToGroup(Match match, string groupName)
     {
         MatchGroup? groupMatch = match as MatchGroup;

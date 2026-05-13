@@ -217,6 +217,11 @@ public sealed class MatchServiceTestContext
         {
             return groups.Values.ToList();
         }
+
+        public void Clear()
+        {
+            groups.Clear();
+        }
     }
 
     private sealed class SimpleJourneyRepository(Dictionary<int, Journey> journeys) : IJourneyRepository
@@ -249,6 +254,11 @@ public sealed class MatchServiceTestContext
         public IReadOnlyCollection<Journey> GetAll()
         {
             return journeys.Values.ToList();
+        }
+
+        public void Clear()
+        {
+            journeys.Clear();
         }
     }
 

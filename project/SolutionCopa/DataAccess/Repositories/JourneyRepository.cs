@@ -44,4 +44,9 @@ public class JourneyRepository : IJourneyRepository
     {
         return _journeys.AsReadOnly();
     }
+
+    public void Clear()
+    {
+        _journeys.Clear();
+    }
 }

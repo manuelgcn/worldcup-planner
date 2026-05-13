@@ -11,4 +11,5 @@ public interface IEliminationMatchRepository
     void Update(Match match);
     void Delete(Match match);
     bool ExistsById(int id);
+    void Clear();
 }

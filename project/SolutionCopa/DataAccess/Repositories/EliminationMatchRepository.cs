@@ -42,4 +42,9 @@ public class EliminationMatchRepository : IEliminationMatchRepository
     }
 
     public bool ExistsById(int id) => _storage.Any(m => m.MatchId == id);
+
+    public void Clear()
+    {
+        _storage.Clear();
+    }
 }

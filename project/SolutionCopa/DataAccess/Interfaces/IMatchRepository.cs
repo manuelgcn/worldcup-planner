@@ -15,4 +15,5 @@ public interface IMatchRepository
     List<Match> GetByPhase(Phase phase);
     List<Match> GetByDateRange(DateTime from, DateTime to);
     List<Match> GetAll();
+    void Clear();
 }

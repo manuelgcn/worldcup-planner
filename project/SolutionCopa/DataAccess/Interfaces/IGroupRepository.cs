@@ -10,4 +10,5 @@ public interface IGroupRepository
     Group? GetByName(string name);
     bool ExistsByName(string name);
     IReadOnlyCollection<Group> GetAll();
+    void Clear();
 }

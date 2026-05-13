@@ -44,4 +44,9 @@ public class GroupRepository : IGroupRepository
     {
         return _groups.AsReadOnly();
     }
+
+    public void Clear()
+    {
+        _groups.Clear();
+    }
 }
