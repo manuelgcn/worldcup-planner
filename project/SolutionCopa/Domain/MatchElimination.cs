@@ -6,9 +6,15 @@ public class MatchElimination : Match
 {
     private const string RequiredMatchCodeMessage = "Match code is required.";
     private const string InvalidPhaseMessage = "Phase is invalid.";
+    private const string NegativePenaltyGoalsMessage = "Penalty shootout goals cannot be negative.";
+    private const string DrawnPenaltyShootoutMessage = "Penalty shootout must produce a winner.";
+    private const string PenaltyShootoutOnDecidedMatchMessage = "Penalty shootout can only be recorded when regulation goals are tied.";
 
     public string MatchCode { get; private set; } = null!;
     public Phase Phase { get; private set; }
+    public bool WonByPenalties { get; private set; }
+    public int HomePenaltyGoals { get; private set; }
+    public int AwayPenaltyGoals { get; private set; }
     private Match? _matchHome;
     private Match? _matchAway;
 
@@ -132,4 +138,45 @@ public class MatchElimination : Match
         }
     }
 
+    public void SetPenaltyShootoutResult(int homePenaltyGoals, int awayPenaltyGoals)
+    {
+        if (homePenaltyGoals < 0 || awayPenaltyGoals < 0)
+        {
+            throw new MatchException(NegativePenaltyGoalsMessage);
+        }
+
+        if (homePenaltyGoals == awayPenaltyGoals)
+        {
+            throw new MatchException(DrawnPenaltyShootoutMessage);
+        }
+
+        if (!IsDraw())
+        {
+            throw new MatchException(PenaltyShootoutOnDecidedMatchMessage);
+        }
+
+        HomePenaltyGoals = homePenaltyGoals;
+        AwayPenaltyGoals = awayPenaltyGoals;
+        WonByPenalties = true;
+    }
+
+    public override Team? GetWinner()
+    {
+        if (HasHomeTeamWon())
+        {
+            return HomeTeam;
+        }
+
+        if (HasAwayTeamWon())
+        {
+            return AwayTeam;
+        }
+
+        if (WonByPenalties)
+        {
+            return HomePenaltyGoals > AwayPenaltyGoals ? HomeTeam : AwayTeam;
+        }
+
+        return null;
+    }
 }

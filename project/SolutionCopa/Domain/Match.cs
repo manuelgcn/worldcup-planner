@@ -176,7 +176,7 @@ public abstract class Match
         return AwayGoals - HomeGoals;
     }
 
-    public Team? GetWinner()
+    public virtual Team? GetWinner()
     {
         if (HasHomeTeamWon())
         {
