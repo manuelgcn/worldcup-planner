@@ -1,4 +1,5 @@
 using DataAccess.Interfaces;
+using DataAccess.Repositories;
 using ProjectCopa;
 using Services;
 using Services.DTOs;
@@ -26,6 +27,7 @@ public sealed class MatchServiceTestContext
     private IAuditLogRepository AuditLogRepository { get; set; } = null!;
     
     public MockMatchRepository MatchRepository { get; } = new MockMatchRepository();
+    public EliminationMatchRepository EliminationMatchRepository { get; } = new EliminationMatchRepository();
     public MockMatchSimulationEngine SimulationEngine { get; } = new MockMatchSimulationEngine();
     public MockUnitOfWork UnitOfWork { get; } = new MockUnitOfWork();
     public IReadOnlyCollection<AuditLog> AuditLogs => _auditLog.AsReadOnly();
@@ -101,7 +103,41 @@ public sealed class MatchServiceTestContext
             MatchFactory,
             SimulationEngine,
             AuditLogService, // <-- Inyectado directamente en el servicio
-            UnitOfWork);
+            UnitOfWork,
+            EliminationMatchRepository);
+    }
+
+    /// <summary>
+    /// Helper used by Phase 6 guard tests: seeds an arbitrary MatchElimination
+    /// into the elimination repository so MatchService.EnsureGroupMatchIsEditable
+    /// trips its guard. The elimination match is a stub — only its presence
+    /// in the repository matters.
+    /// </summary>
+    public void SeedFakeEliminationMatchInRepository()
+    {
+        Team home = _teams.Values.First();
+        Team away = _teams.Values.Skip(1).FirstOrDefault() ?? home;
+        Stadium stadium = _stadiums.Values.First();
+        Group group = _groups.Values.First();
+        Journey journey = _journeys.Values.First();
+        DateTime sourceDate = new DateTime(2026, 6, 5, 14, 0, 0);
+        DateTime elimDate = new DateTime(2026, 7, 1, 14, 0, 0);
+
+        MockMatch sourceHome = new MockMatch(900, sourceDate, home, away, stadium);
+        MockMatch sourceAway = new MockMatch(901, sourceDate, away, home, stadium);
+        _ = group; _ = journey;
+
+        MatchElimination elim = MatchElimination.Create(
+            id: 9000,
+            matchDate: elimDate,
+            homeTeam: home,
+            awayTeam: away,
+            stadium: stadium,
+            phase: Phase.RoundOf32,
+            matchCode: "A1",
+            matchHome: sourceHome,
+            matchAway: sourceAway);
+        EliminationMatchRepository.Add(elim);
     }
 
     // Simple concrete repository implementations
