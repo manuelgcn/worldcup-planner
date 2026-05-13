@@ -11,6 +11,7 @@ public sealed class GroupStandingsService : IGroupStandingsService
     private const int PointsForWin = 3;
     private const int PointsForDraw = 1;
     private const int MinimumGoalsForPlayedMatch = 1;
+    private const int DefaultTieBreakerSeed = 0;
     private const string GroupNotFoundMessage = "Group was not found.";
 
     private readonly IMatchRepository _matchRepository;
@@ -35,8 +36,10 @@ public sealed class GroupStandingsService : IGroupStandingsService
         Dictionary<int, StandingAccumulator> accumulators = InitializeAccumulators(group);
         AccumulateGroupMatches(group, accumulators);
 
-        int tieBreakerSeed = ResolveTieBreakerSeed();
-        return OrderStandings(accumulators.Values, tieBreakerSeed)
+        IReadOnlyCollection<StandingAccumulator> rows = accumulators.Values.ToList();
+        Dictionary<int, int> tieBreakers = BuildTieBreakerMap(rows, ResolveTieBreakerSeed());
+
+        return OrderStandings(rows, tieBreakers)
             .Select(accumulator => accumulator.ToDto())
             .ToList();
     }
@@ -91,22 +94,25 @@ public sealed class GroupStandingsService : IGroupStandingsService
     private int ResolveTieBreakerSeed()
     {
         TournamentSettings? settings = _settingsRepository.GetAll().FirstOrDefault();
-        return settings?.CrossingsSeed ?? 0;
+        return settings?.CrossingsSeed ?? DefaultTieBreakerSeed;
     }
 
-    private static IEnumerable<StandingAccumulator> OrderStandings(IEnumerable<StandingAccumulator> accumulators, int seed)
+    private static Dictionary<int, int> BuildTieBreakerMap(IReadOnlyCollection<StandingAccumulator> rows, int seed)
     {
         Random random = new Random(seed);
-        Dictionary<int, int> tieBreakers = accumulators.ToDictionary(
-            accumulator => accumulator.Team.Id,
-            _ => random.Next());
+        return rows.ToDictionary(row => row.Team.Id, _ => random.Next());
+    }
 
-        return accumulators
-            .OrderByDescending(accumulator => accumulator.Points)
-            .ThenByDescending(accumulator => accumulator.GoalDifference)
-            .ThenByDescending(accumulator => accumulator.GoalsFor)
-            .ThenByDescending(accumulator => tieBreakers[accumulator.Team.Id])
-            .ThenBy(accumulator => accumulator.Team.Id);
+    private static IEnumerable<StandingAccumulator> OrderStandings(
+        IReadOnlyCollection<StandingAccumulator> rows,
+        IReadOnlyDictionary<int, int> tieBreakers)
+    {
+        return rows
+            .OrderByDescending(row => row.Points)
+            .ThenByDescending(row => row.GoalDifference)
+            .ThenByDescending(row => row.GoalsFor)
+            .ThenByDescending(row => tieBreakers[row.Team.Id])
+            .ThenBy(row => row.Team.Id);
     }
 
     private IReadOnlyCollection<MatchGroup> GetAllGroupMatches()
