@@ -1,0 +1,66 @@
+.filters-card {
+    padding: 1rem;
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: .85rem;
+    align-items: end;
+}
+
+.filter-item {
+    position: relative;
+}
+
+.filter-item .form-label {
+    font-size: .84rem;
+    color: #475569;
+    margin-bottom: .35rem;
+}
+
+.filter-actions {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+.filter-actions .btn i {
+    margin-right: .35rem;
+}
+
+.section-separator {
+    margin: 1.1rem 0 .9rem;
+    border-top: 1px solid var(--m26-line);
+}
+
+.section-title {
+    font-family: "Bebas Neue", Oswald, sans-serif;
+    text-transform: uppercase;
+    margin-bottom: .65rem;
+}
+
+.table-wrap {
+    overflow: hidden;
+}
+
+.goal-input {
+    width: 62px;
+    display: inline-block;
+    text-align: center;
+}
+
+.row-editing {
+    background-color: #fff3cd;
+}
+
+.auth-card {
+    max-width: 500px;
+    padding: 1.2rem;
+}
+
+@media (max-width: 640.98px) {
+    .filter-actions .btn {
+        width: 100%;
+    }
+}

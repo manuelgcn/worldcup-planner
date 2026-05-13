@@ -1,0 +1,86 @@
+@page "/signup"
+@using ProjectCopa
+@using Services
+@inject UserServices UserServices
+@inject NavigationManager Nav
+
+<PageTitle>Register</PageTitle>
+
+<section class="auth-wrap">
+    <div class="m26-card auth-card">
+        <div class="m26-card-header auth-head">
+            <h1 class="auth-title mb-0">Crear cuenta</h1>
+        </div>
+        <div class="auth-body">
+            @if (!string.IsNullOrWhiteSpace(error))
+            {
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                    @error
+                </div>
+            }
+
+            <div class="mb-3">
+                <label class="form-label" for="signupName">Nombre</label>
+                <input id="signupName" class="form-control" placeholder="Nombre" @bind="name" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="signupLastname">Apellido</label>
+                <input id="signupLastname" class="form-control" placeholder="Apellido" @bind="lastname" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="signupEmail">Email</label>
+                <input id="signupEmail" class="form-control" placeholder="tu@email.com" @bind="email" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="signupPassword">Contraseña</label>
+                <input id="signupPassword" class="form-control" placeholder="••••••••" type="password" @bind="password" />
+            </div>
+            <div class="mb-4">
+                <label class="form-label" for="signupBirth">Fecha de nacimiento</label>
+                <input id="signupBirth" class="form-control" type="date" @bind="dateOfBirth" />
+            </div>
+
+            <button class="btn btn-primary w-100" @onclick="Register">Crear cuenta</button>
+        </div>
+    </div>
+</section>
+
+@code {
+    private string name = "";
+    private string lastname = "";
+    private string email = "";
+    private string password = "";
+    private DateTime dateOfBirth = DateTime.Today;
+    private string? error;
+
+    private void Register()
+    {
+        error = null;
+
+        try
+        {
+            User user = new User(
+                id: GenerateUserId(),
+                name: name,
+                lastname: lastname,
+                email: email,
+                password: password,
+                dateOfBirth: dateOfBirth
+            );
+            user.AddRole(UserRoles.Editor);
+
+            UserServices.AddUser(user);
+            Nav.NavigateTo("/login");
+        }
+        catch (ArgumentException ex)
+        {
+            error = ex.Message;
+        }
+    }
+
+    private int GenerateUserId()
+    {
+        return UserServices.GetAllUsers().Count + 1;
+    }
+}

@@ -1,0 +1,39 @@
+﻿@page "/Error"
+@using System.Diagnostics
+
+<PageTitle>Error</PageTitle>
+
+<section class="error-page m26-card">
+    <div class="error-visual" aria-hidden="true">
+        <div class="ball"></div>
+        <div class="code">404</div>
+    </div>
+    <h1 class="error-title">OOPS, PARTIDO INTERRUMPIDO</h1>
+    <p class="error-subtitle">Ocurrió un error mientras procesábamos tu solicitud.</p>
+
+    @if (ShowRequestId)
+    {
+        <p class="request-id">
+            <strong>Request ID:</strong> <code>@RequestId</code>
+        </p>
+    }
+
+    <p class="dev-note">
+        En modo <strong>Development</strong> se muestra más detalle técnico del error.
+    </p>
+    <a class="btn btn-primary" href="/">
+        <i class="bi bi-house-door-fill" aria-hidden="true"></i>
+        Volver al inicio
+    </a>
+</section>
+
+@code{
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+
+    private string? RequestId { get; set; }
+    private bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+
+    protected override void OnInitialized() =>
+        RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+
+}

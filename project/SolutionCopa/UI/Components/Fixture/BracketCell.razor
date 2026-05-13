@@ -1,0 +1,37 @@
+@using ProjectCopa
+
+<div class="bracket-cell @PlayedClass()">
+    <div class="bracket-cell-code">@Match.MatchCode</div>
+    <div class="bracket-cell-team @WinnerClass(true)">
+        <span class="team-name">@TeamName(Match.HomeTeam)</span>
+        <span class="team-score">@Match.HomeGoals</span>
+    </div>
+    <div class="bracket-cell-team @WinnerClass(false)">
+        <span class="team-name">@TeamName(Match.AwayTeam)</span>
+        <span class="team-score">@Match.AwayGoals</span>
+    </div>
+    @if (Match.Stadium != null)
+    {
+        <div class="bracket-cell-stadium">@Match.Stadium.Name</div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public MatchElimination Match { get; set; } = null!;
+
+    private string PlayedClass() => IsPlayed(Match) ? "played" : "pending";
+
+    private string WinnerClass(bool isHome)
+    {
+        if (!IsPlayed(Match)) return "";
+        bool homeWon = Match.HomeGoals > Match.AwayGoals;
+        bool awayWon = Match.AwayGoals > Match.HomeGoals;
+        if (isHome && homeWon) return "winner";
+        if (!isHome && awayWon) return "winner";
+        return "loser";
+    }
+
+    private static string TeamName(Team? team) => team?.Name ?? "TBD";
+
+    private static bool IsPlayed(MatchElimination match) => match.WasSimulated || match.HomeGoals + match.AwayGoals > 0;
+}
