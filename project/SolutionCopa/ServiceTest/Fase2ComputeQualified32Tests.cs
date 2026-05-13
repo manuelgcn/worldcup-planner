@@ -1,89 +1,33 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProjectCopa;
 using ServiceTest.TestDoubles.Mocks;
 using Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+
 
 namespace ServiceTest
 {
     [TestClass]
     public class Fase2ComputeQualified32Tests
     {
+        private const int PointsForWin = 3;
+        private const int PointsForDraw = 1;
+        private const int BaseFifaRanking = 1000;
+        private const int ExpectedQualifiedCount = 32;
+        private const int ExpectedThirdPlaceCount = 8;
+        private const int TeamsPerGroupCount = 4;
+        private const char FirstGroupChar = 'A';
+        private const char LastGroupChar = 'L';
+        private const int StadiumCapacity = 30000;
+ 
+        private static readonly DateTime DefaultStartDate = new DateTime(2026, 6, 1);
+ 
         [TestMethod]
         public void ComputeQualified32FromGroups_Returns32Teams_And_SelectsBest8Thirds_Deterministically()
         {
+           
             MockMatchRepository matchRepo = new MockMatchRepository();
-
-            List<Group> groups = new();
-            int teamId = 1;
-
-            // Build groups A-L with 4 teams each
-            for (char c = 'A'; c <= 'L'; c++)
-            {
-                Group group = new Group(c.ToString());
-
-                for (int i = 0; i < 4; i++)
-                {
-                    Team team = new Team(
-                        id: teamId,
-                        name: $"T{teamId}",
-                        fifaRanking: 1000 + teamId,
-                        isFictitious: false,
-                        confederation: Confederation.UEFA
-                    );
-
-                    teamId++;
-                    group.AddTeam(team);
-                }
-
-                groups.Add(group);
-            }
-
-            int matchId = 1000;
-
-            // Create deterministic results per group
-            foreach (Group g in groups)
-            {
-                Stadium stadium = new Stadium("S", "City", null, 30000);
-                Journey journey = Journey.CreateInstance(1);
-
-                List<Team> teams = g.Teams.ToList();
-
-                void AddMatch(int h, int a, int hg, int ag)
-                {
-                    MatchGroup match = MatchGroup.CreateMatchWithConfig(
-                        matchId++,
-                        DateTime.UtcNow,
-                        teams[h],
-                        teams[a],
-                        stadium,
-                        new TournamentSettings(),
-                        g,
-                        journey
-                    );
-
-                    match.SetGoals(hg, ag);
-                    matchRepo.Add(match);
-                }
-
-                // Ordering:
-                // teams[0] first
-                // teams[1] second
-                // teams[2] third
-                // teams[3] fourth
-                AddMatch(0, 1, 2, 0);
-                AddMatch(0, 2, 2, 0);
-                AddMatch(0, 3, 2, 0);
-                AddMatch(1, 2, 2, 1);
-                AddMatch(1, 3, 2, 1);
-                AddMatch(2, 3, 2, 1);
-            }
-
             TournamentSettings settings = new TournamentSettings(
                 id: 1,
-                startDate: new DateTime(2026, 6, 1),
+                startDate: DefaultStartDate,
                 maxMatchesPerDay: 3,
                 daysBetweenJourneys: 3,
                 fixtureSeed: 0,
@@ -91,74 +35,139 @@ namespace ServiceTest
                 simulationSeed: 123,
                 completionSeed: 0
             );
-
+ 
+            List<Group> groups = BuildGroups();
+            PopulateMatches(groups, matchRepo, settings);
+ 
             Fase2 fase2 = new Fase2(
                 simulationEngine: null!,
                 matchRepository: matchRepo,
                 settingsRepository: null!,
                 unitOfWork: null!
             );
-
-            var result1 = fase2.ComputeQualified32FromGroups(groups, settings);
-            var result2 = fase2.ComputeQualified32FromGroups(groups, settings);
-
-            // Assert total
-            Assert.AreEqual(32, result1.Count);
-
-            // Assert determinism
+ 
+           
+            List<(Team Team, string Group)> result1 = fase2.ComputeQualified32FromGroups(groups, settings);
+            List<(Team Team, string Group)> result2 = fase2.ComputeQualified32FromGroups(groups, settings);
+ 
+            
+            Assert.AreEqual(ExpectedQualifiedCount, result1.Count);
             CollectionAssert.AreEqual(result1, result2);
-
-            // Assert each group contributes 2 or 3 teams
-            foreach (Group g in groups)
+ 
+            foreach (Group group in groups)
             {
-                int count = result1.Count(q => q.Group == g.Name);
-                Assert.IsTrue(count == 2 || count == 3);
+                int count = result1.Count(q => q.Group == group.Name);
+                Assert.IsTrue(count == 2 || count == 3, $"El grupo {group.Name} debería tener 2 o 3 clasificados.");
             }
-
-            // Assert exactly 8 third placed teams
+ 
             int thirdPlacedCount = 0;
-
-            foreach (Group g in groups)
+            foreach (Group group in groups)
             {
-                Team third = ComputeThirdPlacedTeam(g, matchRepo);
-
+                Team third = ComputeThirdPlacedTeam(group, matchRepo);
                 if (result1.Any(q => q.Team.Id == third.Id))
                 {
                     thirdPlacedCount++;
                 }
             }
-
-            Assert.AreEqual(8, thirdPlacedCount);
+            Assert.AreEqual(ExpectedThirdPlaceCount, thirdPlacedCount);
         }
-
+ 
+        // --- Helper Methods ---
+ 
+        private static List<Group> BuildGroups()
+        {
+            List<Group> groups = new List<Group>();
+            int teamId = 1;
+ 
+            for (char c = FirstGroupChar; c <= LastGroupChar; c++)
+            {
+                Group group = new Group(c.ToString());
+                for (int i = 0; i < TeamsPerGroupCount; i++)
+                {
+                    Team team = new Team(
+                        id: teamId,
+                        name: $"T{teamId}",
+                        fifaRanking: BaseFifaRanking + teamId,
+                        isFictitious: false,
+                        confederation: Confederation.UEFA
+                    );
+                    teamId++;
+                    group.AddTeam(team);
+                }
+                groups.Add(group);
+            }
+ 
+            return groups;
+        }
+ 
+        private static void PopulateMatches(List<Group> groups, MockMatchRepository matchRepo, TournamentSettings settings)
+        {
+            int matchId = 1000;
+            Stadium stadium = new Stadium("S", "City", string.Empty, StadiumCapacity);
+            Journey journey = Journey.CreateInstance(1);
+ 
+            foreach (Group group in groups)
+            {
+                List<Team> teams = group.Teams.ToList();
+                
+                // Usamos la fecha de inicio del torneo para que la validación del Match no falle
+                DateTime matchDate = settings.StartDate;
+ 
+                MatchGroup match1 = MatchGroup.CreateMatchWithConfig(matchId++, matchDate, teams[0], teams[1], stadium, settings, group, journey);
+                match1.SetGoals(2, 0);
+                matchRepo.Add(match1);
+ 
+                MatchGroup match2 = MatchGroup.CreateMatchWithConfig(matchId++, matchDate, teams[0], teams[2], stadium, settings, group, journey);
+                match2.SetGoals(2, 0);
+                matchRepo.Add(match2);
+ 
+                MatchGroup match3 = MatchGroup.CreateMatchWithConfig(matchId++, matchDate, teams[0], teams[3], stadium, settings, group, journey);
+                match3.SetGoals(2, 0);
+                matchRepo.Add(match3);
+ 
+                MatchGroup match4 = MatchGroup.CreateMatchWithConfig(matchId++, matchDate, teams[1], teams[2], stadium, settings, group, journey);
+                match4.SetGoals(2, 1);
+                matchRepo.Add(match4);
+ 
+                MatchGroup match5 = MatchGroup.CreateMatchWithConfig(matchId++, matchDate, teams[1], teams[3], stadium, settings, group, journey);
+                match5.SetGoals(2, 1);
+                matchRepo.Add(match5);
+ 
+                MatchGroup match6 = MatchGroup.CreateMatchWithConfig(matchId++, matchDate, teams[2], teams[3], stadium, settings, group, journey);
+                match6.SetGoals(2, 1);
+                matchRepo.Add(match6);
+            }
+        }
+ 
         private static Team ComputeThirdPlacedTeam(Group group, MockMatchRepository repo)
         {
-            Dictionary<Team, int> points = group.Teams.ToDictionary(t => t, _ => 0);
-
-            var matches = repo.GetByGroup(group.Name).OfType<MatchGroup>();
-
-            foreach (var m in matches)
+            Dictionary<Team, int> points = group.Teams.ToDictionary(team => team, _ => 0);
+            IEnumerable<MatchGroup> matches = repo.GetByGroup(group.Name).OfType<MatchGroup>();
+ 
+            foreach (MatchGroup match in matches)
             {
-                if (m.HomeGoals > m.AwayGoals)
+                if (match.HomeGoals > match.AwayGoals)
                 {
-                    points[m.HomeTeam!] += 3;
+                    points[match.HomeTeam!] += PointsForWin;
                 }
-                else if (m.AwayGoals > m.HomeGoals)
+                else if (match.AwayGoals > match.HomeGoals)
                 {
-                    points[m.AwayTeam!] += 3;
+                    points[match.AwayTeam!] += PointsForWin;
                 }
                 else
                 {
-                    points[m.HomeTeam!] += 1;
-                    points[m.AwayTeam!] += 1;
+                    points[match.HomeTeam!] += PointsForDraw;
+                    points[match.AwayTeam!] += PointsForDraw;
                 }
             }
-
+ 
             return points
-                .OrderByDescending(p => p.Value)
-                .Select(p => p.Key)
+                .OrderByDescending(keyValuePair => keyValuePair.Value)
+                .Select(keyValuePair => keyValuePair.Key)
                 .Skip(2)
                 .First();
         }
     }
+
+    
 }
