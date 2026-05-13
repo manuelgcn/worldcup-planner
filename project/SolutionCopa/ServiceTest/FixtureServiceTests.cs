@@ -22,6 +22,22 @@ public class FixtureServiceTests
     }
 
     [TestMethod]
+    public void CannotCreateFixtureWithLessThanFourStadiums()
+    {
+        List<Team> teams = Create48ValidTeams();
+        List<Stadium> stadiums =
+        [
+            new Stadium("Stadium1", "City", null, 30000),
+            new Stadium("Stadium2", "City", null, 30000),
+            new Stadium("Stadium3", "City", null, 30000)
+        ];
+
+        FixtureService service = new FixtureService(teams, stadiums);
+
+        Assert.ThrowsException<ArgumentException>(() => service.CreateFixture());
+    }
+
+    [TestMethod]
     public void CreateFixtureWith48TeamsCreates12Groups()
     {
         List<Team> teams = Create48ValidTeams();

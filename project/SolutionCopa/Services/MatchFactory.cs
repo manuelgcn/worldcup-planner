@@ -19,7 +19,7 @@ public class MatchFactory(
     private const string MatchCodeRequiredMessage = "MatchCode is required";
     private const string MatchHomeIdRequiredMessage = "MatchHomeId is required";
     private const string MatchAwayIdRequiredMessage = "MatchAwayId is required";
-    private const string GroupIdRequiredMessage = "GroupId is required";
+    private const string GroupNameRequiredMessage = "Group name is required";
     private const string JourneyIdRequiredMessage = "JourneyId is required";
     private const string TeamNotFoundMessage = "Team not found";
     private const string StadiumNotFoundMessage = "Stadium not found";
@@ -57,10 +57,10 @@ public class MatchFactory(
                 stadium, tournamentSettings, phase, matchCode, sourceHome, sourceAway);
         }
 
-        int groupId = request.GroupId ?? throw new MatchServicesException(GroupIdRequiredMessage);
+        string groupName = request.GroupName ?? throw new MatchServicesException(GroupNameRequiredMessage);
         int journeyId = request.JourneyId ?? throw new MatchServicesException(JourneyIdRequiredMessage);
         
-        Group group = GetGroupOrThrow(groupId);
+        Group group = GetGroupOrThrow(groupName);
         Journey journey = GetJourneyOrThrow(journeyId);
 
         if (tournamentSettings == null)
@@ -99,14 +99,14 @@ public class MatchFactory(
         return stadiumRepository.GetById(stadiumId) ?? throw new MatchServicesException(StadiumNotFoundMessage);
     }
 
-    private Group GetGroupOrThrow(int groupId)
+    private Group GetGroupOrThrow(string groupName)
     {
-        return groupRepository.GetById(groupId) ?? throw new MatchServicesException(GroupNotFoundMessage);
+        return groupRepository.GetByName(groupName) ?? throw new MatchServicesException(GroupNotFoundMessage);
     }
 
     private Journey GetJourneyOrThrow(int journeyId)
     {
-        return journeyRepository.GetById(journeyId) ?? throw new MatchServicesException(JourneyNotFoundMessage);
+        return journeyRepository.GetByNumber(journeyId) ?? throw new MatchServicesException(JourneyNotFoundMessage);
     }
 
     private TournamentSettings? GetTournamentSettingsOrNull(int? tournamentSettingsId)

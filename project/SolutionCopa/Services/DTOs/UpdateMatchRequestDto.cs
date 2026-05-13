@@ -10,7 +10,7 @@ public sealed class UpdateMatchRequestDto
     public int? StadiumId { get; init; }
 
     public int? TournamentSettingsId { get; init; }
-    public int? GroupId { get; init; }
+    public string? GroupName { get; init; }
     public int? JourneyId { get; init; }
     public Phase? Phase { get; init; }
     public string? MatchCode { get; init; }

@@ -98,6 +98,42 @@ public sealed class MockMatchRepository : IMatchRepository
         return result;
     }
 
+    public List<Match> GetByStadium(int stadiumId)
+    {
+        List<Match> result = new List<Match>();
+
+        foreach (Match item in _matches.Values)
+        {
+            if (item.Stadium != null && item.Stadium.Id == stadiumId)
+            {
+                result.Add(item);
+            }
+        }
+
+        return result;
+    }
+
+    public List<Match> GetByPhase(Phase phase)
+    {
+        List<Match> result = new List<Match>();
+
+        foreach (Match item in _matches.Values)
+        {
+            MatchElimination? eliminationMatch = item as MatchElimination;
+            if (eliminationMatch != null && eliminationMatch.Phase == phase)
+            {
+                result.Add(item);
+            }
+        }
+
+        return result;
+    }
+
+    public List<Match> GetAll()
+    {
+        return _matches.Values.ToList();
+    }
+
     private static bool BelongsToGroup(Match match, string groupName)
     {
         MatchGroup? groupMatch = match as MatchGroup;

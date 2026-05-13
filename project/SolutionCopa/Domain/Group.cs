@@ -2,16 +2,16 @@ namespace ProjectCopa;
 
 public class Group
 {
+    private const string GroupNameIsRequiredMessage = "Group name is required";
+
     public string Name { get; private set; }
 
-    private List<Team> teams = new List<Team>();
+    private readonly List<Team> teams = new();
     public IReadOnlyCollection<Team> Teams => teams.AsReadOnly();
 
     public Group(string name)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Group name is required");
-
+        ValidateName(name);
         Name = name;
     }
     
@@ -25,6 +25,14 @@ public class Group
             throw new ArgumentException("Team already exists in group");
 
         teams.Add(team);
+    }
+
+    private static void ValidateName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException(GroupNameIsRequiredMessage);
+        }
     }
 
 
