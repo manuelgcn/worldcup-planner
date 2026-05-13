@@ -81,6 +81,11 @@ public sealed class GroupStandingsService : IGroupStandingsService
             return;
         }
 
+        if (!IsMatchPlayed(match))
+        {
+            return;
+        }
+
         if (!accumulators.TryGetValue(match.HomeTeam.Id, out StandingAccumulator? home)
             || !accumulators.TryGetValue(match.AwayTeam.Id, out StandingAccumulator? away))
         {
