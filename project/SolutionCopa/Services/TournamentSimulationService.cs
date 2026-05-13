@@ -12,7 +12,9 @@ public sealed class TournamentSimulationService(
     IUnitOfWork unitOfWork,
     IMatchSimulationEngine matchSimulationEngine,
     IAuditLogService auditLogService,
-    IKnockoutFixtureGenerator knockoutFixtureGenerator) : ITournamentSimulationService
+    ITournamentSettingsRepository tournamentSettingsRepository,
+    IStadiumRepository stadiumRepository,
+    IEliminationMatchRepository eliminationMatchRepository) : ITournamentSimulationService
 {
     private const string FixtureNotGeneratedMessage = "El fixture aún no ha sido generado";
     private const string AuditLogMessage = "La fase de grupos fue simulada y la fase 2 fue generada.";
@@ -26,11 +28,12 @@ public sealed class TournamentSimulationService(
 
         SimulateMatches(groupStageMatches, seed);
 
-        QualifiedTeams qualifiedTeams = ClassifyTeams(groups, groupStageMatches, seed);
+        TournamentSettings settings = ResolveTournamentSettings(seed);
+        List<(Team Team, string Group)> qualifiedTeamsWithGroup = ClassifyQualifiedTeamsWithGroup(groups, groupStageMatches, settings);
 
-        GenerateAndPersistKnockoutPhase(qualifiedTeams);
+        GenerateAndSimulateEliminationPhase(qualifiedTeamsWithGroup, settings);
 
-        LogAndCommit();
+        LogSimulation();
     }
 
     private List<Group> GetOrderedGroups()
@@ -74,29 +77,82 @@ public sealed class TournamentSimulationService(
         }
     }
 
-    private QualifiedTeams ClassifyTeams(List<Group> groups, List<Match> matches, int seed)
+    private List<(Team Team, string Group)> ClassifyQualifiedTeamsWithGroup(List<Group> groups, List<Match> matches, TournamentSettings settings)
     {
         GroupQualifier qualifier = new GroupQualifier();
-        return qualifier.ClassifyTeams(groups, matches, seed);
+        QualifiedTeams qualifiedTeams = qualifier.ClassifyTeams(groups, matches, settings.CrossingsSeed);
+
+        Dictionary<int, string> teamGroupMap = groups
+            .SelectMany(group => group.Teams.Select(team => new { team.Id, group.Name }))
+            .ToDictionary(entry => entry.Id, entry => entry.Name);
+
+        List<(Team Team, string Group)> qualifiedWithGroups = new List<(Team Team, string Group)>();
+        AddTeamsWithGroup(qualifiedWithGroups, qualifiedTeams.TopEightFirsts, teamGroupMap);
+        AddTeamsWithGroup(qualifiedWithGroups, qualifiedTeams.RemainingFourFirsts, teamGroupMap);
+        AddTeamsWithGroup(qualifiedWithGroups, qualifiedTeams.TopEightSeconds, teamGroupMap);
+        AddTeamsWithGroup(qualifiedWithGroups, qualifiedTeams.WorstFourSeconds, teamGroupMap);
+        AddTeamsWithGroup(qualifiedWithGroups, qualifiedTeams.BestEightThirds, teamGroupMap);
+
+        return qualifiedWithGroups;
     }
 
-    private void GenerateAndPersistKnockoutPhase(QualifiedTeams qualifiedTeams)
+    private void GenerateAndSimulateEliminationPhase(List<(Team Team, string Group)> qualifiedTeamsWithGroup, TournamentSettings settings)
     {
-        List<Match> knockoutMatches = knockoutFixtureGenerator.GeneratePhase2(qualifiedTeams);
+        Fase2 fase2 = new Fase2(
+            matchSimulationEngine,
+            matchRepository,
+            tournamentSettingsRepository,
+            unitOfWork,
+            auditLogService);
 
-        foreach (Match match in knockoutMatches)
+        fase2.OrchestrateAndSimulateEliminationPhase(
+            qualifiedTeamsWithGroup,
+            stadiumRepository.GetAll(),
+            settings,
+            eliminationMatchRepository,
+            settings.CrossingsSeed);
+    }
+
+    private TournamentSettings ResolveTournamentSettings(int seed)
+    {
+        TournamentSettings? persistedSettings = tournamentSettingsRepository.GetAll().FirstOrDefault();
+        if (persistedSettings != null)
         {
-            matchRepository.Add(match);
+            return persistedSettings;
+        }
+
+        return new TournamentSettings(
+            id: 0,
+            startDate: new DateTime(2026, 6, 1),
+            maxMatchesPerDay: 3,
+            daysBetweenJourneys: 3,
+            fixtureSeed: seed,
+            crossingsSeed: seed,
+            simulationSeed: seed,
+            completionSeed: seed);
+    }
+
+    private static void AddTeamsWithGroup(
+        List<(Team Team, string Group)> target,
+        IEnumerable<Team> teams,
+        IReadOnlyDictionary<int, string> teamGroupMap)
+    {
+        foreach (Team team in teams)
+        {
+            if (!teamGroupMap.TryGetValue(team.Id, out string? groupName))
+            {
+                throw new InvalidOperationException($"No se encontró grupo para el equipo {team.Id}.");
+            }
+
+            target.Add((team, groupName));
         }
     }
 
-    private void LogAndCommit()
+    private void LogSimulation()
     {
         auditLogService.Log(
             AuditActions.SimulateGroupStageAndGenerateKnockout,
             AuditLogMessage,
             affectedEntityType: nameof(TournamentSimulationService));
-
-        unitOfWork.Commit();
     }
 }
