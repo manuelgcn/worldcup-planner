@@ -14,6 +14,7 @@
             <h1 class="auth-title mb-0">Ingresar</h1>
         </div>
         <div class="auth-body">
+
             @if (errors.Count > 0)
             {
                 <div class="alert alert-danger" role="alert">
@@ -32,11 +33,37 @@
                 <label class="form-label" for="loginEmail">Email</label>
                 <input id="loginEmail" class="form-control" placeholder="tu@email.com" @bind="email" />
             </div>
+
             <div class="mb-3">
                 <label class="form-label" for="loginPassword">Contraseña</label>
                 <input id="loginPassword" class="form-control" placeholder="••••••••" type="password" @bind="password" />
             </div>
-            <button class="btn btn-primary w-100" @onclick="Login">Ingresar</button>
+
+            <button class="btn btn-primary w-100" @onclick="Login">
+                Ingresar
+            </button>
+
+            <!-- ========================= -->
+            <!-- TESTEO FUNCIONAL -->
+            <!-- ========================= -->
+            <hr />
+
+            <div class="alert alert-info" role="alert">
+                <strong>Credenciales de prueba (solo para testeo funcional) NO MODIFICAR:</strong>
+                <ul class="mb-0">
+                    <li>
+                        <strong>Administrador</strong><br />
+                        Email: <code>admin@copa.com</code><br />
+                        Password: <code>Admin@123</code>
+                    </li>
+                    <li class="mt-2">
+                        <strong>Editor</strong><br />
+                        Email: <code>editor@copa.com</code><br />
+                        Password: <code>Editor@123</code>
+                    </li>
+                </ul>
+            </div>
+
         </div>
     </div>
 </section>
@@ -44,7 +71,7 @@
 @code {
     private string email = "";
     private string password = "";
-    private readonly List<string> errors = new List<string>();
+    private readonly List<string> errors = new();
 
     private void Login()
     {

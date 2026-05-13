@@ -109,6 +109,20 @@ User admin = new User(
 admin.AddRole(UserRoles.Admin);
 userServices.AddUser(admin);
 
+
+User editor = new User(
+    2,
+    "Editor",
+    "Sistema",
+    "editor@copa.com",
+    "Editor@123",
+    new DateTime(1995, 5, 15)
+);
+editor.AddRole(UserRoles.Editor);
+userServices.AddUser(editor);
+
+
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
