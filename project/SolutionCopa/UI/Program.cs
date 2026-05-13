@@ -42,10 +42,12 @@ builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
     new KnockoutFixtureGenerator(
         sp.GetRequiredService<IMatchSimulationEngine>(),
         sp.GetRequiredService<IMatchRepository>(),
+        sp.GetRequiredService<IEliminationMatchRepository>(),
+        sp.GetRequiredService<IGroupRepository>(),
+        sp.GetRequiredService<IStadiumRepository>(),
         sp.GetRequiredService<ITournamentSettingsRepository>(),
         sp.GetRequiredService<IUnitOfWork>(),
-        sp.GetRequiredService<IAuditLogService>(),
-        sp.GetRequiredService<IStadiumRepository>()));
+        sp.GetRequiredService<IAuditLogService>()));
 builder.Services.AddSingleton<IKnockoutFixtureGenerator>(sp => sp.GetRequiredService<KnockoutFixtureGenerator>());
 builder.Services.AddSingleton<ITournamentSimulationService, TournamentSimulationService>();
 builder.Services.AddSingleton<IFixtureOrchestrator, FixtureOrchestrator>();
