@@ -246,4 +246,60 @@ public class StadiumServicesTests
             new MockUnitOfWork(),
             AuditLogService.CreateInstance(repository, 1));
     }
+
+    [TestMethod]
+    public void SeedDefaultStadiums_FromEmpty_AddsAtLeastFourStadiums()
+    {
+        _service.SeedDefaultStadiums(performedByEmail: null);
+
+        Assert.IsTrue(_service.GetAllStadiums().Count >= 4);
+    }
+
+    [TestMethod]
+    public void SeedDefaultStadiums_FromEmpty_StadiumsHaveValidCapacity()
+    {
+        _service.SeedDefaultStadiums(performedByEmail: null);
+
+        Assert.IsTrue(_service.GetAllStadiums().All(stadium => stadium.Capacity >= 20000));
+    }
+
+    [TestMethod]
+    public void SeedDefaultStadiums_WhenFourOrMoreExist_DoesNothing()
+    {
+        _service.AddStadium(new Stadium("Centenario", "Montevideo", null, 60000) { Id = 1 });
+        _service.AddStadium(new Stadium("Maracana", "Rio", null, 78000) { Id = 2 });
+        _service.AddStadium(new Stadium("Azteca", "Mexico", null, 80000) { Id = 3 });
+        _service.AddStadium(new Stadium("Wembley", "London", null, 90000) { Id = 4 });
+        int countBefore = _service.GetAllStadiums().Count;
+
+        _service.SeedDefaultStadiums(performedByEmail: null);
+
+        Assert.AreEqual(countBefore, _service.GetAllStadiums().Count);
+    }
+
+    [TestMethod]
+    public void SeedDefaultStadiums_WhenSomeExist_FillsUpToFour()
+    {
+        _service.AddStadium(new Stadium("Centenario", "Montevideo", null, 60000) { Id = 1 });
+        _service.AddStadium(new Stadium("Maracana", "Rio", null, 78000) { Id = 2 });
+
+        _service.SeedDefaultStadiums(performedByEmail: null);
+
+        Assert.IsTrue(_service.GetAllStadiums().Count >= 4);
+    }
+
+    [TestMethod]
+    public void SeedDefaultStadiums_AuditsCreateStadiumPerGeneratedStadium()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        StadiumServices auditedService = new StadiumServices(
+            new MockStadiumRepository(),
+            new MockUnitOfWork(),
+            AuditLogService.CreateInstance(auditRepo, 1));
+
+        auditedService.SeedDefaultStadiums(performedByEmail: "admin@copa.com");
+
+        int createLogs = auditRepo.GetAll().Count(log => log.Action == AuditActions.CreateStadium);
+        Assert.IsTrue(createLogs >= 4);
+    }
 }

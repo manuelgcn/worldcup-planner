@@ -15,7 +15,9 @@
 @inject IEliminationMatchRepository EliminationRepository
 @inject ITournamentSettingsRepository SettingsRepository
 @inject ITeamRepository TeamRepository
+@inject TeamServices TeamServices
 @inject IStadiumService StadiumService
+@inject StadiumServices StadiumServicesImpl
 @inject SessionState Session
 @inject NavigationManager Nav
 
@@ -77,6 +79,23 @@ else
 
         @if (IsAdmin)
         {
+            <section class="admin-actions demo-data">
+                <h4>Datos de prueba</h4>
+                <p>Atajos para probar el flujo sin cargar equipos y estadios a mano.</p>
+                <button class="btn btn-secondary"
+                        disabled="@(teamCount >= 48 || isBusy)"
+                        @onclick="HandleFillTeamsAsync"
+                        title="@FillTeamsTooltip()">
+                    Cargar @(48 - teamCount) equipos demo
+                </button>
+                <button class="btn btn-secondary"
+                        disabled="@(stadiumCount >= 4 || isBusy)"
+                        @onclick="HandleSeedStadiumsAsync"
+                        title="@SeedStadiumsTooltip()">
+                    Cargar estadios demo
+                </button>
+            </section>
+
             <section class="admin-actions">
                 <h4>Acciones de Administrador</h4>
                 <div class="seed-input">
@@ -303,6 +322,33 @@ else
         await RunAdminActionAsync(
             () => KnockoutGenerator.SimulateUntilFinal(Session.CurrentUser?.email),
             "Bracket simulado hasta el final.");
+    }
+
+    private async Task HandleFillTeamsAsync()
+    {
+        int completionSeed = settings?.CompletionSeed ?? 0;
+        await RunAdminActionAsync(
+            () => TeamServices.FillToFortyEight(completionSeed, Session.CurrentUser?.email),
+            "Equipos demo cargados.");
+    }
+
+    private async Task HandleSeedStadiumsAsync()
+    {
+        await RunAdminActionAsync(
+            () => StadiumServicesImpl.SeedDefaultStadiums(Session.CurrentUser?.email),
+            "Estadios demo cargados.");
+    }
+
+    private string FillTeamsTooltip()
+    {
+        if (teamCount >= 48) return "Ya hay 48 equipos cargados.";
+        return $"Genera {48 - teamCount} equipos ficticios para completar los cupos por confederación.";
+    }
+
+    private string SeedStadiumsTooltip()
+    {
+        if (stadiumCount >= 4) return "Ya hay 4 o más estadios cargados.";
+        return "Carga 4 estadios reales del Mundial 2026 para que la generación de fixture funcione.";
     }
 
     private async Task RunAdminActionAsync(Action action, string successText)

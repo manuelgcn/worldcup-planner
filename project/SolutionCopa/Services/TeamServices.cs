@@ -29,6 +29,55 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
         { Confederation.CONCACAF, ConcacafQuota }
     };
 
+    public void FillToFortyEight(int? completionSeed, string? performedByEmail)
+    {
+        IReadOnlyCollection<Team> existing = teamRepository.GetAll();
+        if (existing.Count >= FixtureTeamCount)
+        {
+            return;
+        }
+
+        int seed = completionSeed ?? 0;
+        Random random = new Random(seed);
+        int nextId = NextAvailableTeamId(existing);
+
+        foreach (Confederation confederation in QuotasByConfederation.Keys)
+        {
+            int quota = QuotasByConfederation[confederation];
+            int existingForConfederation = teamRepository.CountByConfederation(confederation);
+            int missing = quota - existingForConfederation;
+
+            for (int sequence = 0; sequence < missing; sequence++)
+            {
+                Team fictitious = CreateFictitiousTeam(nextId, confederation, sequence + existingForConfederation + 1, random);
+                teamRepository.Add(fictitious);
+                auditLogService?.LogPerformedBy(
+                    AuditActions.CreateTeam,
+                    $"Generated fictitious team '{fictitious.Name}' with ranking {fictitious.FifaRanking}.",
+                    performedByEmail,
+                    nameof(Team),
+                    fictitious.Id);
+                nextId++;
+            }
+        }
+
+        unitOfWork.Commit();
+    }
+
+    private static int NextAvailableTeamId(IReadOnlyCollection<Team> existing)
+    {
+        return existing.Count == 0 ? 1 : existing.Max(team => team.Id) + 1;
+    }
+
+    private static Team CreateFictitiousTeam(int id, Confederation confederation, int sequenceInConfederation, Random random)
+    {
+        const int MinRanking = 300;
+        const int MaxRanking = 2500;
+        int ranking = random.Next(MinRanking, MaxRanking + 1);
+        string name = $"{confederation}_{sequenceInConfederation:D2}";
+        return new Team(id, name, ranking, isFictitious: true, confederation);
+    }
+
     public void AddTeam(Team team)
     {
         ArgumentNullException.ThrowIfNull(team);
