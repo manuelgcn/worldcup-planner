@@ -222,6 +222,25 @@ public class MatchRepositoryTests
         Assert.AreEqual(2, all.Count);
     }
 
+    [TestMethod]
+    public void ClearRemovesAllStoredMatches()
+    {
+        _repository.Add(CreateGroupMatch(matchId: 1, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 1)));
+        _repository.Add(CreateEliminationMatch(matchId: 10, date: new DateTime(2026, 7, 1)));
+
+        _repository.Clear();
+
+        Assert.AreEqual(0, _repository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void ClearOnEmptyRepositoryDoesNotThrow()
+    {
+        _repository.Clear();
+
+        Assert.AreEqual(0, _repository.GetAll().Count);
+    }
+
     private static MatchGroup CreateGroupMatch(int matchId, string groupName, int journeyNumber, DateTime date)
     {
         Team homeTeam = new Team(matchId + 1, name: $"Team-{matchId}-H", fifaRanking: 1000 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
