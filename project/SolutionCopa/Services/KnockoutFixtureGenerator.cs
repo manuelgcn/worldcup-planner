@@ -12,6 +12,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private const int RequiredGroupStageMatchCount = 72;
     private const int MinimumGoalsForPlayedMatch = 1;
     private const int FirstNewMatchIdSeed = 3000;
+    private const int DaysFromStartToFirstKnockoutRound = 60;
     private const string TournamentSettingsRequiredMessage = "Tournament settings are required to generate phase 2.";
     private const string StadiumsRequiredMessage = "At least one stadium is required to generate phase 2.";
     private const string GroupsRequiredMessage = "All 12 groups must exist before generating the knockout bracket.";
@@ -351,11 +352,17 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         if (existingFinals.Count == 0 && existingThirds.Count == 0)
         {
             List<MatchElimination> finalMatches = CreateRoundFromWinners(semiFinals, Phase.Final, settings, elimRepo);
-            List<MatchElimination> thirdMatches = CreateRoundFromLosers(semiFinals, Phase.ThirdPlace, settings, elimRepo);
-            foreach (MatchElimination match in finalMatches.Concat(thirdMatches))
+            foreach (MatchElimination match in finalMatches)
             {
                 elimRepo.Add(match);
             }
+
+            List<MatchElimination> thirdMatches = CreateRoundFromLosers(semiFinals, Phase.ThirdPlace, settings, elimRepo);
+            foreach (MatchElimination match in thirdMatches)
+            {
+                elimRepo.Add(match);
+            }
+
             SimulateMatches(finalMatches.Concat(thirdMatches).ToList(), settings, elimRepo);
             CommitAndAuditRound(Phase.Final, performedByEmail);
             return true;
@@ -380,7 +387,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     {
         Stadium stadium = ResolveStadium();
         int nextId = NextMatchId(elimRepo);
-        DateTime nextDate = settings.StartDate.AddDays(60 + (int)nextPhase);
+        DateTime nextDate = KnockoutPhaseDate(settings, nextPhase);
         List<MatchElimination> created = new List<MatchElimination>();
 
         for (int i = 0; i < previousRound.Count; i += 2)
@@ -410,8 +417,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         }
 
         Stadium stadium = ResolveStadium();
-        int nextId = NextMatchId(elimRepo) + 100;
-        DateTime nextDate = settings.StartDate.AddDays(60 + (int)Phase.Final);
+        int nextId = NextMatchId(elimRepo);
+        DateTime nextDate = KnockoutPhaseDate(settings, phase);
 
         MatchElimination first = semiFinals[0];
         MatchElimination second = semiFinals[1];
@@ -421,6 +428,11 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         MatchElimination thirdPlace = MatchElimination.CreateMatchWithConfig(
             nextId, nextDate, home, away, stadium, settings, phase, $"3PL-{nextId}", first, second);
         return new List<MatchElimination> { thirdPlace };
+    }
+
+    private static DateTime KnockoutPhaseDate(TournamentSettings settings, Phase phase)
+    {
+        return settings.StartDate.AddDays(DaysFromStartToFirstKnockoutRound + (int)phase);
     }
 
     private static Team LoserOf(MatchElimination match)
