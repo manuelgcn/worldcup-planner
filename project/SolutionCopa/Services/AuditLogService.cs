@@ -33,6 +33,15 @@ public sealed class AuditLogService : IAuditLogService
         Log(action, details, _defaultTournamentSettingsId, affectedEntityType, affectedEntityId);
     }
 
+    public void LogPerformedBy(string action, string details, string? performedByEmail, string? affectedEntityType = null, int? affectedEntityId = null)
+    {
+        string detailsWithActor = string.IsNullOrWhiteSpace(performedByEmail)
+            ? details
+            : $"{details} by {performedByEmail}";
+
+        Log(action, detailsWithActor, _defaultTournamentSettingsId, affectedEntityType, affectedEntityId);
+    }
+
     public List<AuditLogDto> GetAll()
     {
         List<AuditLog> logs = _repository.GetAll();

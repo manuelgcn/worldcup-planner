@@ -42,5 +42,13 @@ public static class AuditActions
 
     public const string GenerateFixture = "GENERATE_FIXTURE";
 
+    public const string RegenerateFixture = "REGENERATE_FIXTURE";
+
+    public const string ClearFixture = "CLEAR_FIXTURE";
+
+    public const string GenerateKnockout = "GENERATE_KNOCKOUT";
+
+    public const string SimulateRound = "SIMULATE_ROUND";
+
     public const string SimulateGroupStageAndGenerateKnockout = "SIMULATE_GROUP_STAGE_AND_GENERATE_KNOCKOUT";
 }
