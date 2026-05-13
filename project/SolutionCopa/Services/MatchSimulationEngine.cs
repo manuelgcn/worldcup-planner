@@ -11,6 +11,7 @@ public class MatchSimulationEngine : IMatchSimulationEngine
     private const double RankingWeightFactor = 0.0005;
     private const double MinimumScoringChance = 0.10;
     private const double MaximumScoringChance = 0.85;
+    private const int PerMatchSeedMultiplier = 397;
     private const string HomeTeamRequiredMessage = "Home team is required for simulation.";
     private const string AwayTeamRequiredMessage = "Away team is required for simulation.";
 
@@ -21,8 +22,7 @@ public class MatchSimulationEngine : IMatchSimulationEngine
         Team homeTeam = match.HomeTeam ?? throw new InvalidOperationException(HomeTeamRequiredMessage);
         Team awayTeam = match.AwayTeam ?? throw new InvalidOperationException(AwayTeamRequiredMessage);
 
-        int perMatchSeed = DerivePerMatchSeed(simulationSeed, match.MatchId);
-        Random random = new Random(perMatchSeed);
+        Random random = new Random(DerivePerMatchSeed(simulationSeed, match.MatchId));
 
         int homeGoals = GenerateGoals(random, homeTeam.FifaRanking, awayTeam.FifaRanking);
         int awayGoals = GenerateGoals(random, awayTeam.FifaRanking, homeTeam.FifaRanking);
@@ -30,8 +30,6 @@ public class MatchSimulationEngine : IMatchSimulationEngine
         match.SetGoals(homeGoals, awayGoals);
         match.MarkAsSimulated();
     }
-
-    private const int PerMatchSeedMultiplier = 397;
 
     private static int DerivePerMatchSeed(int simulationSeed, int matchId)
     {
@@ -41,7 +39,7 @@ public class MatchSimulationEngine : IMatchSimulationEngine
         }
     }
 
-    private int GenerateGoals(Random random, int teamRanking, int opponentRanking)
+    private static int GenerateGoals(Random random, int teamRanking, int opponentRanking)
     {
         double scoringChance = CalculateScoringChance(teamRanking, opponentRanking);
 
@@ -51,7 +49,6 @@ public class MatchSimulationEngine : IMatchSimulationEngine
         while (random.NextDouble() < currentChance && goals < MaxGoals)
         {
             goals++;
-
             currentChance *= GoalDecayFactor;
 
             if (currentChance < MinimumScoringChance)
@@ -62,7 +59,7 @@ public class MatchSimulationEngine : IMatchSimulationEngine
 
         return goals;
     }
-    
+
     private static double CalculateScoringChance(int teamRanking, int opponentRanking)
     {
         int rankingDifference = teamRanking - opponentRanking;
