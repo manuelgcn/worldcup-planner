@@ -379,6 +379,20 @@ public class AuditLogServiceTests
     }
 
     [TestMethod]
+    public void GetAll_PreservesInsertionOrder()
+    {
+        _service.Log("FIRST", "first action", 1);
+        _service.Log("SECOND", "second action", 1);
+        _service.Log("THIRD", "third action", 1);
+
+        List<AuditLogDto> result = _service.GetAll();
+
+        CollectionAssert.AreEqual(
+            new List<string> { "FIRST", "SECOND", "THIRD" },
+            result.Select(dto => dto.Action).ToList());
+    }
+
+    [TestMethod]
     public void Log_StoresIso8601RoundTrippableTimestamp()
     {
         DateTime before = DateTime.UtcNow.AddSeconds(-1);

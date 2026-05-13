@@ -1,0 +1,103 @@
+@page "/audit-log"
+@using ProjectCopa
+@using Services
+@using Services.DTOs
+@using Services.Interfaces
+@inject IAuditLogService AuditLogService
+@inject SessionState Session
+@inject NavigationManager Nav
+
+<PageTitle>Log de auditoría</PageTitle>
+
+@if (!Session.IsLoggedIn)
+{
+    <section class="m26-card auth-card">
+        <h1 class="m26-page-title mb-2">Log de auditoría</h1>
+        <p class="mb-3">No estás logueado.</p>
+        <button class="btn btn-primary" @onclick="@(() => Nav.NavigateTo("/login"))">Ir a Login</button>
+    </section>
+}
+else if (!IsAdmin)
+{
+    <div class="alert alert-danger" role="alert">
+        <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
+        No tenés permisos para ver el log.
+    </div>
+}
+else
+{
+    <h1 class="m26-page-title">Log de auditoría</h1>
+
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <input class="form-control" style="max-width: 280px;"
+               placeholder="Filtrar por acción (ej: CREATE_USER)"
+               @bind="actionFilter" @bind:event="oninput" />
+        <input class="form-control" style="max-width: 200px;" type="date" @bind="fromDate" />
+        <input class="form-control" style="max-width: 200px;" type="date" @bind="toDate" />
+        <button class="btn btn-outline-secondary" @onclick="ClearFilters">
+            <i class="bi bi-x-circle" aria-hidden="true"></i> Limpiar
+        </button>
+    </div>
+
+    <article class="m26-card pane">
+        @if (!Filtered.Any())
+        {
+            <div class="m26-empty">
+                <i class="bi bi-journal-x" aria-hidden="true"></i>
+                <p class="mb-0">No hay registros que coincidan.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table m26-scoreboard mb-0">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Acción</th>
+                            <th>Entidad</th>
+                            <th>ID</th>
+                            <th>Detalle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (AuditLogDto log in Filtered)
+                        {
+                            <tr>
+                                <td>@log.Timestamp.ToString("o")</td>
+                                <td><span class="m26-conf-badge">@log.Action</span></td>
+                                <td>@(log.EntityType ?? "—")</td>
+                                <td>@(log.EntityId?.ToString() ?? "—")</td>
+                                <td>@log.Details</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </article>
+}
+
+@code {
+    private string actionFilter = "";
+    private DateTime? fromDate;
+    private DateTime? toDate;
+
+    private bool IsAdmin =>
+        Session.IsLoggedIn && Session.CurrentUser!.Roles.Contains(UserRoles.Admin);
+
+    private IEnumerable<AuditLogDto> Filtered =>
+        AuditLogService.GetAll()
+            .Where(l => string.IsNullOrWhiteSpace(actionFilter)
+                || l.Action.Contains(actionFilter, StringComparison.OrdinalIgnoreCase))
+            .Where(l => !fromDate.HasValue || l.Timestamp.Date >= fromDate.Value.Date)
+            .Where(l => !toDate.HasValue || l.Timestamp.Date <= toDate.Value.Date)
+            .OrderByDescending(l => l.Timestamp);
+
+    private void ClearFilters()
+    {
+        actionFilter = "";
+        fromDate = null;
+        toDate = null;
+    }
+}
