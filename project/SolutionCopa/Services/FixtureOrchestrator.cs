@@ -11,11 +11,12 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     private const int MinimumStadiumCount = 4;
     private const int GroupStageJourneyCount = 3;
     private const string FixtureAlreadyGeneratedMessage = "Fixture is already generated. Use RegenerateGroupStage instead.";
+    private const string FixtureNotGeneratedMessage = "Fixture has not been generated yet.";
     private const string KnockoutAlreadyGeneratedMessage = "Cannot regenerate fixture: knockout phase already exists.";
     private const string MissingSettingsMessage = "Tournament settings are not configured.";
     private const string MissingTeamsMessage = "Fixture requires exactly 48 teams.";
     private const string MissingStadiumsMessage = "Fixture requires at least 4 stadiums.";
-    private const string FixtureNotGeneratedMessage = "Fixture has not been generated yet.";
+    private const string ClearFixtureDetails = "Previous fixture cleared before regeneration.";
 
     private readonly ITeamRepository _teamRepository;
     private readonly IStadiumRepository _stadiumRepository;
@@ -62,49 +63,89 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     public void GenerateGroupStage(int? fixtureSeedOverride, string? performedByEmail)
     {
         EnsureFixtureNotYetGenerated();
-        TournamentSettings settings = LoadSettings();
-        IReadOnlyCollection<Team> teams = LoadTeams();
-        IReadOnlyCollection<Stadium> stadiums = LoadStadiums();
+        GenerationPlan plan = PrepareGenerationPlan(fixtureSeedOverride);
 
-        int effectiveSeed = ResolveFixtureSeed(fixtureSeedOverride, settings);
+        ExecuteAndCommit(plan);
 
-        BuildAndPersistFixture(teams, stadiums, settings, effectiveSeed);
-
-        _unitOfWork.Commit();
-
-        _auditLogService.LogPerformedBy(
-            AuditActions.GenerateFixture,
-            $"Fixture generated with seed {effectiveSeed}.",
-            performedByEmail,
-            nameof(FixtureOrchestrator));
+        AuditGenerated(plan.EffectiveSeed, performedByEmail);
     }
 
     public void RegenerateGroupStage(int? fixtureSeedOverride, string? performedByEmail)
     {
         EnsureFixtureGenerated();
         EnsureKnockoutNotYetGenerated();
+        GenerationPlan plan = PrepareGenerationPlan(fixtureSeedOverride);
 
+        ClearGroupStageStorage();
+        AuditCleared(performedByEmail);
+
+        ExecuteAndCommit(plan);
+
+        AuditRegenerated(plan.EffectiveSeed, performedByEmail);
+    }
+
+    private GenerationPlan PrepareGenerationPlan(int? fixtureSeedOverride)
+    {
         TournamentSettings settings = LoadSettings();
         IReadOnlyCollection<Team> teams = LoadTeams();
         IReadOnlyCollection<Stadium> stadiums = LoadStadiums();
-        int effectiveSeed = ResolveFixtureSeed(fixtureSeedOverride, settings);
+        int effectiveSeed = fixtureSeedOverride ?? settings.FixtureSeed;
+        return new GenerationPlan(teams, stadiums, settings, effectiveSeed);
+    }
 
-        ClearGroupStageStorage();
-        _auditLogService.LogPerformedBy(
-            AuditActions.ClearFixture,
-            "Previous fixture cleared before regeneration.",
-            performedByEmail,
-            nameof(FixtureOrchestrator));
-
-        BuildAndPersistFixture(teams, stadiums, settings, effectiveSeed);
-
+    private void ExecuteAndCommit(GenerationPlan plan)
+    {
+        IReadOnlyCollection<Group> groups = BuildGroups(plan);
+        PersistGroups(groups);
+        PersistJourneys();
+        PersistMatches(groups, plan.Stadiums, plan.Settings);
         _unitOfWork.Commit();
+    }
 
-        _auditLogService.LogPerformedBy(
-            AuditActions.RegenerateFixture,
-            $"Fixture regenerated with seed {effectiveSeed}.",
-            performedByEmail,
-            nameof(FixtureOrchestrator));
+    private static IReadOnlyCollection<Group> BuildGroups(GenerationPlan plan)
+    {
+        FixtureService fixtureService = new FixtureService(plan.Teams, plan.Stadiums, plan.EffectiveSeed, auditLogService: null);
+        return fixtureService.CreateFixture();
+    }
+
+    private void PersistGroups(IReadOnlyCollection<Group> groups)
+    {
+        foreach (Group group in groups)
+        {
+            _groupRepository.Add(group);
+        }
+    }
+
+    private void PersistJourneys()
+    {
+        for (int journeyNumber = 1; journeyNumber <= GroupStageJourneyCount; journeyNumber++)
+        {
+            _journeyRepository.Add(Journey.CreateInstance(journeyNumber));
+        }
+    }
+
+    private void PersistMatches(
+        IReadOnlyCollection<Group> groups,
+        IReadOnlyCollection<Stadium> stadiums,
+        TournamentSettings settings)
+    {
+        GroupFixtureGenerator matchGenerator = new GroupFixtureGenerator();
+        List<Match> matches = matchGenerator.GenerateMatches(
+            groups.ToList(),
+            stadiums.ToList(),
+            settings.StartDate);
+
+        foreach (Match match in matches)
+        {
+            _matchRepository.Add(match);
+        }
+    }
+
+    private void ClearGroupStageStorage()
+    {
+        _matchRepository.Clear();
+        _journeyRepository.Clear();
+        _groupRepository.Clear();
     }
 
     private void EnsureFixtureNotYetGenerated()
@@ -161,62 +202,36 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         return stadiums;
     }
 
-    private static int ResolveFixtureSeed(int? fixtureSeedOverride, TournamentSettings settings)
+    private void AuditGenerated(int seed, string? performedByEmail)
     {
-        return fixtureSeedOverride ?? settings.FixtureSeed;
+        _auditLogService.LogPerformedBy(
+            AuditActions.GenerateFixture,
+            $"Fixture generated with seed {seed}.",
+            performedByEmail,
+            nameof(FixtureOrchestrator));
     }
 
-    private void BuildAndPersistFixture(
-        IReadOnlyCollection<Team> teams,
-        IReadOnlyCollection<Stadium> stadiums,
-        TournamentSettings settings,
-        int effectiveSeed)
+    private void AuditCleared(string? performedByEmail)
     {
-        FixtureService fixtureService = new FixtureService(teams, stadiums, effectiveSeed, auditLogService: null);
-        IReadOnlyCollection<Group> groups = fixtureService.CreateFixture();
-
-        PersistGroups(groups);
-        PersistJourneys();
-        PersistMatches(groups, stadiums, settings);
+        _auditLogService.LogPerformedBy(
+            AuditActions.ClearFixture,
+            ClearFixtureDetails,
+            performedByEmail,
+            nameof(FixtureOrchestrator));
     }
 
-    private void PersistGroups(IReadOnlyCollection<Group> groups)
+    private void AuditRegenerated(int seed, string? performedByEmail)
     {
-        foreach (Group group in groups)
-        {
-            _groupRepository.Add(group);
-        }
+        _auditLogService.LogPerformedBy(
+            AuditActions.RegenerateFixture,
+            $"Fixture regenerated with seed {seed}.",
+            performedByEmail,
+            nameof(FixtureOrchestrator));
     }
 
-    private void PersistJourneys()
-    {
-        for (int journeyNumber = 1; journeyNumber <= GroupStageJourneyCount; journeyNumber++)
-        {
-            _journeyRepository.Add(Journey.CreateInstance(journeyNumber));
-        }
-    }
-
-    private void PersistMatches(
-        IReadOnlyCollection<Group> groups,
-        IReadOnlyCollection<Stadium> stadiums,
-        TournamentSettings settings)
-    {
-        GroupFixtureGenerator matchGenerator = new GroupFixtureGenerator();
-        List<Match> matches = matchGenerator.GenerateMatches(
-            groups.ToList(),
-            stadiums.ToList(),
-            settings.StartDate);
-
-        foreach (Match match in matches)
-        {
-            _matchRepository.Add(match);
-        }
-    }
-
-    private void ClearGroupStageStorage()
-    {
-        _matchRepository.Clear();
-        _journeyRepository.Clear();
-        _groupRepository.Clear();
-    }
+    private sealed record GenerationPlan(
+        IReadOnlyCollection<Team> Teams,
+        IReadOnlyCollection<Stadium> Stadiums,
+        TournamentSettings Settings,
+        int EffectiveSeed);
 }
