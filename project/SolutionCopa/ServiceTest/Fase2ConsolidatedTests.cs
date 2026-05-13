@@ -70,7 +70,10 @@ namespace ServiceTest
             public Match? GetById(int matchId) => throw new InvalidOperationException("boom");
             public List<Match> GetByGroup(string groupName) => throw new NotImplementedException();
             public List<Match> GetByJourney(int journeyNumber) => throw new NotImplementedException();
+            public List<Match> GetByStadium(int stadiumId) => throw new NotImplementedException();
+            public List<Match> GetByPhase(Phase phase) => throw new NotImplementedException();
             public List<Match> GetByDateRange(DateTime from, DateTime to) => throw new NotImplementedException();
+            public List<Match> GetAll() => throw new NotImplementedException();
         }
     }
 }
