@@ -48,6 +48,7 @@ builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
         sp.GetRequiredService<IStadiumRepository>()));
 builder.Services.AddSingleton<IKnockoutFixtureGenerator>(sp => sp.GetRequiredService<KnockoutFixtureGenerator>());
 builder.Services.AddSingleton<ITournamentSimulationService, TournamentSimulationService>();
+builder.Services.AddSingleton<IFixtureOrchestrator, FixtureOrchestrator>();
 
 
 builder.Services.AddScoped<SessionState>();
@@ -63,6 +64,30 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
+
+// =======================
+// Seed default TournamentSettings (id=1)
+// Required because IAuditLogService is created with defaultTournamentSettingsId=1.
+// =======================
+ITournamentSettingsRepository settingsRepository =
+    app.Services.GetRequiredService<ITournamentSettingsRepository>();
+
+const int DefaultTournamentSettingsId = 1;
+
+if (settingsRepository.GetById(DefaultTournamentSettingsId) is null)
+{
+    TournamentSettings defaultSettings = new TournamentSettings(
+        id: DefaultTournamentSettingsId,
+        startDate: new DateTime(2026, 6, 1),
+        maxMatchesPerDay: 3,
+        daysBetweenJourneys: 3,
+        fixtureSeed: 0,
+        crossingsSeed: 0,
+        simulationSeed: 0,
+        completionSeed: 0);
+
+    settingsRepository.Add(defaultSettings);
+}
 
 // =======================
 // Seed Admin

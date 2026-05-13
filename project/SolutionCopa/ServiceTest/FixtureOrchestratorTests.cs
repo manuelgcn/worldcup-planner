@@ -317,12 +317,14 @@ public class FixtureOrchestratorTests
     private void SeedTeams(int count)
     {
         Confederation[] confederations = Enum.GetValues<Confederation>();
+        const int teamsPerRankingTier = 12;
         for (int teamIndex = 0; teamIndex < count; teamIndex++)
         {
+            int tier = teamIndex / teamsPerRankingTier;
             Team team = new Team(
                 id: teamIndex + 1,
                 name: $"Team-{teamIndex + 1:D2}",
-                fifaRanking: 500 + teamIndex,
+                fifaRanking: 2000 - (tier * 100),
                 isFictitious: false,
                 confederation: confederations[teamIndex % confederations.Length]);
             _teamRepository.Add(team);
