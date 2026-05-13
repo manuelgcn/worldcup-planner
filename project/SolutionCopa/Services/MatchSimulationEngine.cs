@@ -11,6 +11,13 @@ public class MatchSimulationEngine : IMatchSimulationEngine
     private const double RankingWeightFactor = 0.0005;
     private const double MinimumScoringChance = 0.10;
     private const double MaximumScoringChance = 0.85;
+    private const int PerMatchSeedMultiplier = 397;
+    private const int PenaltyKicksPerTeam = 5;
+    private const int SuddenDeathSafetyCap = 50;
+    private const double BasePenaltyConversionChance = 0.75;
+    private const double PenaltyRankingWeightFactor = 0.00015;
+    private const double MinimumPenaltyConversionChance = 0.40;
+    private const double MaximumPenaltyConversionChance = 0.95;
     private const string HomeTeamRequiredMessage = "Home team is required for simulation.";
     private const string AwayTeamRequiredMessage = "Away team is required for simulation.";
 
@@ -18,19 +25,94 @@ public class MatchSimulationEngine : IMatchSimulationEngine
     {
         ArgumentNullException.ThrowIfNull(match);
 
-        Random random = new Random(simulationSeed);
-
         Team homeTeam = match.HomeTeam ?? throw new InvalidOperationException(HomeTeamRequiredMessage);
         Team awayTeam = match.AwayTeam ?? throw new InvalidOperationException(AwayTeamRequiredMessage);
+
+        Random random = new Random(DerivePerMatchSeed(simulationSeed, match.MatchId));
 
         int homeGoals = GenerateGoals(random, homeTeam.FifaRanking, awayTeam.FifaRanking);
         int awayGoals = GenerateGoals(random, awayTeam.FifaRanking, homeTeam.FifaRanking);
 
         match.SetGoals(homeGoals, awayGoals);
         match.MarkAsSimulated();
+
+        if (match is MatchElimination eliminationMatch && eliminationMatch.IsDraw())
+        {
+            ResolveByPenaltyShootout(eliminationMatch, random, homeTeam.FifaRanking, awayTeam.FifaRanking);
+        }
     }
 
-    private int GenerateGoals(Random random, int teamRanking, int opponentRanking)
+    private static void ResolveByPenaltyShootout(MatchElimination match, Random random, int homeRanking, int awayRanking)
+    {
+        double homeChance = CalculatePenaltyConversionChance(homeRanking, awayRanking);
+        double awayChance = CalculatePenaltyConversionChance(awayRanking, homeRanking);
+
+        int homePenalties = 0;
+        int awayPenalties = 0;
+
+        for (int kick = 0; kick < PenaltyKicksPerTeam; kick++)
+        {
+            if (random.NextDouble() < homeChance)
+            {
+                homePenalties++;
+            }
+            if (random.NextDouble() < awayChance)
+            {
+                awayPenalties++;
+            }
+        }
+
+        int suddenDeathKick = 0;
+        while (homePenalties == awayPenalties && suddenDeathKick < SuddenDeathSafetyCap)
+        {
+            bool homeScored = random.NextDouble() < homeChance;
+            bool awayScored = random.NextDouble() < awayChance;
+            if (homeScored)
+            {
+                homePenalties++;
+            }
+            if (awayScored)
+            {
+                awayPenalties++;
+            }
+            suddenDeathKick++;
+        }
+
+        if (homePenalties == awayPenalties)
+        {
+            homePenalties++;
+        }
+
+        match.SetPenaltyShootoutResult(homePenalties, awayPenalties);
+    }
+
+    private static double CalculatePenaltyConversionChance(int shooterRanking, int opponentRanking)
+    {
+        int rankingDifference = shooterRanking - opponentRanking;
+        double adjustedChance = BasePenaltyConversionChance + (rankingDifference * PenaltyRankingWeightFactor);
+
+        if (adjustedChance < MinimumPenaltyConversionChance)
+        {
+            return MinimumPenaltyConversionChance;
+        }
+
+        if (adjustedChance > MaximumPenaltyConversionChance)
+        {
+            return MaximumPenaltyConversionChance;
+        }
+
+        return adjustedChance;
+    }
+
+    private static int DerivePerMatchSeed(int simulationSeed, int matchId)
+    {
+        unchecked
+        {
+            return (simulationSeed * PerMatchSeedMultiplier) ^ matchId;
+        }
+    }
+
+    private static int GenerateGoals(Random random, int teamRanking, int opponentRanking)
     {
         double scoringChance = CalculateScoringChance(teamRanking, opponentRanking);
 
@@ -40,7 +122,6 @@ public class MatchSimulationEngine : IMatchSimulationEngine
         while (random.NextDouble() < currentChance && goals < MaxGoals)
         {
             goals++;
-
             currentChance *= GoalDecayFactor;
 
             if (currentChance < MinimumScoringChance)
@@ -51,7 +132,7 @@ public class MatchSimulationEngine : IMatchSimulationEngine
 
         return goals;
     }
-    
+
     private static double CalculateScoringChance(int teamRanking, int opponentRanking)
     {
         int rankingDifference = teamRanking - opponentRanking;

@@ -217,10 +217,20 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             _simulationEngine.Simulate(match, seed);
 
             _matchRepository.Update(match);
-            _auditLog?.Log(AuditActions.SimulateMatch, $"Simulated elimination match {matchId} with seed {seed}.", settings.Id, "Match", match.MatchId);
+            _auditLog?.Log(AuditActions.SimulateMatch, BuildSimulationAuditDetails(match, seed), settings.Id, "Match", match.MatchId);
         }
 
         _unitOfWork.Commit();
+    }
+
+    private static string BuildSimulationAuditDetails(Match match, int seed)
+    {
+        string baseMessage = $"Simulated elimination match {match.MatchId} with seed {seed}.";
+        if (match is MatchElimination eliminationMatch && eliminationMatch.WonByPenalties)
+        {
+            return baseMessage + $" Tiebreaker resolved by penalty shootout {eliminationMatch.HomePenaltyGoals}-{eliminationMatch.AwayPenaltyGoals}.";
+        }
+        return baseMessage;
     }
 
     public void OrchestrateAndSimulateEliminationPhase(
@@ -245,7 +255,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
                 int seed = settings.SimulationSeed + match.MatchId;
                 _simulationEngine.Simulate(match, seed);
                 eliminationRepo.Update(match);
-                _auditLog?.Log(AuditActions.SimulateMatch, $"Simulated elimination match {match.MatchId} with seed {seed}.", settings.Id, "Match", match.MatchId);
+                _auditLog?.Log(AuditActions.SimulateMatch, BuildSimulationAuditDetails(match, seed), settings.Id, "Match", match.MatchId);
             }
             catch (Exception ex)
             {
