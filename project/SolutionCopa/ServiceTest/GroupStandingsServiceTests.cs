@@ -149,7 +149,7 @@ public class GroupStandingsServiceTests
 
         AddPlayedMatch(matchId: 1, home: _teamAlpha, away: _teamBravo, homeGoals: 2, awayGoals: 0);
         Journey journey = Journey.CreateInstance(1);
-        MatchGroup otherMatch = MatchGroup.CreateInstance(matchId: 2, matchDate: DefaultStartDate, homeTeam: otherHome, awayTeam: otherAway, stadium: _stadium, group: otherGroup, journey: journey);
+        MatchGroup otherMatch = MatchGroup.CreateInstance(id:2, matchDate: DefaultStartDate, homeTeam: otherHome, awayTeam: otherAway, stadium: _stadium, group: otherGroup, journey: journey);
         otherMatch.SetGoals(5, 0);
         _matchRepository.Add(otherMatch);
 
@@ -200,7 +200,7 @@ public class GroupStandingsServiceTests
     {
         Journey journey = Journey.CreateInstance(1);
         MatchGroup match = MatchGroup.CreateInstance(
-            matchId: matchId,
+            id: matchId,
             matchDate: DefaultStartDate.AddDays(matchId),
             homeTeam: home,
             awayTeam: away,

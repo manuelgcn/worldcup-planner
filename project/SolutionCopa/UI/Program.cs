@@ -49,6 +49,7 @@ builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
 builder.Services.AddSingleton<IKnockoutFixtureGenerator>(sp => sp.GetRequiredService<KnockoutFixtureGenerator>());
 builder.Services.AddSingleton<ITournamentSimulationService, TournamentSimulationService>();
 builder.Services.AddSingleton<IFixtureOrchestrator, FixtureOrchestrator>();
+builder.Services.AddSingleton<IGroupStandingsService, GroupStandingsService>();
 
 
 builder.Services.AddScoped<SessionState>();
