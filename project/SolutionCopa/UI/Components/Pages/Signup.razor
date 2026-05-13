@@ -68,6 +68,7 @@
                 password: password,
                 dateOfBirth: dateOfBirth
             );
+            user.AddRole(UserRoles.Editor);
 
             UserServices.AddUser(user);
             Nav.NavigateTo("/login");
