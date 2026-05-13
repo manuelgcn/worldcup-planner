@@ -85,6 +85,16 @@ public class User
             roles.Add(role);
         }
     }
+    
+    
+    public void RemoveRoles(UserRoles role)
+    {
+        if (roles.Contains(role) && roles.Count > 1)
+        {
+            roles.Remove(role);
+        }
+    }
+
 
     public void UpdatePersonalData(string name, string lastname, string email)
     {

@@ -1,0 +1,153 @@
+@page "/admin/users"
+@using ProjectCopa
+@using Services
+@inject SessionState Session
+@inject UserServices UserServices
+@inject NavigationManager Nav
+
+<PageTitle>Administración de Usuarios</PageTitle>
+
+<h3>Administración de Usuarios</h3>
+
+@if (!Session.IsLoggedIn)
+{
+    <p>No estas logueado</p>
+    <button @onclick="GoToLogin">Ir a Login</button>
+}
+else if (!IsAdmin)
+{
+    <p>No tenes permisos para acceder a esta sección</p>
+}
+else
+{
+    @if (errors.Any())
+    {
+        <div class="alert alert-danger">
+            <ul>
+                @foreach (var e in errors)
+                {
+                    <li>@e</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <div class="alert alert-success">
+            @successMessage
+        </div>
+    }
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Nombre</th>
+                <th>Roles</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (User user in users)
+            {
+                <tr>
+                    <td>@user.idUser</td>
+                    <td>@user.email</td>
+                    <td>@user.name @user.lastname</td>
+                    <td>
+                        @foreach (UserRoles role in user.Roles)
+                        {
+                            <span class="badge bg-secondary me-1">
+                                @role
+                                <button
+                                    class="btn btn-sm btn-link text-danger"
+                                    @onclick="() => RemoveRole(user.idUser, role)">
+                                    x
+                                </button>
+                            </span>
+                        }
+                    </td>
+                    <td>
+                        <select @bind="selectedRole">
+                            @foreach (UserRoles role in Enum.GetValues<UserRoles>())
+                            {
+                                <option value="@role">@role</option>
+                            }
+                        </select>
+                        <button class="btn btn-sm btn-primary"
+                                @onclick="() => AddRole(user.idUser)">
+                            Agregar Rol
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<User> users = new();
+    private readonly List<string> errors = new();
+    private string? successMessage;
+    private UserRoles selectedRole;
+
+    private bool IsAdmin =>
+        Session.CurrentUser?.Roles.Contains(UserRoles.Admin) == true;
+
+    protected override void OnInitialized()
+    {
+        LoadUsers();
+    }
+
+    private void LoadUsers()
+    {
+        users = UserServices.GetAllUsers().ToList();
+    }
+
+    private void AddRole(int userId)
+    {
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            UserServices.AssignRole(userId, selectedRole);
+            successMessage = "Rol asignado correctamente";
+            LoadUsers();
+        }
+        catch (ArgumentException ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void RemoveRole(int userId, UserRoles role)
+    {
+        errors.Clear();
+        successMessage = null;
+        
+        if (userId == 1)
+        {
+            errors.Add("El administrador del sistema no puede ser modificado");
+            return;
+        }
+
+        try
+        {
+            UserServices.RemoveRole(userId, role);
+            successMessage = "Rol removido correctamente";
+            LoadUsers();
+        }
+        catch (ArgumentException ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void GoToLogin()
+    {
+        Nav.NavigateTo("/login");
+    }
+}

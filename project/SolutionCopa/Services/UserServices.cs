@@ -25,6 +25,9 @@ public class UserServices
             throw new ArgumentException("Email already exists");
         if (users.Any(u => u.idUser == user.idUser))
             throw new ArgumentException("User ID is already assigned");
+        if (!user.Roles.Any())
+            throw new ArgumentException("User must have at least one role");
+
 
         users.Add(user);
         _auditLogService?.Log(
@@ -33,6 +36,32 @@ public class UserServices
             nameof(User),
             user.idUser);
     }
+    
+    
+    
+    public void RemoveRole(int userId, UserRoles role)
+    {
+        User user = GetUserById(userId);
+
+        if (!user.Roles.Contains(role))
+            return;
+
+        if (user.Roles.Count == 1)
+            throw new ArgumentException("User must have at least one role");
+
+        user.RemoveRoles(role);
+
+        _auditLogService?.Log(
+            AuditActions.RemoveUserRoles,
+            $"Role={role} removed from UserId={user.idUser}.",
+            nameof(User),
+            user.idUser
+        );
+    }
+
+
+    
+    
 
     public User GetUserByEmail(string email)
     {
@@ -69,6 +98,12 @@ public class UserServices
 
     public void UpdateUser(int id, string name, string lastname, string email)
     {
+
+        if (id == 1)
+        {
+            throw new ArgumentException("El usuario administrador del sistema no puede ser modificado");
+        }
+
         User user = GetUserById(id);
 
         if (users.Any(u => u.email == email && u.idUser != id))
