@@ -8,16 +8,16 @@ public sealed class StadiumScheduleTracker
     private const string StadiumAlreadyOccupiedMessage = "Stadium already has a match at this time.";
     private const string StadiumMaxMatchesExceededMessage = "Stadium already has maximum matches for the day.";
 
-    private readonly Dictionary<StadiumDateKey, DailySchedule> bookings = new();
+    private readonly Dictionary<StadiumDateKey, DailySchedule> _bookings = new Dictionary<StadiumDateKey, DailySchedule>();
 
     public bool CanSchedule(Stadium stadium, DateTime dateTime)
     {
         ArgumentNullException.ThrowIfNull(stadium);
 
-        StadiumDateKey key = new(stadium, DateOnly.FromDateTime(dateTime));
+        StadiumDateKey key = new StadiumDateKey(stadium, DateOnly.FromDateTime(dateTime));
         TimeSpan time = dateTime.TimeOfDay;
 
-        if (!bookings.TryGetValue(key, out DailySchedule? schedule))
+        if (!_bookings.TryGetValue(key, out DailySchedule? schedule))
         {
             return true;
         }
@@ -29,13 +29,13 @@ public sealed class StadiumScheduleTracker
     {
         ArgumentNullException.ThrowIfNull(stadium);
 
-        StadiumDateKey key = new(stadium, DateOnly.FromDateTime(dateTime));
+        StadiumDateKey key = new StadiumDateKey(stadium, DateOnly.FromDateTime(dateTime));
         TimeSpan time = dateTime.TimeOfDay;
 
-        if (!bookings.TryGetValue(key, out DailySchedule? schedule))
+        if (!_bookings.TryGetValue(key, out DailySchedule? schedule))
         {
             schedule = new DailySchedule();
-            bookings[key] = schedule;
+            _bookings[key] = schedule;
         }
 
         schedule.Book(time);
@@ -45,7 +45,7 @@ public sealed class StadiumScheduleTracker
 
     private sealed class DailySchedule
     {
-        private readonly HashSet<TimeSpan> _bookedTimes = new();
+        private readonly HashSet<TimeSpan> _bookedTimes = new HashSet<TimeSpan>();
 
         public bool CanBook(TimeSpan time)
         {

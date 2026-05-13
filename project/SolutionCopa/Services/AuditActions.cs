@@ -33,4 +33,6 @@ public static class AuditActions
     public const string DeleteStadium = "DELETE_STADIUM";
 
     public const string GenerateFixture = "GENERATE_FIXTURE";
+
+    public const string SimulateGroupStageAndGenerateKnockout = "SIMULATE_GROUP_STAGE_AND_GENERATE_KNOCKOUT";
 }

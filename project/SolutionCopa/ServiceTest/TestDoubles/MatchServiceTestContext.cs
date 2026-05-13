@@ -162,6 +162,11 @@ public sealed class MatchServiceTestContext
         {
             return groups.GetValueOrDefault(groupId);
         }
+
+        public IReadOnlyCollection<Group> GetAll()
+        {
+            return groups.Values.ToList();
+        }
     }
 
     private sealed class SimpleJourneyRepository(Dictionary<int, Journey> journeys) : IJourneyRepository

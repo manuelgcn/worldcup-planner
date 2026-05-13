@@ -5,4 +5,5 @@ namespace DataAccess.Interfaces;
 public interface IGroupRepository
 {
     Group? GetById(int groupId);
+    IReadOnlyCollection<Group> GetAll();
 }
