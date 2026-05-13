@@ -18,16 +18,27 @@ public class MatchSimulationEngine : IMatchSimulationEngine
     {
         ArgumentNullException.ThrowIfNull(match);
 
-        Random random = new Random(simulationSeed);
-
         Team homeTeam = match.HomeTeam ?? throw new InvalidOperationException(HomeTeamRequiredMessage);
         Team awayTeam = match.AwayTeam ?? throw new InvalidOperationException(AwayTeamRequiredMessage);
+
+        int perMatchSeed = DerivePerMatchSeed(simulationSeed, match.MatchId);
+        Random random = new Random(perMatchSeed);
 
         int homeGoals = GenerateGoals(random, homeTeam.FifaRanking, awayTeam.FifaRanking);
         int awayGoals = GenerateGoals(random, awayTeam.FifaRanking, homeTeam.FifaRanking);
 
         match.SetGoals(homeGoals, awayGoals);
         match.MarkAsSimulated();
+    }
+
+    private const int PerMatchSeedMultiplier = 397;
+
+    private static int DerivePerMatchSeed(int simulationSeed, int matchId)
+    {
+        unchecked
+        {
+            return (simulationSeed * PerMatchSeedMultiplier) ^ matchId;
+        }
     }
 
     private int GenerateGoals(Random random, int teamRanking, int opponentRanking)
