@@ -9,6 +9,7 @@ namespace Services;
 public sealed class TournamentSimulationService(
     IGroupRepository groupRepository,
     IMatchRepository matchRepository,
+    IEliminationMatchRepository eliminationMatchRepository,
     IUnitOfWork unitOfWork,
     IMatchSimulationEngine matchSimulationEngine,
     IAuditLogService auditLogService,
@@ -88,7 +89,7 @@ public sealed class TournamentSimulationService(
         List<Match> knockoutMatches = knockoutFixtureGenerator.GeneratePhase2(qualifiedTeams);
         foreach (Match match in knockoutMatches)
         {
-            matchRepository.Add(match);
+            eliminationMatchRepository.Add(match);
         }
     }
 

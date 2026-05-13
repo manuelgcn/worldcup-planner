@@ -27,6 +27,7 @@ public sealed class TournamentSimulationServiceTests
 
     private MockGroupRepository _groupRepository = null!;
     private MockMatchRepository _matchRepository = null!;
+    private EliminationMatchRepository _eliminationMatchRepository = null!;
     private MockMatchSimulationEngine _matchSimulationEngine = null!;
     private MockKnockoutFixtureGenerator _knockoutFixtureGenerator = null!;
     private MockAuditLogRepository _auditLogRepository = null!;
@@ -39,6 +40,7 @@ public sealed class TournamentSimulationServiceTests
     {
         _groupRepository = new MockGroupRepository();
         _matchRepository = new MockMatchRepository();
+        _eliminationMatchRepository = new EliminationMatchRepository();
         _matchSimulationEngine = new MockMatchSimulationEngine();
         _knockoutFixtureGenerator = new MockKnockoutFixtureGenerator();
         _auditLogRepository = new MockAuditLogRepository();
@@ -53,6 +55,7 @@ public sealed class TournamentSimulationServiceTests
         _service = new TournamentSimulationService(
             _groupRepository,
             _matchRepository,
+            _eliminationMatchRepository,
             _unitOfWork,
             _matchSimulationEngine,
             auditLogService,
@@ -67,7 +70,8 @@ public sealed class TournamentSimulationServiceTests
 
         Assert.AreEqual(GroupCount * MatchesPerGroup, _matchSimulationEngine.SimulateCalls);
         Assert.AreEqual(GroupCount * MatchesPerGroup, _matchRepository.UpdateCalls);
-        Assert.AreEqual(KnockoutMatchesCount, _matchRepository.AddCalls);
+        Assert.AreEqual(0, _matchRepository.AddCalls);
+        Assert.AreEqual(KnockoutMatchesCount, _eliminationMatchRepository.GetAll().Count);
         Assert.IsNotNull(_knockoutFixtureGenerator.LastQualifiedTeamsReceived);
         Assert.AreEqual(1, _unitOfWork.CommitCalls);
         Assert.IsTrue(_auditLogRepository.GetAll().Any(log => log.Action == AuditActions.SimulateGroupStageAndGenerateKnockout));
@@ -78,6 +82,7 @@ public sealed class TournamentSimulationServiceTests
     {
         MockGroupRepository emptyGroupRepository = new MockGroupRepository();
         MockMatchRepository emptyMatchRepository = new MockMatchRepository();
+        EliminationMatchRepository emptyEliminationRepository = new EliminationMatchRepository();
         MockKnockoutFixtureGenerator emptyKnockoutFixtureGenerator = new MockKnockoutFixtureGenerator();
         TournamentSettingsRepository emptySettingsRepository = new TournamentSettingsRepository();
         MockUnitOfWork emptyUnitOfWork = new MockUnitOfWork();
@@ -88,6 +93,7 @@ public sealed class TournamentSimulationServiceTests
         TournamentSimulationService service = new TournamentSimulationService(
             emptyGroupRepository,
             emptyMatchRepository,
+            emptyEliminationRepository,
             emptyUnitOfWork,
             _matchSimulationEngine,
             auditLogService,
