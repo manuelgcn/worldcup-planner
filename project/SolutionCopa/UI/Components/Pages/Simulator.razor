@@ -1,0 +1,95 @@
+@page "/simulator"
+@using ProjectCopa
+@using Services.Interfaces
+@inject ITournamentSimulationService TournamentSimulationService
+@inject SessionState Session
+@inject NavigationManager Nav
+
+<PageTitle>Simulador de Torneo</PageTitle>
+
+<h3>Simulador de Torneo</h3>
+
+@if (!Session.IsLoggedIn)
+{
+    <p>No estas logueado</p>
+    <button @onclick="GoToLogin">Ir a Login</button>
+}
+else if (!IsAdmin)
+{
+    <p>No tenes permisos para simular el torneo</p>
+}
+else
+{
+    @if (errors.Any())
+    {
+        <ul style="color:red">
+            @foreach (var error in errors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <p style="color:green">@successMessage</p>
+    }
+
+    <div style="margin-bottom: 20px;">
+        <h4>Simulacion deterministica</h4>
+        <input type="number" @bind="seed" placeholder="Seed" />
+        <button @onclick="SimulateWithSeed">Simular con seed</button>
+    </div>
+
+    <div>
+        <h4>Simulacion aleatoria</h4>
+        <button @onclick="SimulateRandom">Simular random</button>
+    </div>
+}
+
+@code {
+    private int seed;
+    private readonly List<string> errors = new();
+    private string? successMessage;
+
+    private bool IsAdmin =>
+        Session.CurrentUser?.Roles.Contains(UserRoles.Admin) == true;
+
+    private void SimulateWithSeed()
+    {
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            TournamentSimulationService.SimulateGroupStageAndGenerateKnockout(seed);
+            successMessage = $"Torneo simulado correctamente con seed {seed}";
+        }
+        catch (Exception ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void SimulateRandom()
+    {
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            int random = new Random().Next();
+            TournamentSimulationService.SimulateGroupStageAndGenerateKnockout(random);
+            successMessage = "Torneo simulado correctamente (random)";
+        }
+        catch (Exception ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void GoToLogin()
+    {
+        Nav.NavigateTo("/login");
+    }
+}

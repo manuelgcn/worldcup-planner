@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using DataAccess.Interfaces;
 using ProjectCopa;
 
@@ -134,6 +132,11 @@ public sealed class MockMatchRepository : IMatchRepository
     public List<Match> GetAll()
     {
         return _matches.Values.ToList();
+    }
+
+    public void Clear()
+    {
+        _matches.Clear();
     }
 
     private static bool BelongsToGroup(Match match, string groupName)

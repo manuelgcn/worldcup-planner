@@ -1,0 +1,55 @@
+@using ProjectCopa
+
+@if (AllElimMatches.Count == 0)
+{
+    <p>Aún no se generaron cruces de fase 2.</p>
+}
+else
+{
+    <div class="bracket">
+        @foreach (BracketColumn column in BuildColumns())
+        {
+            <div class="bracket-column">
+                <h5>@column.Title</h5>
+                <div class="bracket-column-cells">
+                    @foreach (MatchElimination match in column.Matches)
+                    {
+                        <BracketCell Match="match" />
+                    }
+                    @if (column.Matches.Count == 0)
+                    {
+                        <div class="bracket-cell pending placeholder">Pendiente</div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public List<MatchElimination> AllElimMatches { get; set; } = new();
+
+    private static readonly (Phase Phase, string Title)[] PhasesInDisplayOrder =
+    {
+        (Phase.RoundOf32, "R32"),
+        (Phase.RoundOf16, "Octavos"),
+        (Phase.QuarterFinals, "Cuartos"),
+        (Phase.SemiFinal, "Semis"),
+        (Phase.ThirdPlace, "3er puesto"),
+        (Phase.Final, "Final")
+    };
+
+    private IEnumerable<BracketColumn> BuildColumns()
+    {
+        foreach ((Phase phase, string title) in PhasesInDisplayOrder)
+        {
+            List<MatchElimination> matches = AllElimMatches
+                .Where(match => match.Phase == phase)
+                .OrderBy(match => match.MatchId)
+                .ToList();
+            yield return new BracketColumn(title, matches);
+        }
+    }
+
+    private sealed record BracketColumn(string Title, List<MatchElimination> Matches);
+}

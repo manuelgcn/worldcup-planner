@@ -51,12 +51,26 @@ public class GroupFixtureGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateMatches_AssignsUniqueSequentialMatchIds()
+    {
+        List<Group> groups = CreateGroups(TotalGroups);
+        List<Stadium> stadiums = CreateStadiums();
+        GroupFixtureGenerator generator = new GroupFixtureGenerator();
+
+        List<Match> matches = generator.GenerateMatches(groups, stadiums, DefaultStartDate);
+
+        HashSet<int> ids = matches.Select(match => match.MatchId).ToHashSet();
+        Assert.AreEqual(ExpectedTotalMatches, ids.Count);
+        Assert.IsFalse(ids.Contains(0), "MatchId 0 indicates the generator left ids unassigned");
+    }
+
+    [TestMethod]
     public void GenerateMatches_CreatesSeventyTwoMatches_FullTournament()
     {
         List<Group> groups = CreateGroups(TotalGroups);
         List<Stadium> stadiums = CreateStadiums();
         GroupFixtureGenerator generator = new GroupFixtureGenerator();
-        
+
         List<Match> matches = generator.GenerateMatches(groups, stadiums, DefaultStartDate);
 
         Assert.AreEqual(ExpectedTotalMatches, matches.Count);

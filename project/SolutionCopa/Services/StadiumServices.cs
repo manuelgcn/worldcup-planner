@@ -9,10 +9,62 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
 {
     private const string DuplicateStadiumNameMessage = "Stadium name must be unique in the system.";
     private const string StadiumNotFoundMessage = "Stadium was not found.";
+    private const int MinimumStadiumsForFixture = 4;
+
+    private static readonly (string Name, string City, int Capacity)[] DefaultStadiumSeeds =
+    {
+        ("MetLife Stadium", "East Rutherford", 82500),
+        ("AT&T Stadium", "Arlington", 80000),
+        ("SoFi Stadium", "Inglewood", 70000),
+        ("Estadio Azteca", "Ciudad de Mexico", 87000),
+        ("BMO Field", "Toronto", 30000),
+        ("Mercedes-Benz Stadium", "Atlanta", 71000),
+        ("Hard Rock Stadium", "Miami Gardens", 65000),
+        ("Estadio BBVA", "Monterrey", 51000)
+    };
 
     public IReadOnlyCollection<Stadium> GetAllStadiums()
     {
         return stadiumRepository.GetAll();
+    }
+
+    public void SeedDefaultStadiums(string? performedByEmail)
+    {
+        IReadOnlyCollection<Stadium> existing = stadiumRepository.GetAll();
+        if (existing.Count >= MinimumStadiumsForFixture)
+        {
+            return;
+        }
+
+        HashSet<string> existingNames = existing.Select(stadium => stadium.Name).ToHashSet();
+        int nextId = existing.Count == 0 ? 1 : existing.Max(stadium => stadium.Id) + 1;
+        int addedSoFar = existing.Count;
+
+        foreach ((string name, string city, int capacity) in DefaultStadiumSeeds)
+        {
+            if (addedSoFar >= MinimumStadiumsForFixture)
+            {
+                break;
+            }
+
+            if (existingNames.Contains(name))
+            {
+                continue;
+            }
+
+            Stadium stadium = new Stadium(name, city, null, capacity) { Id = nextId };
+            stadiumRepository.Add(stadium);
+            auditLogService?.LogPerformedBy(
+                AuditActions.CreateStadium,
+                $"Generated default stadium '{stadium.Name}' in {stadium.City}.",
+                performedByEmail,
+                nameof(Stadium),
+                stadium.Id);
+            nextId++;
+            addedSoFar++;
+        }
+
+        unitOfWork.Commit();
     }
 
     public void AddStadium(Stadium stadium)

@@ -43,4 +43,9 @@ public sealed class MockJourneyRepository : IJourneyRepository
     {
         return _journeys.Values.ToList();
     }
+
+    public void Clear()
+    {
+        _journeys.Clear();
+    }
 }

@@ -117,6 +117,25 @@ public class GroupRepositoryTests
         Assert.AreSame(group, stored);
     }
 
+    [TestMethod]
+    public void ClearRemovesAllStoredGroups()
+    {
+        _repository.Add(CreateGroup("A"));
+        _repository.Add(CreateGroup("B"));
+
+        _repository.Clear();
+
+        Assert.AreEqual(0, _repository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void ClearOnEmptyRepositoryDoesNotThrow()
+    {
+        _repository.Clear();
+
+        Assert.AreEqual(0, _repository.GetAll().Count);
+    }
+
     private static Group CreateGroup(string name)
     {
         return new Group(name);

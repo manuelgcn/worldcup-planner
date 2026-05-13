@@ -1,5 +1,4 @@
 using System.Text;
-using System.Linq;
 using ProjectCopa;
 using DataAccess.Interfaces;
 using Services.DTOs;
@@ -9,6 +8,8 @@ namespace Services;
 
 public sealed class AuditLogService : IAuditLogService
 {
+    private const string ActorSeparator = " by ";
+
     private readonly int _defaultTournamentSettingsId;
     private readonly IAuditLogRepository _repository;
 
@@ -32,6 +33,22 @@ public sealed class AuditLogService : IAuditLogService
     public void Log(string action, string details, string? affectedEntityType = null, int? affectedEntityId = null)
     {
         Log(action, details, _defaultTournamentSettingsId, affectedEntityType, affectedEntityId);
+    }
+
+    public void LogPerformedBy(string action, string details, string? performedByEmail, string? affectedEntityType = null, int? affectedEntityId = null)
+    {
+        string detailsWithActor = AppendActor(details, performedByEmail);
+        Log(action, detailsWithActor, _defaultTournamentSettingsId, affectedEntityType, affectedEntityId);
+    }
+
+    private static string AppendActor(string details, string? performedByEmail)
+    {
+        if (string.IsNullOrWhiteSpace(performedByEmail))
+        {
+            return details;
+        }
+
+        return $"{details}{ActorSeparator}{performedByEmail}";
     }
 
     public List<AuditLogDto> GetAll()

@@ -95,6 +95,25 @@ public class JourneyRepositoryTests
         Assert.IsTrue(journeys.Contains(secondJourney));
     }
 
+    [TestMethod]
+    public void ClearRemovesAllStoredJourneys()
+    {
+        _repository.Add(Create(1));
+        _repository.Add(Create(2));
+
+        _repository.Clear();
+
+        Assert.AreEqual(0, _repository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void ClearOnEmptyRepositoryDoesNotThrow()
+    {
+        _repository.Clear();
+
+        Assert.AreEqual(0, _repository.GetAll().Count);
+    }
+
     private static Journey Create(int number)
     {
         return Journey.CreateInstance(number);

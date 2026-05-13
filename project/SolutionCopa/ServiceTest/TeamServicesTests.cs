@@ -239,4 +239,89 @@ public sealed class TeamServicesTests
 
         Assert.ThrowsException<TeamServicesException>(() => _service.OrderForFixture(teams, 2026));
     }
+
+    [TestMethod]
+    public void FillToFortyEight_FromEmpty_AddsExactlyFortyEightTeams()
+    {
+        _service.FillToFortyEight(completionSeed: 7, performedByEmail: null);
+
+        Assert.AreEqual(48, _service.GetTeams().Count);
+    }
+
+    [TestMethod]
+    public void FillToFortyEight_FromEmpty_RespectsConfederationQuotas()
+    {
+        _service.FillToFortyEight(completionSeed: 7, performedByEmail: null);
+
+        IReadOnlyCollection<Team> teams = _service.GetTeams();
+        Assert.AreEqual(16, teams.Count(team => team.Confederation == Confederation.UEFA));
+        Assert.AreEqual(9, teams.Count(team => team.Confederation == Confederation.CAF));
+        Assert.AreEqual(8, teams.Count(team => team.Confederation == Confederation.AFC));
+        Assert.AreEqual(7, teams.Count(team => team.Confederation == Confederation.CONMEBOL));
+        Assert.AreEqual(7, teams.Count(team => team.Confederation == Confederation.CONCACAF));
+        Assert.AreEqual(1, teams.Count(team => team.Confederation == Confederation.OFC));
+    }
+
+    [TestMethod]
+    public void FillToFortyEight_FromEmpty_GeneratedTeamsAreFictitious()
+    {
+        _service.FillToFortyEight(completionSeed: 7, performedByEmail: null);
+
+        Assert.IsTrue(_service.GetTeams().All(team => team.IsFictitious));
+    }
+
+    [TestMethod]
+    public void FillToFortyEight_WhenSomePresent_AddsOnlyMissingTeams()
+    {
+        _service.AddTeam(new Team(1, "Uruguay", 1800, false, Confederation.CONMEBOL));
+        _service.AddTeam(new Team(2, "Brasil", 1900, false, Confederation.CONMEBOL));
+
+        _service.FillToFortyEight(completionSeed: 7, performedByEmail: null);
+
+        IReadOnlyCollection<Team> teams = _service.GetTeams();
+        Assert.AreEqual(48, teams.Count);
+        Assert.IsTrue(teams.Any(team => team.Name == "Uruguay" && !team.IsFictitious));
+        Assert.IsTrue(teams.Any(team => team.Name == "Brasil" && !team.IsFictitious));
+        Assert.AreEqual(7, teams.Count(team => team.Confederation == Confederation.CONMEBOL));
+    }
+
+    [TestMethod]
+    public void FillToFortyEight_WhenAlreadyFortyEight_DoesNothing()
+    {
+        _service.FillToFortyEight(completionSeed: 7, performedByEmail: null);
+        int countAfterFirst = _service.GetTeams().Count;
+
+        _service.FillToFortyEight(completionSeed: 99, performedByEmail: null);
+
+        Assert.AreEqual(countAfterFirst, _service.GetTeams().Count);
+    }
+
+    [TestMethod]
+    public void FillToFortyEight_IsDeterministicForSameSeed()
+    {
+        _service.FillToFortyEight(completionSeed: 42, performedByEmail: null);
+        List<int> firstRankings = _service.GetTeams().Select(team => team.FifaRanking).OrderBy(rank => rank).ToList();
+
+        MockTeamRepository repo2 = new MockTeamRepository();
+        MockUnitOfWork uow2 = new MockUnitOfWork();
+        TeamServices service2 = new TeamServices(repo2, uow2);
+        service2.FillToFortyEight(completionSeed: 42, performedByEmail: null);
+        List<int> secondRankings = service2.GetTeams().Select(team => team.FifaRanking).OrderBy(rank => rank).ToList();
+
+        CollectionAssert.AreEqual(firstRankings, secondRankings);
+    }
+
+    [TestMethod]
+    public void FillToFortyEight_AuditsCreateTeamPerGeneratedTeam()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        MockTeamRepository teamRepo = new MockTeamRepository();
+        MockUnitOfWork uow = new MockUnitOfWork();
+        TeamServices auditedService = new TeamServices(teamRepo, uow, AuditLogService.CreateInstance(auditRepo, 1));
+
+        auditedService.FillToFortyEight(completionSeed: 7, performedByEmail: "admin@copa.com");
+
+        int createLogs = auditRepo.GetAll().Count(log => log.Action == AuditActions.CreateTeam);
+        Assert.AreEqual(48, createLogs);
+    }
 }

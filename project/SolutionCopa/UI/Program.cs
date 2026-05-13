@@ -17,18 +17,41 @@ builder.Services.AddSingleton<IMatchRepository, MatchRepository>();
 builder.Services.AddSingleton<IStadiumRepository, StadiumRepository>();
 builder.Services.AddSingleton<IGroupRepository, GroupRepository>();
 builder.Services.AddSingleton<IJourneyRepository, JourneyRepository>();
+builder.Services.AddSingleton<ITournamentSettingsRepository, TournamentSettingsRepository>();
+builder.Services.AddSingleton<IEliminationMatchRepository, EliminationMatchRepository>();
+builder.Services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 
 
-
 builder.Services.AddSingleton<UserServices>();
+builder.Services.AddSingleton<TeamServices>();
 builder.Services.AddSingleton<StadiumServices>();
 builder.Services.AddSingleton<IStadiumService>(sp => sp.GetRequiredService<StadiumServices>());
 builder.Services.AddSingleton<GroupServices>();
-builder.Services.AddSingleton<JourneyServices>();
 builder.Services.AddSingleton<IGroupService>(sp => sp.GetRequiredService<GroupServices>());
+builder.Services.AddSingleton<JourneyServices>();
 builder.Services.AddSingleton<IJourneyService>(sp => sp.GetRequiredService<JourneyServices>());
-builder.Services.AddSingleton<TeamServices>();
+
+
+builder.Services.AddSingleton<IMatchSimulationEngine, MatchSimulationEngine>();
+builder.Services.AddSingleton<IAuditLogService>(sp =>
+    AuditLogService.CreateInstance(
+        sp.GetRequiredService<IAuditLogRepository>(),
+        defaultTournamentSettingsId: 1));
+builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
+    new KnockoutFixtureGenerator(
+        sp.GetRequiredService<IMatchSimulationEngine>(),
+        sp.GetRequiredService<IMatchRepository>(),
+        sp.GetRequiredService<IEliminationMatchRepository>(),
+        sp.GetRequiredService<IGroupRepository>(),
+        sp.GetRequiredService<IStadiumRepository>(),
+        sp.GetRequiredService<ITournamentSettingsRepository>(),
+        sp.GetRequiredService<IUnitOfWork>(),
+        sp.GetRequiredService<IAuditLogService>()));
+builder.Services.AddSingleton<IKnockoutFixtureGenerator>(sp => sp.GetRequiredService<KnockoutFixtureGenerator>());
+builder.Services.AddSingleton<ITournamentSimulationService, TournamentSimulationService>();
+builder.Services.AddSingleton<IFixtureOrchestrator, FixtureOrchestrator>();
+builder.Services.AddSingleton<IGroupStandingsService, GroupStandingsService>();
 
 
 builder.Services.AddScoped<SessionState>();
@@ -42,10 +65,36 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
 app.UseAntiforgery();
 
+// =======================
+// Seed default TournamentSettings (id=1)
+// Required because IAuditLogService is created with defaultTournamentSettingsId=1.
+// =======================
+ITournamentSettingsRepository settingsRepository =
+    app.Services.GetRequiredService<ITournamentSettingsRepository>();
+
+const int DefaultTournamentSettingsId = 1;
+
+if (settingsRepository.GetById(DefaultTournamentSettingsId) is null)
+{
+    TournamentSettings defaultSettings = new TournamentSettings(
+        id: DefaultTournamentSettingsId,
+        startDate: new DateTime(2026, 6, 1),
+        maxMatchesPerDay: 3,
+        daysBetweenJourneys: 3,
+        fixtureSeed: 0,
+        crossingsSeed: 0,
+        simulationSeed: 0,
+        completionSeed: 0);
+
+    settingsRepository.Add(defaultSettings);
+}
+
+// =======================
+// Seed Admin
+// =======================
 UserServices userServices = app.Services.GetRequiredService<UserServices>();
 
 User admin = new User(

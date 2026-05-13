@@ -1,0 +1,443 @@
+.fixture-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.fixture-page h3 {
+    margin: 0 0 1rem;
+    font-family: "Bebas Neue", Oswald, sans-serif;
+    letter-spacing: .04em;
+}
+
+.auth-card {
+    max-width: 500px;
+    padding: 1.2rem;
+    border: 1px solid rgba(0, 0, 0, .1);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, .02);
+}
+
+.alert {
+    padding: .75rem 1rem;
+    border-radius: 6px;
+    margin: .8rem 0;
+    border-left: 4px solid;
+}
+
+.alert ul {
+    margin: .2rem 0 0;
+    padding-left: 1.2rem;
+}
+
+.alert-error {
+    background: #fdecea;
+    border-color: #d32f2f;
+    color: #5b1a17;
+}
+
+.alert-success {
+    background: #e8f5e9;
+    border-color: #2e7d32;
+    color: #1b3e1c;
+}
+
+/* Wizard banner: the most prominent element on the page */
+.wizard-banner {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    gap: .1rem 1rem;
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #002868 0%, #1e3a8a 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+}
+
+.wizard-banner.step-done {
+    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+}
+
+.wizard-step-label {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    opacity: .8;
+}
+
+.wizard-step-title {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 1.4rem;
+    font-weight: bold;
+    font-family: "Bebas Neue", Oswald, sans-serif;
+    letter-spacing: .04em;
+}
+
+.wizard-step-hint {
+    grid-column: 1 / 3;
+    grid-row: 2;
+    font-size: .9rem;
+    opacity: .95;
+    margin-top: .2rem;
+}
+
+/* Status panel as collapsible details */
+.status-panel {
+    margin: 1rem 0;
+    padding: .5rem 1rem;
+    border: 1px solid rgba(0, 0, 0, .1);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, .02);
+}
+
+.status-panel summary {
+    cursor: pointer;
+    padding: .3rem 0;
+    color: var(--m26-blue, #002868);
+    font-weight: 600;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: .4rem .8rem;
+    margin-top: .5rem;
+    font-size: .9rem;
+}
+
+.status-warn {
+    color: #d32f2f;
+    font-weight: 600;
+    margin-left: .3rem;
+}
+
+/* Step sections (the "do this now" cards) */
+.step-section {
+    margin: 1rem 0;
+    padding: 1rem 1.25rem;
+    border: 1px solid rgba(0, 40, 104, .15);
+    border-radius: 8px;
+    background: rgba(0, 40, 104, .03);
+}
+
+.step-section h4 {
+    margin: 0 0 .5rem;
+    font-size: 1.1rem;
+    color: var(--m26-blue, #002868);
+}
+
+.step-help {
+    margin: 0 0 .6rem;
+    color: rgba(0, 0, 0, .7);
+    font-size: .9rem;
+}
+
+.step-help a {
+    color: var(--m26-blue, #002868);
+    font-weight: 600;
+}
+
+.step-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+    align-items: center;
+}
+
+.step-actions label {
+    font-size: .85rem;
+    color: rgba(0, 0, 0, .7);
+}
+
+.step-actions input[type="number"] {
+    width: 7rem;
+    padding: .3rem .5rem;
+    border: 1px solid rgba(0, 0, 0, .2);
+    border-radius: 4px;
+}
+
+/* Groups and bracket sections */
+.groups-section,
+.group-detail-section,
+.bracket-section {
+    margin: 1.5rem 0;
+    padding: 1rem 1.25rem;
+    border: 1px solid rgba(0, 0, 0, .08);
+    border-radius: 8px;
+    background: white;
+}
+
+.groups-section h4,
+.bracket-section h4 {
+    margin: 0 0 .8rem;
+    font-family: "Bebas Neue", Oswald, sans-serif;
+    letter-spacing: .04em;
+    border-bottom: 2px solid var(--m26-blue, #002868);
+    padding-bottom: .3rem;
+}
+
+::deep .groups-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+::deep .group-card {
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, .12);
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+    transition: box-shadow .15s ease;
+}
+
+::deep .group-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .12);
+}
+
+::deep .group-card-head {
+    padding: .9rem 1rem .5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, .06);
+}
+
+::deep .group-card-body {
+    padding: .6rem 1rem 1rem;
+}
+
+::deep .group-badge {
+    background: rgba(0, 40, 104, .09);
+    color: var(--m26-blue, #002868);
+    border: 1px solid rgba(0, 40, 104, .2);
+    border-radius: 999px;
+    display: inline-block;
+    padding: .35rem .8rem;
+    font-family: "Bebas Neue", Oswald, sans-serif;
+    font-size: 1.15rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+::deep .standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .85rem;
+    margin-bottom: .5rem;
+}
+
+::deep .standings-table th,
+::deep .standings-table td {
+    padding: .3rem .4rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(0, 0, 0, .06);
+}
+
+::deep .standings-table th {
+    background: rgba(0, 0, 0, .04);
+    font-weight: 600;
+    font-size: .75rem;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, .65);
+}
+
+::deep .standings-table th:first-child,
+::deep .standings-table td:first-child {
+    text-align: left;
+    padding-left: .6rem;
+}
+
+::deep .standings-table tr.qualified td {
+    background: rgba(76, 175, 80, .14);
+}
+
+::deep .standings-table tr.third-place td {
+    background: rgba(255, 193, 7, .14);
+}
+
+::deep .standings-table tr.eliminated td {
+    color: rgba(0, 0, 0, .5);
+}
+
+::deep .matches-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: .3rem 0 .8rem;
+    font-size: .9rem;
+}
+
+::deep .matches-table th,
+::deep .matches-table td {
+    padding: .35rem .5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, .06);
+    text-align: center;
+}
+
+::deep .matches-table th {
+    background: rgba(0, 0, 0, .04);
+    font-size: .75rem;
+    text-transform: uppercase;
+}
+
+::deep .group-detail-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .5rem;
+}
+
+::deep .group-detail-actions {
+    display: inline-flex;
+    gap: .4rem;
+}
+
+/* Bracket */
+::deep .bracket {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    padding: .5rem 0;
+    align-items: stretch;
+}
+
+::deep .bracket-column {
+    flex: 0 0 200px;
+    display: flex;
+    flex-direction: column;
+}
+
+::deep .bracket-column h5 {
+    margin: 0 0 .5rem;
+    text-align: center;
+    font-family: "Bebas Neue", Oswald, sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-size: 1rem;
+    color: var(--m26-blue, #002868);
+    border-bottom: 1px solid rgba(0, 0, 0, .1);
+    padding-bottom: .3rem;
+}
+
+::deep .bracket-column-cells {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    justify-content: space-around;
+    flex: 1;
+}
+
+::deep .bracket-cell {
+    border: 1px solid rgba(0, 0, 0, .12);
+    border-radius: 6px;
+    padding: .5rem .6rem;
+    background: white;
+    font-size: .85rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+}
+
+::deep .bracket-cell.played {
+    border-left: 4px solid #4caf50;
+}
+
+::deep .bracket-cell.pending {
+    border-left: 4px solid rgba(0, 0, 0, .15);
+    color: rgba(0, 0, 0, .55);
+}
+
+::deep .bracket-cell.placeholder {
+    text-align: center;
+    font-style: italic;
+    background: rgba(0, 0, 0, .02);
+}
+
+::deep .bracket-cell-code {
+    font-size: .7rem;
+    font-weight: bold;
+    color: rgba(0, 0, 0, .55);
+    margin-bottom: .3rem;
+    letter-spacing: .04em;
+}
+
+::deep .bracket-cell-team {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .2rem 0;
+}
+
+::deep .bracket-cell-team .team-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+::deep .bracket-cell-team .team-score {
+    min-width: 1.5rem;
+    text-align: right;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+::deep .bracket-cell-team.winner {
+    font-weight: bold;
+    color: #2e7d32;
+}
+
+::deep .bracket-cell-team.loser {
+    color: rgba(0, 0, 0, .5);
+}
+
+::deep .bracket-cell-stadium {
+    margin-top: .3rem;
+    font-size: .7rem;
+    color: rgba(0, 0, 0, .55);
+    font-style: italic;
+}
+
+/* Buttons */
+.btn {
+    padding: .5rem 1rem;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, .15);
+    background: white;
+    cursor: pointer;
+    font-size: .9rem;
+    transition: background .1s ease, box-shadow .1s ease;
+}
+
+.btn:hover:not(:disabled) {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .15);
+}
+
+.btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: var(--m26-blue, #002868);
+    color: white;
+    border-color: var(--m26-blue, #002868);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #003a8c;
+}
+
+.btn-secondary {
+    background: rgba(0, 0, 0, .04);
+}
+
+.btn-link {
+    background: transparent;
+    border: none;
+    color: var(--m26-blue, #002868);
+    text-decoration: underline;
+    padding: .2rem .4rem;
+}

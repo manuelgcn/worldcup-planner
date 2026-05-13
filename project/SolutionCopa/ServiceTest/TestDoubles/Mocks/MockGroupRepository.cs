@@ -47,4 +47,9 @@ public sealed class MockGroupRepository : IGroupRepository
     {
         return _groups.Values.ToList();
     }
+
+    public void Clear()
+    {
+        _groups.Clear();
+    }
 }

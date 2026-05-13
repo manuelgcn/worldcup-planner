@@ -86,6 +86,11 @@ public class MatchRepository : IMatchRepository
         return _matches.ToList();
     }
 
+    public void Clear()
+    {
+        _matches.Clear();
+    }
+
     private static bool IsGroupMatch(MatchGroup matchGroup, string groupName)
     {
         return matchGroup.Group != null && matchGroup.Group.Name == groupName;

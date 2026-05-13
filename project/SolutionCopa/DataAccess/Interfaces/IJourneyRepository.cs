@@ -10,4 +10,5 @@ public interface IJourneyRepository
     Journey? GetByNumber(int number);
     bool ExistsByNumber(int number);
     IReadOnlyCollection<Journey> GetAll();
+    void Clear();
 }

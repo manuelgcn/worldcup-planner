@@ -47,6 +47,12 @@ public abstract class Match
     public int HomeGoals { get; private set; }
     public int AwayGoals { get; private set; }
     public Stadium? Stadium { get; private set; }
+    public bool WasSimulated { get; private set; }
+
+    public void MarkAsSimulated()
+    {
+        WasSimulated = true;
+    }
 
     protected Match()
     {

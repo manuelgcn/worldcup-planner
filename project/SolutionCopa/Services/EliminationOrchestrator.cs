@@ -2,68 +2,67 @@ using DataAccess.Interfaces;
 using ProjectCopa;
 using Services.Interfaces;
 
-namespace Services
-{
-    public class EliminationOrchestrator
-    {
-        private readonly IEliminationMatchRepository _eliminationRepo;
-        private readonly IAuditLogService _auditLog;
+namespace Services;
 
-        public EliminationOrchestrator(IEliminationMatchRepository eliminationRepo, IAuditLogService auditLog)
+public class EliminationOrchestrator
+{
+    private readonly IEliminationMatchRepository _eliminationRepo;
+    private readonly IAuditLogService _auditLog;
+
+    public EliminationOrchestrator(IEliminationMatchRepository eliminationRepo, IAuditLogService auditLog)
+    {
+        _eliminationRepo = eliminationRepo;
+        _auditLog = auditLog;
+    }
+
+    public void OrchestrateEliminationPhase(IEnumerable<(Team Team, string Group)> qualifiedWithGroups, IReadOnlyCollection<Stadium> stadiums, TournamentSettings settings, int? crossingsSeedOverride = null)
+    {
+        if (qualifiedWithGroups == null) throw new ArgumentNullException(nameof(qualifiedWithGroups));
+        List<(Team Team, string Group)> entries = qualifiedWithGroups.ToList();
+        if (entries.Count != 32) throw new ArgumentException("Requires 32 qualified teams with group info");
+
+        EliminationBuilder builder = new EliminationBuilder();
+        int crossingsSeed = crossingsSeedOverride ?? settings.CrossingsSeed;
+
+        List<Stadium> stadiumList = stadiums?.ToList() ?? new List<Stadium> { new Stadium("Default", "City", null, 30000) };
+        int maxPerDay = settings.MaxMatchesPerDay;
+        int daysBetween = settings.DaysBetweenJourneys;
+
+        DateTime roundStart = settings.StartDate;
+
+        Func<int, Stadium> stadiumProvider = (matchIndex) => stadiumList[matchIndex % stadiumList.Count];
+
+        Func<int, DateTime> makeDateProvider(DateTime start)
         {
-            _eliminationRepo = eliminationRepo;
-            _auditLog = auditLog;
+            return (matchIndex) =>
+            {
+                int dayOffset = matchIndex / maxPerDay;
+                return start.AddDays(dayOffset);
+            };
         }
 
-        public void OrchestrateEliminationPhase(IEnumerable<(Team Team, string Group)> qualifiedWithGroups, IReadOnlyCollection<Stadium> stadiums, TournamentSettings settings, int? crossingsSeedOverride = null)
+        List<MatchElimination> roundOf32 = builder.CreateRoundOf32(entries, stadiums, settings, crossingsSeed, stadiumProvider, makeDateProvider(roundStart));
+        foreach (MatchElimination m in roundOf32) _eliminationRepo.Add(m);
+
+        _auditLog.Log(AuditActions.GenerateKnockout, $"RoundOf32 generated with seed {crossingsSeed}.", settings.Id);
+
+        List<Match> currentRound = roundOf32.Cast<Match>().ToList();
+
+        (Phase phase, int matchCount)[] rounds = new (Phase phase, int matchCount)[]
         {
-            if (qualifiedWithGroups == null) throw new ArgumentNullException(nameof(qualifiedWithGroups));
-            List<(Team Team, string Group)> entries = qualifiedWithGroups.ToList();
-            if (entries.Count != 32) throw new ArgumentException("Requires 32 qualified teams with group info");
+            (Phase.RoundOf16, 8),
+            (Phase.QuarterFinals, 4),
+            (Phase.SemiFinal, 2),
+            (Phase.Final, 1)
+        };
 
-            EliminationBuilder builder = new EliminationBuilder();
-            int crossingsSeed = crossingsSeedOverride ?? settings.CrossingsSeed;
-
-            List<Stadium> stadiumList = stadiums?.ToList() ?? new List<Stadium> { new Stadium("Default", "City", null, 30000) };
-            int maxPerDay = settings.MaxMatchesPerDay;
-            int daysBetween = settings.DaysBetweenJourneys;
-
-            DateTime roundStart = settings.StartDate;
-
-            Func<int, Stadium> stadiumProvider = (matchIndex) => stadiumList[matchIndex % stadiumList.Count];
-
-            Func<int, DateTime> makeDateProvider(DateTime start)
-            {
-                return (matchIndex) =>
-                {
-                    int dayOffset = matchIndex / maxPerDay;
-                    return start.AddDays(dayOffset);
-                };
-            }
-
-            List<MatchElimination> roundOf32 = builder.CreateRoundOf32(entries, stadiums, settings, crossingsSeed, stadiumProvider, makeDateProvider(roundStart));
-            foreach (MatchElimination m in roundOf32) _eliminationRepo.Add(m);
-
-            _auditLog.Log("GenerateEliminationBracket", $"RoundOf32 generated with seed {crossingsSeed}.", settings.Id);
-
-            List<Match> currentRound = roundOf32.Cast<Match>().ToList();
-
-            (Phase phase, int matchCount)[] rounds = new (Phase phase, int matchCount)[]
-            {
-                (Phase.RoundOf16, 8),
-                (Phase.QuarterFinals, 4),
-                (Phase.SemiFinal, 2),
-                (Phase.Final, 1)
-            };
-
-            for (int r = 0; r < rounds.Length; r++)
-            {
-                roundStart = roundStart.AddDays(daysBetween);
-                List<MatchElimination> nextMatches = builder.CreateNextRoundFromMatches(currentRound, rounds[r].phase, stadiums, settings, stadiumProvider, makeDateProvider(roundStart));
-                foreach (MatchElimination nm in nextMatches) _eliminationRepo.Add(nm);
-                _auditLog.Log("GenerateEliminationBracket", $"{rounds[r].phase} generated.", settings.Id);
-                currentRound = nextMatches.Cast<Match>().ToList();
-            }
+        for (int r = 0; r < rounds.Length; r++)
+        {
+            roundStart = roundStart.AddDays(daysBetween);
+            List<MatchElimination> nextMatches = builder.CreateNextRoundFromMatches(currentRound, rounds[r].phase, stadiums, settings, stadiumProvider, makeDateProvider(roundStart));
+            foreach (MatchElimination nm in nextMatches) _eliminationRepo.Add(nm);
+            _auditLog.Log(AuditActions.GenerateKnockout, $"{rounds[r].phase} generated.", settings.Id);
+            currentRound = nextMatches.Cast<Match>().ToList();
         }
     }
 }

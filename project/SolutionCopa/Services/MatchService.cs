@@ -12,7 +12,8 @@ public class MatchService(
     IMatchFactory matchFactory,
     IMatchSimulationEngine matchSimulationEngine,
     IAuditLogService auditLogService,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IEliminationMatchRepository? eliminationMatchRepository = null)
     : IMatchService
 {
     private const int DefaultTournamentSettingsId = 1;
@@ -22,6 +23,7 @@ public class MatchService(
     private const string MatchNotFoundMessage = "Match not found";
     private const string ValueRequiredMessage = "Value is required";
     private const string TournamentSettingsNotFoundMessage = "Tournament settings not found";
+    private const string GroupMatchFrozenByKnockoutMessage = "Group-stage matches cannot be edited once the knockout phase is generated.";
 
     public MatchDto CreateMatch(CreateMatchRequestDto request)
     {
@@ -51,6 +53,7 @@ public class MatchService(
         ValidateRequired(request);
 
         Match match = GetMatchOrThrow(matchId);
+        EnsureGroupMatchIsEditable(match);
 
         matchFactory.ApplyUpdate(match, request);
 
@@ -69,6 +72,7 @@ public class MatchService(
     public void DeleteMatch(int matchId)
     {
         Match match = GetMatchOrThrow(matchId);
+        EnsureGroupMatchIsEditable(match);
         matchRepository.Delete(match);
 
         LogAuditAction(
@@ -82,6 +86,7 @@ public class MatchService(
     public void AddGoal(int matchId, bool isHomeTeam)
     {
         Match match = GetMatchOrThrow(matchId);
+        EnsureGroupMatchIsEditable(match);
         if (isHomeTeam) match.AddHomeGoal();
         else match.AddAwayGoal();
 
@@ -98,6 +103,7 @@ public class MatchService(
     public void RemoveGoal(int matchId, bool isHomeTeam)
     {
         Match match = GetMatchOrThrow(matchId);
+        EnsureGroupMatchIsEditable(match);
         if (isHomeTeam) match.RemoveHomeGoal();
         else match.RemoveAwayGoal();
 
@@ -125,6 +131,7 @@ public class MatchService(
     public void SimulateMatch(int matchId)
     {
         Match match = GetMatchOrThrow(matchId);
+        EnsureGroupMatchIsEditable(match);
         TournamentSettings tournamentSettings = GetSimulationTournamentSettingsOrThrow();
 
         matchSimulationEngine.Simulate(match, tournamentSettings.SimulationSeed);
@@ -169,6 +176,7 @@ public class MatchService(
     public void SetGoals(int matchId, int homeGoals, int awayGoals)
     {
         Match match = GetMatchOrThrow(matchId);
+        EnsureGroupMatchIsEditable(match);
         match.SetGoals(homeGoals, awayGoals);
         LogAuditAction(
             AuditActions.UpdateMatch,
@@ -212,6 +220,24 @@ public class MatchService(
     private Match GetMatchOrThrow(int matchId)
     {
         return matchRepository.GetById(matchId) ?? throw new MatchServicesException(MatchNotFoundMessage);
+    }
+
+    private void EnsureGroupMatchIsEditable(Match match)
+    {
+        if (match is not MatchGroup)
+        {
+            return;
+        }
+
+        if (eliminationMatchRepository == null)
+        {
+            return;
+        }
+
+        if (eliminationMatchRepository.GetAll().Count > 0)
+        {
+            throw new MatchServicesException(GroupMatchFrozenByKnockoutMessage);
+        }
     }
 
     private TournamentSettings GetSimulationTournamentSettingsOrThrow()

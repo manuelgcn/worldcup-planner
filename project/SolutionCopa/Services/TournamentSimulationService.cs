@@ -9,9 +9,11 @@ namespace Services;
 public sealed class TournamentSimulationService(
     IGroupRepository groupRepository,
     IMatchRepository matchRepository,
+    IEliminationMatchRepository eliminationMatchRepository,
     IUnitOfWork unitOfWork,
     IMatchSimulationEngine matchSimulationEngine,
     IAuditLogService auditLogService,
+    ITournamentSettingsRepository tournamentSettingsRepository,
     IKnockoutFixtureGenerator knockoutFixtureGenerator) : ITournamentSimulationService
 {
     private const string FixtureNotGeneratedMessage = "El fixture aún no ha sido generado";
@@ -26,11 +28,13 @@ public sealed class TournamentSimulationService(
 
         SimulateMatches(groupStageMatches, seed);
 
-        QualifiedTeams qualifiedTeams = ClassifyTeams(groups, groupStageMatches, seed);
+        TournamentSettings settings = ResolveTournamentSettings(seed);
+        QualifiedTeams qualifiedTeams = ClassifyQualifiedTeams(groups, groupStageMatches, settings);
 
         GenerateAndPersistKnockoutPhase(qualifiedTeams);
 
-        LogAndCommit();
+        LogSimulation();
+        unitOfWork.Commit();
     }
 
     private List<Group> GetOrderedGroups()
@@ -74,29 +78,45 @@ public sealed class TournamentSimulationService(
         }
     }
 
-    private QualifiedTeams ClassifyTeams(List<Group> groups, List<Match> matches, int seed)
+    private static QualifiedTeams ClassifyQualifiedTeams(List<Group> groups, List<Match> matches, TournamentSettings settings)
     {
         GroupQualifier qualifier = new GroupQualifier();
-        return qualifier.ClassifyTeams(groups, matches, seed);
+        return qualifier.ClassifyTeams(groups, matches, settings.CrossingsSeed);
     }
 
     private void GenerateAndPersistKnockoutPhase(QualifiedTeams qualifiedTeams)
     {
         List<Match> knockoutMatches = knockoutFixtureGenerator.GeneratePhase2(qualifiedTeams);
-
         foreach (Match match in knockoutMatches)
         {
-            matchRepository.Add(match);
+            eliminationMatchRepository.Add(match);
         }
     }
 
-    private void LogAndCommit()
+    private TournamentSettings ResolveTournamentSettings(int seed)
+    {
+        TournamentSettings? persistedSettings = tournamentSettingsRepository.GetAll().FirstOrDefault();
+        if (persistedSettings != null)
+        {
+            return persistedSettings;
+        }
+
+        return new TournamentSettings(
+            id: 0,
+            startDate: new DateTime(2026, 6, 1),
+            maxMatchesPerDay: 3,
+            daysBetweenJourneys: 3,
+            fixtureSeed: seed,
+            crossingsSeed: seed,
+            simulationSeed: seed,
+            completionSeed: seed);
+    }
+
+    private void LogSimulation()
     {
         auditLogService.Log(
             AuditActions.SimulateGroupStageAndGenerateKnockout,
             AuditLogMessage,
             affectedEntityType: nameof(TournamentSimulationService));
-
-        unitOfWork.Commit();
     }
 }

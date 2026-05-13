@@ -1,0 +1,66 @@
+@using ProjectCopa
+@inject NavigationManager Nav
+
+<div class="group-detail">
+    <div class="group-detail-head">
+        <h4>Grupo @GroupName — Partidos</h4>
+        <div class="group-detail-actions">
+            <button class="btn btn-secondary" @onclick="HandleBack">Volver</button>
+            <button class="btn btn-link" @onclick="NavigateToMatchesPage">Editar en /matches</button>
+        </div>
+    </div>
+
+    @if (Matches.Count == 0)
+    {
+        <p>No hay partidos persistidos para este grupo.</p>
+    }
+    else
+    {
+        @foreach (IGrouping<int, MatchGroup> journey in GroupedByJourney)
+        {
+            <h5>Jornada @journey.Key</h5>
+            <table class="matches-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Local</th>
+                        <th>Resultado</th>
+                        <th>Visitante</th>
+                        <th>Estadio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (MatchGroup match in journey)
+                    {
+                        <tr>
+                            <td>@match.MatchDate.ToString("dd/MM HH:mm")</td>
+                            <td>@match.HomeTeam?.Name</td>
+                            <td>@match.HomeGoals - @match.AwayGoals</td>
+                            <td>@match.AwayTeam?.Name</td>
+                            <td>@match.Stadium?.Name</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string GroupName { get; set; } = "";
+    [Parameter, EditorRequired] public List<MatchGroup> Matches { get; set; } = new();
+    [Parameter] public EventCallback OnBack { get; set; }
+
+    private IEnumerable<IGrouping<int, MatchGroup>> GroupedByJourney =>
+        Matches
+            .OrderBy(match => match.Journey?.Number ?? 0)
+            .ThenBy(match => match.MatchDate)
+            .GroupBy(match => match.Journey?.Number ?? 0);
+
+    private Task HandleBack() => OnBack.InvokeAsync();
+
+    private void NavigateToMatchesPage()
+    {
+        Nav.NavigateTo($"/matches?grupo={Uri.EscapeDataString(GroupName)}");
+    }
+}
