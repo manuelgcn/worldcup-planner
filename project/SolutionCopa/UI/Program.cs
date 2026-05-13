@@ -20,15 +20,18 @@ builder.Services.AddSingleton<IJourneyRepository, JourneyRepository>();
 builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 
 
-
 builder.Services.AddSingleton<UserServices>();
+builder.Services.AddSingleton<TeamServices>();
 builder.Services.AddSingleton<StadiumServices>();
 builder.Services.AddSingleton<IStadiumService>(sp => sp.GetRequiredService<StadiumServices>());
 builder.Services.AddSingleton<GroupServices>();
-builder.Services.AddSingleton<JourneyServices>();
 builder.Services.AddSingleton<IGroupService>(sp => sp.GetRequiredService<GroupServices>());
+builder.Services.AddSingleton<JourneyServices>();
 builder.Services.AddSingleton<IJourneyService>(sp => sp.GetRequiredService<JourneyServices>());
-builder.Services.AddSingleton<TeamServices>();
+
+
+builder.Services.AddSingleton<IMatchSimulationEngine, MatchSimulationEngine>();
+builder.Services.AddSingleton<ITournamentSimulationService, TournamentSimulationService>();
 
 
 builder.Services.AddScoped<SessionState>();
@@ -42,10 +45,12 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
 app.UseAntiforgery();
 
+// =======================
+// Seed Admin
+// =======================
 UserServices userServices = app.Services.GetRequiredService<UserServices>();
 
 User admin = new User(

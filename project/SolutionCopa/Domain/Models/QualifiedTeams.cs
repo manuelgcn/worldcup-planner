@@ -1,5 +1,3 @@
-using ProjectCopa;
-
 namespace ProjectCopa.Models;
 
 public record QualifiedTeams
