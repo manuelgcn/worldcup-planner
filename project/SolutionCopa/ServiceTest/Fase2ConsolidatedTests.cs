@@ -46,7 +46,7 @@ public class Fase2ConsolidatedTests
         Assert.IsTrue(simulation.SimulateWasCalled);
         Assert.IsTrue(uow.CommitCalls >= 1);
         List<AuditLog> logs = auditRepo.GetAll();
-        Assert.IsTrue(logs.Any(l => l.Action == "GenerateEliminationBracket"));
+        Assert.IsTrue(logs.Any(l => l.Action == AuditActions.GenerateKnockout));
 
         ThrowingMatchRepository? throwingRepo = new ThrowingMatchRepository();
         Fase2 fase2Bad = new Fase2(simulation, throwingRepo, settingsRepo, uow, auditService);

@@ -44,7 +44,7 @@ public class EliminationOrchestrator
         List<MatchElimination> roundOf32 = builder.CreateRoundOf32(entries, stadiums, settings, crossingsSeed, stadiumProvider, makeDateProvider(roundStart));
         foreach (MatchElimination m in roundOf32) _eliminationRepo.Add(m);
 
-        _auditLog.Log("GenerateEliminationBracket", $"RoundOf32 generated with seed {crossingsSeed}.", settings.Id);
+        _auditLog.Log(AuditActions.GenerateKnockout, $"RoundOf32 generated with seed {crossingsSeed}.", settings.Id);
 
         List<Match> currentRound = roundOf32.Cast<Match>().ToList();
 
@@ -61,7 +61,7 @@ public class EliminationOrchestrator
             roundStart = roundStart.AddDays(daysBetween);
             List<MatchElimination> nextMatches = builder.CreateNextRoundFromMatches(currentRound, rounds[r].phase, stadiums, settings, stadiumProvider, makeDateProvider(roundStart));
             foreach (MatchElimination nm in nextMatches) _eliminationRepo.Add(nm);
-            _auditLog.Log("GenerateEliminationBracket", $"{rounds[r].phase} generated.", settings.Id);
+            _auditLog.Log(AuditActions.GenerateKnockout, $"{rounds[r].phase} generated.", settings.Id);
             currentRound = nextMatches.Cast<Match>().ToList();
         }
     }

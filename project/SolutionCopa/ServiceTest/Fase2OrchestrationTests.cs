@@ -45,6 +45,6 @@ public class Fase2OrchestrationTests
         Assert.AreEqual(1, all.Count(m => ((MatchElimination)m).Phase == Phase.Final));
 
         List<AuditLog> logs = auditRepo.GetAll();
-        Assert.IsTrue(logs.Any(l => l.Action == "GenerateEliminationBracket"));
+        Assert.IsTrue(logs.Any(l => l.Action == AuditActions.GenerateKnockout));
     }
 }

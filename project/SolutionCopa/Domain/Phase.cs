@@ -6,6 +6,7 @@ public enum Phase
     SemiFinal,
     QuarterFinals,
     RoundOf16,
-    RoundOf32
+    RoundOf32,
+    ThirdPlace
 }
 

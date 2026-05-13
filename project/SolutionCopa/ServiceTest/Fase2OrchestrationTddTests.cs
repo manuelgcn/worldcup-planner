@@ -49,9 +49,9 @@ public class Fase2OrchestrationTddTests
         // Check that created matches have tournament settings propagated (via MatchElimination when created with config)
         Assert.IsTrue(all.OfType<MatchElimination>().All(m => m != null));
 
-        // Check audit logs contain GenerateEliminationBracket with tournament id
+        // Check audit logs contain the knockout-generation action with tournament id
         List<AuditLog> logs = auditRepo.GetAll();
-        Assert.IsTrue(logs.Any(l => l.Action == "GenerateEliminationBracket" && l.TournamentSettingsId == settings.Id));
+        Assert.IsTrue(logs.Any(l => l.Action == AuditActions.GenerateKnockout && l.TournamentSettingsId == settings.Id));
         Assert.IsTrue(simulation.SimulateWasCalled);
         Assert.IsTrue(uow.CommitCalls >= 1);
     }
