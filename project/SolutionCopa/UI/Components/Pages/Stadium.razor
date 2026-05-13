@@ -26,7 +26,7 @@ else
     if (errors.Any())
     {
         <ul style="color:red">
-            @foreach (var error in errors)
+            @foreach (string error in errors)
             {
                 <li>@error</li>
             }
@@ -71,7 +71,7 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (var stadium in stadiums)
+                @foreach (ProjectCopa.Stadium stadium in stadiums)
                 {
                     <tr>
                         <td>@stadium.Name</td>

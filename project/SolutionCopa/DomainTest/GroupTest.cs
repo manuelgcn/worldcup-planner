@@ -25,7 +25,7 @@ public class GroupTest
     {
         Group group = new Group("A");
 
-        ProjectCopa.Team team = new ProjectCopa.Team(
+        Team team = new Team(
             1,
             "Uruguay",
             1500,
@@ -45,11 +45,11 @@ public class GroupTest
     {
         Group group = new Group("A");
 
-        group.AddTeam(new ProjectCopa.Team(1, "T1", 1000, false, Confederation.UEFA));
-        group.AddTeam(new ProjectCopa.Team(2, "T2", 1100, false, Confederation.UEFA));
-        group.AddTeam(new ProjectCopa.Team(3, "T3", 1200, false, Confederation.UEFA));
-        group.AddTeam(new ProjectCopa.Team(4, "T4", 1300, false, Confederation.UEFA));
-        group.AddTeam(new ProjectCopa.Team(5, "T5", 1400, false, Confederation.UEFA));
+        group.AddTeam(new Team(1, "T1", 1000, false, Confederation.UEFA));
+        group.AddTeam(new Team(2, "T2", 1100, false, Confederation.UEFA));
+        group.AddTeam(new Team(3, "T3", 1200, false, Confederation.UEFA));
+        group.AddTeam(new Team(4, "T4", 1300, false, Confederation.UEFA));
+        group.AddTeam(new Team(5, "T5", 1400, false, Confederation.UEFA));
     }
 
     
@@ -59,7 +59,7 @@ public class GroupTest
     {
         Group group = new Group("A");
 
-        ProjectCopa.Team team = new ProjectCopa.Team(
+        Team team = new Team(
             1,
             "Uruguay",
             1500,

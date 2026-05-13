@@ -119,7 +119,7 @@ public class MatchTests
     public void MatchRejectsInvalidDate()
     {
         TournamentSettings tournamentSettings = new TournamentSettings();
-        var invalidDate = MatchDate.AddDays(-1);
+        DateTime invalidDate = MatchDate.AddDays(-1);
 
         Assert.ThrowsException<MatchException>(() =>
             new MockMatch(1, invalidDate, _homeTeam, _awayTeam, _stadium, tournamentSettings));
@@ -201,7 +201,7 @@ public class MatchTests
     [TestMethod]
     public void MatchRejectsDateEarlierThanDefaultTournamentStartDate()
     {
-        var invalidDate = MatchDate.AddDays(-1);
+        DateTime invalidDate = MatchDate.AddDays(-1);
 
         Assert.ThrowsException<MatchException>(() =>
             new MockMatch(1, invalidDate, _homeTeam, _awayTeam, _stadium));

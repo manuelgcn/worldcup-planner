@@ -111,7 +111,7 @@ public class UserTests
     [TestMethod]
     public void UserCanBeInitializedWithAllData()
     {
-        var birthDate = new DateTime(1990, 5, 15);
+        DateTime birthDate = new DateTime(1990, 5, 15);
         User usuario = new User(1,"Juan","Perez","Juan@gmail.com","Pass1234@",birthDate);
         Assert.AreEqual("Juan", usuario.name);
         Assert.AreEqual("Perez", usuario.lastname);

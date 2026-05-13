@@ -1,4 +1,5 @@
 using System.Text;
+using System.Linq;
 using ProjectCopa;
 using DataAccess.Interfaces;
 using Services.DTOs;
@@ -22,15 +23,15 @@ public sealed class AuditLogService : IAuditLogService
         return new AuditLogService(repository, defaultTournamentSettingsId);
     }
 
-    public void Log(string action, string details, int tournamentSettingsId, string? entityType = null, int? entityId = null)
+    public void Log(string action, string details, int tournamentSettingsId, string? affectedEntityType = null, int? affectedEntityId = null)
     {
-        AuditLog log = AuditLog.Create(action, details, tournamentSettingsId, entityType, entityId);
+        AuditLog log = AuditLog.Create(action, details, tournamentSettingsId, affectedEntityType, affectedEntityId);
         _repository.Add(log);
     }
 
-    public void Log(string action, string details, string? entityType = null, int? entityId = null)
+    public void Log(string action, string details, string? affectedEntityType = null, int? affectedEntityId = null)
     {
-        Log(action, details, _defaultTournamentSettingsId, entityType, entityId);
+        Log(action, details, _defaultTournamentSettingsId, affectedEntityType, affectedEntityId);
     }
 
     public List<AuditLogDto> GetAll()
@@ -91,7 +92,7 @@ public sealed class AuditLogService : IAuditLogService
             entityPart = $" | Entity: {log.AffectedEntityType} - ID: {log.AffectedEntityId!.Value}";
         }
 
-        return $"[{log.Timestamp:yyyy-MM-dd HH:mm:ss}] Action: {log.Action} | Details: {log.Details} | TournamentID: {log.TournamentSettingsId}{entityPart}";
+        return $"[{log.Timestamp.ToString("o")}] Action: {log.Action} | Details: {log.Details} | TournamentID: {log.TournamentSettingsId}{entityPart}";
     }
 
     private static bool ExistLogEntity(AuditLog log)
