@@ -11,6 +11,13 @@ public sealed class MockMatchRepository : IMatchRepository
     public int UpdateCalls { get; private set; }
     public int DeleteCalls { get; private set; }
 
+    public void ResetCounters()
+    {
+        AddCalls = 0;
+        UpdateCalls = 0;
+        DeleteCalls = 0;
+    }
+
     public bool ExistsById(int matchId)
     {
         return _matches.ContainsKey(matchId);

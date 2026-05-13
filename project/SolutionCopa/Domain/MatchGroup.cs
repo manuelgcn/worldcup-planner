@@ -9,6 +9,17 @@ public class MatchGroup : Match
 
     public Group? Group { get; private set; }
     public Journey? Journey { get; private set; }
+    public string MatchCode { get; private set; } = null!;
+
+    public void SetMatchCode(string matchCode)
+    {
+        if (string.IsNullOrWhiteSpace(matchCode))
+        {
+            throw new MatchException("Match code is required.");
+        }
+
+        MatchCode = matchCode;
+    }
 
     private MatchGroup(
         int id,

@@ -6,10 +6,14 @@ namespace ServiceTest.TestDoubles.Mocks;
 public sealed class MockGroupRepository : IGroupRepository
 {
     private readonly Dictionary<string, Group> _groups = new();
-
     public int AddCalls { get; private set; }
     public int UpdateCalls { get; private set; }
     public int DeleteCalls { get; private set; }
+
+    public void Seed(int groupId, Group group)
+    {
+        _groups[group.Name] = group;
+    }
 
     public void Add(Group group)
     {
