@@ -6,20 +6,34 @@ namespace ServiceTest;
 [TestClass]
 public class UserServicesTests
 {
-    
+
     private UserServices service;
 
-    
+
     [TestInitialize]
     public void Setup()
     {
         service = new UserServices();
     }
-    
+
+    private static User BuildUser(
+        int id,
+        string name,
+        string lastname,
+        string email,
+        string password,
+        DateTime dateOfBirth,
+        UserRoles role = UserRoles.Editor)
+    {
+        User user = new User(id, name, lastname, email, password, dateOfBirth);
+        user.AddRole(role);
+        return user;
+    }
+
     [TestMethod]
     public void CanAddUser()
     {
-        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15) );
+        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         service.AddUser(user);
         Assert.AreEqual(1, service.GetAllUsers().Count);
     }
@@ -29,7 +43,7 @@ public class UserServicesTests
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
         UserServices auditedService = new UserServices(AuditLogService.CreateInstance(repository, 1));
-        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
 
         auditedService.AddUser(user);
 
@@ -43,10 +57,10 @@ public class UserServicesTests
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
         UserServices auditedService = new UserServices(AuditLogService.CreateInstance(repository, 1));
-        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         auditedService.AddUser(user);
 
-        auditedService.UpdateUser(1, "Juan Carlos", "Perez", "juan.c@mail.com");
+        auditedService.UpdateUser(2, "Juan Carlos", "Perez", "juan.c@mail.com");
 
         Assert.IsTrue(repository.GetAll().Any(log => log.Action == "UPDATE_USER"));
     }
@@ -56,7 +70,7 @@ public class UserServicesTests
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
         UserServices auditedService = new UserServices(AuditLogService.CreateInstance(repository, 1));
-        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         auditedService.AddUser(user);
 
         auditedService.RemoveUser(1);
@@ -69,37 +83,37 @@ public class UserServicesTests
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
         UserServices auditedService = new UserServices(AuditLogService.CreateInstance(repository, 1));
-        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         auditedService.AddUser(user);
 
         auditedService.AssignRole(1, UserRoles.Admin);
 
         Assert.IsTrue(repository.GetAll().Any(log => log.Action == "ASSIGN_USER_ROLE"));
     }
-    
-    
+
+
     [TestMethod]
     public void CanGetUserByEmail()
     {
-        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15) );
+        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         service.AddUser(user);
 
         User result = service.GetUserByEmail("juan@mail.com");
 
         Assert.AreEqual(user, result);
     }
-    
+
     [TestMethod]
     public void GetUserByEmailThrowsIfNotFound()
     {
         Assert.ThrowsException<ArgumentException>(() =>
             service.GetUserByEmail("noexiste@mail.com"));
     }
-    
+
     [TestMethod]
     public void CanGetUserById()
     {
-        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15) );
+        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         service.AddUser(user);
 
         User result = service.GetUserById(1);
@@ -110,8 +124,8 @@ public class UserServicesTests
     [TestMethod]
     public void AddUserThrowsWhenEmailAlreadyExists()
     {
-        User firstUser = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
-        User secondUser = new User(2, "Ana", "Lopez", "juan@mail.com", "Pass123@", new DateTime(1995, 3, 10));
+        User firstUser = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User secondUser = BuildUser(2, "Ana", "Lopez", "juan@mail.com", "Pass123@", new DateTime(1995, 3, 10));
         service.AddUser(firstUser);
 
         Assert.ThrowsException<ArgumentException>(() => service.AddUser(secondUser));
@@ -120,25 +134,25 @@ public class UserServicesTests
     [TestMethod]
     public void AddUserThrowsWhenIdAlreadyExists()
     {
-        User firstUser = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
-        User secondUser = new User(1, "Ana", "Lopez", "ana@mail.com", "Pass123@", new DateTime(1995, 3, 10));
+        User firstUser = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User secondUser = BuildUser(1, "Ana", "Lopez", "ana@mail.com", "Pass123@", new DateTime(1995, 3, 10));
         service.AddUser(firstUser);
 
         Assert.ThrowsException<ArgumentException>(() => service.AddUser(secondUser));
     }
 
-    
+
     [TestMethod]
     public void CanRemoveUser()
     {
-        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15) );
+        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         service.AddUser(user);
         service.RemoveUser(1);
         Assert.AreEqual(0, service.GetAllUsers().Count);
     }
 
-    
-    
+
+
     [TestMethod]
     public void CannotRemoveNonExistingUser()
     {
@@ -146,23 +160,23 @@ public class UserServicesTests
             service.RemoveUser(99));
     }
 
-    
+
     [TestMethod]
     public void CanUpdateUserData()
     {
-        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
 
         service.AddUser(user);
 
-        service.UpdateUser(1, "Juan Carlos", "Perez", "juan.c@mail.com");
+        service.UpdateUser(2, "Juan Carlos", "Perez", "juan.c@mail.com");
 
-        User updated = service.GetUserById(1);
+        User updated = service.GetUserById(2);
 
         Assert.AreEqual("Juan Carlos", updated.name);
         Assert.AreEqual("juan.c@mail.com", updated.email);
     }
 
-    
+
     [TestMethod]
     public void CannotUpdateUserThatDoesNotExist()
     {
@@ -173,7 +187,7 @@ public class UserServicesTests
     [TestMethod]
     public void CannotUpdateUserWithDuplicatedEmail()
     {
-        User user1 = new User(
+        User user1 = BuildUser(
             1,
             "Juan",
             "Perez",
@@ -182,7 +196,7 @@ public class UserServicesTests
             new DateTime(1990, 5, 15)
         );
 
-        User user2 = new User(
+        User user2 = BuildUser(
             2,
             "Ana",
             "Lopez",
@@ -198,11 +212,11 @@ public class UserServicesTests
             service.UpdateUser(2, "Ana", "Lopez", "juan@mail.com"));
     }
 
-    
+
     [TestMethod]
     public void AdminCanAssignRoleToUser()
     {
-        User user = new User(
+        User user = BuildUser(
             1,
             "Juan",
             "Perez",
@@ -220,8 +234,8 @@ public class UserServicesTests
         Assert.IsTrue(updated.Roles.Contains(UserRoles.Admin));
     }
 
-    
-   
+
+
     [TestMethod]
     public void CannotAssignRoleToNonExistingUser()
     {
@@ -232,8 +246,8 @@ public class UserServicesTests
     [TestMethod]
     public void GetAllUsers_ReturnsAllRegisteredUsersInInsertionOrder()
     {
-        User first = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
-        User second = new User(2, "Ana", "Lopez", "ana@mail.com", "Pass123@", new DateTime(1995, 3, 10));
+        User first = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User second = BuildUser(2, "Ana", "Lopez", "ana@mail.com", "Pass123@", new DateTime(1995, 3, 10));
         service.AddUser(first);
         service.AddUser(second);
 
@@ -249,12 +263,12 @@ public class UserServicesTests
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
         UserServices auditedService = new UserServices(AuditLogService.CreateInstance(repository, 1));
-        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
 
         auditedService.AddUser(user);
-        auditedService.UpdateUser(1, "Juan Carlos", "Perez", "juan.c@mail.com");
-        auditedService.AssignRole(1, UserRoles.Admin);
-        auditedService.RemoveUser(1);
+        auditedService.UpdateUser(2, "Juan Carlos", "Perez", "juan.c@mail.com");
+        auditedService.AssignRole(2, UserRoles.Admin);
+        auditedService.RemoveUser(2);
 
         List<string> actions = repository.GetAll().Select(log => log.Action).ToList();
         Assert.IsTrue(actions.Contains("CREATE_USER"));
