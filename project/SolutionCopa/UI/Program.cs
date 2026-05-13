@@ -5,6 +5,7 @@ using UI;
 using UI.Components;
 using ProjectCopa;
 using Services.Interfaces;
+using Services.Parsers;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +53,12 @@ builder.Services.AddSingleton<IKnockoutFixtureGenerator>(sp => sp.GetRequiredSer
 builder.Services.AddSingleton<ITournamentSimulationService, TournamentSimulationService>();
 builder.Services.AddSingleton<IFixtureOrchestrator, FixtureOrchestrator>();
 builder.Services.AddSingleton<IGroupStandingsService, GroupStandingsService>();
+builder.Services.AddSingleton<ITeamParser, CsvStreamTeamParser>();
+builder.Services.AddSingleton<IImportService>(sp =>
+    ImportService.CreateInstance(
+        sp.GetRequiredService<ITeamRepository>(),
+        sp.GetRequiredService<IUnitOfWork>(),
+        sp.GetRequiredService<ITeamParser>()));
 
 
 builder.Services.AddScoped<SessionState>();

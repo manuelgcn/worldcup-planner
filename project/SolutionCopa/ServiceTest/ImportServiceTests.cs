@@ -164,6 +164,21 @@ public class ImportServiceTests
     }
 
     [TestMethod]
+    public void ImportTeamsReturnsResultWithImportedTeamsAndCount()
+    {
+        MemoryStream stream = CreateImportStream();
+        List<TeamImportDto> rows = BuildValidRows();
+        SetupParserRows(stream, rows);
+
+        ImportResult result = _service.ImportTeams(stream);
+
+        Assert.AreEqual(2, result.ImportedCount);
+        CollectionAssert.AreEquivalent(
+            new List<string> { "Argentina", "Japan" },
+            result.ImportedTeams.Select(t => t.Name).ToList());
+    }
+
+    [TestMethod]
     public void ImportTeamsPropagatesUnitOfWorkFailure()
     {
         // Arrange
