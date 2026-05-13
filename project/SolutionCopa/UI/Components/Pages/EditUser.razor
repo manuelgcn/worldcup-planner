@@ -7,41 +7,63 @@
 
 <PageTitle>Editar Usuario</PageTitle>
 
-<h3>Mi perfil</h3>
+<section class="auth-wrap">
+    <div class="m26-card auth-card">
+        <div class="m26-card-header auth-head">
+            <h1 class="auth-title mb-0">Mi perfil</h1>
+        </div>
+        <div class="auth-body">
+            @if (errors.Any())
+            {
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                    Se encontraron errores:
+                    <ul>
+                        @foreach (string error in errors)
+                        {
+                            <li>@error</li>
+                        }
+                    </ul>
+                </div>
+            }
 
-@if (errors.Any())
-{
-    <ul style="color:red">
-        @foreach (string error in errors)
-        {
-            <li>@error</li>
-        }
-    </ul>
-}
+            @if (!string.IsNullOrWhiteSpace(successMessage))
+            {
+                <div class="alert alert-success" role="alert">
+                    <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                    @successMessage
+                </div>
+            }
 
-@if (!string.IsNullOrWhiteSpace(successMessage))
-{
-    <p style="color:green">@successMessage</p>
-}
+            @if (!Session.IsLoggedIn)
+            {
+                <p>No estás logueado.</p>
+                <button class="btn btn-primary w-100" @onclick="GoToLogin">Ir a Login</button>
+            }
+            else
+            {
+                <p class="current-mail">
+                    Email actual: <strong>@Session.CurrentUser!.email</strong>
+                </p>
 
-@if (!Session.IsLoggedIn)
-{
-    <p>No estas logueado</p>
-    <button @onclick="GoToLogin">Ir a Login</button>
-}
-else
-{
-    <p>Email actual: @Session.CurrentUser!.email</p>
+                <div class="mb-3">
+                    <label class="form-label" for="editName">Nombre</label>
+                    <input id="editName" class="form-control" placeholder="Nombre" @bind="name" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="editLastName">Apellido</label>
+                    <input id="editLastName" class="form-control" placeholder="Apellido" @bind="lastname" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="editEmail">Email</label>
+                    <input id="editEmail" class="form-control" placeholder="Email" @bind="email" />
+                </div>
 
-    <input placeholder="Nombre" @bind="name" />
-    <br />
-    <input placeholder="Apellido" @bind="lastname" />
-    <br />
-    <input placeholder="Email" @bind="email" />
-    <br />
-
-    <button @onclick="Save">Guardar cambios</button>
-}
+                <button class="btn btn-primary w-100" @onclick="Save">Guardar cambios</button>
+            }
+        </div>
+    </div>
+</section>
 
 @code {
     private string name = "";

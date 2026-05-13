@@ -6,25 +6,45 @@
 
 <PageTitle>Register</PageTitle>
 
-<h3>Crear usuario</h3>
+<section class="auth-wrap">
+    <div class="m26-card auth-card">
+        <div class="m26-card-header auth-head">
+            <h1 class="auth-title mb-0">Crear cuenta</h1>
+        </div>
+        <div class="auth-body">
+            @if (!string.IsNullOrWhiteSpace(error))
+            {
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                    @error
+                </div>
+            }
 
-@if (!string.IsNullOrWhiteSpace(error))
-{
-    <p style="color:red">@error</p>
-}
+            <div class="mb-3">
+                <label class="form-label" for="signupName">Nombre</label>
+                <input id="signupName" class="form-control" placeholder="Nombre" @bind="name" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="signupLastname">Apellido</label>
+                <input id="signupLastname" class="form-control" placeholder="Apellido" @bind="lastname" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="signupEmail">Email</label>
+                <input id="signupEmail" class="form-control" placeholder="tu@email.com" @bind="email" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="signupPassword">Contraseña</label>
+                <input id="signupPassword" class="form-control" placeholder="••••••••" type="password" @bind="password" />
+            </div>
+            <div class="mb-4">
+                <label class="form-label" for="signupBirth">Fecha de nacimiento</label>
+                <input id="signupBirth" class="form-control" type="date" @bind="dateOfBirth" />
+            </div>
 
-<input placeholder="Nombre" @bind="name" />
-<br />
-<input placeholder="Apellido" @bind="lastname" />
-<br />
-<input placeholder="Email" @bind="email" />
-<br />
-<input placeholder="Password" type="password" @bind="password" />
-<br />
-<input type="date" @bind="dateOfBirth" />
-<br />
-
-<button @onclick="Register">Crear cuenta</button>
+            <button class="btn btn-primary w-100" @onclick="Register">Crear cuenta</button>
+        </div>
+    </div>
+</section>
 
 @code {
     private string name = "";
