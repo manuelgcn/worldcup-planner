@@ -9,7 +9,6 @@ public sealed class GroupFixtureGenerator
     private const int DaysBetweenJornadas = 3;
     private const int MaxMatchesPerStadiumPerDay = 3;
     private const int SimultaneousJornadaNumber = 3;
-    private const int DefaultMatchId = 0;
     private const string MatchCodePrefix = "M";
     private const int TeamAIndex = 0;
     private const int TeamBIndex = 1;
@@ -112,7 +111,7 @@ public sealed class GroupFixtureGenerator
 
     private MatchGroup BuildAndReserve(int mNum, DateTime mTime, Group group, List<Team> teams, (int home, int away) pair, Stadium stadium, int jornada, StadiumScheduleTracker tracker)
     {
-        MatchGroup match = MatchGroup.CreateInstance(DefaultMatchId, mTime, teams[pair.home], teams[pair.away], stadium, group, Journey.CreateInstance(jornada));
+        MatchGroup match = MatchGroup.CreateInstance(mNum, mTime, teams[pair.home], teams[pair.away], stadium, group, Journey.CreateInstance(jornada));
         match.SetMatchCode(MatchCodePrefix + mNum);
         tracker.Reserve(stadium, mTime);
         return match;
