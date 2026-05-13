@@ -76,25 +76,26 @@ app.UseStaticFiles();
 app.UseAntiforgery();
 
 // =======================
-// Seed default TournamentSettings (id=1)
+// Seed default TournamentSettings desde appsettings.json (seccion "TournamentSettings").
 // Required because IAuditLogService is created with defaultTournamentSettingsId=1.
 // =======================
 ITournamentSettingsRepository settingsRepository =
     app.Services.GetRequiredService<ITournamentSettingsRepository>();
 
-const int DefaultTournamentSettingsId = 1;
+IConfigurationSection settingsSection = builder.Configuration.GetSection("TournamentSettings");
+int settingsId = settingsSection.GetValue<int>("Id", 1);
 
-if (settingsRepository.GetById(DefaultTournamentSettingsId) is null)
+if (settingsRepository.GetById(settingsId) is null)
 {
     TournamentSettings defaultSettings = new TournamentSettings(
-        id: DefaultTournamentSettingsId,
-        startDate: new DateTime(2026, 6, 1),
-        maxMatchesPerDay: 3,
-        daysBetweenJourneys: 3,
-        fixtureSeed: 0,
-        crossingsSeed: 0,
-        simulationSeed: 0,
-        completionSeed: 0);
+        id: settingsId,
+        startDate: settingsSection.GetValue<DateTime>("StartDate", new DateTime(2026, 6, 1)),
+        maxMatchesPerDay: settingsSection.GetValue<int>("MaxMatchesPerDay", 3),
+        daysBetweenJourneys: settingsSection.GetValue<int>("DaysBetweenJourneys", 3),
+        fixtureSeed: settingsSection.GetValue<int>("FixtureSeed", 0),
+        crossingsSeed: settingsSection.GetValue<int>("CrossingsSeed", 0),
+        simulationSeed: settingsSection.GetValue<int>("SimulationSeed", 0),
+        completionSeed: settingsSection.GetValue<int>("CompletionSeed", 0));
 
     settingsRepository.Add(defaultSettings);
 }
