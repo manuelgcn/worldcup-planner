@@ -13,8 +13,7 @@ public sealed class TournamentSimulationService(
     IMatchSimulationEngine matchSimulationEngine,
     IAuditLogService auditLogService,
     ITournamentSettingsRepository tournamentSettingsRepository,
-    IStadiumRepository stadiumRepository,
-    IEliminationMatchRepository eliminationMatchRepository) : ITournamentSimulationService
+    IKnockoutFixtureGenerator knockoutFixtureGenerator) : ITournamentSimulationService
 {
     private const string FixtureNotGeneratedMessage = "El fixture aún no ha sido generado";
     private const string AuditLogMessage = "La fase de grupos fue simulada y la fase 2 fue generada.";
@@ -29,11 +28,12 @@ public sealed class TournamentSimulationService(
         SimulateMatches(groupStageMatches, seed);
 
         TournamentSettings settings = ResolveTournamentSettings(seed);
-        List<(Team Team, string Group)> qualifiedTeamsWithGroup = ClassifyQualifiedTeamsWithGroup(groups, groupStageMatches, settings);
+        QualifiedTeams qualifiedTeams = ClassifyQualifiedTeams(groups, groupStageMatches, settings);
 
-        GenerateAndSimulateEliminationPhase(qualifiedTeamsWithGroup, settings);
+        GenerateAndPersistKnockoutPhase(qualifiedTeams);
 
         LogSimulation();
+        unitOfWork.Commit();
     }
 
     private List<Group> GetOrderedGroups()
@@ -77,40 +77,19 @@ public sealed class TournamentSimulationService(
         }
     }
 
-    private List<(Team Team, string Group)> ClassifyQualifiedTeamsWithGroup(List<Group> groups, List<Match> matches, TournamentSettings settings)
+    private static QualifiedTeams ClassifyQualifiedTeams(List<Group> groups, List<Match> matches, TournamentSettings settings)
     {
         GroupQualifier qualifier = new GroupQualifier();
-        QualifiedTeams qualifiedTeams = qualifier.ClassifyTeams(groups, matches, settings.CrossingsSeed);
-
-        Dictionary<int, string> teamGroupMap = groups
-            .SelectMany(group => group.Teams.Select(team => new { team.Id, group.Name }))
-            .ToDictionary(entry => entry.Id, entry => entry.Name);
-
-        List<(Team Team, string Group)> qualifiedWithGroups = new List<(Team Team, string Group)>();
-        AddTeamsWithGroup(qualifiedWithGroups, qualifiedTeams.TopEightFirsts, teamGroupMap);
-        AddTeamsWithGroup(qualifiedWithGroups, qualifiedTeams.RemainingFourFirsts, teamGroupMap);
-        AddTeamsWithGroup(qualifiedWithGroups, qualifiedTeams.TopEightSeconds, teamGroupMap);
-        AddTeamsWithGroup(qualifiedWithGroups, qualifiedTeams.WorstFourSeconds, teamGroupMap);
-        AddTeamsWithGroup(qualifiedWithGroups, qualifiedTeams.BestEightThirds, teamGroupMap);
-
-        return qualifiedWithGroups;
+        return qualifier.ClassifyTeams(groups, matches, settings.CrossingsSeed);
     }
 
-    private void GenerateAndSimulateEliminationPhase(List<(Team Team, string Group)> qualifiedTeamsWithGroup, TournamentSettings settings)
+    private void GenerateAndPersistKnockoutPhase(QualifiedTeams qualifiedTeams)
     {
-        Fase2 fase2 = new Fase2(
-            matchSimulationEngine,
-            matchRepository,
-            tournamentSettingsRepository,
-            unitOfWork,
-            auditLogService);
-
-        fase2.OrchestrateAndSimulateEliminationPhase(
-            qualifiedTeamsWithGroup,
-            stadiumRepository.GetAll(),
-            settings,
-            eliminationMatchRepository,
-            settings.CrossingsSeed);
+        List<Match> knockoutMatches = knockoutFixtureGenerator.GeneratePhase2(qualifiedTeams);
+        foreach (Match match in knockoutMatches)
+        {
+            matchRepository.Add(match);
+        }
     }
 
     private TournamentSettings ResolveTournamentSettings(int seed)
@@ -130,22 +109,6 @@ public sealed class TournamentSimulationService(
             crossingsSeed: seed,
             simulationSeed: seed,
             completionSeed: seed);
-    }
-
-    private static void AddTeamsWithGroup(
-        List<(Team Team, string Group)> target,
-        IEnumerable<Team> teams,
-        IReadOnlyDictionary<int, string> teamGroupMap)
-    {
-        foreach (Team team in teams)
-        {
-            if (!teamGroupMap.TryGetValue(team.Id, out string? groupName))
-            {
-                throw new InvalidOperationException($"No se encontró grupo para el equipo {team.Id}.");
-            }
-
-            target.Add((team, groupName));
-        }
     }
 
     private void LogSimulation()

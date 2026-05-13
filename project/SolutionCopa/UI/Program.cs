@@ -17,6 +17,9 @@ builder.Services.AddSingleton<IMatchRepository, MatchRepository>();
 builder.Services.AddSingleton<IStadiumRepository, StadiumRepository>();
 builder.Services.AddSingleton<IGroupRepository, GroupRepository>();
 builder.Services.AddSingleton<IJourneyRepository, JourneyRepository>();
+builder.Services.AddSingleton<ITournamentSettingsRepository, TournamentSettingsRepository>();
+builder.Services.AddSingleton<IEliminationMatchRepository, EliminationMatchRepository>();
+builder.Services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 
 
@@ -31,6 +34,19 @@ builder.Services.AddSingleton<IJourneyService>(sp => sp.GetRequiredService<Journ
 
 
 builder.Services.AddSingleton<IMatchSimulationEngine, MatchSimulationEngine>();
+builder.Services.AddSingleton<IAuditLogService>(sp =>
+    AuditLogService.CreateInstance(
+        sp.GetRequiredService<IAuditLogRepository>(),
+        defaultTournamentSettingsId: 1));
+builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
+    new KnockoutFixtureGenerator(
+        sp.GetRequiredService<IMatchSimulationEngine>(),
+        sp.GetRequiredService<IMatchRepository>(),
+        sp.GetRequiredService<ITournamentSettingsRepository>(),
+        sp.GetRequiredService<IUnitOfWork>(),
+        sp.GetRequiredService<IAuditLogService>(),
+        sp.GetRequiredService<IStadiumRepository>()));
+builder.Services.AddSingleton<IKnockoutFixtureGenerator>(sp => sp.GetRequiredService<KnockoutFixtureGenerator>());
 builder.Services.AddSingleton<ITournamentSimulationService, TournamentSimulationService>();
 
 

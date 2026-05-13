@@ -1,4 +1,5 @@
 using ProjectCopa;
+using DataAccess.Repositories;
 using ServiceTest.TestDoubles.Mocks;
 using Services;
 
@@ -40,10 +41,10 @@ public class Fase2ComputeQualified32Tests
         PopulateMatches(groups, matchRepo, settings);
  
         Fase2 fase2 = new Fase2(
-            simulationEngine: null!,
+            simulationEngine: new MockMatchSimulationEngine(),
             matchRepository: matchRepo,
-            settingsRepository: null!,
-            unitOfWork: null!
+            settingsRepository: new TournamentSettingsRepository(),
+            unitOfWork: new MockUnitOfWork()
         );
  
            

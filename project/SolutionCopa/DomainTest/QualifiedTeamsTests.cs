@@ -16,11 +16,13 @@ public sealed class QualifiedTeamsTests
         Assert.IsNotNull(qualifiedTeams.TopEightSeconds);
         Assert.IsNotNull(qualifiedTeams.WorstFourSeconds);
         Assert.IsNotNull(qualifiedTeams.BestEightThirds);
+        Assert.IsNotNull(qualifiedTeams.GroupByTeamId);
         Assert.AreEqual(0, qualifiedTeams.TopEightFirsts.Count);
         Assert.AreEqual(0, qualifiedTeams.RemainingFourFirsts.Count);
         Assert.AreEqual(0, qualifiedTeams.TopEightSeconds.Count);
         Assert.AreEqual(0, qualifiedTeams.WorstFourSeconds.Count);
         Assert.AreEqual(0, qualifiedTeams.BestEightThirds.Count);
+        Assert.AreEqual(0, qualifiedTeams.GroupByTeamId.Count);
     }
 
     [TestMethod]
@@ -28,13 +30,15 @@ public sealed class QualifiedTeamsTests
     {
         Team team = new Team(1, "Team", 1500, false, Confederation.CONMEBOL);
         List<Team> teams = new List<Team> { team };
+        Dictionary<int, string> groupByTeamId = new Dictionary<int, string> { { team.Id, "A" } };
         QualifiedTeams qualifiedTeams = new QualifiedTeams
         {
             TopEightFirsts = teams,
             RemainingFourFirsts = teams,
             TopEightSeconds = teams,
             WorstFourSeconds = teams,
-            BestEightThirds = teams
+            BestEightThirds = teams,
+            GroupByTeamId = groupByTeamId
         };
 
         Assert.AreSame(teams, qualifiedTeams.TopEightFirsts);
@@ -42,6 +46,7 @@ public sealed class QualifiedTeamsTests
         Assert.AreSame(teams, qualifiedTeams.TopEightSeconds);
         Assert.AreSame(teams, qualifiedTeams.WorstFourSeconds);
         Assert.AreSame(teams, qualifiedTeams.BestEightThirds);
+        Assert.AreSame(groupByTeamId, qualifiedTeams.GroupByTeamId);
     }
 
     [TestMethod]
@@ -49,13 +54,15 @@ public sealed class QualifiedTeamsTests
     {
         Team team = new Team(1, "Team", 1500, false, Confederation.CONMEBOL);
         List<Team> teams = new List<Team> { team };
+        Dictionary<int, string> groupByTeamId = new Dictionary<int, string> { { team.Id, "A" } };
         QualifiedTeams first = new QualifiedTeams
         {
             TopEightFirsts = teams,
             RemainingFourFirsts = teams,
             TopEightSeconds = teams,
             WorstFourSeconds = teams,
-            BestEightThirds = teams
+            BestEightThirds = teams,
+            GroupByTeamId = groupByTeamId
         };
         QualifiedTeams second = new QualifiedTeams
         {
@@ -63,7 +70,8 @@ public sealed class QualifiedTeamsTests
             RemainingFourFirsts = teams,
             TopEightSeconds = teams,
             WorstFourSeconds = teams,
-            BestEightThirds = teams
+            BestEightThirds = teams,
+            GroupByTeamId = groupByTeamId
         };
 
         Assert.IsTrue(first.Equals(second));

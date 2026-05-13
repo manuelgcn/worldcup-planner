@@ -29,10 +29,16 @@ public sealed class GroupQualifier
         List<TeamStanding> firstPlaceStandings = new List<TeamStanding>();
         List<TeamStanding> secondPlaceStandings = new List<TeamStanding>();
         List<TeamStanding> thirdPlaceStandings = new List<TeamStanding>();
+        Dictionary<int, string> groupByTeamId = new Dictionary<int, string>();
 
         int groupIndex = 0;
         foreach (Group group in orderedGroups)
         {
+            foreach (Team team in group.Teams)
+            {
+                groupByTeamId[team.Id] = group.Name;
+            }
+
             List<TeamStanding> standings = BuildStandingsForGroup(group, playedMatches, seed, groupIndex);
 
             if (standings.Count != TeamsPerGroup)
@@ -58,7 +64,8 @@ public sealed class GroupQualifier
             RemainingFourFirsts = TakeTeams(orderedFirsts, TopFirstsCount, RemainingFirstsCount),
             TopEightSeconds = TakeTeams(orderedSeconds, 0, TopSecondsCount),
             WorstFourSeconds = TakeTeams(orderedSeconds, TopSecondsCount, WorstSecondsCount),
-            BestEightThirds = TakeTeams(orderedThirds, 0, BestThirdsCount)
+            BestEightThirds = TakeTeams(orderedThirds, 0, BestThirdsCount),
+            GroupByTeamId = groupByTeamId
         };
     }
 

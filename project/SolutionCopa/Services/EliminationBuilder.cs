@@ -22,57 +22,39 @@ public class EliminationBuilder
             entries[j] = tmp;
         }
 
+        // Interleave by group to guarantee no same-group pairings.
+        // Groups with more qualified teams are processed first so their teams
+        // spread across different slots before lighter groups run out of slots.
+        List<List<(Team Team, string Group)>> byGroup = entries
+            .GroupBy(e => e.Group)
+            .OrderByDescending(g => g.Count())
+            .Select(g => g.ToList())
+            .ToList();
 
-        int n = entries.Count;
-        bool[] used = new bool[n];
-        List<(int a, int b)> pairs = new List<(int a, int b)>();
-
-        for (int i = 0; i < n; i++)
+        List<(Team Team, string Group)> interleaved = new List<(Team Team, string Group)>(entries.Count);
+        int maxSlot = byGroup.Max(g => g.Count);
+        for (int slot = 0; slot < maxSlot; slot++)
         {
-            if (used[i]) continue;
-            used[i] = true;
-
-
-            List<int> candidates = new List<int>();
-            for (int j = i + 1; j < n; j++)
+            foreach (List<(Team Team, string Group)> group in byGroup)
             {
-                if (used[j]) continue;
-                if (entries[j].Group != entries[i].Group) candidates.Add(j);
+                if (slot < group.Count)
+                    interleaved.Add(group[slot]);
             }
-
-            int selected;
-            if (candidates.Count > 0)
-            {
-                selected = candidates[random.Next(candidates.Count)];
-            }
-            else
-            {
-
-                List<int> anyRemaining = new List<int>();
-                for (int j = i + 1; j < n; j++) if (!used[j]) anyRemaining.Add(j);
-                if (anyRemaining.Count == 0) break;
-                selected = anyRemaining[random.Next(anyRemaining.Count)];
-            }
-
-            used[selected] = true;
-            pairs.Add((i, selected));
         }
 
         List<MatchElimination> result = new List<MatchElimination>();
-        int matchIndex = 0;
-        foreach (var p in pairs)
+        for (int i = 0; i < interleaved.Count; i += 2)
         {
-            Team home = entries[p.a].Team;
-            Team away = entries[p.b].Team;
-            Stadium stadium = stadiumProvider(matchIndex);
-            DateTime date = dateProvider(matchIndex);
+            Team home = interleaved[i].Team;
+            Team away = interleaved[i + 1].Team;
+            Stadium stadium = stadiumProvider(i / 2);
+            DateTime date = dateProvider(i / 2);
             MatchGroup sourceHome = MatchGroup.CreateMatchWithConfig(-_nextMatchId, settings.StartDate, home, away, stadium, settings, new Group("X"), Journey.CreateInstance(1));
             MatchGroup sourceAway = MatchGroup.CreateMatchWithConfig(-(_nextMatchId + 1), settings.StartDate, away, home, stadium, settings, new Group("Y"), Journey.CreateInstance(1));
             string matchCode = $"R32-{_nextMatchId}";
             MatchElimination elim = MatchElimination.CreateMatchWithConfig(_nextMatchId, date, home, away, stadium, settings, Phase.RoundOf32, matchCode, sourceHome, sourceAway);
             result.Add(elim);
             _nextMatchId++;
-            matchIndex++;
         }
 
         return result;
