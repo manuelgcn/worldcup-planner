@@ -102,7 +102,12 @@ fabric.properties
 # Local Copilot/session artifacts
 .agents/
 .copilot/
+.claude/
 AGENTS.md
+COPILOT_PROMPT_*.md
+PROMPT_COPILOT_*.md
+PROMPTS_CLAUDE_CODE.md
+**/copilotDiffState.xml
 
 # Keep only repository-root GitHub metadata
 /project/SolutionCopa/.github/
