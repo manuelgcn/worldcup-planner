@@ -1,7 +1,53 @@
 ﻿@page "/"
+@inject SessionState Session
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<section class="home-hero m26-card">
+    <div class="hero-copy">
+        <p class="hero-kicker">TORNEO INTERNACIONAL</p>
+        <h1 class="hero-title">LA COPA</h1>
+        <p class="hero-subtitle">
+            48 selecciones, 16 sedes y 104 partidos.
+        </p>
+        <div class="hero-cta">
+            @if (Session.IsLoggedIn)
+            {
+                <a class="btn btn-primary btn-lg" href="/fixture">
+                    <i class="bi bi-diagram-3-fill" aria-hidden="true"></i>
+                    Ver Fixture
+                </a>
+                <a class="btn btn-outline-primary btn-lg" href="/matches">
+                    <i class="bi bi-calendar-event-fill" aria-hidden="true"></i>
+                    Ver Partidos
+                </a>
+            }
+            else
+            {
+                <a class="btn btn-primary btn-lg" href="/login">
+                    <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+                    Ingresar
+                </a>
+                <a class="btn btn-outline-primary btn-lg" href="/signup">
+                    <i class="bi bi-person-plus-fill" aria-hidden="true"></i>
+                    Registrarme
+                </a>
+            }
+        </div>
+    </div>
+</section>
 
-Welcome to your new app.
+<section class="stats-grid">
+    <article class="m26-card stat-card">
+        <p class="stat-value">48</p>
+        <p class="stat-label">Equipos</p>
+    </article>
+    <article class="m26-card stat-card">
+        <p class="stat-value">16</p>
+        <p class="stat-label">Estadios</p>
+    </article>
+    <article class="m26-card stat-card">
+        <p class="stat-value">104</p>
+        <p class="stat-label">Partidos</p>
+    </article>
+</section>

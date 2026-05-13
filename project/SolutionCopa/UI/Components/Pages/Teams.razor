@@ -9,87 +9,121 @@
 
 <PageTitle>Equipos</PageTitle>
 
-<h3>Equipos</h3>
-
 @if (!Session.IsLoggedIn)
 {
-    <p>No estas logueado</p>
-    <button @onclick="GoToLogin">Ir a Login</button>
+    <section class="m26-card auth-card">
+        <h1 class="m26-page-title mb-2">Equipos</h1>
+        <p class="mb-3">No estás logueado.</p>
+        <button class="btn btn-primary" @onclick="GoToLogin">
+            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+            Ir a Login
+        </button>
+    </section>
 }
 else if (!IsAdmin)
 {
-    <p>No tenes permisos para administrar equipos</p>
+    <div class="alert alert-danger" role="alert">
+        <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
+        No tenés permisos para administrar equipos.
+    </div>
 }
 else
-{ 
-    
+{
+    <h1 class="m26-page-title">Equipos</h1>
+
     if (errors.Any())
     {
-        <ul style="color:red">
-            @foreach (string error in errors)
-            {
-                <li>@error</li>
-            }
-        </ul>
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+            Se encontraron errores:
+            <ul>
+                @foreach (string error in errors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
     }
 
     if (!string.IsNullOrWhiteSpace(successMessage))
     {
-        <p style="color:green">@successMessage</p>
+        <div class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+            @successMessage
+        </div>
     }
 
-    <h4>Crear Equipo</h4>
+    <section class="admin-grid">
+        <article class="m26-card pane">
+            <h2 class="pane-title">Crear equipo</h2>
+            <div class="mb-3">
+                <label class="form-label" for="teamName">Nombre</label>
+                <input id="teamName" class="form-control" placeholder="Nombre" @bind="nombre" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="teamRanking">Ranking FIFA</label>
+                <input id="teamRanking" class="form-control" placeholder="Ranking FIFA" type="number" @bind="rankingFifa" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="teamConfederation">Confederación</label>
+                <select id="teamConfederation" class="form-select" @bind="confederation">
+                    @foreach (Confederation c in Enum.GetValues<Confederation>())
+                    {
+                        <option value="@c">@c</option>
+                    }
+                </select>
+            </div>
 
-    <input placeholder="Nombre" @bind="nombre" />
-    <br />
-    <input placeholder="Ranking FIFA" type="number" @bind="rankingFifa" />
-    <br />
-    <select @bind="confederation">
-        @foreach (Confederation c in Enum.GetValues<Confederation>())
-        {
-            <option value="@c">@c</option>
-        }
-    </select>
-    <br />
+            <button class="btn btn-primary" @onclick="Create">
+                <i class="bi bi-plus-circle-fill" aria-hidden="true"></i>
+                Crear
+            </button>
+        </article>
 
-    <button @onclick="Create">Crear</button>
-
-    <hr />
-
-    <h4>Equipos existentes</h4>
-
-    @if (!equipos.Any())
-    {
-        <p>No hay equipos cargados</p>
-    }
-    else
-    {
-        <table>
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Ranking</th>
-                    <th>Confederación</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (Team equipo in equipos)
-                {
-                    <tr>
-                        <td>@equipo.Name</td>
-                        <td>@equipo.FifaRanking</td>
-                        <td>@equipo.Confederation</td>
-                        <td>
-                            <button @onclick="() => Remove(equipo.Name)">
-                                Eliminar
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
+        <article class="m26-card pane">
+            <h2 class="pane-title">Equipos existentes</h2>
+            @if (!equipos.Any())
+            {
+                <div class="m26-empty">
+                    <i class="bi bi-people" aria-hidden="true"></i>
+                    <p class="mb-0">No hay equipos cargados.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover m26-scoreboard mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Ranking</th>
+                                <th>Confederación</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (Team equipo in equipos)
+                            {
+                                <tr>
+                                    <td>@equipo.Name</td>
+                                    <td>@equipo.FifaRanking</td>
+                                    <td>
+                                        <span class="m26-conf-badge conf-@equipo.Confederation">@equipo.Confederation</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => Remove(equipo.Name)">
+                                            <i class="bi bi-trash" aria-hidden="true"></i>
+                                            Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </section>
 }
 
 @code {

@@ -10,37 +10,72 @@
 
 <PageTitle>Fixture</PageTitle>
 
-<h3>Fixture - Fase de Grupos</h3>
-
 @if (!Session.IsLoggedIn)
 {
-    <p>No estas logueado</p>
-    <button @onclick="GoToLogin">Ir a Login</button>
+    <section class="m26-card auth-card">
+        <h1 class="m26-page-title mb-2">Fixture</h1>
+        <p class="mb-3">No estás logueado.</p>
+        <button class="btn btn-primary" @onclick="GoToLogin">
+            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+            Ir a Login
+        </button>
+    </section>
 }
 else if (errorMessage is not null)
 {
-    <p style="color:red">@errorMessage</p>
-}
-else if (groups is null)
-{
-    <button @onclick="GenerateFixture">Ver Fixture</button>
+    <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+        @errorMessage
+    </div>
 }
 else
 {
-    @foreach (Group group in groups)
-    {
-        <h4>Grupo @group.Name</h4>
+    <section class="fixture-head">
+        <h1 class="m26-page-title mb-0">FIXTURE — FASE DE GRUPOS</h1>
+        @if (groups is null)
+        {
+            <button class="btn btn-primary btn-lg" @onclick="GenerateFixture">
+                <i class="bi bi-shuffle" aria-hidden="true"></i>
+                Ver Fixture
+            </button>
+        }
+    </section>
 
-        <ul>
-            @foreach (Team team in group.Teams)
+    @if (groups is not null)
+    {
+        <section class="groups-grid">
+            @foreach (Group group in groups)
             {
-                <li>
-                    @team.Name -
-                    @team.Confederation -
-                    Ranking @team.FifaRanking
-                </li>
+                <article class="m26-card group-card">
+                    <div class="group-card-head">
+                        <span class="group-badge">Grupo @group.Name</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm m26-scoreboard mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Equipo</th>
+                                    <th>Confederación</th>
+                                    <th>Ranking FIFA</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (Team team in group.Teams)
+                                {
+                                    <tr>
+                                        <td>@team.Name</td>
+                                        <td>
+                                            <span class="m26-conf-badge conf-@team.Confederation">@team.Confederation</span>
+                                        </td>
+                                        <td>@team.FifaRanking</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
             }
-        </ul>
+        </section>
     }
 }
 

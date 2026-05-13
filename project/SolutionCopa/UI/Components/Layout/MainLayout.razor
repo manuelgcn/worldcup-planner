@@ -1,4 +1,5 @@
 ﻿@inherits LayoutComponentBase
+@inject SessionState Session
 
 <div class="page">
     <div class="sidebar">
@@ -7,7 +8,23 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            <a class="top-link" href="/">
+                <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+                Acerca de la aplicación
+            </a>
+            <div class="session-chip" aria-label="Estado de sesión">
+                <span class="avatar-icon" aria-hidden="true">
+                    <i class="bi bi-person-circle"></i>
+                </span>
+                @if (Session.IsLoggedIn)
+                {
+                    <span>@Session.CurrentUser!.name</span>
+                }
+                else
+                {
+                    <span>Invitado</span>
+                }
+            </div>
         </div>
 
         <article class="content px-4">
