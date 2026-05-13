@@ -1,0 +1,79 @@
+.home-hero {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(1.5rem, 4vw, 3rem);
+    margin-bottom: 1.2rem;
+    isolation: isolate;
+}
+
+.home-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(90deg, rgba(0, 40, 104, .12) 0 33.33%, rgba(255, 255, 255, 0) 33.33% 66.66%, rgba(228, 0, 43, .12) 66.66%),
+        radial-gradient(circle at 95% 5%, rgba(255, 215, 0, .34), transparent 38%),
+        repeating-radial-gradient(circle at 90% 80%, rgba(0, 40, 104, .08), rgba(0, 40, 104, .08) 8px, transparent 8px, transparent 16px);
+    opacity: .85;
+    z-index: -1;
+}
+
+.hero-kicker {
+    margin: 0;
+    font-weight: 700;
+    color: #475569;
+    letter-spacing: .07em;
+}
+
+.hero-title {
+    font-size: clamp(3.2rem, 12vw, 6rem);
+    line-height: .92;
+    margin: .35rem 0 .65rem;
+    text-transform: uppercase;
+    background: var(--m26-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.hero-subtitle {
+    max-width: 52ch;
+    font-size: clamp(1rem, 2.6vw, 1.12rem);
+    color: #334155;
+    margin-bottom: 1.25rem;
+}
+
+.hero-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .7rem;
+}
+
+.hero-cta .btn i {
+    margin-right: .35rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: .9rem;
+}
+
+.stat-card {
+    padding: 1rem 1.1rem;
+    text-align: center;
+}
+
+.stat-value {
+    margin: 0;
+    font-family: "Bebas Neue", Oswald, sans-serif;
+    font-size: clamp(2.3rem, 9vw, 3.2rem);
+    line-height: 1;
+    color: var(--m26-blue);
+}
+
+.stat-label {
+    margin: .2rem 0 0;
+    color: #475569;
+    font-weight: 600;
+}
