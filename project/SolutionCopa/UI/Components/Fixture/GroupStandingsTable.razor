@@ -1,0 +1,48 @@
+@using Services.DTOs
+
+<table class="standings-table">
+    <thead>
+        <tr>
+            <th>Equipo</th>
+            <th title="Partidos jugados">PJ</th>
+            <th title="Ganados">G</th>
+            <th title="Empatados">E</th>
+            <th title="Perdidos">P</th>
+            <th title="Goles a favor">GF</th>
+            <th title="Goles en contra">GC</th>
+            <th title="Diferencia de gol">DG</th>
+            <th>Pts</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            int position = 0;
+        }
+        @foreach (GroupStandingDto row in Standings)
+        {
+            position++;
+            <tr class="@RowClass(position)">
+                <td>@row.Team.Name</td>
+                <td>@row.GamesPlayed</td>
+                <td>@row.Wins</td>
+                <td>@row.Draws</td>
+                <td>@row.Losses</td>
+                <td>@row.GoalsFor</td>
+                <td>@row.GoalsAgainst</td>
+                <td>@row.GoalDifference</td>
+                <td><strong>@row.Points</strong></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter] public List<GroupStandingDto> Standings { get; set; } = new();
+
+    private static string RowClass(int position)
+    {
+        if (position <= 2) return "qualified";
+        if (position == 3) return "third-place";
+        return "eliminated";
+    }
+}

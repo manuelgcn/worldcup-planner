@@ -1,70 +1,355 @@
 @page "/fixture"
 @using ProjectCopa
+@using ProjectCopa.Exceptions
 @using Services
+@using Services.DTOs
+@using Services.Exceptions
 @using Services.Interfaces
-@inject TeamServices TeamServices
-@inject IStadiumService StadiumServices
+@using DataAccess.Interfaces
+@using UI.Components.Fixture
+@inject IFixtureOrchestrator FixtureOrchestrator
+@inject IGroupStandingsService StandingsService
+@inject IKnockoutFixtureGenerator KnockoutGenerator
+@inject IGroupRepository GroupRepository
+@inject IMatchRepository MatchRepository
+@inject IEliminationMatchRepository EliminationRepository
+@inject ITournamentSettingsRepository SettingsRepository
+@inject ITeamRepository TeamRepository
+@inject IStadiumService StadiumService
 @inject SessionState Session
 @inject NavigationManager Nav
 
-<PageTitle>Fixture</PageTitle>
+<PageTitle>Fixture y Cruces</PageTitle>
 
-<h3>Fixture - Fase de Grupos</h3>
+<h3>Fixture y Cruces — Mundial 2026</h3>
 
 @if (!Session.IsLoggedIn)
 {
-    <p>No estas logueado</p>
-    <button @onclick="GoToLogin">Ir a Login</button>
-}
-else if (errorMessage is not null)
-{
-    <p style="color:red">@errorMessage</p>
-}
-else if (groups is null)
-{
-    <button @onclick="GenerateFixture">Ver Fixture</button>
+    <div class="auth-card">
+        <p>No estás logueado.</p>
+        <button class="btn btn-primary" @onclick="GoToLogin">Ir a Login</button>
+    </div>
 }
 else
 {
-    @foreach (Group group in groups)
+    @if (errors.Any())
     {
-        <h4>Grupo @group.Name</h4>
-
-        <ul>
-            @foreach (Team team in group.Teams)
+        <ul style="color:red">
+            @foreach (string error in errors)
             {
-                <li>
-                    @team.Name -
-                    @team.Confederation -
-                    Ranking @team.FifaRanking
-                </li>
+                <li>@error</li>
             }
         </ul>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <p style="color:green">@successMessage</p>
+    }
+
+    @if (settings is null)
+    {
+        <p style="color:red">No hay configuración del torneo (TournamentSettings) cargada.</p>
+    }
+    else
+    {
+        <section class="tournament-summary">
+            <h4>Configuración del torneo</h4>
+            <ul>
+                <li><strong>StartDate:</strong> @settings.StartDate.ToString("yyyy-MM-dd")</li>
+                <li><strong>MaxMatchesPerDay:</strong> @settings.MaxMatchesPerDay</li>
+                <li><strong>DaysBetweenJourneys:</strong> @settings.DaysBetweenJourneys</li>
+                <li><strong>FixtureSeed:</strong> @settings.FixtureSeed</li>
+                <li><strong>CompletionSeed:</strong> @settings.CompletionSeed</li>
+                <li><strong>CrossingsSeed:</strong> @settings.CrossingsSeed</li>
+                <li><strong>SimulationSeed:</strong> @settings.SimulationSeed</li>
+            </ul>
+
+            <h4>Estado actual</h4>
+            <ul>
+                <li>Equipos cargados: <strong>@teamCount</strong> / 48</li>
+                <li>Estadios disponibles: <strong>@stadiumCount</strong></li>
+                <li>Partidos de grupos persistidos: <strong>@groupMatches.Count</strong> / 72</li>
+                <li>Partidos pendientes (sin goles): <strong>@pendingGroupMatches</strong></li>
+                <li>Cruces de fase 2 generados: <strong>@(IsKnockoutGenerated ? "sí" : "no")</strong></li>
+            </ul>
+        </section>
+
+        @if (IsAdmin)
+        {
+            <section class="admin-actions">
+                <h4>Acciones de Administrador</h4>
+                <div class="seed-input">
+                    <label>Override FixtureSeed (opcional):</label>
+                    <input type="number" @bind="fixtureSeedInput" placeholder="@settings.FixtureSeed.ToString()" />
+                </div>
+                @if (!IsFixtureGenerated)
+                {
+                    <button class="btn btn-primary"
+                            disabled="@(!CanGenerateFixture || isBusy)"
+                            @onclick="HandleGenerateFixtureAsync"
+                            title="@GenerateFixtureTooltip()">
+                        Generar fixture
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-secondary"
+                            disabled="@(IsKnockoutGenerated || isBusy)"
+                            @onclick="HandleRegenerateFixtureAsync"
+                            title="@RegenerateFixtureTooltip()">
+                        Regenerar fixture
+                    </button>
+                }
+            </section>
+        }
+
+        @if (IsFixtureGenerated)
+        {
+            <section class="groups-section">
+                <h4>Grupos</h4>
+                <div class="groups-grid">
+                    @foreach (Group group in groups)
+                    {
+                        <GroupCard Group="group"
+                                   Standings="@StandingsFor(group.Name)"
+                                   OnSelect="HandleSelectGroup" />
+                    }
+                </div>
+            </section>
+
+            @if (selectedGroupName != null)
+            {
+                <section class="group-detail-section">
+                    <GroupDetail GroupName="@selectedGroupName"
+                                 Matches="@MatchesForSelectedGroup()"
+                                 OnBack="HandleClearSelection" />
+                </section>
+            }
+
+            <section class="knockout-section">
+                <h4>Cruces — Fase 2</h4>
+                @if (!IsKnockoutGenerated)
+                {
+                    @if (!IsGroupStageComplete)
+                    {
+                        <p>
+                            Completá los resultados de fase de grupos para generar los cruces.
+                            Faltan <strong>@pendingGroupMatches</strong> partidos sin resultado.
+                        </p>
+                    }
+                    @if (IsAdmin)
+                    {
+                        <div class="seed-input">
+                            <label>Override CrossingsSeed (opcional):</label>
+                            <input type="number" @bind="crossingsSeedInput" placeholder="@settings.CrossingsSeed.ToString()" />
+                        </div>
+                        <button class="btn btn-primary"
+                                disabled="@(!CanGenerateKnockout || isBusy)"
+                                @onclick="HandleGenerateKnockoutAsync"
+                                title="@GenerateKnockoutTooltip()">
+                            Sortear cruces (R32)
+                        </button>
+                    }
+                }
+                else
+                {
+                    <KnockoutBracket AllElimMatches="@eliminationMatches" />
+                    @if (IsAdmin)
+                    {
+                        <div class="bracket-actions">
+                            <button class="btn btn-secondary"
+                                    disabled="@(IsBracketFullySimulated || isBusy)"
+                                    @onclick="HandleSimulateNextRoundAsync">
+                                Simular siguiente ronda
+                            </button>
+                            <button class="btn btn-primary"
+                                    disabled="@(IsBracketFullySimulated || isBusy)"
+                                    @onclick="HandleSimulateUntilFinalAsync">
+                                Simular hasta el final
+                            </button>
+                        </div>
+                    }
+                }
+            </section>
+        }
     }
 }
 
 @code {
-    private IReadOnlyCollection<Group>? groups;
-    private string? errorMessage;
+    private TournamentSettings? settings;
+    private List<Group> groups = new();
+    private List<MatchGroup> groupMatches = new();
+    private List<MatchElimination> eliminationMatches = new();
+    private int teamCount;
+    private int stadiumCount;
+    private int pendingGroupMatches;
+    private string? selectedGroupName;
+    private int? fixtureSeedInput;
+    private int? crossingsSeedInput;
 
-    private void GenerateFixture()
+    private readonly List<string> errors = new();
+    private string? successMessage;
+    private bool isBusy;
+
+    private bool IsAdmin =>
+        Session.CurrentUser?.Roles.Contains(UserRoles.Admin) == true;
+
+    private bool IsFixtureGenerated => FixtureOrchestrator.IsFixtureGenerated();
+    private bool IsKnockoutGenerated => KnockoutGenerator.IsBracketGenerated();
+    private bool IsGroupStageComplete => StandingsService.IsGroupStageComplete();
+
+    private bool CanGenerateFixture =>
+        teamCount == 48 && stadiumCount >= 4 && !IsFixtureGenerated;
+
+    private bool CanGenerateKnockout =>
+        IsFixtureGenerated && IsGroupStageComplete && !IsKnockoutGenerated;
+
+    private bool IsBracketFullySimulated
     {
-        errorMessage = null;
+        get
+        {
+            if (eliminationMatches.Count == 0) return false;
+            bool hasFinal = eliminationMatches.Any(match => match.Phase == Phase.Final);
+            bool hasThird = eliminationMatches.Any(match => match.Phase == Phase.ThirdPlace);
+            if (!hasFinal || !hasThird) return false;
+            return eliminationMatches.All(match => match.HomeGoals + match.AwayGoals > 0);
+        }
+    }
 
+    protected override void OnInitialized()
+    {
+        ReloadState();
+    }
+
+    private void ReloadState()
+    {
         try
         {
-            FixtureService fixtureService = new FixtureService(
-                TeamServices.GetTeams(),
-                StadiumServices.GetAllStadiums(),
-                seed: 42
-            );
-
-            groups = fixtureService.CreateFixture();
+            settings = SettingsRepository.GetAll().FirstOrDefault();
+            teamCount = TeamRepository.GetAll().Count;
+            stadiumCount = StadiumService.GetAllStadiums().Count;
+            groups = GroupRepository.GetAll().OrderBy(group => group.Name).ToList();
+            groupMatches = MatchRepository.GetAll().OfType<MatchGroup>().ToList();
+            eliminationMatches = EliminationRepository.GetAll().OfType<MatchElimination>().ToList();
+            pendingGroupMatches = StandingsService.PendingGroupStageMatchCount();
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            errorMessage = ex.Message;
+            errors.Add($"Error al cargar el estado: {ex.Message}");
         }
+    }
+
+    private List<GroupStandingDto> StandingsFor(string groupName)
+    {
+        try
+        {
+            return StandingsService.GetStandings(groupName);
+        }
+        catch (GroupServicesException)
+        {
+            return new List<GroupStandingDto>();
+        }
+    }
+
+    private List<MatchGroup> MatchesForSelectedGroup()
+    {
+        if (selectedGroupName == null) return new List<MatchGroup>();
+        return groupMatches
+            .Where(match => match.Group != null && match.Group.Name == selectedGroupName)
+            .ToList();
+    }
+
+    private void HandleSelectGroup(string groupName)
+    {
+        selectedGroupName = groupName;
+    }
+
+    private void HandleClearSelection()
+    {
+        selectedGroupName = null;
+    }
+
+    private async Task HandleGenerateFixtureAsync()
+    {
+        await RunAdminActionAsync(
+            () => FixtureOrchestrator.GenerateGroupStage(fixtureSeedInput, Session.CurrentUser?.email),
+            "Fixture generado correctamente.");
+    }
+
+    private async Task HandleRegenerateFixtureAsync()
+    {
+        await RunAdminActionAsync(
+            () => FixtureOrchestrator.RegenerateGroupStage(fixtureSeedInput, Session.CurrentUser?.email),
+            "Fixture regenerado correctamente.");
+    }
+
+    private async Task HandleGenerateKnockoutAsync()
+    {
+        await RunAdminActionAsync(
+            () => KnockoutGenerator.GenerateBracket(crossingsSeedInput, Session.CurrentUser?.email),
+            "Cruces de fase 2 generados.");
+    }
+
+    private async Task HandleSimulateNextRoundAsync()
+    {
+        await RunAdminActionAsync(
+            () => KnockoutGenerator.SimulateNextRound(Session.CurrentUser?.email),
+            "Ronda simulada.");
+    }
+
+    private async Task HandleSimulateUntilFinalAsync()
+    {
+        await RunAdminActionAsync(
+            () => KnockoutGenerator.SimulateUntilFinal(Session.CurrentUser?.email),
+            "Bracket simulado hasta el final.");
+    }
+
+    private async Task RunAdminActionAsync(Action action, string successText)
+    {
+        errors.Clear();
+        successMessage = null;
+        isBusy = true;
+        try
+        {
+            await Task.Run(action);
+            successMessage = successText;
+            ReloadState();
+        }
+        catch (FixtureOrchestratorException ex) { errors.Add(ex.Message); }
+        catch (MatchServicesException ex) { errors.Add(ex.Message); }
+        catch (GroupServicesException ex) { errors.Add(ex.Message); }
+        catch (StadiumServicesException ex) { errors.Add(ex.Message); }
+        catch (TeamServicesException ex) { errors.Add(ex.Message); }
+        catch (SettingsException ex) { errors.Add(ex.Message); }
+        catch (ArgumentException ex) { errors.Add(ex.Message); }
+        catch (InvalidOperationException ex) { errors.Add(ex.Message); }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private string GenerateFixtureTooltip()
+    {
+        if (teamCount != 48) return $"Se necesitan 48 equipos. Hay {teamCount}.";
+        if (stadiumCount < 4) return $"Se necesitan al menos 4 estadios. Hay {stadiumCount}.";
+        if (IsFixtureGenerated) return "El fixture ya está generado. Usá Regenerar.";
+        return "Generá el fixture inicial con los 48 equipos cargados.";
+    }
+
+    private string RegenerateFixtureTooltip()
+    {
+        if (IsKnockoutGenerated) return "No se puede regenerar: ya hay cruces de fase 2.";
+        return "Borra los partidos de grupos y vuelve a generar el fixture.";
+    }
+
+    private string GenerateKnockoutTooltip()
+    {
+        if (!IsFixtureGenerated) return "Generá el fixture primero.";
+        if (!IsGroupStageComplete) return $"Faltan {pendingGroupMatches} partidos de fase de grupos por jugar.";
+        if (IsKnockoutGenerated) return "Los cruces ya están generados.";
+        return "Sortea los 16 cruces de Round of 32.";
     }
 
     private void GoToLogin()
