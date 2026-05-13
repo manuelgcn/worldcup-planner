@@ -229,5 +229,38 @@ public class UserServicesTests
             service.AssignRole(99, UserRoles.Editor));
     }
 
-    
+    [TestMethod]
+    public void GetAllUsers_ReturnsAllRegisteredUsersInInsertionOrder()
+    {
+        User first = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User second = new User(2, "Ana", "Lopez", "ana@mail.com", "Pass123@", new DateTime(1995, 3, 10));
+        service.AddUser(first);
+        service.AddUser(second);
+
+        List<User> all = service.GetAllUsers().ToList();
+
+        Assert.AreEqual(2, all.Count);
+        Assert.AreEqual(1, all[0].idUser);
+        Assert.AreEqual(2, all[1].idUser);
+    }
+
+    [TestMethod]
+    public void FullAbmLifecycle_ExecutesEveryAuditAction()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        UserServices auditedService = new UserServices(AuditLogService.CreateInstance(repository, 1));
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        auditedService.AddUser(user);
+        auditedService.UpdateUser(1, "Juan Carlos", "Perez", "juan.c@mail.com");
+        auditedService.AssignRole(1, UserRoles.Admin);
+        auditedService.RemoveUser(1);
+
+        List<string> actions = repository.GetAll().Select(log => log.Action).ToList();
+        Assert.IsTrue(actions.Contains("CREATE_USER"));
+        Assert.IsTrue(actions.Contains("UPDATE_USER"));
+        Assert.IsTrue(actions.Contains("ASSIGN_USER_ROLE"));
+        Assert.IsTrue(actions.Contains("DELETE_USER"));
+        Assert.AreEqual(0, auditedService.GetAllUsers().Count);
+    }
 }
