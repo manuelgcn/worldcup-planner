@@ -6,11 +6,11 @@ namespace Services;
 public class MatchSimulationEngine : IMatchSimulationEngine
 {
     private const int MaxGoals = 15;
-    private const double GoalDecayFactor = 0.75;
-    private const double BaseScoringChance = 0.25;
-    private const double RankingWeightFactor = 0.0003;
+    private const double GoalDecayFactor = 0.65;
+    private const double BaseScoringChance = 0.55;
+    private const double RankingWeightFactor = 0.0005;
     private const double MinimumScoringChance = 0.10;
-    private const double MaximumScoringChance = 0.80;
+    private const double MaximumScoringChance = 0.85;
     private const string HomeTeamRequiredMessage = "Home team is required for simulation.";
     private const string AwayTeamRequiredMessage = "Away team is required for simulation.";
 
