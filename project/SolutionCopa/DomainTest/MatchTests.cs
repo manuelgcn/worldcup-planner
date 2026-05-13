@@ -438,4 +438,24 @@ public class MatchTests
         _match.SetGoals(homeGoals: 2, awayGoals: 2);
         Assert.AreEqual(0, _match.GetGoalDifferenceForAway());
     }
+
+    [TestMethod]
+    public void MatchCanChangeDateToValidTournamentDate()
+    {
+        _match = CreateMatchWithData();
+        DateTime newDate = new DateTime(2022, 11, 25);
+
+        _match.ChangeDate(newDate);
+
+        Assert.AreEqual(newDate, _match.MatchDate);
+    }
+
+    [TestMethod]
+    public void MatchRejectsChangeDateBeforeTournamentStart()
+    {
+        _match = CreateMatchWithData();
+        DateTime invalidDate = new DateTime(2022, 11, 19);
+
+        Assert.ThrowsException<MatchException>(() => _match.ChangeDate(invalidDate));
+    }
 }

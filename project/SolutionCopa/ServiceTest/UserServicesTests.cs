@@ -107,6 +107,26 @@ public class UserServicesTests
         Assert.AreEqual(user, result);
     }
 
+    [TestMethod]
+    public void AddUserThrowsWhenEmailAlreadyExists()
+    {
+        User firstUser = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User secondUser = new User(2, "Ana", "Lopez", "juan@mail.com", "Pass123@", new DateTime(1995, 3, 10));
+        service.AddUser(firstUser);
+
+        Assert.ThrowsException<ArgumentException>(() => service.AddUser(secondUser));
+    }
+
+    [TestMethod]
+    public void AddUserThrowsWhenIdAlreadyExists()
+    {
+        User firstUser = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User secondUser = new User(1, "Ana", "Lopez", "ana@mail.com", "Pass123@", new DateTime(1995, 3, 10));
+        service.AddUser(firstUser);
+
+        Assert.ThrowsException<ArgumentException>(() => service.AddUser(secondUser));
+    }
+
     
     [TestMethod]
     public void CanRemoveUser()

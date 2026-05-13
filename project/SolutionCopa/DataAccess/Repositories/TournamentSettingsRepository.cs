@@ -5,7 +5,7 @@ namespace DataAccess.Repositories;
 
 public class TournamentSettingsRepository : ITournamentSettingsRepository
 {
-    private readonly List<TournamentSettings> _settings = new();
+    private readonly List<TournamentSettings> _settings = new List<TournamentSettings>();
 
     public void Add(TournamentSettings settings)
     {

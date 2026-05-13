@@ -64,6 +64,16 @@ public class MatchGroupTests
     }
 
     [TestMethod]
+    public void MatchGroupCanSetMatchCode()
+    {
+        MatchGroup matchGroup = CreateValidMatchGroup();
+
+        matchGroup.SetMatchCode("M1");
+
+        Assert.AreEqual("M1", matchGroup.MatchCode);
+    }
+
+    [TestMethod]
     public void MatchGroupCanBeCreatedWithtournamentSettings()
     {
         MatchGroup matchGroup = CreateValidMatchGroupWithConfiguration();
@@ -89,6 +99,14 @@ public class MatchGroupTests
     {
         Assert.ThrowsException<MatchException>(() =>
             MatchGroup.CreateInstance(1, MatchDate, _homeTeam, _awayTeam, _stadium, _group, null!));
+    }
+
+    [TestMethod]
+    public void MatchGroupRejectsInvalidMatchCode()
+    {
+        MatchGroup matchGroup = CreateValidMatchGroup();
+
+        Assert.ThrowsException<MatchException>(() => matchGroup.SetMatchCode(string.Empty));
     }
 
     [TestMethod]

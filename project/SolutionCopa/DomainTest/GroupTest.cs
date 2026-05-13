@@ -12,6 +12,12 @@ public class GroupTest
         Assert.AreEqual("A", group.Name);
         Assert.AreEqual(0, group.Teams.Count);
     }
+
+    [TestMethod]
+    public void GroupCannotBeCreatedWithEmptyName()
+    {
+        Assert.ThrowsException<ArgumentException>(() => new Group(string.Empty));
+    }
     
     
     [TestMethod]

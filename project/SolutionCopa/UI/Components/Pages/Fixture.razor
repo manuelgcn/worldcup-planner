@@ -1,8 +1,10 @@
 @page "/fixture"
 @using ProjectCopa
 @using Services
+@using Services.Interfaces
+@using UI
 @inject TeamServices TeamServices
-@inject StadiumServices StadiumServices
+@inject IStadiumService StadiumServices
 @inject SessionState Session
 @inject NavigationManager Nav
 

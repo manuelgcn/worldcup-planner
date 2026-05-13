@@ -170,4 +170,13 @@ public sealed class TeamTests
             _ = new Team(1, "Argentina", rankingFifa, false, Confederation.CONMEBOL);
         });
     }
+
+    [TestMethod]
+    public void TeamCreationThrowsWhenIdIsZero()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+        {
+            _ = new ProjectCopa.Team(0, "Argentina", 2400, false, Confederation.CONMEBOL);
+        });
+    }
 }

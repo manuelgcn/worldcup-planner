@@ -1,8 +1,10 @@
-
 @page "/stadiums"
 @using ProjectCopa
 @using Services
-@inject StadiumServices StadiumServices
+@using Services.Exceptions
+@using Services.Interfaces
+@using UI
+@inject IStadiumService StadiumServices
 @inject SessionState Session
 @inject NavigationManager Nav
 
@@ -76,7 +78,7 @@ else
                         <td>@stadium.City</td>
                         <td>@stadium.Capacity</td>
                         <td>
-                            <button @onclick="() => Remove(stadium.Name)">
+                            <button @onclick="() => Remove(stadium.Id)">
                                 Eliminar
                             </button>
                         </td>
@@ -96,8 +98,7 @@ else
     private readonly List<string> errors = new List<string>();
     private string? successMessage;
 
-    private IReadOnlyCollection<ProjectCopa.Stadium> stadiums =
-        Array.Empty<ProjectCopa.Stadium>();
+    private IReadOnlyCollection<ProjectCopa.Stadium> stadiums = Array.Empty<ProjectCopa.Stadium>();
 
     private bool IsAdmin =>
         Session.CurrentUser!.Roles.Contains(UserRoles.Admin);
@@ -134,22 +135,30 @@ else
             ClearForm();
             LoadStadiums();
         }
+        catch (StadiumServicesException ex)
+        {
+            errors.Add(ex.Message);
+        }
         catch (ArgumentException ex)
         {
             errors.Add(ex.Message);
         }
     }
 
-    private void Remove(string name)
+    private void Remove(int id)
     {
         errors.Clear();
         successMessage = null;
 
         try
         {
-            StadiumServices.Remove(name);
+            StadiumServices.RemoveById(id);
             successMessage = "Estadio eliminado correctamente";
             LoadStadiums();
+        }
+        catch (StadiumServicesException ex)
+        {
+            errors.Add(ex.Message);
         }
         catch (ArgumentException ex)
         {
