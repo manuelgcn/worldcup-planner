@@ -8,83 +8,120 @@
 
 <PageTitle>Estadios</PageTitle>
 
-<h3>Estadios</h3>
-
 @if (!Session.IsLoggedIn)
 {
-    <p>No estas logueado</p>
-    <button @onclick="GoToLogin">Ir a Login</button>
+    <section class="m26-card auth-card">
+        <h1 class="m26-page-title mb-2">Estadios</h1>
+        <p class="mb-3">No estás logueado.</p>
+        <button class="btn btn-primary" @onclick="GoToLogin">
+            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+            Ir a Login
+        </button>
+    </section>
 }
 else if (!IsAdmin)
 {
-    <p>No tenes permisos para administrar estadios</p>
+    <div class="alert alert-danger" role="alert">
+        <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
+        No tenés permisos para administrar estadios.
+    </div>
 }
 else
 {
+    <h1 class="m26-page-title">Estadios</h1>
+
     if (errors.Any())
     {
-        <ul style="color:red">
-            @foreach (string error in errors)
-            {
-                <li>@error</li>
-            }
-        </ul>
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+            Se encontraron errores:
+            <ul>
+                @foreach (string error in errors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
     }
 
     if (!string.IsNullOrWhiteSpace(successMessage))
     {
-        <p style="color:green">@successMessage</p>
+        <div class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+            @successMessage
+        </div>
     }
 
-    <h4>Crear Estadio</h4>
+    <section class="admin-grid">
+        <article class="m26-card pane">
+            <h2 class="pane-title">Crear estadio</h2>
 
-    <input placeholder="Nombre" @bind="name" />
-    <br />
-    <input placeholder="Ciudad" @bind="city" />
-    <br />
-    <input placeholder="Descripcion (opcional)" @bind="description" />
-    <br />
-    <input placeholder="Capacidad" type="number" @bind="capacity" />
-    <br />
+            <div class="mb-3">
+                <label class="form-label" for="stadiumName">Nombre</label>
+                <input id="stadiumName" class="form-control" placeholder="Nombre" @bind="name" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="stadiumCity">Ciudad</label>
+                <input id="stadiumCity" class="form-control" placeholder="Ciudad" @bind="city" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="stadiumDesc">Descripción (opcional)</label>
+                <input id="stadiumDesc" class="form-control" placeholder="Descripción (opcional)" @bind="description" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="stadiumCapacity">Capacidad</label>
+                <input id="stadiumCapacity" class="form-control" placeholder="Capacidad" type="number" @bind="capacity" />
+            </div>
 
-    <button @onclick="Create">Crear</button>
+            <button class="btn btn-primary" @onclick="Create">
+                <i class="bi bi-plus-circle-fill" aria-hidden="true"></i>
+                Crear
+            </button>
+        </article>
 
-    <hr />
+        <article class="m26-card pane">
+            <h2 class="pane-title">Estadios existentes</h2>
 
-    <h4>Estadios existentes</h4>
-
-    @if (!stadiums.Any())
-    {
-        <p>No hay estadios cargados</p>
-    }
-    else
-    {
-        <table>
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Ciudad</th>
-                    <th>Capacidad</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (ProjectCopa.Stadium stadium in stadiums)
-                {
-                    <tr>
-                        <td>@stadium.Name</td>
-                        <td>@stadium.City</td>
-                        <td>@stadium.Capacity</td>
-                        <td>
-                            <button @onclick="() => Remove(stadium.Id)">
-                                Eliminar
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
+            @if (!stadiums.Any())
+            {
+                <div class="m26-empty">
+                    <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                    <p class="mb-0">No hay estadios cargados.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover m26-scoreboard mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Ciudad</th>
+                                <th>Capacidad</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (ProjectCopa.Stadium stadium in stadiums)
+                            {
+                                <tr>
+                                    <td>@stadium.Name</td>
+                                    <td>@stadium.City</td>
+                                    <td>@stadium.Capacity</td>
+                                    <td class="text-end">
+                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => Remove(stadium.Id)">
+                                            <i class="bi bi-trash" aria-hidden="true"></i>
+                                            Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </section>
 }
 
 @code {

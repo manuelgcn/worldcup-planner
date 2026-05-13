@@ -11,139 +11,181 @@
 
 <PageTitle>Partidos</PageTitle>
 
-<h3>Partidos - Fase de Grupos</h3>
-
 @if (!Session.IsLoggedIn)
 {
-    <p>No estás logueado</p>
-    <button @onclick="GoToLogin">Ir a Login</button>
+    <section class="m26-card auth-card">
+        <h1 class="m26-page-title mb-2">Partidos</h1>
+        <p class="mb-3">No estás logueado.</p>
+        <button class="btn btn-primary" @onclick="GoToLogin">
+            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+            Ir a Login
+        </button>
+    </section>
 }
 else
 {
+    <h1 class="m26-page-title">PARTIDOS</h1>
+
     @if (errors.Any())
     {
-        <ul style="color:red">
-            @foreach (var error in errors)
-            {
-                <li>@error</li>
-            }
-        </ul>
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+            Se encontraron errores:
+            <ul>
+                @foreach (var error in errors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
     }
 
     @if (!string.IsNullOrWhiteSpace(successMessage))
     {
-        <p style="color:green">@successMessage</p>
+        <div class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+            @successMessage
+        </div>
     }
 
-    <div class="filters">
-        <label>Desde:</label>
-        <input type="date" @bind="filterFrom" />
+    <section class="m26-card filters-card">
+        <div class="filters-grid">
+            <div class="filter-item">
+                <label class="form-label">Desde</label>
+                <input class="form-control" type="date" @bind="filterFrom" />
+            </div>
+            <div class="filter-item">
+                <label class="form-label">Hasta</label>
+                <input class="form-control" type="date" @bind="filterTo" />
+            </div>
+            <div class="filter-item">
+                <label class="form-label">Estadio</label>
+                <select class="form-select" @bind="filterStadiumId">
+                    <option value="0">-- Todos --</option>
+                    @foreach (ProjectCopa.Stadium s in stadiums)
+                    {
+                        <option value="@s.Id">@s.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-item">
+                <label class="form-label">Grupo</label>
+                <select class="form-select" @bind="filterGroup">
+                    <option value="">-- Todos --</option>
+                    @foreach (string g in groupOptions)
+                    {
+                        <option value="@g">@g</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-item">
+                <label class="form-label">Fase</label>
+                <select class="form-select" @bind="filterPhase">
+                    <option value="">-- Todas --</option>
+                    @foreach (Phase p in Enum.GetValues<Phase>())
+                    {
+                        <option value="@p">@p</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-primary" @onclick="ApplyFilters">
+                    <i class="bi bi-funnel-fill" aria-hidden="true"></i>
+                    Filtrar
+                </button>
+                <button class="btn btn-outline-primary" @onclick="ClearFilters">
+                    <i class="bi bi-eraser-fill" aria-hidden="true"></i>
+                    Limpiar
+                </button>
+            </div>
+        </div>
+    </section>
 
-        <label>Hasta:</label>
-        <input type="date" @bind="filterTo" />
-
-        <label>Estadio:</label>
-        <select @bind="filterStadiumId">
-            <option value="0">-- Todos --</option>
-            @foreach (ProjectCopa.Stadium s in stadiums)
-            {
-                <option value="@s.Id">@s.Name</option>
-            }
-        </select>
-
-        <label>Grupo:</label>
-        <select @bind="filterGroup">
-            <option value="">-- Todos --</option>
-            @foreach (string g in groupOptions)
-            {
-                <option value="@g">@g</option>
-            }
-        </select>
-
-        <label>Fase:</label>
-        <select @bind="filterPhase">
-            <option value="">-- Todas --</option>
-            @foreach (Phase p in Enum.GetValues<Phase>())
-            {
-                <option value="@p">@p</option>
-            }
-        </select>
-
-        <button @onclick="ApplyFilters">Filtrar</button>
-        <button @onclick="ClearFilters">Limpiar</button>
-    </div>
-
-    <hr />
+    <div class="section-separator"></div>
 
     @if (matches.Any())
     {
-        <h4>Partidos filtrados</h4>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Fecha</th>
-                    <th>Equipos</th>
-                    <th>Estadio</th>
-                    <th>Resultado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (Match match in matches)
-                {
-                    @if (editingMatchId == match.MatchId)
+        <h2 class="section-title">Partidos filtrados</h2>
+        <div class="table-responsive m26-card table-wrap">
+            <table class="table table-hover m26-scoreboard mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Equipos</th>
+                        <th>Estadio</th>
+                        <th>Resultado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (Match match in matches)
                     {
-                        <tr style="background-color: #fff3cd;">
-                            <td>@match.MatchId</td>
-                            <td>
-                                <input type="datetime-local" @bind="editingMatchDate" />
-                            </td>
-                            <td>
-                                @match.HomeTeam?.Name vs @match.AwayTeam?.Name
-                            </td>
-                            <td>
-                                <select @bind="editingStadiumId">
-                                    <option value="0">-- Seleccione estadio --</option>
-                                    @foreach (var stadium in stadiums)
-                                    {
-                                        <option value="@stadium.Id">@stadium.Name</option>
-                                    }
-                                </select>
-                            </td>
-                            <td>
-                                <input type="number" @bind="editingHomeGoals" min="0" style="width: 40px;" />
-                                -
-                                <input type="number" @bind="editingAwayGoals" min="0" style="width: 40px;" />
-                            </td>
-                            
-                            <td>
-                                <button @onclick="() => SaveEdit(match)">Guardar</button>
-                                <button @onclick="CancelEdit">Cancelar</button>
-                            </td>
-                        </tr>
+                        @if (editingMatchId == match.MatchId)
+                        {
+                            <tr class="row-editing">
+                                <td>@match.MatchId</td>
+                                <td>
+                                    <input class="form-control" type="datetime-local" @bind="editingMatchDate" />
+                                </td>
+                                <td>
+                                    @match.HomeTeam?.Name vs @match.AwayTeam?.Name
+                                </td>
+                                <td>
+                                    <select class="form-select" @bind="editingStadiumId">
+                                        <option value="0">-- Seleccione estadio --</option>
+                                        @foreach (var stadium in stadiums)
+                                        {
+                                            <option value="@stadium.Id">@stadium.Name</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <input class="form-control goal-input" type="number" @bind="editingHomeGoals" min="0" />
+                                    -
+                                    <input class="form-control goal-input" type="number" @bind="editingAwayGoals" min="0" />
+                                </td>
+
+                                <td>
+                                    <button class="btn btn-success btn-sm me-1" @onclick="() => SaveEdit(match)">
+                                        <i class="bi bi-check-lg" aria-hidden="true"></i>
+                                        Guardar
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm" @onclick="CancelEdit">
+                                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                                        Cancelar
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <td>@match.MatchId</td>
+                                <td>@match.MatchDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@match.HomeTeam?.Name vs @match.AwayTeam?.Name</td>
+                                <td>@match.Stadium?.Name</td>
+                                <td>@match.HomeGoals - @match.AwayGoals</td>
+
+                                <td>
+                                    <button class="btn btn-outline-primary btn-sm" @onclick="() => StartEdit(match)">
+                                        <i class="bi bi-pencil" aria-hidden="true"></i>
+                                        Editar
+                                    </button>
+                                </td>
+                            </tr>
+                        }
                     }
-                    else
-                    {
-                        <tr>
-                            <td>@match.MatchId</td>
-                            <td>@match.MatchDate.ToString("dd/MM/yyyy HH:mm")</td>
-                            <td>@match.HomeTeam?.Name vs @match.AwayTeam?.Name</td>
-                            <td>@match.Stadium?.Name</td>
-                            <td>@match.HomeGoals - @match.AwayGoals</td>
-                            
-                            <td>
-                                <button @onclick="() => StartEdit(match)">Editar</button>
-                            </td>
-                        </tr>
-                    }
-                }
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     }
     else
     {
-        <p>No hay partidos para los filtros seleccionados</p>
+        <div class="m26-empty">
+            <i class="bi bi-calendar-x" aria-hidden="true"></i>
+            <p class="mb-0">No hay partidos para los filtros seleccionados.</p>
+        </div>
     }
 }
 

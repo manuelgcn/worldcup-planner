@@ -8,23 +8,38 @@
 
 <PageTitle>Login</PageTitle>
 
-<h3>Login</h3>
+<section class="auth-wrap">
+    <div class="m26-card auth-card">
+        <div class="m26-card-header auth-head">
+            <h1 class="auth-title mb-0">Ingresar</h1>
+        </div>
+        <div class="auth-body">
+            @if (errors.Count > 0)
+            {
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                    Revisá los siguientes errores:
+                    <ul>
+                        @foreach (string error in errors)
+                        {
+                            <li>@error</li>
+                        }
+                    </ul>
+                </div>
+            }
 
-@if (errors.Count > 0)
-{
-    <ul style="color:red">
-        @foreach (string error in errors)
-        {
-            <li>@error</li>
-        }
-    </ul>
-}
-
-<input placeholder="Email" @bind="email" />
-<br />
-<input placeholder="Password" type="password" @bind="password" />
-<br />
-<button @onclick="Login">Ingresar</button>
+            <div class="mb-3">
+                <label class="form-label" for="loginEmail">Email</label>
+                <input id="loginEmail" class="form-control" placeholder="tu@email.com" @bind="email" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="loginPassword">Contraseña</label>
+                <input id="loginPassword" class="form-control" placeholder="••••••••" type="password" @bind="password" />
+            </div>
+            <button class="btn btn-primary w-100" @onclick="Login">Ingresar</button>
+        </div>
+    </div>
+</section>
 
 @code {
     private string email = "";

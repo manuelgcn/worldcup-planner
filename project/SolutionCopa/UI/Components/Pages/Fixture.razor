@@ -24,14 +24,17 @@
 <PageTitle>Fixture y Cruces</PageTitle>
 
 <div class="fixture-page">
-    <h3>Fixture y Cruces — Mundial 2026</h3>
+    <h1 class="m26-page-title mb-2">Fixture y Cruces — Mundial 2026</h1>
 
     @if (!Session.IsLoggedIn)
     {
-        <div class="auth-card">
-            <p>No estás logueado.</p>
-            <button class="btn btn-primary" @onclick="GoToLogin">Ir a Login</button>
-        </div>
+        <section class="m26-card auth-card">
+            <p class="mb-3">No estás logueado.</p>
+            <button class="btn btn-primary" @onclick="GoToLogin">
+                <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+                Ir a Login
+            </button>
+        </section>
     }
     else
     {
