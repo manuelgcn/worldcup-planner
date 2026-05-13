@@ -8,6 +8,8 @@ namespace Services;
 
 public sealed class AuditLogService : IAuditLogService
 {
+    private const string ActorSeparator = " by ";
+
     private readonly int _defaultTournamentSettingsId;
     private readonly IAuditLogRepository _repository;
 
@@ -35,11 +37,18 @@ public sealed class AuditLogService : IAuditLogService
 
     public void LogPerformedBy(string action, string details, string? performedByEmail, string? affectedEntityType = null, int? affectedEntityId = null)
     {
-        string detailsWithActor = string.IsNullOrWhiteSpace(performedByEmail)
-            ? details
-            : $"{details} by {performedByEmail}";
-
+        string detailsWithActor = AppendActor(details, performedByEmail);
         Log(action, detailsWithActor, _defaultTournamentSettingsId, affectedEntityType, affectedEntityId);
+    }
+
+    private static string AppendActor(string details, string? performedByEmail)
+    {
+        if (string.IsNullOrWhiteSpace(performedByEmail))
+        {
+            return details;
+        }
+
+        return $"{details}{ActorSeparator}{performedByEmail}";
     }
 
     public List<AuditLogDto> GetAll()
