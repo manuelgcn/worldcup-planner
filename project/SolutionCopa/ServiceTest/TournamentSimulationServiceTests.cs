@@ -1,4 +1,5 @@
 using ProjectCopa;
+using DataAccess.Repositories;
 using Services;
 using Services.Exceptions;
 using ServiceTest.TestDoubles.Mocks;
@@ -12,10 +13,9 @@ public sealed class TournamentSimulationServiceTests
     private const int GroupCount = 12;
     private const int TeamsPerGroup = 4;
     private const int MatchesPerGroup = 6;
-    private const int KnockoutMatchesCount = 16;
+    private const int EliminationMatchesCount = 31;
     private const int FirstGroupId = 1;
     private const int FirstMatchId = 1;
-    private const int FirstKnockoutMatchId = 1000;
     private const int FirstTeamId = 1;
     private const int StartYear = 2026;
     private const int StartMonth = 6;
@@ -23,17 +23,15 @@ public sealed class TournamentSimulationServiceTests
     private const int GroupStageOffsetMatchDateDays = 0;
     private const int SecondMatchDateOffsetDays = 3;
     private const int ThirdMatchDateOffsetDays = 6;
-    private const int KnockoutStartDayOffset = 0;
-    private const int KnockoutDayStep = 1;
     private const int HomeRankingBase = 2500;
-    private const int KnockoutHomeRankingBase = 2400;
-    private const int KnockoutAwayRankingBase = 2390;
 
     private MockGroupRepository _groupRepository = null!;
     private MockMatchRepository _matchRepository = null!;
     private MockMatchSimulationEngine _matchSimulationEngine = null!;
-    private MockKnockoutFixtureGenerator _knockoutFixtureGenerator = null!;
+    private MockStadiumRepository _stadiumRepository = null!;
     private MockAuditLogRepository _auditLogRepository = null!;
+    private TournamentSettingsRepository _tournamentSettingsRepository = null!;
+    private EliminationMatchRepository _eliminationMatchRepository = null!;
     private MockUnitOfWork _unitOfWork = null!;
     private TournamentSimulationService _service = null!;
 
@@ -43,12 +41,15 @@ public sealed class TournamentSimulationServiceTests
         _groupRepository = new MockGroupRepository();
         _matchRepository = new MockMatchRepository();
         _matchSimulationEngine = new MockMatchSimulationEngine();
-        _knockoutFixtureGenerator = new MockKnockoutFixtureGenerator();
+        _stadiumRepository = new MockStadiumRepository();
         _auditLogRepository = new MockAuditLogRepository();
+        _tournamentSettingsRepository = new TournamentSettingsRepository();
+        _eliminationMatchRepository = new EliminationMatchRepository();
         _unitOfWork = new MockUnitOfWork();
 
         SeedGroupsAndMatches();
-        SeedKnockoutMatches();
+        SeedSettings();
+        SeedStadiums();
         _matchRepository.ResetCounters();
 
         AuditLogService auditLogService = AuditLogService.CreateInstance(_auditLogRepository, 1);
@@ -58,7 +59,9 @@ public sealed class TournamentSimulationServiceTests
             _unitOfWork,
             _matchSimulationEngine,
             auditLogService,
-            _knockoutFixtureGenerator);
+            _tournamentSettingsRepository,
+            _stadiumRepository,
+            _eliminationMatchRepository);
     }
 
     [TestMethod]
@@ -66,14 +69,11 @@ public sealed class TournamentSimulationServiceTests
     {
         _service.SimulateGroupStageAndGenerateKnockout(Seed);
 
-        Assert.AreEqual(GroupCount * MatchesPerGroup, _matchSimulationEngine.SimulateCalls);
+        Assert.AreEqual((GroupCount * MatchesPerGroup) + EliminationMatchesCount, _matchSimulationEngine.SimulateCalls);
         Assert.AreEqual(GroupCount * MatchesPerGroup, _matchRepository.UpdateCalls);
-        Assert.AreEqual(KnockoutMatchesCount, _matchRepository.AddCalls);
-        Assert.IsTrue(_knockoutFixtureGenerator.GeneratePhase2WasCalled);
-        Assert.IsNotNull(_knockoutFixtureGenerator.LastQualifiedTeamsReceived);
+        Assert.AreEqual(EliminationMatchesCount, _eliminationMatchRepository.GetAll().Count);
         Assert.AreEqual(1, _unitOfWork.CommitCalls);
-        Assert.AreEqual(1, _auditLogRepository.GetAll().Count);
-        Assert.AreEqual(AuditActions.SimulateGroupStageAndGenerateKnockout, _auditLogRepository.GetAll()[0].Action);
+        Assert.IsTrue(_auditLogRepository.GetAll().Any(log => log.Action == AuditActions.SimulateGroupStageAndGenerateKnockout));
     }
 
     [TestMethod]
@@ -81,8 +81,13 @@ public sealed class TournamentSimulationServiceTests
     {
         MockGroupRepository emptyGroupRepository = new MockGroupRepository();
         MockMatchRepository emptyMatchRepository = new MockMatchRepository();
+        MockStadiumRepository emptyStadiumRepository = new MockStadiumRepository();
+        TournamentSettingsRepository emptySettingsRepository = new TournamentSettingsRepository();
+        EliminationMatchRepository emptyEliminationMatchRepository = new EliminationMatchRepository();
         MockUnitOfWork emptyUnitOfWork = new MockUnitOfWork();
         emptyGroupRepository.Seed(FirstGroupId, new Group("A"));
+        emptySettingsRepository.Add(new TournamentSettings(1, new DateTime(StartYear, StartMonth, StartDay), 3, 3, Seed, Seed, Seed, Seed));
+        emptyStadiumRepository.Add(new Stadium("Stadium", "City", null, 30000) { Id = 1 });
 
         AuditLogService auditLogService = AuditLogService.CreateInstance(_auditLogRepository, 1);
         TournamentSimulationService service = new TournamentSimulationService(
@@ -91,12 +96,40 @@ public sealed class TournamentSimulationServiceTests
             emptyUnitOfWork,
             _matchSimulationEngine,
             auditLogService,
-            _knockoutFixtureGenerator);
+            emptySettingsRepository,
+            emptyStadiumRepository,
+            emptyEliminationMatchRepository);
 
         MatchServicesException exception = Assert.ThrowsException<MatchServicesException>(
             () => service.SimulateGroupStageAndGenerateKnockout(Seed));
 
         Assert.AreEqual("El fixture aún no ha sido generado", exception.Message);
+    }
+
+    private void SeedSettings()
+    {
+        _tournamentSettingsRepository.Add(
+            new TournamentSettings(
+                1,
+                new DateTime(StartYear, StartMonth, StartDay),
+                3,
+                3,
+                Seed,
+                Seed,
+                Seed,
+                Seed));
+    }
+
+    private void SeedStadiums()
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            _stadiumRepository.Add(
+                new Stadium($"Stadium {i}", "City", null, 30000)
+                {
+                    Id = i + 1
+                });
+        }
     }
 
     private void SeedGroupsAndMatches()
@@ -154,37 +187,4 @@ public sealed class TournamentSimulationServiceTests
         _matchRepository.Add(match);
     }
 
-    private void SeedKnockoutMatches()
-    {
-        List<Match> knockoutMatches = new List<Match>();
-        Match? sourceHome = _matchRepository.GetById(FirstMatchId);
-        Match? sourceAway = _matchRepository.GetById(FirstMatchId + 1);
-
-        if (sourceHome == null || sourceAway == null)
-        {
-            throw new InvalidOperationException("Test setup failed.");
-        }
-
-        for (int index = 0; index < KnockoutMatchesCount; index++)
-        {
-            int matchId = FirstKnockoutMatchId + index;
-            Team homeTeam = new Team(100 + (index * 2), "Knockout Home " + index, KnockoutHomeRankingBase - index, false, Confederation.CONMEBOL);
-            Team awayTeam = new Team(101 + (index * 2), "Knockout Away " + index, KnockoutAwayRankingBase - index, false, Confederation.CONCACAF);
-            Stadium stadium = new Stadium("Knockout Stadium " + index, "City", null, 35000);
-
-            knockoutMatches.Add(
-                MatchElimination.Create(
-                    matchId,
-                    new DateTime(StartYear, StartMonth, StartDay).AddDays(KnockoutStartDayOffset + (index * KnockoutDayStep)),
-                    homeTeam,
-                    awayTeam,
-                    stadium,
-                    Phase.RoundOf32,
-                    "K" + matchId,
-                    sourceHome,
-                    sourceAway));
-        }
-
-        _knockoutFixtureGenerator.SeedResult(knockoutMatches);
-    }
 }
