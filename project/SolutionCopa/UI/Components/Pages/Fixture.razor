@@ -232,7 +232,7 @@ else
             bool hasFinal = eliminationMatches.Any(match => match.Phase == Phase.Final);
             bool hasThird = eliminationMatches.Any(match => match.Phase == Phase.ThirdPlace);
             if (!hasFinal || !hasThird) return false;
-            return eliminationMatches.All(match => match.HomeGoals + match.AwayGoals > 0);
+            return eliminationMatches.All(match => match.WasSimulated);
         }
     }
 

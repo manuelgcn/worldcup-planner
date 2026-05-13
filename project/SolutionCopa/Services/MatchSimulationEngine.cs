@@ -27,6 +27,7 @@ public class MatchSimulationEngine : IMatchSimulationEngine
         int awayGoals = GenerateGoals(random, awayTeam.FifaRanking, homeTeam.FifaRanking);
 
         match.SetGoals(homeGoals, awayGoals);
+        match.MarkAsSimulated();
     }
 
     private int GenerateGoals(Random random, int teamRanking, int opponentRanking)

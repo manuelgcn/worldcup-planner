@@ -122,7 +122,7 @@ public sealed class GroupStandingsService : IGroupStandingsService
 
     private static bool IsMatchPlayed(Match match)
     {
-        return match.HomeGoals + match.AwayGoals >= MinimumGoalsForPlayedMatch;
+        return match.WasSimulated || match.HomeGoals + match.AwayGoals >= MinimumGoalsForPlayedMatch;
     }
 
     private sealed class StandingAccumulator

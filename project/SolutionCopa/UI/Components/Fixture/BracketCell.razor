@@ -33,5 +33,5 @@
 
     private static string TeamName(Team? team) => team?.Name ?? "TBD";
 
-    private static bool IsPlayed(MatchElimination match) => match.HomeGoals + match.AwayGoals > 0;
+    private static bool IsPlayed(MatchElimination match) => match.WasSimulated || match.HomeGoals + match.AwayGoals > 0;
 }

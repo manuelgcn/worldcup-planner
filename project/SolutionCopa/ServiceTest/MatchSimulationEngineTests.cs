@@ -206,6 +206,24 @@ public sealed class MatchSimulationEngineTests
         Assert.IsTrue(match.AwayGoals <= 15);
     }
 
+    [TestMethod]
+    public void Simulate_MarksMatchAsSimulated()
+    {
+        Match match = CreateMatch(1500, 1500);
+
+        _simulationEngine.Simulate(match, 1);
+
+        Assert.IsTrue(match.WasSimulated);
+    }
+
+    [TestMethod]
+    public void NewMatch_IsNotMarkedAsSimulated()
+    {
+        Match match = CreateMatch(1500, 1500);
+
+        Assert.IsFalse(match.WasSimulated);
+    }
+
     private static Match CreateMatch(int homeRanking, int awayRanking)
     {
         Team homeTeam = new Team(1, "Home Team", homeRanking, false, Confederation.CONCACAF);
