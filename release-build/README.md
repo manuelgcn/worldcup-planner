@@ -25,5 +25,16 @@ parámetros del torneo se leen de `win-x64/appsettings.json`, sección
 
 ## Versión
 
-- Tag: `v1.0.0-entrega1`
+- Tag: `v1.0.1-entrega1`
 - Build: self-contained `win-x64`, .NET 8.0
+
+### Cambios respecto a `v1.0.0-entrega1`
+
+- `fix(fixture)`: la generación de fixture ahora respeta los cupos de
+  confederación por grupo (máx. 1 no-UEFA, máx. 2 UEFA) usando Fisher-Yates
+  determinístico sobre `FixtureSeed`.
+- `fix(matches)`: los filtros de la página de partidos funcionan de forma
+  independiente, "Hasta" incluye el mismo día y la lista incluye los partidos
+  de eliminación.
+- `feat(bracket)`: en `/fixture`, los partidos de eliminación que se definen
+  por penales muestran el resultado de la tanda y el equipo que pasó.

@@ -720,6 +720,24 @@ main[b-d0jsncqpy4] {
     font-style: italic;
 }
 
+[b-ix6k40m07m] .bracket-cell-team .penalty-score {
+    margin-left: .25rem;
+    font-size: .75rem;
+    font-weight: 600;
+    color: #b26a00;
+}
+
+[b-ix6k40m07m] .bracket-cell-penalties {
+    margin-top: .3rem;
+    font-size: .72rem;
+    font-weight: 600;
+    color: #b26a00;
+    background: rgba(255, 193, 7, .12);
+    padding: .15rem .35rem;
+    border-radius: 3px;
+    text-align: center;
+}
+
 /* Buttons */
 .btn[b-ix6k40m07m] {
     padding: .5rem 1rem;
