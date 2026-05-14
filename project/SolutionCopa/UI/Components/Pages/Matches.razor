@@ -4,6 +4,7 @@
 @using Services.Interfaces
 @using DataAccess.Interfaces
 @inject IMatchRepository MatchRepository
+@inject IEliminationMatchRepository EliminationRepository
 @inject IUnitOfWork UnitOfWork
 @inject IStadiumService StadiumServices
 @inject SessionState Session
@@ -233,7 +234,8 @@ else
 
         try
         {
-            IEnumerable<Match> result = MatchRepository.GetAll();
+            IEnumerable<Match> result = MatchRepository.GetAll()
+                .Concat(EliminationRepository.GetAll());
 
             if (filterFrom.HasValue)
             {
@@ -360,7 +362,11 @@ else
 
     private void PersistChanges()
     {
-        MatchRepository.Update(match: FindEditingMatch());
+        Match edited = FindEditingMatch();
+        if (edited is MatchElimination)
+            EliminationRepository.Update(edited);
+        else
+            MatchRepository.Update(edited);
         UnitOfWork.Commit();
     }
 
