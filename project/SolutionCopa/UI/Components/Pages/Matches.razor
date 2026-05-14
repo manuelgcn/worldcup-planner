@@ -4,6 +4,7 @@
 @using Services.Interfaces
 @using DataAccess.Interfaces
 @inject IMatchRepository MatchRepository
+@inject IEliminationMatchRepository EliminationRepository
 @inject IUnitOfWork UnitOfWork
 @inject IStadiumService StadiumServices
 @inject SessionState Session
@@ -80,7 +81,7 @@ else
             </div>
             <div class="filter-item">
                 <label class="form-label">Fase</label>
-                <select class="form-select" @bind="filterPhase">
+                <select class="form-select" @bind="FilterPhaseSelection">
                     <option value="">-- Todas --</option>
                     @foreach (Phase p in Enum.GetValues<Phase>())
                     {
@@ -199,6 +200,12 @@ else
     private string filterGroup = "";
     private Phase? filterPhase;
 
+    private string FilterPhaseSelection
+    {
+        get => filterPhase?.ToString() ?? "";
+        set => filterPhase = string.IsNullOrEmpty(value) ? null : Enum.Parse<Phase>(value);
+    }
+
     private List<Match> matches = new();
     private IReadOnlyCollection<ProjectCopa.Stadium> stadiums = Array.Empty<ProjectCopa.Stadium>();
     
@@ -227,27 +234,29 @@ else
 
         try
         {
-            IEnumerable<Match> result = MatchRepository.GetAll();
+            IEnumerable<Match> result = MatchRepository.GetAll()
+                .Concat(EliminationRepository.GetAll());
 
-            if (filterFrom.HasValue && filterTo.HasValue)
-                result = result.Where(m => m.MatchDate >= filterFrom && m.MatchDate <= filterTo);
-            else if (filterFrom.HasValue)
-                result = result.Where(m => m.MatchDate >= filterFrom);
-            else if (filterTo.HasValue)
-                result = result.Where(m => m.MatchDate <= filterTo);
+            if (filterFrom.HasValue)
+            {
+                DateTime fromDate = filterFrom.Value.Date;
+                result = result.Where(m => m.MatchDate.Date >= fromDate);
+            }
+
+            if (filterTo.HasValue)
+            {
+                DateTime toDateExclusive = filterTo.Value.Date.AddDays(1);
+                result = result.Where(m => m.MatchDate < toDateExclusive);
+            }
 
             if (filterStadiumId > 0)
                 result = result.Where(m => m.Stadium != null && m.Stadium.Id == filterStadiumId);
 
             if (!string.IsNullOrEmpty(filterGroup))
-                result = result.OfType<MatchGroup>()
-                    .Where(m => m.Group != null && m.Group.Name == filterGroup)
-                    .Cast<Match>();
+                result = result.Where(m => m is MatchGroup mg && mg.Group != null && mg.Group.Name == filterGroup);
 
             if (filterPhase.HasValue)
-                result = result.OfType<MatchElimination>()
-                    .Where(m => m.Phase == filterPhase.Value)
-                    .Cast<Match>();
+                result = result.Where(m => m is MatchElimination me && me.Phase == filterPhase.Value);
 
             matches = result.ToList();
         }
@@ -353,7 +362,11 @@ else
 
     private void PersistChanges()
     {
-        MatchRepository.Update(match: FindEditingMatch());
+        Match edited = FindEditingMatch();
+        if (edited is MatchElimination)
+            EliminationRepository.Update(edited);
+        else
+            MatchRepository.Update(edited);
         UnitOfWork.Commit();
     }
 

@@ -1,5 +1,6 @@
 using ProjectCopa;
 using Services;
+using Services.Exceptions;
 using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest;
@@ -67,17 +68,39 @@ public class FixtureServiceTests
 
     private List<Team> Create48ValidTeams()
     {
-        List<Team> teams = new List<Team>();
+        return Create48TeamsWithRealisticConfederationQuotas();
+    }
 
-        for (int i = 0; i < 48; i++)
+    private static List<Team> Create48TeamsWithRealisticConfederationQuotas()
+    {
+        List<Team> teams = new List<Team>();
+        int id = 1;
+        int ranking = 2000;
+
+        (Confederation conf, int count)[] quotas =
         {
-            teams.Add(new Team(
-                i + 1,
-                "Team" + i,
-                1000 + i,
-                false,
-                Confederation.UEFA
-            ));
+            (Confederation.UEFA, 16),
+            (Confederation.CONMEBOL, 7),
+            (Confederation.CONCACAF, 7),
+            (Confederation.CAF, 9),
+            (Confederation.AFC, 8),
+            (Confederation.OFC, 1)
+        };
+
+        foreach ((Confederation conf, int count) in quotas)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                teams.Add(new Team(
+                    id,
+                    conf + "_" + (i + 1).ToString("00"),
+                    ranking,
+                    false,
+                    conf
+                ));
+                id++;
+                ranking--;
+            }
         }
 
         return teams;
@@ -138,32 +161,19 @@ public class FixtureServiceTests
     [TestMethod]
     public void CreateFixtureAssignsTeamsByDescendingFifaRanking()
     {
-        List<Team> teams = new List<Team>
-        {
-            new Team(1, "MidRank", 1500, false, Confederation.UEFA),
-            new Team(2, "HighRank", 2000, false, Confederation.UEFA),
-            new Team(3, "LowRank", 1000, false, Confederation.UEFA)
-        };
-        
-        for (int i = 3; i < 48; i++)
-        {
-            teams.Add(new Team(
-                i + 1,
-                "Team" + i,
-                500,
-                false,
-                Confederation.UEFA
-            ));
-        }
+        List<Team> teams = Create48TeamsWithRealisticConfederationQuotas();
+        Team highRank = new Team(99, "HighRank", 2500, false, Confederation.UEFA);
+        teams.RemoveAt(0);
+        teams.Insert(0, highRank);
 
         List<Stadium> stadiums = Create4ValidStadiums();
 
         FixtureService service = new FixtureService(teams, stadiums);
-        
+
         IReadOnlyCollection<Group> groups = service.CreateFixture();
 
         Group firstGroup = groups.First();
-        
+
         Assert.AreEqual("HighRank", firstGroup.Teams.First().Name);
     }
 
@@ -172,47 +182,19 @@ public class FixtureServiceTests
     [TestMethod]
     public void CreateFixtureResolvesEqualRankingsDeterministically()
     {
-      
-        List<Team> teams = new List<Team>();
-
-        
-        for (int i = 0; i < 12; i++)
-        {
-            teams.Add(new Team(
-                i + 1,
-                "TeamEqual" + i,
-                1500,
-                false,
-                Confederation.UEFA
-            ));
-        }
-
-       
-        for (int i = 12; i < 48; i++)
-        {
-            teams.Add(new Team(
-                i + 1,
-                "Team" + i,
-                1000,
-                false,
-                Confederation.UEFA
-            ));
-        }
+        List<Team> teams = Create48TeamsWithRealisticConfederationQuotas();
 
         List<Stadium> stadiums = Create4ValidStadiums();
 
-        
         FixtureService service1 = new FixtureService(teams, stadiums, seed: 42);
         FixtureService service2 = new FixtureService(teams, stadiums, seed: 42);
 
-      
         IReadOnlyCollection<Group> groups1 = service1.CreateFixture();
         IReadOnlyCollection<Group> groups2 = service2.CreateFixture();
 
         List<string> firstTeamsRun1 = groups1.Select(g => g.Teams.First().Name).ToList();
         List<string> firstTeamsRun2 = groups2.Select(g => g.Teams.First().Name).ToList();
 
-        
         CollectionAssert.AreEqual(firstTeamsRun1, firstTeamsRun2);
     }
 
@@ -220,65 +202,58 @@ public class FixtureServiceTests
     [TestMethod]
     public void CreateFixtureDistributesOneTeamFromEachBomboIntoEachGroup()
     {
-       
         List<Team> teams = new List<Team>();
+        int id = 1;
 
-        // Bombo 1 (rankings mas altos)
-        for (int i = 0; i < 12; i++)
+        (Confederation conf, int count)[] quotas =
         {
-            teams.Add(new Team(
-                i + 1,
-                "B1_Team" + i,
-                2400 - i,
-                false,
-                Confederation.UEFA
-            ));
-        }
+            (Confederation.UEFA, 16),
+            (Confederation.CONMEBOL, 7),
+            (Confederation.CONCACAF, 7),
+            (Confederation.CAF, 9),
+            (Confederation.AFC, 8),
+            (Confederation.OFC, 1)
+        };
 
-        // Bombo 2
-        for (int i = 0; i < 12; i++)
-        {
-            teams.Add(new Team(
-                i + 1,
-                "B2_Team" + i,
-                2000 - i,
-                false,
-                Confederation.UEFA
-            ));
-        }
+        int bomboBase = 2400;
+        int teamIndexInBombo = 0;
+        int currentBombo = 0;
+        int placedInQuota = 0;
+        int quotaIdx = 0;
 
-        // Bombo 4
-        for (int i = 0; i < 12; i++)
+        for (int i = 0; i < 48; i++)
         {
-            teams.Add(new Team(
-                i + 1,
-                "B4_Team" + i,
-                1200 - i,
-                false,
-                Confederation.UEFA
-            ));
-        }
-        
-        // Bombo 3
-        for (int i = 0; i < 12; i++)
-        {
-            teams.Add(new Team(
-                i + 1,
-                "B3_Team" + i,
-                1600 - i,
-                false,
-                Confederation.UEFA
-            ));
-        }
+            if (teamIndexInBombo == 12)
+            {
+                teamIndexInBombo = 0;
+                currentBombo++;
+                bomboBase -= 400;
+            }
 
-       
+            while (placedInQuota == quotas[quotaIdx].count)
+            {
+                quotaIdx++;
+                placedInQuota = 0;
+            }
+
+            teams.Add(new Team(
+                id++,
+                "B" + (currentBombo + 1) + "_" + quotas[quotaIdx].conf + "_" + (i + 1),
+                bomboBase - teamIndexInBombo,
+                false,
+                quotas[quotaIdx].conf
+            ));
+
+            placedInQuota++;
+            teamIndexInBombo++;
+        }
 
         List<Stadium> stadiums = Create4ValidStadiums();
 
         FixtureService service = new FixtureService(teams, stadiums);
-        
+
         IReadOnlyCollection<Group> groups = service.CreateFixture();
-        
+
         foreach (Group group in groups)
         {
             List<int> rankings = group.Teams
@@ -286,7 +261,6 @@ public class FixtureServiceTests
                 .OrderByDescending(r => r)
                 .ToList();
 
-            
             Assert.IsTrue(rankings[0] >= 2300);
             Assert.IsTrue(rankings[1] >= 1900 && rankings[1] <= 2100);
             Assert.IsTrue(rankings[2] >= 1500 && rankings[2] <= 1700);
@@ -298,44 +272,16 @@ public class FixtureServiceTests
     [TestMethod]
     public void CreateFixtureAllowsAtMostTwoUefaTeamsPerGroup()
     {
-        
-        List<Team> teams = new List<Team>();
-
-       
-       
-
-        
-        for (int i = 24; i < 48; i++)
-        {
-            teams.Add(new Team(
-                i + 1,
-                "CONMEBOL_Team" + i,
-                2000 - i,
-                false,
-                Confederation.CONMEBOL
-            ));
-        }
-        for (int i = 0; i < 24; i++)
-        {
-            teams.Add(new Team(
-                i + 1,
-                "UEFA_Team" + i,
-                2400 - i,
-                false,
-                Confederation.UEFA
-            ));
-        }
-
+        List<Team> teams = Create48TeamsWithRealisticConfederationQuotas();
         List<Stadium> stadiums = Create4ValidStadiums();
 
         FixtureService service = new FixtureService(teams, stadiums);
-        
+
         IReadOnlyCollection<Group> groups = service.CreateFixture();
-        
+
         foreach (Group group in groups)
         {
-            int uefaCount = group.Teams
-                .Count(t => t.Confederation == Confederation.UEFA);
+            int uefaCount = group.Teams.Count(t => t.Confederation == Confederation.UEFA);
 
             Assert.IsTrue(
                 uefaCount <= 2,
@@ -344,5 +290,132 @@ public class FixtureServiceTests
         }
     }
 
-    
+    [TestMethod]
+    public void CreateFixtureAllowsAtMostOneTeamPerNonUefaConfederationPerGroup()
+    {
+        List<Team> teams = Create48TeamsWithRealisticConfederationQuotas();
+        List<Stadium> stadiums = Create4ValidStadiums();
+
+        FixtureService service = new FixtureService(teams, stadiums);
+
+        IReadOnlyCollection<Group> groups = service.CreateFixture();
+
+        foreach (Group group in groups)
+        {
+            foreach (Confederation conf in Enum.GetValues<Confederation>())
+            {
+                if (conf == Confederation.UEFA) continue;
+
+                int count = group.Teams.Count(t => t.Confederation == conf);
+                Assert.IsTrue(
+                    count <= 1,
+                    $"Group {group.Name} has {count} teams from {conf} (max allowed is 1)"
+                );
+            }
+        }
+    }
+
+    [TestMethod]
+    public void CreateFixtureRespectsConfederationQuotasAndStillProduces12GroupsOf4()
+    {
+        List<Team> teams = Create48TeamsWithRealisticConfederationQuotas();
+        List<Stadium> stadiums = Create4ValidStadiums();
+
+        FixtureService service = new FixtureService(teams, stadiums, seed: 7);
+
+        IReadOnlyCollection<Group> groups = service.CreateFixture();
+
+        Assert.AreEqual(12, groups.Count);
+        foreach (Group group in groups)
+        {
+            Assert.AreEqual(4, group.Teams.Count);
+        }
+
+        List<Team> allTeams = groups.SelectMany(g => g.Teams).ToList();
+        Assert.AreEqual(48, allTeams.Distinct().Count());
+    }
+
+    [TestMethod]
+    public void CreateFixtureProducesSameAssignmentForSameSeed()
+    {
+        List<Team> teams = Create48TeamsWithRealisticConfederationQuotas();
+        List<Stadium> stadiums = Create4ValidStadiums();
+
+        IReadOnlyCollection<Group> run1 = new FixtureService(teams, stadiums, seed: 123).CreateFixture();
+        IReadOnlyCollection<Group> run2 = new FixtureService(teams, stadiums, seed: 123).CreateFixture();
+
+        List<string> assignment1 = run1
+            .Select(g => g.Name + ":" + string.Join(",", g.Teams.Select(t => t.Name)))
+            .ToList();
+        List<string> assignment2 = run2
+            .Select(g => g.Name + ":" + string.Join(",", g.Teams.Select(t => t.Name)))
+            .ToList();
+
+        CollectionAssert.AreEqual(assignment1, assignment2);
+    }
+
+    [TestMethod]
+    public void CreateFixtureDoesNotPlaceTwoNonUefaTeamsFromSameConfederationInGroupZero()
+    {
+        // Distribution crafted so that, with the old "bombo[i] → groups[i]" assignment,
+        // two CONMEBOL teams (at rank positions 12 and 24) both end up in group A.
+        List<Team> teams = new List<Team>();
+        int id = 1;
+        int rank = 2000;
+
+        Confederation[] order = new Confederation[48];
+        for (int i = 0; i < 12; i++) order[i] = Confederation.UEFA;
+        for (int i = 12; i < 18; i++) order[i] = Confederation.CONMEBOL;
+        for (int i = 18; i < 22; i++) order[i] = Confederation.UEFA;
+        order[22] = Confederation.CAF;
+        order[23] = Confederation.CAF;
+        order[24] = Confederation.CONMEBOL;
+        for (int i = 25; i < 32; i++) order[i] = Confederation.CAF;
+        for (int i = 32; i < 39; i++) order[i] = Confederation.CONCACAF;
+        for (int i = 39; i < 47; i++) order[i] = Confederation.AFC;
+        order[47] = Confederation.OFC;
+
+        for (int i = 0; i < 48; i++)
+        {
+            teams.Add(new Team(id++, order[i] + "_" + i, rank--, false, order[i]));
+        }
+
+        List<Stadium> stadiums = Create4ValidStadiums();
+        FixtureService service = new FixtureService(teams, stadiums);
+
+        IReadOnlyCollection<Group> groups = service.CreateFixture();
+
+        foreach (Group group in groups)
+        {
+            int conmebolCount = group.Teams.Count(t => t.Confederation == Confederation.CONMEBOL);
+            Assert.IsTrue(
+                conmebolCount <= 1,
+                $"Group {group.Name} has {conmebolCount} CONMEBOL teams (max 1)"
+            );
+        }
+    }
+
+    [TestMethod]
+    public void CreateFixtureThrowsServiceExceptionWhenConfederationQuotasCannotBeSatisfied()
+    {
+        List<Team> teams = new List<Team>();
+
+        for (int i = 0; i < 14; i++)
+        {
+            teams.Add(new Team(i + 1, "CAF_" + i, 2000 - i, false, Confederation.CAF));
+        }
+        for (int i = 0; i < 16; i++)
+        {
+            teams.Add(new Team(15 + i, "UEFA_" + i, 1900 - i, false, Confederation.UEFA));
+        }
+        for (int i = 0; i < 18; i++)
+        {
+            teams.Add(new Team(31 + i, "AFC_" + i, 1800 - i, false, Confederation.AFC));
+        }
+
+        List<Stadium> stadiums = Create4ValidStadiums();
+        FixtureService service = new FixtureService(teams, stadiums);
+
+        Assert.ThrowsException<FixtureServiceException>(() => service.CreateFixture());
+    }
 }
