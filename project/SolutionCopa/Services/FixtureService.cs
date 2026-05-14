@@ -1,19 +1,21 @@
 using ProjectCopa;
+using Services.Exceptions;
 using Services.Interfaces;
 namespace Services;
 
 public class FixtureService
 {
-   
+    private const int GroupsInTournament = 12;
+    private const int TeamsPerGroup = 4;
+    private const int RequiredTeams = GroupsInTournament * TeamsPerGroup;
+    private const int MaxUefaTeamsPerGroup = 2;
+    private const int MaxNonUefaTeamsPerGroup = 1;
+
     private readonly IReadOnlyCollection<Team> teams;
     private readonly IReadOnlyCollection<Stadium> stadiums;
     private readonly IAuditLogService? _auditLogService;
-
-    
-    
     private readonly int seed;
 
-    
     public FixtureService(
         IReadOnlyCollection<Team> teams,
         IReadOnlyCollection<Stadium> stadiums,
@@ -22,7 +24,7 @@ public class FixtureService
     {
         this.teams = teams;
         this.stadiums = stadiums;
-        this.seed = seed ?? 0; 
+        this.seed = seed ?? 0;
         _auditLogService = auditLogService;
     }
 
@@ -43,7 +45,7 @@ public class FixtureService
 
     private void ValidatePreconditions()
     {
-        if (teams.Count != 48)
+        if (teams.Count != RequiredTeams)
             throw new ArgumentException("Fixture requires exactly 48 teams");
 
         if (stadiums.Count < 4)
@@ -58,16 +60,38 @@ public class FixtureService
         {
             groups.Add(new Group(c.ToString()));
         }
-        
+
         return groups;
     }
-    
+
     private void AssignTeamsToGroups(List<Group> groups)
     {
         List<List<Team>> bombos = CreateBombos();
-        DistributeBombosIntoGroups(groups, bombos);
+
+        List<List<Team>> assignments = new List<List<Team>>();
+        for (int i = 0; i < groups.Count; i++)
+            assignments.Add(new List<Team>());
+
+        foreach (List<Team> bombo in bombos)
+        {
+            bool[] groupAlreadyTakenInBombo = new bool[groups.Count];
+            if (!TryPlaceBomboOneTeamPerGroup(assignments, bombo, groupAlreadyTakenInBombo, 0))
+            {
+                throw new FixtureServiceException(
+                    "Cannot build fixture: confederation quotas cannot be satisfied " +
+                    "(max 1 team per non-UEFA confederation per group, max 2 UEFA per group).");
+            }
+        }
+
+        for (int g = 0; g < groups.Count; g++)
+        {
+            foreach (Team team in assignments[g])
+            {
+                groups[g].AddTeam(team);
+            }
+        }
     }
-    
+
     private List<List<Team>> CreateBombos()
     {
         List<Team> orderedTeams = OrderTeamsByRankingWithDeterministicTieBreak();
@@ -78,8 +102,8 @@ public class FixtureService
         {
             bombos.Add(
                 orderedTeams
-                    .Skip(i * 12)
-                    .Take(12)
+                    .Skip(i * GroupsInTournament)
+                    .Take(GroupsInTournament)
                     .ToList()
             );
         }
@@ -87,24 +111,46 @@ public class FixtureService
         return bombos;
     }
 
-    
-    private void DistributeBombosIntoGroups(
-        List<Group> groups,
-        List<List<Team>> bombos)
+    private bool TryPlaceBomboOneTeamPerGroup(
+        List<List<Team>> assignments,
+        List<Team> bombo,
+        bool[] groupAlreadyTakenInBombo,
+        int teamIndex)
     {
-        foreach (List<Team> bombo in bombos)
+        if (teamIndex >= bombo.Count) return true;
+
+        Team team = bombo[teamIndex];
+
+        for (int groupIndex = 0; groupIndex < assignments.Count; groupIndex++)
         {
-            for (int i = 0; i < groups.Count; i++)
-            {
-                groups[i].AddTeam(bombo[i]);
-            }
+            if (groupAlreadyTakenInBombo[groupIndex]) continue;
+            if (!CanPlaceTeamInGroup(assignments[groupIndex], team)) continue;
+
+            assignments[groupIndex].Add(team);
+            groupAlreadyTakenInBombo[groupIndex] = true;
+
+            if (TryPlaceBomboOneTeamPerGroup(assignments, bombo, groupAlreadyTakenInBombo, teamIndex + 1))
+                return true;
+
+            assignments[groupIndex].RemoveAt(assignments[groupIndex].Count - 1);
+            groupAlreadyTakenInBombo[groupIndex] = false;
         }
+
+        return false;
     }
 
+    private static bool CanPlaceTeamInGroup(List<Team> groupTeams, Team team)
+    {
+        if (groupTeams.Count >= TeamsPerGroup) return false;
 
+        int sameConfederationCount = groupTeams.Count(t => t.Confederation == team.Confederation);
+        int maxAllowed = team.Confederation == Confederation.UEFA
+            ? MaxUefaTeamsPerGroup
+            : MaxNonUefaTeamsPerGroup;
 
+        return sameConfederationCount < maxAllowed;
+    }
 
-    
     private List<Team> OrderTeamsByRankingWithDeterministicTieBreak()
     {
         Random random = new Random(seed);
@@ -121,7 +167,6 @@ public class FixtureService
             .ToList();
     }
 
-    
     private void ShuffleDeterministically(List<Team> teams, Random random)
     {
         for (int i = teams.Count - 1; i > 0; i--)
@@ -130,6 +175,4 @@ public class FixtureService
             (teams[i], teams[j]) = (teams[j], teams[i]);
         }
     }
-
-
 }
