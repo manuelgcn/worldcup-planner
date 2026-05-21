@@ -13,6 +13,11 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 
+// TODO Fase 1 (EF Core): registrar AppDbContext con AddDbContext (scoped por request)
+// usando ConnectionStrings:Default (override por env var ConnectionStrings__Default).
+// Migrar los repositorios y IUnitOfWork de AddSingleton -> AddScoped: el DbContext
+// de EF Core no es thread-safe y debe vivir por request. IUnitOfWork.Commit() pasa
+// a envolver SaveChangesAsync() (autosave por operacion, sin "guardar todo").
 builder.Services.AddSingleton<ITeamRepository, TeamRepository>();
 builder.Services.AddSingleton<IMatchRepository, MatchRepository>();
 builder.Services.AddSingleton<IStadiumRepository, StadiumRepository>();
