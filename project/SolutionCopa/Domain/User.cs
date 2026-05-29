@@ -1,6 +1,8 @@
 ﻿using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 using System.Text;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 
 namespace ProjectCopa;
@@ -8,14 +10,16 @@ namespace ProjectCopa;
 
 public class User
 {
+    [Key]
     public int idUser { get; set; }
     public string name { get; set; }
     public string? lastname { get; set; }
     public string email { get; set; }
     public string password { get; private set; }
     public DateTime? dateOfBirth { get; set; }
-    
+    [NotMapped]
     private List<UserRoles> roles = new List<UserRoles>();
+    [NotMapped]
     public IReadOnlyCollection<UserRoles> Roles => roles.AsReadOnly();
     
     public User()
