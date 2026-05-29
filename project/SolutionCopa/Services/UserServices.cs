@@ -1,44 +1,48 @@
-﻿
-using ProjectCopa;
+﻿using ProjectCopa;
 using Services.Interfaces;
+using DataAccess.Interfaces;
 
 namespace Services;
 
 public class UserServices
 {
     private readonly IAuditLogService? _auditLogService;
-    private readonly List<User> users = new List<User>();
+    private readonly IUserRepository _userRepository;
+
+    public UserServices(IUserRepository userRepository, IAuditLogService? auditLogService = null)
+    {
+        _userRepository = userRepository;
+        _auditLogService = auditLogService;
+    }
 
     public IReadOnlyCollection<User> GetAllUsers()
     {
-        return users.AsReadOnly();
-    }
-
-    public UserServices(IAuditLogService? auditLogService = null)
-    {
-        _auditLogService = auditLogService;
+        return _userRepository.GetAll();
     }
 
     public void AddUser(User user)
     {
-        if (users.Any(u => u.email == user.email))
+        var existingUsers = _userRepository.GetAll();
+
+        if (existingUsers.Any(u => u.email == user.email))
             throw new ArgumentException("Email already exists");
-        if (users.Any(u => u.idUser == user.idUser))
+
+        if (existingUsers.Any(u => u.idUser == user.idUser))
             throw new ArgumentException("User ID is already assigned");
+
         if (!user.Roles.Any())
             throw new ArgumentException("User must have at least one role");
 
+        _userRepository.Add(user);
 
-        users.Add(user);
         _auditLogService?.Log(
             AuditActions.CreateUser,
             $"UserId={user.idUser} created with email={user.email}.",
             nameof(User),
-            user.idUser);
+            user.idUser
+        );
     }
-    
-    
-    
+
     public void RemoveRole(int userId, UserRoles role)
     {
         User user = GetUserById(userId);
@@ -59,13 +63,9 @@ public class UserServices
         );
     }
 
-
-    
-    
-
     public User GetUserByEmail(string email)
     {
-        User user = users.FirstOrDefault(u => u.email == email);
+        User? user = _userRepository.GetByEmail(email);
 
         if (user == null)
             throw new ArgumentException("User not found");
@@ -73,10 +73,9 @@ public class UserServices
         return user;
     }
 
-    
     public User GetUserById(int id)
     {
-        User user = users.FirstOrDefault(u => u.idUser == id);
+        User? user = _userRepository.GetAll().FirstOrDefault(u => u.idUser == id);
 
         if (user == null)
             throw new ArgumentException("User not found");
@@ -84,47 +83,60 @@ public class UserServices
         return user;
     }
 
-    
     public void RemoveUser(int id)
     {
+        if (id == 1)
+            throw new ArgumentException("El usuario administrador del sistema no puede ser eliminado");
+
         User user = GetUserById(id);
-        users.Remove(user);
+
+        _userRepository.Remove(user);
+
         _auditLogService?.Log(
             AuditActions.DeleteUser,
             $"UserId={user.idUser} deleted.",
             nameof(User),
-            user.idUser);
+            user.idUser
+        );
     }
 
     public void UpdateUser(int id, string name, string lastname, string email)
     {
-
         if (id == 1)
-        {
             throw new ArgumentException("El usuario administrador del sistema no puede ser modificado");
-        }
 
-        User user = GetUserById(id);
+        var users = _userRepository.GetAll();
 
         if (users.Any(u => u.email == email && u.idUser != id))
             throw new ArgumentException("Email already exists");
 
+        User user = GetUserById(id);
+
         user.UpdatePersonalData(name, lastname, email);
+
+        _userRepository.Update(user);
+
         _auditLogService?.Log(
             AuditActions.UpdateUser,
             $"UserId={user.idUser} updated.",
             nameof(User),
-            user.idUser);
+            user.idUser
+        );
     }
 
     public void AssignRole(int userId, UserRoles role)
     {
         User user = GetUserById(userId);
+
         user.AddRole(role);
+
+        _userRepository.Update(user);
+
         _auditLogService?.Log(
             AuditActions.AssignUserRole,
             $"Role={role} assigned to UserId={user.idUser}.",
             nameof(User),
-            user.idUser);
+            user.idUser
+        );
     }
 }
