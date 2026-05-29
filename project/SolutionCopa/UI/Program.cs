@@ -1,6 +1,8 @@
 using Services;
+using DataAccess;
 using DataAccess.Interfaces;
 using DataAccess.Repositories;
+using Microsoft.EntityFrameworkCore;
 using UI;
 using UI.Components;
 using ProjectCopa;
@@ -13,11 +15,16 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 
-// TODO Fase 1 (EF Core): registrar AppDbContext con AddDbContext (scoped por request)
-// usando ConnectionStrings:Default (override por env var ConnectionStrings__Default).
-// Migrar los repositorios y IUnitOfWork de AddSingleton -> AddScoped: el DbContext
-// de EF Core no es thread-safe y debe vivir por request. IUnitOfWork.Commit() pasa
-// a envolver SaveChangesAsync() (autosave por operacion, sin "guardar todo").
+// Fase 1 (EF Core): Team persiste en SQL via IDbContextFactory<AppDbContext>.
+// AddDbContextFactory es el patron recomendado en Blazor Server (un DbContext
+// efimero por operacion). El factory es Singleton, por lo que TeamRepository puede
+// seguir Singleton sin captive dependency. El resto de repos siguen en memoria.
+string connectionString = builder.Configuration.GetConnectionString("Default")
+    ?? throw new InvalidOperationException("Falta ConnectionStrings:Default");
+
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
 builder.Services.AddSingleton<ITeamRepository, TeamRepository>();
 builder.Services.AddSingleton<IMatchRepository, MatchRepository>();
 builder.Services.AddSingleton<IStadiumRepository, StadiumRepository>();
@@ -69,6 +76,13 @@ builder.Services.AddSingleton<IImportService>(sp =>
 builder.Services.AddScoped<SessionState>();
 
 WebApplication app = builder.Build();
+
+// Aplica migraciones pendientes al arranque (crea/actualiza la tabla Teams).
+// Requiere el contenedor SQL levantado (docker compose up -d).
+using (AppDbContext db = app.Services.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext())
+{
+    db.Database.Migrate();
+}
 
 if (!app.Environment.IsDevelopment())
 {
