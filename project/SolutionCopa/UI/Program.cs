@@ -9,23 +9,20 @@ using ProjectCopa;
 using Services.Interfaces;
 using Services.Parsers;
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-
-// Fase 1 (EF Core): Team persiste en SQL via IDbContextFactory<AppDbContext>.
-// AddDbContextFactory es el patron recomendado en Blazor Server (un DbContext
-// efimero por operacion). El factory es Singleton, por lo que TeamRepository puede
-// seguir Singleton sin captive dependency. El resto de repos siguen en memoria.
 string connectionString = builder.Configuration.GetConnectionString("Default")
-    ?? throw new InvalidOperationException("Falta ConnectionStrings:Default");
+    ?? throw new InvalidOperationException("Missing connection string");
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 builder.Services.AddSingleton<ITeamRepository, TeamRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
 builder.Services.AddSingleton<IMatchRepository, MatchRepository>();
 builder.Services.AddSingleton<IStadiumRepository, StadiumRepository>();
 builder.Services.AddSingleton<IGroupRepository, GroupRepository>();
@@ -35,8 +32,8 @@ builder.Services.AddSingleton<IEliminationMatchRepository, EliminationMatchRepos
 builder.Services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 
+builder.Services.AddScoped<UserServices>();
 
-builder.Services.AddSingleton<UserServices>();
 builder.Services.AddSingleton<TeamServices>();
 builder.Services.AddSingleton<StadiumServices>();
 builder.Services.AddSingleton<IStadiumService>(sp => sp.GetRequiredService<StadiumServices>());
@@ -45,12 +42,12 @@ builder.Services.AddSingleton<IGroupService>(sp => sp.GetRequiredService<GroupSe
 builder.Services.AddSingleton<JourneyServices>();
 builder.Services.AddSingleton<IJourneyService>(sp => sp.GetRequiredService<JourneyServices>());
 
-
 builder.Services.AddSingleton<IMatchSimulationEngine, MatchSimulationEngine>();
 builder.Services.AddSingleton<IAuditLogService>(sp =>
     AuditLogService.CreateInstance(
         sp.GetRequiredService<IAuditLogRepository>(),
-        defaultTournamentSettingsId: 1));
+        1));
+
 builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
     new KnockoutFixtureGenerator(
         sp.GetRequiredService<IMatchSimulationEngine>(),
@@ -61,25 +58,28 @@ builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
         sp.GetRequiredService<ITournamentSettingsRepository>(),
         sp.GetRequiredService<IUnitOfWork>(),
         sp.GetRequiredService<IAuditLogService>()));
-builder.Services.AddSingleton<IKnockoutFixtureGenerator>(sp => sp.GetRequiredService<KnockoutFixtureGenerator>());
+
+builder.Services.AddSingleton<IKnockoutFixtureGenerator>(sp =>
+    sp.GetRequiredService<KnockoutFixtureGenerator>());
+
 builder.Services.AddSingleton<ITournamentSimulationService, TournamentSimulationService>();
 builder.Services.AddSingleton<IFixtureOrchestrator, FixtureOrchestrator>();
 builder.Services.AddSingleton<IGroupStandingsService, GroupStandingsService>();
 builder.Services.AddSingleton<ITeamParser, CsvStreamTeamParser>();
+
 builder.Services.AddSingleton<IImportService>(sp =>
     ImportService.CreateInstance(
         sp.GetRequiredService<ITeamRepository>(),
         sp.GetRequiredService<IUnitOfWork>(),
         sp.GetRequiredService<ITeamParser>()));
 
-
 builder.Services.AddScoped<SessionState>();
 
-WebApplication app = builder.Build();
+var app = builder.Build();
 
-// Aplica migraciones pendientes al arranque (crea/actualiza la tabla Teams).
-// Requiere el contenedor SQL levantado (docker compose up -d).
-using (AppDbContext db = app.Services.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext())
+using (var db = app.Services
+           .GetRequiredService<IDbContextFactory<AppDbContext>>()
+           .CreateDbContext())
 {
     db.Database.Migrate();
 }
@@ -94,61 +94,52 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
-// =======================
-// Seed default TournamentSettings desde appsettings.json (seccion "TournamentSettings").
-// Required because IAuditLogService is created with defaultTournamentSettingsId=1.
-// =======================
-ITournamentSettingsRepository settingsRepository =
-    app.Services.GetRequiredService<ITournamentSettingsRepository>();
-
-IConfigurationSection settingsSection = builder.Configuration.GetSection("TournamentSettings");
+var settingsRepository = app.Services.GetRequiredService<ITournamentSettingsRepository>();
+var settingsSection = builder.Configuration.GetSection("TournamentSettings");
 int settingsId = settingsSection.GetValue<int>("Id", 1);
 
 if (settingsRepository.GetById(settingsId) is null)
 {
-    TournamentSettings defaultSettings = new TournamentSettings(
-        id: settingsId,
-        startDate: settingsSection.GetValue<DateTime>("StartDate", new DateTime(2026, 6, 1)),
-        maxMatchesPerDay: settingsSection.GetValue<int>("MaxMatchesPerDay", 3),
-        daysBetweenJourneys: settingsSection.GetValue<int>("DaysBetweenJourneys", 3),
-        fixtureSeed: settingsSection.GetValue<int>("FixtureSeed", 0),
-        crossingsSeed: settingsSection.GetValue<int>("CrossingsSeed", 0),
-        simulationSeed: settingsSection.GetValue<int>("SimulationSeed", 0),
-        completionSeed: settingsSection.GetValue<int>("CompletionSeed", 0));
+    var settings = new TournamentSettings(
+        settingsId,
+        settingsSection.GetValue<DateTime>("StartDate", new DateTime(2026, 6, 1)),
+        settingsSection.GetValue<int>("MaxMatchesPerDay", 3),
+        settingsSection.GetValue<int>("DaysBetweenJourneys", 3),
+        settingsSection.GetValue<int>("FixtureSeed", 0),
+        settingsSection.GetValue<int>("CrossingsSeed", 0),
+        settingsSection.GetValue<int>("SimulationSeed", 0),
+        settingsSection.GetValue<int>("CompletionSeed", 0));
 
-    settingsRepository.Add(defaultSettings);
+    settingsRepository.Add(settings);
 }
 
-// =======================
-// Seed Admin
-// =======================
-UserServices userServices = app.Services.GetRequiredService<UserServices>();
+using (var scope = app.Services.CreateScope())
+{
+    var userServices = scope.ServiceProvider.GetRequiredService<UserServices>();
+    var users = userServices.GetAllUsers() ?? new List<User>();
 
-User admin = new User(
-    1,
-    "Admin",
-    "Sistema",
-    "admin@copa.com",
-    "Admin@123",
-    new DateTime(1990, 1, 1)
-);
+    if (!users.Any(u => u.email == "admin@copa.com"))
+    {
+        var admin = new User(
+            0, "Admin", "Sistema",
+            "admin@copa.com", "Admin@123",
+            new DateTime(1990, 1, 1)
+        );
+        admin.AddRole(UserRoles.Admin);
+        userServices.AddUser(admin);
+    }
 
-admin.AddRole(UserRoles.Admin);
-userServices.AddUser(admin);
-
-
-User editor = new User(
-    2,
-    "Editor",
-    "Sistema",
-    "editor@copa.com",
-    "Editor@123",
-    new DateTime(1995, 5, 15)
-);
-editor.AddRole(UserRoles.Editor);
-userServices.AddUser(editor);
-
-
+    if (!users.Any(u => u.email == "editor@copa.com"))
+    {
+        var editor = new User(
+            0, "Editor", "Sistema",
+            "editor@copa.com", "Editor@123",
+            new DateTime(1995, 5, 15)
+        );
+        editor.AddRole(UserRoles.Editor);
+        userServices.AddUser(editor);
+    }
+}
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
