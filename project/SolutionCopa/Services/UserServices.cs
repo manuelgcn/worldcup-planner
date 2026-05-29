@@ -47,7 +47,7 @@ public class UserServices
     {
         User user = GetUserById(userId);
 
-        if (!user.Roles.Contains(role))
+        if (!user.Roles.Any(r => r.Role == role))
             return;
 
         if (user.Roles.Count == 1)

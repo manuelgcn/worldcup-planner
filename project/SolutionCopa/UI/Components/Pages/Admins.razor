@@ -57,13 +57,13 @@ else
                     <td>@user.email</td>
                     <td>@user.name @user.lastname</td>
                     <td>
-                        @foreach (UserRoles role in user.Roles)
+                        @foreach (var role in user.Roles)
                         {
                             <span class="badge bg-secondary me-1">
-                                @role
+                                @role.Role
                                 <button
                                     class="btn btn-sm btn-link text-danger"
-                                    @onclick="() => RemoveRole(user.idUser, role)">
+                                    @onclick="() => RemoveRole(user.idUser, role.Role)">
                                     x
                                 </button>
                             </span>
@@ -94,7 +94,7 @@ else
     private UserRoles selectedRole;
 
     private bool IsAdmin =>
-        Session.CurrentUser?.Roles.Contains(UserRoles.Admin) == true;
+        Session.CurrentUser?.HasRole(UserRoles.Admin) == true;
 
     protected override void OnInitialized()
     {

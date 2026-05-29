@@ -227,7 +227,7 @@ public class UserServicesTests
 
         User updated = service.GetUserById(1);
 
-        Assert.IsTrue(updated.Roles.Contains(UserRoles.Admin));
+        Assert.IsTrue(updated.HasRole(UserRoles.Admin));
     }
 
     [TestMethod]
