@@ -113,33 +113,53 @@ if (settingsRepository.GetById(settingsId) is null)
     settingsRepository.Add(settings);
 }
 
+
+// funcion implementada con IA para la correcta asignacion de roles en la base de datos
 using (var scope = app.Services.CreateScope())
 {
     var userServices = scope.ServiceProvider.GetRequiredService<UserServices>();
-    var users = userServices.GetAllUsers() ?? new List<User>();
 
-    if (!users.Any(u => u.email == "admin@copa.com"))
+    var admin = userServices.GetAllUsers().FirstOrDefault(u => u.email == "admin@copa.com");
+
+    if (admin == null)
     {
-        var admin = new User(
-            0, "Admin", "Sistema",
-            "admin@copa.com", "Admin@123",
+        admin = new User(
+            0,
+            "Admin",
+            "Sistema",
+            "admin@copa.com",
+            "Admin@123",
             new DateTime(1990, 1, 1)
         );
         admin.AddRole(UserRoles.Admin);
         userServices.AddUser(admin);
     }
-
-    if (!users.Any(u => u.email == "editor@copa.com"))
+    else if (!admin.HasRole(UserRoles.Admin))
     {
-        var editor = new User(
-            0, "Editor", "Sistema",
-            "editor@copa.com", "Editor@123",
+        userServices.AssignRole(admin.idUser, UserRoles.Admin);
+    }
+
+    var editor = userServices.GetAllUsers().FirstOrDefault(u => u.email == "editor@copa.com");
+
+    if (editor == null)
+    {
+        editor = new User(
+            0,
+            "Editor",
+            "Sistema",
+            "editor@copa.com",
+            "Editor@123",
             new DateTime(1995, 5, 15)
         );
         editor.AddRole(UserRoles.Editor);
         userServices.AddUser(editor);
     }
+    else if (!editor.HasRole(UserRoles.Editor))
+    {
+        userServices.AssignRole(editor.idUser, UserRoles.Editor);
+    }
 }
+
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

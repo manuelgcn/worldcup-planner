@@ -60,17 +60,19 @@
 
         try
         {
+           
             User user = new User(
-                id: GenerateUserId(),
-                name: name,
-                lastname: lastname,
-                email: email,
-                password: password,
-                dateOfBirth: dateOfBirth
+                0,
+                name.Trim(),
+                lastname.Trim(),
+                email.Trim(),
+                password,
+                dateOfBirth
             );
-            user.AddRole(UserRoles.Editor);
 
+            user.AddRole(UserRoles.Editor);
             UserServices.AddUser(user);
+
             Nav.NavigateTo("/login");
         }
         catch (ArgumentException ex)
@@ -78,9 +80,5 @@
             error = ex.Message;
         }
     }
-
-    private int GenerateUserId()
-    {
-        return UserServices.GetAllUsers().Count + 1;
-    }
+    
 }

@@ -1,5 +1,6 @@
 using ProjectCopa;
 using DataAccess.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.Repositories;
 
@@ -18,14 +19,18 @@ public class UserRepository : IUserRepository
         context.SaveChanges();
     }
 
-    public IReadOnlyCollection<User> GetAll()
-    {
-        return context.Users.ToList();
-    }
-
     public User? GetByEmail(string email)
     {
-        return context.Users.FirstOrDefault(u => u.email == email);
+        return context.Users
+            .Include(u => u.Roles)
+            .FirstOrDefault(u => u.email == email);
+    }
+
+    public IReadOnlyCollection<User> GetAll()
+    {
+        return context.Users
+            .Include(u => u.Roles)
+            .ToList();
     }
 
     public void Remove(User user)
