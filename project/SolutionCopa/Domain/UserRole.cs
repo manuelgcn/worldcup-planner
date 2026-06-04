@@ -1,4 +1,4 @@
-using ProjectCopa;
+namespace ProjectCopa;
 
 public class UserRole
 {

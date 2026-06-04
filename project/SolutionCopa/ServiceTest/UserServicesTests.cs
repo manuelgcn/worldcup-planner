@@ -168,9 +168,10 @@ public class UserServicesTests
     [TestMethod]
     public void CanRemoveUser()
     {
-        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        // idUser != 1: el id 1 esta reservado al admin del sistema y la regla de negocio impide eliminarlo.
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         service.AddUser(user);
-        service.RemoveUser(1);
+        service.RemoveUser(2);
         Assert.AreEqual(0, service.GetAllUsers().Count);
     }
 

@@ -1,13 +1,18 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 using System.Text;
-using System.ComponentModel.DataAnnotations;
 
 namespace ProjectCopa;
 
 public class User
 {
-    [Key]
+    private const string EmailRequiredMessage = "Email es obligatorio";
+    private const string EmailInvalidMessage = "Email invalido";
+    private const string PasswordTooShortMessage = "La contrasena debe tener al menos 8 caracteres";
+    private const string PasswordMissingUppercaseMessage = "La contrasena debe contener al menos una mayuscula";
+    private const string PasswordMissingDigitMessage = "La contrasena debe contener al menos un numero";
+    private const string PasswordMissingSpecialCharMessage = "La contrasena debe contener al menos un caracter especial";
+
     public int idUser { get; set; }
 
     public string name { get; set; }
@@ -42,25 +47,25 @@ public class User
     private void ValidateEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
-            throw new ArgumentException("Email es obligatorio");
+            throw new ArgumentException(EmailRequiredMessage);
 
         if (!email.Contains("@") || !email.Contains("."))
-            throw new ArgumentException("Email invalido");
+            throw new ArgumentException(EmailInvalidMessage);
     }
 
     private void ValidatePassword(string password)
     {
         if (password == null || password.Length < 8)
-            throw new ArgumentException();
+            throw new ArgumentException(PasswordTooShortMessage);
 
         if (!Regex.IsMatch(password, "[A-Z]"))
-            throw new ArgumentException();
+            throw new ArgumentException(PasswordMissingUppercaseMessage);
 
         if (!Regex.IsMatch(password, "[0-9]"))
-            throw new ArgumentException();
+            throw new ArgumentException(PasswordMissingDigitMessage);
 
         if (!Regex.IsMatch(password, "[^a-zA-Z0-9]"))
-            throw new ArgumentException();
+            throw new ArgumentException(PasswordMissingSpecialCharMessage);
     }
 
     private string EncryptPassword(string password)
