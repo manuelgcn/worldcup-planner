@@ -16,7 +16,7 @@ public class KnockoutFixtureGeneratorTests
         QualifiedTeams qualifiedTeams = BuildQualifiedTeams();
         MockMatchSimulationEngine simulationEngine = new MockMatchSimulationEngine();
         MockMatchRepository matchRepository = new MockMatchRepository();
-        TournamentSettingsRepository settingsRepository = new TournamentSettingsRepository();
+        MockTournamentSettingsRepository settingsRepository = new MockTournamentSettingsRepository();
         settingsRepository.Add(new TournamentSettings(1, new DateTime(2026, 6, 1), 3, 3, 0, 77, 99, 0));
         MockUnitOfWork unitOfWork = new MockUnitOfWork();
         MockStadiumRepository stadiumRepository = new MockStadiumRepository();

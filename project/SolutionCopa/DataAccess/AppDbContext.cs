@@ -11,6 +11,9 @@ public class AppDbContext : DbContext
     public DbSet<Team> Teams => Set<Team>();
     public DbSet<User> Users => Set<User>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<Stadium> Stadiums => Set<Stadium>();
+    public DbSet<TournamentSettings> TournamentSettings => Set<TournamentSettings>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -18,5 +21,8 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new TeamConfiguration());
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new UserRoleConfiguration());
+        modelBuilder.ApplyConfiguration(new StadiumConfiguration());
+        modelBuilder.ApplyConfiguration(new TournamentSettingsConfiguration());
+        modelBuilder.ApplyConfiguration(new AuditLogConfiguration());
     }
 }

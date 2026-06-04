@@ -13,7 +13,7 @@ public class Fase2TddTests
     {
         // Arrange
         var matchRepo = new MockMatchRepository();
-        var settingsRepo = new TournamentSettingsRepository();
+        var settingsRepo = new MockTournamentSettingsRepository();
         var settings = new TournamentSettings(1, new DateTime(2026,6,1), 3, 3, fixtureSeed:0, crossingsSeed:0, simulationSeed:42, completionSeed:0);
         settingsRepo.Add(settings);
 
