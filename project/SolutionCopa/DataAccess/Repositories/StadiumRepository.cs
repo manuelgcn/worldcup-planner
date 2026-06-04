@@ -1,65 +1,75 @@
 using DataAccess.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using ProjectCopa;
 
 namespace DataAccess.Repositories;
 
+// Repositorio de Stadium sobre EF Core. Mismo patron que TeamRepository:
+// IDbContextFactory para un contexto efimero por operacion (recomendado en Blazor Server),
+// autosave por mutacion y lecturas AsNoTracking con los filtros resueltos en la base.
 public class StadiumRepository : IStadiumRepository
 {
-    private readonly List<Stadium> _stadiums = new List<Stadium>();
-    private int _nextId = 1;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
+
+    public StadiumRepository(IDbContextFactory<AppDbContext> contextFactory)
+    {
+        _contextFactory = contextFactory;
+    }
 
     public void Add(Stadium stadium)
     {
-        if (stadium.Id <= 0)
-        {
-            stadium.Id = _nextId;
-        }
-
-        _nextId = Math.Max(_nextId, stadium.Id + 1);
-        _stadiums.Add(stadium);
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        context.Stadiums.Add(stadium);
+        context.SaveChanges();
     }
 
     public void Update(Stadium stadium)
     {
-        int index = _stadiums.FindIndex(s => s.Id == stadium.Id);
-        if (index >= 0)
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        Stadium? existing = context.Stadiums.FirstOrDefault(s => s.Id == stadium.Id);
+        if (existing is null)
         {
-            _stadiums[index] = stadium;
+            context.Stadiums.Add(stadium);                              // conserva la semantica actual: si no existe, agrega
         }
         else
         {
-            if (stadium.Id <= 0)
-            {
-                stadium.Id = _nextId;
-            }
-
-            _nextId = Math.Max(_nextId, stadium.Id + 1);
-            _stadiums.Add(stadium);
+            context.Entry(existing).CurrentValues.SetValues(stadium);   // copia valores por nombre de propiedad
         }
+        context.SaveChanges();
     }
 
     public void Delete(Stadium stadium)
     {
-        _stadiums.RemoveAll(s => s.Id == stadium.Id);
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        Stadium? existing = context.Stadiums.FirstOrDefault(s => s.Id == stadium.Id);
+        if (existing is not null)
+        {
+            context.Stadiums.Remove(existing);
+            context.SaveChanges();
+        }
     }
 
     public Stadium? GetById(int stadiumId)
     {
-        return _stadiums.FirstOrDefault(s => s.Id == stadiumId);
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Stadiums.AsNoTracking().FirstOrDefault(s => s.Id == stadiumId);
     }
 
     public Stadium? GetByName(string name)
     {
-        return _stadiums.FirstOrDefault(s => s.Name == name);
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Stadiums.AsNoTracking().FirstOrDefault(s => s.Name == name);
     }
 
     public bool ExistsByName(string name)
     {
-        return _stadiums.Any(s => s.Name == name);
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Stadiums.AsNoTracking().Any(s => s.Name == name);
     }
 
     public IReadOnlyCollection<Stadium> GetAll()
     {
-        return _stadiums.AsReadOnly();
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Stadiums.AsNoTracking().ToList();
     }
 }

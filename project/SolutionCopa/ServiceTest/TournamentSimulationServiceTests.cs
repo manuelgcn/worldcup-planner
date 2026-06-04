@@ -31,7 +31,7 @@ public sealed class TournamentSimulationServiceTests
     private MockMatchSimulationEngine _matchSimulationEngine = null!;
     private MockKnockoutFixtureGenerator _knockoutFixtureGenerator = null!;
     private MockAuditLogRepository _auditLogRepository = null!;
-    private TournamentSettingsRepository _tournamentSettingsRepository = null!;
+    private MockTournamentSettingsRepository _tournamentSettingsRepository = null!;
     private MockUnitOfWork _unitOfWork = null!;
     private TournamentSimulationService _service = null!;
 
@@ -44,7 +44,7 @@ public sealed class TournamentSimulationServiceTests
         _matchSimulationEngine = new MockMatchSimulationEngine();
         _knockoutFixtureGenerator = new MockKnockoutFixtureGenerator();
         _auditLogRepository = new MockAuditLogRepository();
-        _tournamentSettingsRepository = new TournamentSettingsRepository();
+        _tournamentSettingsRepository = new MockTournamentSettingsRepository();
         _unitOfWork = new MockUnitOfWork();
 
         SeedGroupsAndMatches();
@@ -84,7 +84,7 @@ public sealed class TournamentSimulationServiceTests
         MockMatchRepository emptyMatchRepository = new MockMatchRepository();
         EliminationMatchRepository emptyEliminationRepository = new EliminationMatchRepository();
         MockKnockoutFixtureGenerator emptyKnockoutFixtureGenerator = new MockKnockoutFixtureGenerator();
-        TournamentSettingsRepository emptySettingsRepository = new TournamentSettingsRepository();
+        MockTournamentSettingsRepository emptySettingsRepository = new MockTournamentSettingsRepository();
         MockUnitOfWork emptyUnitOfWork = new MockUnitOfWork();
         emptyGroupRepository.Seed(FirstGroupId, new Group("A"));
         emptySettingsRepository.Add(new TournamentSettings(1, new DateTime(StartYear, StartMonth, StartDay), 3, 3, Seed, Seed, Seed, Seed));

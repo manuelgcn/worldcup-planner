@@ -30,7 +30,7 @@ public class Fase2ConsolidatedTests
 
         EliminationMatchRepository eliminationRepo = new EliminationMatchRepository();
         MockMatchRepository matchRepo = new MockMatchRepository();
-        TournamentSettingsRepository settingsRepo = new TournamentSettingsRepository();
+        MockTournamentSettingsRepository settingsRepo = new MockTournamentSettingsRepository();
         settingsRepo.Add(settings);
         MockMatchSimulationEngine simulation = new ServiceTest.TestDoubles.Mocks.MockMatchSimulationEngine();
         MockUnitOfWork uow = new ServiceTest.TestDoubles.Mocks.MockUnitOfWork();

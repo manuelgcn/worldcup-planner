@@ -1,19 +1,30 @@
-using ProjectCopa;
 using DataAccess.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using ProjectCopa;
 
 namespace DataAccess.Repositories;
 
+// Repositorio de AuditLog sobre EF Core (mismo patron que TeamRepository).
+// El Id es IDENTITY: lo asigna la BD al guardar; el repo nunca llama a SetId.
 public sealed class AuditLogRepository : IAuditLogRepository
 {
-    private readonly List<AuditLog> _logs = new List<AuditLog>();
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
+
+    public AuditLogRepository(IDbContextFactory<AppDbContext> contextFactory)
+    {
+        _contextFactory = contextFactory;
+    }
 
     public void Add(AuditLog log)
     {
-        _logs.Add(log);
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        context.AuditLogs.Add(log);
+        context.SaveChanges();                                          // EF asigna el Id (IDENTITY) y lo refleja en la entidad
     }
 
     public List<AuditLog> GetAll()
     {
-        return _logs.ToList();
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.AuditLogs.AsNoTracking().OrderBy(l => l.Id).ToList();  // orden de insercion (Id ascendente)
     }
 }

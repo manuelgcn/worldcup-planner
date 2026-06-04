@@ -11,6 +11,16 @@ public sealed class AuditLog
     public string? AffectedEntityType { get; }
     public int? AffectedEntityId { get; }
 
+    // Constructor sin parametros requerido por EF Core para materializar la entidad:
+    // el ctor parametrizado usa 'timestampUtc', que no matchea la propiedad 'Timestamp',
+    // por lo que EF no puede bindearlo. EF instancia por aca y escribe el resto de las
+    // propiedades (incluido el Id IDENTITY) por sus backing fields.
+    private AuditLog()
+    {
+        Action = string.Empty;
+        Details = string.Empty;
+    }
+
     private AuditLog(
         DateTime timestampUtc,
         string action,

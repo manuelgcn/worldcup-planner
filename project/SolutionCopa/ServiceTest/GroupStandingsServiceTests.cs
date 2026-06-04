@@ -18,7 +18,7 @@ public class GroupStandingsServiceTests
 
     private MockMatchRepository _matchRepository = null!;
     private MockGroupRepository _groupRepository = null!;
-    private TournamentSettingsRepository _settingsRepository = null!;
+    private MockTournamentSettingsRepository _settingsRepository = null!;
     private GroupStandingsService _service = null!;
 
     private Team _teamAlpha = null!;
@@ -33,7 +33,7 @@ public class GroupStandingsServiceTests
     {
         _matchRepository = new MockMatchRepository();
         _groupRepository = new MockGroupRepository();
-        _settingsRepository = new TournamentSettingsRepository();
+        _settingsRepository = new MockTournamentSettingsRepository();
         _settingsRepository.Add(CreateDefaultSettings());
 
         _teamAlpha = new Team(1, "Alpha", 1500, false, Confederation.UEFA);

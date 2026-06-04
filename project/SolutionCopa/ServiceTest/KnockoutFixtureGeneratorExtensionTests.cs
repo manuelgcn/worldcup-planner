@@ -28,7 +28,7 @@ public class KnockoutFixtureGeneratorExtensionTests
     private MockMatchRepository _matchRepository = null!;
     private EliminationMatchRepository _eliminationRepository = null!;
     private MockStadiumRepository _stadiumRepository = null!;
-    private TournamentSettingsRepository _settingsRepository = null!;
+    private MockTournamentSettingsRepository _settingsRepository = null!;
     private MockMatchSimulationEngine _simulationEngine = null!;
     private MockUnitOfWork _unitOfWork = null!;
     private MockAuditLogRepository _auditRepository = null!;
@@ -42,7 +42,7 @@ public class KnockoutFixtureGeneratorExtensionTests
         _matchRepository = new MockMatchRepository();
         _eliminationRepository = new EliminationMatchRepository();
         _stadiumRepository = new MockStadiumRepository();
-        _settingsRepository = new TournamentSettingsRepository();
+        _settingsRepository = new MockTournamentSettingsRepository();
         _simulationEngine = new MockMatchSimulationEngine();
         _unitOfWork = new MockUnitOfWork();
         _auditRepository = new MockAuditLogRepository();

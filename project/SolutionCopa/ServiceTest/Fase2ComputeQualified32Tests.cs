@@ -43,7 +43,7 @@ public class Fase2ComputeQualified32Tests
         Fase2 fase2 = new Fase2(
             simulationEngine: new MockMatchSimulationEngine(),
             matchRepository: matchRepo,
-            settingsRepository: new TournamentSettingsRepository(),
+            settingsRepository: new MockTournamentSettingsRepository(),
             unitOfWork: new MockUnitOfWork()
         );
  
