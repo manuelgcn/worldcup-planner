@@ -55,11 +55,28 @@ public class UserRepository : IUserRepository
 
     public void Update(User user)
     {
-        // TODO(GREEN): version ingenua. Update() sobre el grafo no sincroniza la
-        // coleccion de roles (no entera de los roles quitados), por lo que los tests
-        // de sincronizacion de roles y de no-op para usuarios inexistentes fallan.
         using AppDbContext context = _contextFactory.CreateDbContext();
-        context.Users.Update(user);
-        context.SaveChanges();
+        User? existing = context.Users
+                                .Include(u => u.Roles)
+                                .FirstOrDefault(u => u.idUser == user.idUser);
+        if (existing is null) return;                                   // no-op: igual que buscar y no encontrar
+
+        context.Entry(existing).CurrentValues.SetValues(user);          // copia los escalares por nombre de propiedad
+
+        // sincroniza la coleccion de roles a mano (evita el doble tracking de Update sobre grafos)
+        List<UserRole> rolesToRemove = existing.Roles.Where(r => !user.HasRole(r.Role)).ToList();
+        foreach (UserRole role in rolesToRemove)
+        {
+            existing.Roles.Remove(role);
+            context.Remove(role);
+        }
+
+        List<UserRole> rolesToAdd = user.Roles.Where(r => !existing.Roles.Any(e => e.Role == r.Role)).ToList();
+        foreach (UserRole role in rolesToAdd)
+        {
+            existing.Roles.Add(new UserRole { UserId = existing.idUser, User = existing, Role = role.Role });
+        }
+
+        context.SaveChanges();                                          // autosave
     }
 }

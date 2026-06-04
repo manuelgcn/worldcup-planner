@@ -22,12 +22,10 @@ public class UserServices
 
     public void AddUser(User user)
     {
-        var existingUsers = _userRepository.GetAll();
-
-        if (existingUsers.Any(u => u.email == user.email))
+        if (_userRepository.ExistsByEmail(user.email))
             throw new ArgumentException("Email already exists");
 
-        if (existingUsers.Any(u => u.idUser == user.idUser))
+        if (_userRepository.GetById(user.idUser) is not null)
             throw new ArgumentException("User ID is already assigned");
 
         if (!user.Roles.Any())
@@ -55,6 +53,8 @@ public class UserServices
 
         user.RemoveRoles(role);
 
+        _userRepository.Update(user);
+
         _auditLogService?.Log(
             AuditActions.RemoveUserRoles,
             $"Role={role} removed from UserId={user.idUser}.",
@@ -75,7 +75,7 @@ public class UserServices
 
     public User GetUserById(int id)
     {
-        User? user = _userRepository.GetAll().FirstOrDefault(u => u.idUser == id);
+        User? user = _userRepository.GetById(id);
 
         if (user == null)
             throw new ArgumentException("User not found");
@@ -105,9 +105,9 @@ public class UserServices
         if (id == 1)
             throw new ArgumentException("El usuario administrador del sistema no puede ser modificado");
 
-        var users = _userRepository.GetAll();
+        User? userWithEmail = _userRepository.GetByEmail(email);
 
-        if (users.Any(u => u.email == email && u.idUser != id))
+        if (userWithEmail is not null && userWithEmail.idUser != id)
             throw new ArgumentException("Email already exists");
 
         User user = GetUserById(id);

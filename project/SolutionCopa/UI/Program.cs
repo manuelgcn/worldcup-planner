@@ -21,7 +21,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 builder.Services.AddSingleton<ITeamRepository, TeamRepository>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddSingleton<IUserRepository, UserRepository>();
 
 builder.Services.AddSingleton<IMatchRepository, MatchRepository>();
 builder.Services.AddSingleton<IStadiumRepository, StadiumRepository>();
@@ -32,7 +32,7 @@ builder.Services.AddSingleton<IEliminationMatchRepository, EliminationMatchRepos
 builder.Services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 
-builder.Services.AddScoped<UserServices>();
+builder.Services.AddSingleton<UserServices>();
 
 builder.Services.AddSingleton<TeamServices>();
 builder.Services.AddSingleton<StadiumServices>();
