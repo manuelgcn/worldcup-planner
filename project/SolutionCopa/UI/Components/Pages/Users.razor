@@ -57,31 +57,30 @@ else
 
             <div class="mb-3">
                 <label class="form-label" for="userName">Nombre</label>
-                <input id="userName" class="form-control" placeholder="Nombre" @bind="name" />
+                <input id="userName" class="form-control" @bind="name" />
             </div>
             <div class="mb-3">
                 <label class="form-label" for="userLastname">Apellido</label>
-                <input id="userLastname" class="form-control" placeholder="Apellido" @bind="lastname" />
+                <input id="userLastname" class="form-control" @bind="lastname" />
             </div>
             <div class="mb-3">
                 <label class="form-label" for="userEmail">Email</label>
-                <input id="userEmail" class="form-control" placeholder="tu@email.com" @bind="email" />
+                <input id="userEmail" class="form-control" @bind="email" />
             </div>
 
             @if (editingUserId is null)
             {
                 <div class="mb-3">
                     <label class="form-label" for="userPassword">Contraseña</label>
-                    <input id="userPassword" class="form-control" type="password" placeholder="••••••••" @bind="password" />
-                    <small class="form-text text-muted">≥8 caracteres, mayúscula, número y especial.</small>
+                    <input id="userPassword" class="form-control" type="password" @bind="password" />
                 </div>
                 <div class="mb-3">
                     <label class="form-label" for="userBirth">Fecha de nacimiento</label>
                     <input id="userBirth" class="form-control" type="date" @bind="dateOfBirth" />
                 </div>
                 <div class="mb-3">
-                    <label class="form-label" for="userRole">Rol inicial</label>
-                    <select id="userRole" class="form-select" @bind="initialRole">
+                    <label class="form-label">Rol inicial</label>
+                    <select class="form-select" @bind="initialRole">
                         @foreach (UserRoles role in Enum.GetValues<UserRoles>())
                         {
                             <option value="@role">@role</option>
@@ -93,101 +92,64 @@ else
             <div class="d-flex gap-2">
                 @if (editingUserId is null)
                 {
-                    <button class="btn btn-primary" @onclick="Create">
-                        <i class="bi bi-plus-circle-fill" aria-hidden="true"></i>
-                        Crear
-                    </button>
+                    <button class="btn btn-primary" @onclick="Create">Crear</button>
                 }
                 else
                 {
-                    <button class="btn btn-primary" @onclick="SaveEdit">
-                        <i class="bi bi-save" aria-hidden="true"></i>
-                        Guardar
-                    </button>
-                    <button class="btn btn-outline-secondary" @onclick="CancelEdit">
-                        Cancelar
-                    </button>
+                    <button class="btn btn-primary" @onclick="SaveEdit">Guardar</button>
+                    <button class="btn btn-outline-secondary" @onclick="CancelEdit">Cancelar</button>
                 }
             </div>
         </article>
 
         <article class="m26-card pane">
             <h2 class="pane-title">Usuarios existentes</h2>
+
             @if (!usuarios.Any())
             {
-                <div class="m26-empty">
-                    <i class="bi bi-people" aria-hidden="true"></i>
-                    <p class="mb-0">No hay usuarios cargados.</p>
-                </div>
+                <p>No hay usuarios.</p>
             }
             else
             {
-                <div class="table-responsive">
-                    <table class="table table-hover m26-scoreboard mb-0">
-                        <thead>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Roles</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (User u in usuarios)
+                        {
                             <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Email</th>
-                                <th>Roles</th>
-                                <th class="text-end">Acciones</th>
+                                <td>@u.idUser</td>
+                                <td>@u.name @u.lastname</td>
+                                <td>@u.email</td>
+                                <td>
+                                    @foreach (var r in u.Roles)
+                                    {
+                                        <span class="badge bg-secondary">@r.Role</span>
+                                    }
+                                </td>
+                                <td>
+                                    <button @onclick="() => StartEdit(u)">Editar</button>
+                                    <button disabled="@(u.HasRole(UserRoles.Admin))"
+                                            @onclick="() => AssignRole(u.idUser, UserRoles.Admin)">
+                                        Admin
+                                    </button>
+                                    <button disabled="@(u.HasRole(UserRoles.Editor))"
+                                            @onclick="() => AssignRole(u.idUser, UserRoles.Editor)">
+                                        Editor
+                                    </button>
+                                    <button @onclick="() => Remove(u.idUser)">Eliminar</button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (User u in usuarios)
-                            {
-                                <tr>
-                                    <td>@u.idUser</td>
-                                    <td>@u.name @u.lastname</td>
-                                    <td>@u.email</td>
-                                    <td>
-                                        @if (!u.Roles.Any())
-                                        {
-                                            <span class="text-muted">—</span>
-                                        }
-                                        else
-                                        {
-                                            @foreach (UserRoles r in u.Roles)
-                                            {
-                                                <span class="m26-conf-badge">@r</span>
-                                            }
-                                        }
-                                    </td>
-                                    <td class="text-end">
-                                        <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-primary"
-                                                    @onclick="() => StartEdit(u)">
-                                                <i class="bi bi-pencil" aria-hidden="true"></i>
-                                                Editar
-                                            </button>
-                                            <button class="btn btn-outline-secondary"
-                                                    disabled="@(u.Roles.Contains(UserRoles.Admin))"
-                                                    @onclick="() => AssignRole(u.idUser, UserRoles.Admin)"
-                                                    title="Asignar rol Admin">
-                                                <i class="bi bi-shield-check" aria-hidden="true"></i>
-                                                Admin
-                                            </button>
-                                            <button class="btn btn-outline-secondary"
-                                                    disabled="@(u.Roles.Contains(UserRoles.Editor))"
-                                                    @onclick="() => AssignRole(u.idUser, UserRoles.Editor)"
-                                                    title="Asignar rol Editor">
-                                                <i class="bi bi-pencil-square" aria-hidden="true"></i>
-                                                Editor
-                                            </button>
-                                            <button class="btn btn-outline-danger"
-                                                    disabled="@(u.idUser == Session.CurrentUser!.idUser)"
-                                                    @onclick="() => Remove(u.idUser)"
-                                                    title="@(u.idUser == Session.CurrentUser!.idUser ? "No podés eliminar tu propio usuario" : "Eliminar")">
-                                                <i class="bi bi-trash" aria-hidden="true"></i>
-                                                Eliminar
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                        }
+                    </tbody>
+                </table>
             }
         </article>
     </section>
@@ -203,13 +165,13 @@ else
 
     private int? editingUserId;
 
-    private readonly List<string> errors = new List<string>();
+    private List<string> errors = new();
     private string? successMessage;
 
-    private IReadOnlyCollection<User> usuarios = Array.Empty<User>();
+    private List<User> usuarios = new();
 
     private bool IsAdmin =>
-        Session.IsLoggedIn && Session.CurrentUser!.Roles.Contains(UserRoles.Admin);
+        Session.IsLoggedIn && Session.CurrentUser!.HasRole(UserRoles.Admin);
 
     protected override void OnInitialized()
     {
@@ -218,40 +180,22 @@ else
 
     private void LoadUsers()
     {
-        usuarios = UserServices.GetAllUsers();
+        usuarios = UserServices.GetAllUsers().ToList();
     }
 
     private void Create()
     {
-        errors.Clear();
-        successMessage = null;
-
-        if (!ValidateCreateInput())
-            return;
-
         try
         {
-            int nextId = UserServices.GetAllUsers()
-                .Select(u => u.idUser)
-                .DefaultIfEmpty(0)
-                .Max() + 1;
-
-            User user = new User(
-                nextId,
-                name.Trim(),
-                lastname.Trim(),
-                email.Trim(),
-                password,
-                dateOfBirth);
+            var user = new User(0, name, lastname, email, password, dateOfBirth);
             user.AddRole(initialRole);
 
             UserServices.AddUser(user);
 
-            successMessage = $"Usuario #{nextId} creado correctamente";
-            ClearForm();
+            successMessage = "Usuario creado";
             LoadUsers();
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
             errors.Add(ex.Message);
         }
@@ -259,8 +203,6 @@ else
 
     private void StartEdit(User u)
     {
-        errors.Clear();
-        successMessage = null;
         editingUserId = u.idUser;
         name = u.name;
         lastname = u.lastname ?? "";
@@ -270,31 +212,18 @@ else
     private void CancelEdit()
     {
         editingUserId = null;
-        ClearForm();
     }
 
     private void SaveEdit()
     {
-        errors.Clear();
-        successMessage = null;
-
-        if (!ValidateEditInput())
-            return;
-
         try
         {
-            UserServices.UpdateUser(
-                editingUserId!.Value,
-                name.Trim(),
-                lastname.Trim(),
-                email.Trim());
-
-            successMessage = $"Usuario #{editingUserId} actualizado correctamente";
+            UserServices.UpdateUser(editingUserId!.Value, name, lastname, email);
+            successMessage = "Usuario actualizado";
             editingUserId = null;
-            ClearForm();
             LoadUsers();
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
             errors.Add(ex.Message);
         }
@@ -302,81 +231,14 @@ else
 
     private void Remove(int id)
     {
-        errors.Clear();
-        successMessage = null;
-
-        if (id == Session.CurrentUser!.idUser)
-        {
-            errors.Add("No podés eliminar tu propio usuario.");
-            return;
-        }
-
-        try
-        {
-            UserServices.RemoveUser(id);
-            successMessage = $"Usuario #{id} eliminado correctamente";
-            if (editingUserId == id)
-            {
-                editingUserId = null;
-                ClearForm();
-            }
-            LoadUsers();
-        }
-        catch (ArgumentException ex)
-        {
-            errors.Add(ex.Message);
-        }
+        UserServices.RemoveUser(id);
+        LoadUsers();
     }
 
     private void AssignRole(int id, UserRoles role)
     {
-        errors.Clear();
-        successMessage = null;
-
-        try
-        {
-            UserServices.AssignRole(id, role);
-            successMessage = $"Rol {role} asignado al usuario #{id}";
-            LoadUsers();
-        }
-        catch (ArgumentException ex)
-        {
-            errors.Add(ex.Message);
-        }
-    }
-
-    private bool ValidateCreateInput()
-    {
-        if (string.IsNullOrWhiteSpace(name))
-            errors.Add("El nombre es obligatorio");
-        if (string.IsNullOrWhiteSpace(email))
-            errors.Add("El email es obligatorio");
-        if (string.IsNullOrWhiteSpace(password))
-            errors.Add("La contraseña es obligatoria");
-        return !errors.Any();
-    }
-
-    private bool ValidateEditInput()
-    {
-        if (string.IsNullOrWhiteSpace(name))
-            errors.Add("El nombre es obligatorio");
-        if (string.IsNullOrWhiteSpace(lastname))
-            errors.Add("El apellido es obligatorio");
-        if (string.IsNullOrWhiteSpace(email))
-            errors.Add("El email es obligatorio");
-        else if (!email.Contains("@") || !email.Contains("."))
-            errors.Add("Email inválido");
-        return !errors.Any();
-    }
-
-    private void ClearForm()
-    {
-        name = "";
-        lastname = "";
-        email = "";
-        password = "";
-        dateOfBirth = DateTime.Today;
-        initialRole = UserRoles.Editor;
+        UserServices.AssignRole(id, role);
+        LoadUsers();
     }
 
     private void GoToLogin()

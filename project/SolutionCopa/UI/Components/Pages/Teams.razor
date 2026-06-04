@@ -137,7 +137,7 @@ else
     private IReadOnlyCollection<Team> equipos = Array.Empty<Team>();
 
     private bool IsAdmin =>
-        Session.CurrentUser!.Roles.Contains(UserRoles.Admin);
+        Session.CurrentUser!.HasRole(UserRoles.Admin);
 
     protected override void OnInitialized()
     {

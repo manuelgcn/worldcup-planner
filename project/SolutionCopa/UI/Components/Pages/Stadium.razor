@@ -136,7 +136,7 @@ else
     private IReadOnlyCollection<ProjectCopa.Stadium> stadiums = Array.Empty<ProjectCopa.Stadium>();
 
     private bool IsAdmin =>
-        Session.CurrentUser!.Roles.Contains(UserRoles.Admin);
+        Session.CurrentUser!.HasRole(UserRoles.Admin);
 
     protected override void OnInitialized()
     {

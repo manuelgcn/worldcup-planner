@@ -84,7 +84,7 @@ else
     private DateTime? toDate;
 
     private bool IsAdmin =>
-        Session.IsLoggedIn && Session.CurrentUser!.Roles.Contains(UserRoles.Admin);
+        Session.IsLoggedIn && Session.CurrentUser!.HasRole(UserRoles.Admin);
 
     private IEnumerable<AuditLogDto> Filtered =>
         AuditLogService.GetAll()
@@ -101,3 +101,4 @@ else
         toDate = null;
     }
 }
+``

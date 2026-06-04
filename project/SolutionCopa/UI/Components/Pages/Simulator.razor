@@ -53,7 +53,8 @@ else
     private string? successMessage;
 
     private bool IsAdmin =>
-        Session.CurrentUser?.Roles.Contains(UserRoles.Admin) == true;
+        Session.CurrentUser?.HasRole(UserRoles.Admin) == true;
+
 
     private void SimulateWithSeed()
     {

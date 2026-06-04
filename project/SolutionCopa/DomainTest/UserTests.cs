@@ -194,7 +194,7 @@ public class UserTests
         User usuario = new User(1, "Juan", "Perez", "juan@mail.com", "Passs1234@", new DateTime(1990, 5, 15));
         usuario.AddRole(UserRoles.Admin);
 
-        Assert.IsTrue(usuario.Roles.Contains(UserRoles.Admin));
+        Assert.IsTrue(usuario.Roles.Any(r => r.Role == UserRoles.Admin));
     }
 
     
