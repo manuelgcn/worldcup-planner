@@ -17,9 +17,19 @@ public class MockUserRepository : IUserRepository
         return users.ToList();
     }
 
+    public User? GetById(int id)
+    {
+        return users.FirstOrDefault(u => u.idUser == id);
+    }
+
     public User? GetByEmail(string email)
     {
         return users.FirstOrDefault(u => u.email == email);
+    }
+
+    public bool ExistsByEmail(string email)
+    {
+        return users.Any(u => u.email == email);
     }
 
     public void Remove(User user)
