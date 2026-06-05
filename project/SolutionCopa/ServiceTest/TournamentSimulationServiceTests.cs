@@ -27,7 +27,7 @@ public sealed class TournamentSimulationServiceTests
 
     private MockGroupRepository _groupRepository = null!;
     private MockMatchRepository _matchRepository = null!;
-    private EliminationMatchRepository _eliminationMatchRepository = null!;
+    private MockEliminationMatchRepository _eliminationMatchRepository = null!;
     private MockMatchSimulationEngine _matchSimulationEngine = null!;
     private MockKnockoutFixtureGenerator _knockoutFixtureGenerator = null!;
     private MockAuditLogRepository _auditLogRepository = null!;
@@ -40,7 +40,7 @@ public sealed class TournamentSimulationServiceTests
     {
         _groupRepository = new MockGroupRepository();
         _matchRepository = new MockMatchRepository();
-        _eliminationMatchRepository = new EliminationMatchRepository();
+        _eliminationMatchRepository = new MockEliminationMatchRepository();
         _matchSimulationEngine = new MockMatchSimulationEngine();
         _knockoutFixtureGenerator = new MockKnockoutFixtureGenerator();
         _auditLogRepository = new MockAuditLogRepository();
@@ -82,7 +82,7 @@ public sealed class TournamentSimulationServiceTests
     {
         MockGroupRepository emptyGroupRepository = new MockGroupRepository();
         MockMatchRepository emptyMatchRepository = new MockMatchRepository();
-        EliminationMatchRepository emptyEliminationRepository = new EliminationMatchRepository();
+        MockEliminationMatchRepository emptyEliminationRepository = new MockEliminationMatchRepository();
         MockKnockoutFixtureGenerator emptyKnockoutFixtureGenerator = new MockKnockoutFixtureGenerator();
         MockTournamentSettingsRepository emptySettingsRepository = new MockTournamentSettingsRepository();
         MockUnitOfWork emptyUnitOfWork = new MockUnitOfWork();

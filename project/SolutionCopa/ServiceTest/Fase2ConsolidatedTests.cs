@@ -28,7 +28,7 @@ public class Fase2ConsolidatedTests
 
         TournamentSettings settings = new TournamentSettings(1, new DateTime(2026,6,1), 3, 3, fixtureSeed:0, crossingsSeed:777, simulationSeed:99, completionSeed:0);
 
-        EliminationMatchRepository eliminationRepo = new EliminationMatchRepository();
+        MockEliminationMatchRepository eliminationRepo = new MockEliminationMatchRepository();
         MockMatchRepository matchRepo = new MockMatchRepository();
         MockTournamentSettingsRepository settingsRepo = new MockTournamentSettingsRepository();
         settingsRepo.Add(settings);

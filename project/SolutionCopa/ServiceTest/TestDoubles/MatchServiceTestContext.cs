@@ -27,7 +27,7 @@ public sealed class MatchServiceTestContext
     private IAuditLogRepository AuditLogRepository { get; set; } = null!;
     
     public MockMatchRepository MatchRepository { get; } = new MockMatchRepository();
-    public EliminationMatchRepository EliminationMatchRepository { get; } = new EliminationMatchRepository();
+    public MockEliminationMatchRepository EliminationMatchRepository { get; } = new MockEliminationMatchRepository();
     public MockMatchSimulationEngine SimulationEngine { get; } = new MockMatchSimulationEngine();
     public MockUnitOfWork UnitOfWork { get; } = new MockUnitOfWork();
     public IReadOnlyCollection<AuditLog> AuditLogs => _auditLog.AsReadOnly();

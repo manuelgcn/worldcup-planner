@@ -4,7 +4,9 @@ using ProjectCopa;
 
 namespace DataAccess.Repositories;
 
-// RED: esqueleto sobre IDbContextFactory. La implementacion EF Core (TPH) llega en el commit GREEN.
+// Repositorio polimorfico sobre la tabla TPH "Matches" (mismo patron que el resto: IDbContextFactory,
+// autosave por operacion, lecturas AsNoTrackingWithIdentityResolution con el grafo incluido y filtros
+// resueltos en la base). La logica EF delicada vive en MatchEf.
 public class MatchRepository : IMatchRepository
 {
     private readonly IDbContextFactory<AppDbContext> _contextFactory;
@@ -14,27 +16,94 @@ public class MatchRepository : IMatchRepository
         _contextFactory = contextFactory;
     }
 
-    public bool ExistsById(int matchId) => throw new NotImplementedException();
+    public bool ExistsById(int matchId)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Matches.AsNoTracking().Any(match => match.MatchId == matchId);
+    }
 
-    public void Add(Match match) => throw new NotImplementedException();
+    public void Add(Match match)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        MatchEf.Add(context, match);
+    }
 
-    public void Update(Match match) => throw new NotImplementedException();
+    public void Update(Match match)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        MatchEf.Update(context, match);
+    }
 
-    public void Delete(Match match) => throw new NotImplementedException();
+    public void Delete(Match match)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        MatchEf.Delete(context, match.MatchId);
+    }
 
-    public Match? GetById(int matchId) => throw new NotImplementedException();
+    public Match? GetById(int matchId)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return MatchEf.WithGraph(context.Matches).FirstOrDefault(match => match.MatchId == matchId);
+    }
 
-    public List<Match> GetByGroup(string groupName) => throw new NotImplementedException();
+    public List<Match> GetByGroup(string groupName)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return MatchEf.WithGraph(context.Matches)
+            .OfType<MatchGroup>()
+            .Where(match => match.Group != null && match.Group.Name == groupName)
+            .Cast<Match>()
+            .ToList();
+    }
 
-    public List<Match> GetByJourney(int journeyNumber) => throw new NotImplementedException();
+    public List<Match> GetByJourney(int journeyNumber)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return MatchEf.WithGraph(context.Matches)
+            .OfType<MatchGroup>()
+            .Where(match => match.Journey != null && match.Journey.Number == journeyNumber)
+            .Cast<Match>()
+            .ToList();
+    }
 
-    public List<Match> GetByStadium(int stadiumId) => throw new NotImplementedException();
+    public List<Match> GetByStadium(int stadiumId)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return MatchEf.WithGraph(context.Matches)
+            .Where(match => match.Stadium != null && match.Stadium.Id == stadiumId)
+            .ToList();
+    }
 
-    public List<Match> GetByPhase(Phase phase) => throw new NotImplementedException();
+    public List<Match> GetByPhase(Phase phase)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return MatchEf.WithGraph(context.Matches)
+            .OfType<MatchElimination>()
+            .Where(match => match.Phase == phase)
+            .Cast<Match>()
+            .ToList();
+    }
 
-    public List<Match> GetByDateRange(DateTime from, DateTime to) => throw new NotImplementedException();
+    public List<Match> GetByDateRange(DateTime from, DateTime to)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return MatchEf.WithGraph(context.Matches)
+            .Where(match => match.MatchDate >= from && match.MatchDate <= to)
+            .ToList();
+    }
 
-    public List<Match> GetAll() => throw new NotImplementedException();
+    public List<Match> GetAll()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return MatchEf.WithGraph(context.Matches).ToList();
+    }
 
-    public void Clear() => throw new NotImplementedException();
+    public void Clear()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        // RemoveRange sobre el DbSet trackeado (no ExecuteDelete: InMemory no lo soporta). Cargar todo
+        // a tracking permite que ClientSetNull nullee las autorreferencias MatchHome/MatchAway antes de borrar.
+        context.Matches.RemoveRange(context.Matches.ToList());
+        context.SaveChanges();
+    }
 }

@@ -4,9 +4,8 @@ using ProjectCopa;
 
 namespace DataAccess.Repositories;
 
-// RED: esqueleto sobre IDbContextFactory. La implementacion EF Core llega en el commit GREEN.
-// Solo se usa en DataAccessTest (no esta registrado en produccion), pero se migra para que no
-// quede ningun almacenamiento List<T> en DataAccess.
+// Vista tipada de los partidos de grupo sobre la tabla TPH "Matches" (OfType<MatchGroup>).
+// Solo se usa en DataAccessTest; se migra a EF para no dejar almacenamiento List<T> en DataAccess.
 public class GroupMatchRepository : IGroupMatchRepository
 {
     private readonly IDbContextFactory<AppDbContext> _contextFactory;
@@ -16,17 +15,55 @@ public class GroupMatchRepository : IGroupMatchRepository
         _contextFactory = contextFactory;
     }
 
-    public Match? GetById(int id) => throw new NotImplementedException();
+    public Match? GetById(int id)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return MatchEf.WithGraph(context.Matches)
+            .OfType<MatchGroup>()
+            .Cast<Match>()
+            .FirstOrDefault(match => match.MatchId == id);
+    }
 
-    public IReadOnlyCollection<Match> GetByGroup(string groupName) => throw new NotImplementedException();
+    public IReadOnlyCollection<Match> GetByGroup(string groupName)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return MatchEf.WithGraph(context.Matches)
+            .OfType<MatchGroup>()
+            .Where(match => match.Group != null && match.Group.Name == groupName)
+            .Cast<Match>()
+            .ToList();
+    }
 
-    public IReadOnlyCollection<Match> GetAll() => throw new NotImplementedException();
+    public IReadOnlyCollection<Match> GetAll()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return MatchEf.WithGraph(context.Matches)
+            .OfType<MatchGroup>()
+            .Cast<Match>()
+            .ToList();
+    }
 
-    public void Add(Match match) => throw new NotImplementedException();
+    public void Add(Match match)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        MatchEf.Add(context, match);
+    }
 
-    public void Update(Match match) => throw new NotImplementedException();
+    public void Update(Match match)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        MatchEf.Update(context, match);
+    }
 
-    public void Delete(Match match) => throw new NotImplementedException();
+    public void Delete(Match match)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        MatchEf.Delete(context, match.MatchId);
+    }
 
-    public bool ExistsById(int id) => throw new NotImplementedException();
+    public bool ExistsById(int id)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Matches.AsNoTracking().OfType<MatchGroup>().Any(match => match.MatchId == id);
+    }
 }

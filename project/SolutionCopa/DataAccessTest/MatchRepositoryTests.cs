@@ -21,7 +21,7 @@ public class MatchRepositoryTests
     [TestMethod]
     public void AddStoresMatchGroupAndExistsByIdReturnsTrue()
     {
-        AddIsolatedGroupMatch(matchId: 1, groupName: "A", journeyNumber: 1, date: Date(1));
+        AddIsolatedGroupMatch(matchId: 1, groupName: "A", date: Date(1));
 
         Assert.IsTrue(_repository.ExistsById(1));
     }
@@ -46,7 +46,7 @@ public class MatchRepositoryTests
     [TestMethod]
     public void UpdatePersistsEditedResult()
     {
-        AddIsolatedGroupMatch(matchId: 3, groupName: "A", journeyNumber: 1, date: Date(2));
+        AddIsolatedGroupMatch(matchId: 3, groupName: "A", date: Date(2));
         Match stored = _repository.GetById(3)!;          // detached (AsNoTracking)
         stored.SetGoals(2, 1);
 
@@ -111,7 +111,7 @@ public class MatchRepositoryTests
     [TestMethod]
     public void DeleteRemovesStoredMatch()
     {
-        AddIsolatedGroupMatch(matchId: 5, groupName: "C", journeyNumber: 1, date: Date(3));
+        AddIsolatedGroupMatch(matchId: 5, groupName: "C", date: Date(3));
 
         _repository.Delete(_repository.GetById(5)!);
 
@@ -121,7 +121,7 @@ public class MatchRepositoryTests
     [TestMethod]
     public void DeleteDoesNothingWhenMatchIsNotPresent()
     {
-        AddIsolatedGroupMatch(matchId: 6, groupName: "C", journeyNumber: 1, date: Date(4));
+        AddIsolatedGroupMatch(matchId: 6, groupName: "C", date: Date(4));
         Match notStored = EfFixtureData.MakeGroupMatch(
             99, Date(20), EfFixtureData.MakeTeam(9901, "x"), EfFixtureData.MakeTeam(9902, "y"),
             EfFixtureData.MakeStadium(9903, "z"), new Group("C"), Journey.CreateInstance(2));
@@ -203,9 +203,9 @@ public class MatchRepositoryTests
     [TestMethod]
     public void GetByDateRangeReturnsMatchesInsideInclusiveRange()
     {
-        AddIsolatedGroupMatch(matchId: 17, groupName: "A", journeyNumber: 1, date: Date(10));
-        AddIsolatedGroupMatch(matchId: 18, groupName: "B", journeyNumber: 1, date: Date(20));
-        AddIsolatedGroupMatch(matchId: 19, groupName: "C", journeyNumber: 2, date: Date(25));
+        AddIsolatedGroupMatch(matchId: 17, groupName: "A", date: Date(10));
+        AddIsolatedGroupMatch(matchId: 18, groupName: "B", date: Date(20));
+        AddIsolatedGroupMatch(matchId: 19, groupName: "C", date: Date(25));
 
         List<Match> result = _repository.GetByDateRange(Date(10), Date(20));
 
@@ -217,7 +217,7 @@ public class MatchRepositoryTests
     [TestMethod]
     public void GetByDateRangeReturnsEmptyListWhenNothingMatches()
     {
-        AddIsolatedGroupMatch(matchId: 20, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 7, 1));
+        AddIsolatedGroupMatch(matchId: 20, groupName: "A", date: new DateTime(2026, 7, 1));
 
         List<Match> result = _repository.GetByDateRange(Date(1), Date(30));
 
@@ -227,8 +227,8 @@ public class MatchRepositoryTests
     [TestMethod]
     public void GetAllReturnsAllStoredMatches()
     {
-        AddIsolatedGroupMatch(matchId: 1, groupName: "A", journeyNumber: 1, date: Date(1));
-        AddIsolatedGroupMatch(matchId: 2, groupName: "B", journeyNumber: 1, date: Date(2));
+        AddIsolatedGroupMatch(matchId: 1, groupName: "A", date: Date(1));
+        AddIsolatedGroupMatch(matchId: 2, groupName: "B", date: Date(2));
 
         Assert.AreEqual(2, _repository.GetAll().Count);
     }
@@ -256,7 +256,7 @@ public class MatchRepositoryTests
     public void ClearRemovesAllStoredMatchesIncludingBracket()
     {
         // Trampa (c): el bracket tiene autorreferencias (MatchHome/MatchAway); Clear no debe explotar.
-        AddIsolatedGroupMatch(matchId: 1, groupName: "A", journeyNumber: 1, date: Date(1));
+        AddIsolatedGroupMatch(matchId: 1, groupName: "A", date: Date(1));
         AddBracket(eliminationId: 201, homeGoalsSource: 2, awayGoalsSource: 0, sourceIdBase: 500);
 
         _repository.Clear();
@@ -289,6 +289,40 @@ public class MatchRepositoryTests
         Assert.AreEqual(elimination.HomeTeam!.Id, sourceWinner!.Id);   // el local salio del ganador de MatchHome
     }
 
+    [TestMethod]
+    public void AddEliminationToleratesSourceGraphsWithDuplicateKeyedInstances()
+    {
+        // Reproduce el caso real: el estadio/equipos del partido de eliminacion y los que viven DENTRO
+        // de sus fuentes son instancias DISTINTAS con la misma PK (vienen de lecturas separadas:
+        // StadiumRepository vs elimRepo.GetAll). El attach no-traversal no debe romper con
+        // "another instance with the same key is already tracked".
+        Team a = EfFixtureData.MakeTeam(1, "A");
+        Team b = EfFixtureData.MakeTeam(2, "B");
+        Team c = EfFixtureData.MakeTeam(3, "C");
+        Team d = EfFixtureData.MakeTeam(4, "D");
+        Stadium stadiumInSources = EfFixtureData.MakeStadium(9, "Shared");
+        Group groupX = new Group("X");
+        Group groupY = new Group("Y");
+        Journey journey = Journey.CreateInstance(1);
+        MatchGroup sourceHome = EfFixtureData.MakeGroupMatch(110, Date(1), a, b, stadiumInSources, groupX, journey);
+        sourceHome.SetGoals(2, 0);
+        MatchGroup sourceAway = EfFixtureData.MakeGroupMatch(111, Date(1), c, d, stadiumInSources, groupY, journey);
+        sourceAway.SetGoals(0, 2);
+        EfFixtureData.Seed(_factory, a, b, c, d, stadiumInSources, groupX, groupY, journey, sourceHome, sourceAway);
+
+        // Instancias NUEVAS con las mismas PKs, como si vinieran de otra lectura/contexto.
+        Stadium stadiumFromAnotherRead = EfFixtureData.MakeStadium(9, "Shared");
+        Team homeFromAnotherRead = EfFixtureData.MakeTeam(1, "A");
+        Team awayFromAnotherRead = EfFixtureData.MakeTeam(4, "D");
+
+        _repository.Add(EfFixtureData.MakeEliminationMatch(
+            201, Date(15), homeFromAnotherRead, awayFromAnotherRead, stadiumFromAnotherRead, Phase.RoundOf16, sourceHome, sourceAway));
+
+        Assert.IsTrue(_repository.ExistsById(201));
+        Assert.AreEqual(1, EfFixtureData.Count<Stadium>(_factory));   // el estadio no se duplico
+        Assert.AreEqual(4, EfFixtureData.Count<Team>(_factory));      // los equipos no se duplicaron
+    }
+
     private static DateTime Date(int day) => new DateTime(2026, 6, day);
 
     private static Team[] FourTeams(int baseId) =>
@@ -300,13 +334,14 @@ public class MatchRepositoryTests
     ];
 
     // Siembra prerrequisitos propios (equipos/estadio/grupo/jornada) y agrega un partido de grupo aislado.
-    private void AddIsolatedGroupMatch(int matchId, string groupName, int journeyNumber, DateTime date)
+    // Todas las claves se derivan de matchId para que varios partidos coexistan sin choques de PK al sembrar.
+    private void AddIsolatedGroupMatch(int matchId, string groupName, DateTime date)
     {
         Team home = EfFixtureData.MakeTeam(matchId * 100 + 1, $"H{matchId}");
         Team away = EfFixtureData.MakeTeam(matchId * 100 + 2, $"A{matchId}");
         Stadium stadium = EfFixtureData.MakeStadium(matchId * 100 + 3, $"St{matchId}");
         Group group = new Group(groupName);
-        Journey journey = Journey.CreateInstance(journeyNumber);
+        Journey journey = Journey.CreateInstance(matchId);
         EfFixtureData.Seed(_factory, home, away, stadium, group, journey);
         _repository.Add(EfFixtureData.MakeGroupMatch(matchId, date, home, away, stadium, group, journey));
     }

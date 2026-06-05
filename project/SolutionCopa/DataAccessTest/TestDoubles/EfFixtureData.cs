@@ -15,7 +15,7 @@ namespace DataAccessTest.TestDoubles;
 internal static class EfFixtureData
 {
     public static Team MakeTeam(int id, string name) =>
-        new Team(id, name, 1000 + id, false, Confederation.CONMEBOL);
+        new Team(id, name, Math.Clamp(1000 + id, 300, 2500), false, Confederation.CONMEBOL);
 
     public static Stadium MakeStadium(int id, string name) =>
         new Stadium(name, "Test City", null, 50000) { Id = id };
