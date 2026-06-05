@@ -1,52 +1,30 @@
 using DataAccess.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using ProjectCopa;
 
 namespace DataAccess.Repositories;
 
+// RED: esqueleto sobre IDbContextFactory. La implementacion EF Core llega en el commit GREEN.
 public class JourneyRepository : IJourneyRepository
 {
-    private readonly List<Journey> _journeys = new();
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public void Add(Journey journey)
+    public JourneyRepository(IDbContextFactory<AppDbContext> contextFactory)
     {
-        _journeys.Add(journey);
+        _contextFactory = contextFactory;
     }
 
-    public void Update(Journey journey)
-    {
-        int index = _journeys.FindIndex(existingJourney => existingJourney.Number == journey.Number);
+    public void Add(Journey journey) => throw new NotImplementedException();
 
-        if (index >= 0)
-        {
-            _journeys[index] = journey;
-            return;
-        }
+    public void Update(Journey journey) => throw new NotImplementedException();
 
-        _journeys.Add(journey);
-    }
+    public void Delete(Journey journey) => throw new NotImplementedException();
 
-    public void Delete(Journey journey)
-    {
-        _journeys.RemoveAll(existingJourney => existingJourney.Number == journey.Number);
-    }
+    public Journey? GetByNumber(int number) => throw new NotImplementedException();
 
-    public Journey? GetByNumber(int number)
-    {
-        return _journeys.FirstOrDefault(journey => journey.Number == number);
-    }
+    public bool ExistsByNumber(int number) => throw new NotImplementedException();
 
-    public bool ExistsByNumber(int number)
-    {
-        return _journeys.Any(journey => journey.Number == number);
-    }
+    public IReadOnlyCollection<Journey> GetAll() => throw new NotImplementedException();
 
-    public IReadOnlyCollection<Journey> GetAll()
-    {
-        return _journeys.AsReadOnly();
-    }
-
-    public void Clear()
-    {
-        _journeys.Clear();
-    }
+    public void Clear() => throw new NotImplementedException();
 }

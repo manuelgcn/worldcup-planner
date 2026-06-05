@@ -1,52 +1,30 @@
 using DataAccess.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using ProjectCopa;
 
 namespace DataAccess.Repositories;
 
+// RED: esqueleto sobre IDbContextFactory. La implementacion EF Core llega en el commit GREEN.
 public class GroupRepository : IGroupRepository
 {
-    private readonly List<Group> _groups = new();
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public void Add(Group group)
+    public GroupRepository(IDbContextFactory<AppDbContext> contextFactory)
     {
-        _groups.Add(group);
+        _contextFactory = contextFactory;
     }
 
-    public void Update(Group group)
-    {
-        int index = _groups.FindIndex(existingGroup => existingGroup.Name == group.Name);
+    public void Add(Group group) => throw new NotImplementedException();
 
-        if (index >= 0)
-        {
-            _groups[index] = group;
-            return;
-        }
+    public void Update(Group group) => throw new NotImplementedException();
 
-        _groups.Add(group);
-    }
+    public void Delete(Group group) => throw new NotImplementedException();
 
-    public void Delete(Group group)
-    {
-        _groups.RemoveAll(existingGroup => existingGroup.Name == group.Name);
-    }
+    public Group? GetByName(string name) => throw new NotImplementedException();
 
-    public Group? GetByName(string name)
-    {
-        return _groups.FirstOrDefault(group => group.Name == name);
-    }
+    public bool ExistsByName(string name) => throw new NotImplementedException();
 
-    public bool ExistsByName(string name)
-    {
-        return _groups.Any(group => group.Name == name);
-    }
+    public IReadOnlyCollection<Group> GetAll() => throw new NotImplementedException();
 
-    public IReadOnlyCollection<Group> GetAll()
-    {
-        return _groups.AsReadOnly();
-    }
-
-    public void Clear()
-    {
-        _groups.Clear();
-    }
+    public void Clear() => throw new NotImplementedException();
 }

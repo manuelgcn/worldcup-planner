@@ -1,50 +1,32 @@
 using DataAccess.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using ProjectCopa;
 
 namespace DataAccess.Repositories;
 
+// RED: esqueleto sobre IDbContextFactory. La implementacion EF Core (OfType<MatchElimination>) llega en GREEN.
 public class EliminationMatchRepository : IEliminationMatchRepository
 {
-    private readonly List<Match> _storage = new();
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public Match? GetById(int id) => _storage.FirstOrDefault(m => m.MatchId == id);
-
-    public IReadOnlyCollection<Match> GetByPhase(Phase phase)
+    public EliminationMatchRepository(IDbContextFactory<AppDbContext> contextFactory)
     {
-        return _storage
-            .OfType<MatchElimination>()
-            .Where(me => me.Phase == phase)
-            .Cast<Match>()
-            .ToList();
+        _contextFactory = contextFactory;
     }
 
-    public IReadOnlyCollection<Match> GetAll() => _storage.AsReadOnly();
+    public Match? GetById(int id) => throw new NotImplementedException();
 
-    public void Add(Match match)
-    {
-        if (!_storage.Any(m => m.MatchId == match.MatchId))
-            _storage.Add(match);
-    }
+    public IReadOnlyCollection<Match> GetByPhase(Phase phase) => throw new NotImplementedException();
 
-    public void Update(Match match)
-    {
-        Match? existing = GetById(match.MatchId);
-        if (existing != null)
-        {
-            _storage.Remove(existing);
-            _storage.Add(match);
-        }
-    }
+    public IReadOnlyCollection<Match> GetAll() => throw new NotImplementedException();
 
-    public void Delete(Match match)
-    {
-        _storage.RemoveAll(m => m.MatchId == match.MatchId);
-    }
+    public void Add(Match match) => throw new NotImplementedException();
 
-    public bool ExistsById(int id) => _storage.Any(m => m.MatchId == id);
+    public void Update(Match match) => throw new NotImplementedException();
 
-    public void Clear()
-    {
-        _storage.Clear();
-    }
+    public void Delete(Match match) => throw new NotImplementedException();
+
+    public bool ExistsById(int id) => throw new NotImplementedException();
+
+    public void Clear() => throw new NotImplementedException();
 }

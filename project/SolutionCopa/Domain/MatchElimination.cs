@@ -38,6 +38,13 @@ public class MatchElimination : Match
         }
     }
 
+    // Constructor sin parametros exclusivo para la materializacion de EF Core (TPH).
+    // EF escribe MatchHome/MatchAway por backing field (_matchHome/_matchAway) evitando los
+    // setters con validacion. No usar desde la app: las factories estaticas conservan las invariantes.
+    private MatchElimination()
+    {
+    }
+
     private MatchElimination(
         int id,
         DateTime matchDate,

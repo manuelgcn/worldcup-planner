@@ -21,6 +21,14 @@ public class MatchGroup : Match
         MatchCode = matchCode;
     }
 
+    // Constructor sin parametros exclusivo para la materializacion de EF Core (TPH).
+    // EF no puede enlazar las navegaciones (Group/Journey) por constructor, asi que usa este
+    // y escribe las propiedades/backing fields directamente. No usar desde la app: las factories
+    // estaticas siguen siendo la unica via de creacion con invariantes.
+    private MatchGroup()
+    {
+    }
+
     private MatchGroup(
         int id,
         DateTime matchDate,
