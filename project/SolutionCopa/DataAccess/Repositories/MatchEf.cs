@@ -1,3 +1,4 @@
+using DataAccess.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using ProjectCopa;
 
@@ -90,9 +91,31 @@ internal static class MatchEf
 
         if (match is MatchElimination eliminationMatch)
         {
-            MarkUnchanged(context, eliminationMatch.MatchHome);
-            MarkUnchanged(context, eliminationMatch.MatchAway);
+            MarkSourceMatchUnchanged(context, eliminationMatch.MatchHome);
+            MarkSourceMatchUnchanged(context, eliminationMatch.MatchAway);
         }
+    }
+
+    // Defensa en profundidad. Las fuentes de un partido de eliminacion (MatchHome/MatchAway) deben
+    // estar YA persistidas: la app las crea y guarda en la ronda previa antes de generar la
+    // siguiente. La ronda inicial (R32) no tiene fuentes (null) y se omite. Si llegara una fuente NO
+    // persistida, fallamos rapido y claro -con el MatchId ofensor- en vez de marcarla Unchanged y
+    // dejar que el INSERT salga con un FK colgante que el motor rechazaria con una violacion de FK
+    // dificil de diagnosticar (justo el sintoma que ocultaba el provider InMemory).
+    private static void MarkSourceMatchUnchanged(AppDbContext context, Match? sourceMatch)
+    {
+        if (sourceMatch is null)
+        {
+            return;
+        }
+
+        if (!context.Matches.Any(stored => stored.MatchId == sourceMatch.MatchId))
+        {
+            throw new MatchPersistenceException(
+                $"No se puede persistir el partido de eliminacion: el partido fuente {sourceMatch.MatchId} no existe en la base.");
+        }
+
+        MarkUnchanged(context, sourceMatch);
     }
 
     // Attachea UNA entidad ya persistida sin recorrer su grafo. Usar Entry().State (en vez de

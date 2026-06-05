@@ -120,6 +120,55 @@ public sealed class KnockoutPersistenceIntegrationTests
         Assert.IsFalse(_matchRepository.GetAll().Any(match => match.MatchId < 0));
     }
 
+    [TestMethod]
+    public void GenerateBracket_AfterGroupStageSimulated_PersistsRoundOf32WithoutSyntheticSources()
+    {
+        // Camino alternativo (pagina Fixture): el mismo EliminationBuilder.CreateRoundOf32, antes
+        // tambien rompia aca. Se simula la fase de grupos sin generar la fase 2 y luego se genera el
+        // bracket por separado.
+        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        SimulateGroupStageOnly();
+
+        _knockoutGenerator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+
+        List<MatchElimination> roundOf32 = _eliminationRepository.GetAll().OfType<MatchElimination>().ToList();
+        Assert.AreEqual(ExpectedRoundOf32Matches, roundOf32.Count);
+        Assert.IsTrue(roundOf32.All(match => match.MatchHome == null && match.MatchAway == null));
+    }
+
+    [TestMethod]
+    public void SimulateUntilFinal_ProducesPersistedChampionAndBracketChainThatSurvivesReload()
+    {
+        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _simulationService.SimulateGroupStageAndGenerateKnockout(Seed);
+
+        // Simula ronda a ronda hasta la Final. R16 en adelante SI tienen fuentes reales (los partidos
+        // de la ronda previa, ya persistidos): el guard de MatchEf debe dejarlas pasar.
+        _knockoutGenerator.SimulateUntilFinal(AdminEmail);
+
+        // Relee desde un repositorio NUEVO sobre la misma conexion SQLite (simula reiniciar la app).
+        List<MatchElimination> all = new EliminationMatchRepository(_factory)
+            .GetAll().OfType<MatchElimination>().ToList();
+
+        MatchElimination final = all.Single(match => match.Phase == Phase.Final);
+        Assert.IsNotNull(final.GetWinner(), "The final must resolve a champion after reload.");
+        Assert.IsTrue(all.Any(match => match.Phase == Phase.ThirdPlace));
+
+        // R32 (ronda inicial) sin fuentes; las rondas posteriores con su cadena de fuentes persistida.
+        Assert.IsTrue(all.Where(match => match.Phase == Phase.RoundOf32).All(match => match.MatchHome == null));
+        Assert.IsTrue(all.Where(match => match.Phase == Phase.RoundOf16).All(match => match.MatchHome != null));
+    }
+
+    // Simula los 72 partidos de grupos (sin generar la fase 2), dejandolos marcados como jugados.
+    private void SimulateGroupStageOnly()
+    {
+        foreach (Match match in _matchRepository.GetAll().OfType<MatchGroup>().ToList())
+        {
+            _engine.Simulate(match, Seed);
+            _matchRepository.Update(match);
+        }
+    }
+
     private void SeedSettings()
     {
         _settingsRepository.Add(new TournamentSettings(

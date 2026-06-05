@@ -61,7 +61,22 @@ public class MatchEliminationTests
             matchHome,
             matchAway);
     }
-    
+
+    private MatchElimination CreateValidInitialRound(
+        string matchCode = "R32-2000",
+        Phase phase = Phase.RoundOf32)
+    {
+        return MatchElimination.CreateInitialRound(
+            1,
+            MatchDate,
+            _homeTeam,
+            _awayTeam,
+            _stadium,
+            _tournamentSettings,
+            phase,
+            matchCode);
+    }
+
     [TestInitialize]
     public void Setup()
     {
@@ -235,6 +250,51 @@ public class MatchEliminationTests
 
         Assert.ThrowsException<MatchException>(() =>
             CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch, matchCode: null!));
+    }
+
+    // Ronda inicial (R32): factory sin partidos fuente.
+    [TestMethod]
+    public void CreateInitialRound_HasNoSourceMatches()
+    {
+        MatchElimination match = CreateValidInitialRound();
+
+        Assert.IsNull(match.MatchHome);
+        Assert.IsNull(match.MatchAway);
+    }
+
+    [TestMethod]
+    public void CreateInitialRound_SetsPhaseAndMatchCode()
+    {
+        MatchElimination match = CreateValidInitialRound(matchCode: "R32-2001", phase: Phase.RoundOf32);
+
+        Assert.AreEqual(Phase.RoundOf32, match.Phase);
+        Assert.AreEqual("R32-2001", match.MatchCode);
+    }
+
+    [TestMethod]
+    public void CreateInitialRound_UsesTournamentSettingsForMatchDate()
+    {
+        MatchElimination match = CreateValidInitialRound();
+
+        Assert.AreEqual(MatchDate, match.MatchDate);
+    }
+
+    [TestMethod]
+    public void CreateInitialRound_RejectsInvalidPhase()
+    {
+        Assert.ThrowsException<MatchException>(() => CreateValidInitialRound(phase: (Phase)999));
+    }
+
+    [TestMethod]
+    public void CreateInitialRound_RejectsNullMatchCode()
+    {
+        Assert.ThrowsException<MatchException>(() => CreateValidInitialRound(matchCode: null!));
+    }
+
+    [TestMethod]
+    public void CreateInitialRound_RejectsWhitespaceMatchCode()
+    {
+        Assert.ThrowsException<MatchException>(() => CreateValidInitialRound(matchCode: "   "));
     }
 
     // Inheritance: scoring behaviors
