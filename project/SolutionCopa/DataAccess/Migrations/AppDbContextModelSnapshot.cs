@@ -58,6 +58,73 @@ namespace DataAccess.Migrations
                     b.ToTable("AuditLogs", (string)null);
                 });
 
+            modelBuilder.Entity("ProjectCopa.Group", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("Groups", (string)null);
+                });
+
+            modelBuilder.Entity("ProjectCopa.Journey", b =>
+                {
+                    b.Property<int>("Number")
+                        .HasColumnType("int");
+
+                    b.HasKey("Number");
+
+                    b.ToTable("Journeys", (string)null);
+                });
+
+            modelBuilder.Entity("ProjectCopa.Match", b =>
+                {
+                    b.Property<int>("MatchId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AwayGoals")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("AwayTeamId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("HomeGoals")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("HomeTeamId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("MatchDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MatchType")
+                        .IsRequired()
+                        .HasMaxLength(13)
+                        .HasColumnType("nvarchar(13)");
+
+                    b.Property<int?>("StadiumId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("WasSimulated")
+                        .HasColumnType("bit");
+
+                    b.HasKey("MatchId");
+
+                    b.HasIndex("AwayTeamId");
+
+                    b.HasIndex("HomeTeamId");
+
+                    b.HasIndex("StadiumId");
+
+                    b.ToTable("Matches", (string)null);
+
+                    b.HasDiscriminator<string>("MatchType").HasValue("Match");
+
+                    b.UseTphMappingStrategy();
+                });
+
             modelBuilder.Entity("ProjectCopa.Stadium", b =>
                 {
                     b.Property<int>("Id")
@@ -101,6 +168,9 @@ namespace DataAccess.Migrations
                     b.Property<int>("FifaRanking")
                         .HasColumnType("int");
 
+                    b.Property<string>("GroupName")
+                        .HasColumnType("nvarchar(3)");
+
                     b.Property<bool>("IsFictitious")
                         .HasColumnType("bit");
 
@@ -110,6 +180,8 @@ namespace DataAccess.Migrations
                         .HasColumnType("nvarchar(60)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GroupName");
 
                     b.HasIndex("Name")
                         .IsUnique();
@@ -210,6 +282,100 @@ namespace DataAccess.Migrations
                     b.ToTable("UserRoles", (string)null);
                 });
 
+            modelBuilder.Entity("ProjectCopa.MatchElimination", b =>
+                {
+                    b.HasBaseType("ProjectCopa.Match");
+
+                    b.Property<int>("AwayPenaltyGoals")
+                        .HasColumnType("int");
+
+                    b.Property<int>("HomePenaltyGoals")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MatchAwayId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MatchCode")
+                        .IsRequired()
+                        .ValueGeneratedOnUpdateSometimes()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("MatchCode");
+
+                    b.Property<int?>("MatchHomeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Phase")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("WonByPenalties")
+                        .HasColumnType("bit");
+
+                    b.HasIndex("MatchAwayId");
+
+                    b.HasIndex("MatchHomeId");
+
+                    b.HasDiscriminator().HasValue("Elimination");
+                });
+
+            modelBuilder.Entity("ProjectCopa.MatchGroup", b =>
+                {
+                    b.HasBaseType("ProjectCopa.Match");
+
+                    b.Property<string>("GroupName")
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<int?>("JourneyNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MatchCode")
+                        .IsRequired()
+                        .ValueGeneratedOnUpdateSometimes()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("MatchCode");
+
+                    b.HasIndex("GroupName");
+
+                    b.HasIndex("JourneyNumber");
+
+                    b.HasDiscriminator().HasValue("Group");
+                });
+
+            modelBuilder.Entity("ProjectCopa.Match", b =>
+                {
+                    b.HasOne("ProjectCopa.Team", "AwayTeam")
+                        .WithMany()
+                        .HasForeignKey("AwayTeamId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ProjectCopa.Team", "HomeTeam")
+                        .WithMany()
+                        .HasForeignKey("HomeTeamId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ProjectCopa.Stadium", "Stadium")
+                        .WithMany()
+                        .HasForeignKey("StadiumId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("AwayTeam");
+
+                    b.Navigation("HomeTeam");
+
+                    b.Navigation("Stadium");
+                });
+
+            modelBuilder.Entity("ProjectCopa.Team", b =>
+                {
+                    b.HasOne("ProjectCopa.Group", null)
+                        .WithMany("Teams")
+                        .HasForeignKey("GroupName")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
             modelBuilder.Entity("ProjectCopa.UserRole", b =>
                 {
                     b.HasOne("ProjectCopa.User", "User")
@@ -219,6 +385,43 @@ namespace DataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ProjectCopa.MatchElimination", b =>
+                {
+                    b.HasOne("ProjectCopa.Match", "MatchAway")
+                        .WithMany()
+                        .HasForeignKey("MatchAwayId");
+
+                    b.HasOne("ProjectCopa.Match", "MatchHome")
+                        .WithMany()
+                        .HasForeignKey("MatchHomeId");
+
+                    b.Navigation("MatchAway");
+
+                    b.Navigation("MatchHome");
+                });
+
+            modelBuilder.Entity("ProjectCopa.MatchGroup", b =>
+                {
+                    b.HasOne("ProjectCopa.Group", "Group")
+                        .WithMany()
+                        .HasForeignKey("GroupName")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ProjectCopa.Journey", "Journey")
+                        .WithMany()
+                        .HasForeignKey("JourneyNumber")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Group");
+
+                    b.Navigation("Journey");
+                });
+
+            modelBuilder.Entity("ProjectCopa.Group", b =>
+                {
+                    b.Navigation("Teams");
                 });
 
             modelBuilder.Entity("ProjectCopa.User", b =>
