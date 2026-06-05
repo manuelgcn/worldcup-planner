@@ -42,23 +42,11 @@ public class EliminationMatchRepository : IEliminationMatchRepository
             .ToList();
     }
 
-    public void Add(Match match)
-    {
-        using AppDbContext context = _contextFactory.CreateDbContext();
-        MatchEf.Add(context, match);
-    }
+    public void Add(Match match) => MatchEf.Add(_contextFactory, match);
 
-    public void Update(Match match)
-    {
-        using AppDbContext context = _contextFactory.CreateDbContext();
-        MatchEf.Update(context, match);
-    }
+    public void Update(Match match) => MatchEf.Update(_contextFactory, match);
 
-    public void Delete(Match match)
-    {
-        using AppDbContext context = _contextFactory.CreateDbContext();
-        MatchEf.Delete(context, match.MatchId);
-    }
+    public void Delete(Match match) => MatchEf.Delete(_contextFactory, match.MatchId);
 
     public bool ExistsById(int id)
     {

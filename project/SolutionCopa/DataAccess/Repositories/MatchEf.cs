@@ -6,6 +6,8 @@ namespace DataAccess.Repositories;
 // Operaciones EF Core compartidas por los tres repositorios que viven sobre la tabla TPH "Matches"
 // (MatchRepository, GroupMatchRepository, EliminationMatchRepository). Centraliza las dos piezas
 // delicadas de este hito: el attach de grafos detached y los includes con identity resolution.
+// Las escrituras reciben la factory y gestionan su propio contexto efimero (autosave por operacion);
+// las lecturas exponen WithGraph para que cada repo aplique su filtro tipado (OfType/Where).
 internal static class MatchEf
 {
     // Carga el grafo completo de un partido con identity resolution, de modo que las cadenas
@@ -26,8 +28,9 @@ internal static class MatchEf
     // Inserta SOLO la fila del partido. Las entidades relacionadas (equipos, estadio, grupo, jornada
     // y partidos fuente) ya estan persistidas: se attachean como Unchanged ANTES del Add para que EF
     // no las marque Added (lo que duplicaria PKs). Idempotente ante un MatchId ya existente.
-    public static void Add(AppDbContext context, Match match)
+    public static void Add(IDbContextFactory<AppDbContext> contextFactory, Match match)
     {
+        using AppDbContext context = contextFactory.CreateDbContext();
         if (context.Matches.Any(stored => stored.MatchId == match.MatchId))
         {
             return;
@@ -42,8 +45,9 @@ internal static class MatchEf
     // Phase, MatchCode, penales, WasSimulated) y re-apunta el unico FK que una edicion puede cambiar:
     // el estadio. NO usa context.Update(match), que re-trackearia el grafo entero y caeria en las
     // mismas trampas del Add. Si el partido no existe, lo inserta (conserva la semantica previa).
-    public static void Update(AppDbContext context, Match match)
+    public static void Update(IDbContextFactory<AppDbContext> contextFactory, Match match)
     {
+        using AppDbContext context = contextFactory.CreateDbContext();
         Match? existing = context.Matches.FirstOrDefault(stored => stored.MatchId == match.MatchId);
         if (existing is null)
         {
@@ -61,8 +65,9 @@ internal static class MatchEf
         context.SaveChanges();
     }
 
-    public static void Delete(AppDbContext context, int matchId)
+    public static void Delete(IDbContextFactory<AppDbContext> contextFactory, int matchId)
     {
+        using AppDbContext context = contextFactory.CreateDbContext();
         Match? existing = context.Matches.FirstOrDefault(stored => stored.MatchId == matchId);
         if (existing is not null)
         {
@@ -71,7 +76,7 @@ internal static class MatchEf
         }
     }
 
-    public static void AttachRelated(AppDbContext context, Match match)
+    private static void AttachRelated(AppDbContext context, Match match)
     {
         MarkUnchanged(context, match.HomeTeam);
         MarkUnchanged(context, match.AwayTeam);
