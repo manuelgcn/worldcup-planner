@@ -49,5 +49,15 @@ public class MatchConfiguration : IEntityTypeConfiguration<Match>
                .WithMany()
                .HasForeignKey("StadiumId")
                .OnDelete(DeleteBehavior.Restrict);
+
+        // Incidencias: coleccion propiedad del partido (shadow FK "MatchId", Cascade: borrar el
+        // partido borra sus incidencias). Acceso por backing field porque Incidents es de solo lectura.
+        builder.HasMany(m => m.Incidents)
+               .WithOne()
+               .HasForeignKey("MatchId")
+               .OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(m => m.Incidents)
+               .HasField("_incidents")
+               .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
