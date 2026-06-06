@@ -137,6 +137,33 @@ public class TeamRepositoryTests
         Assert.AreEqual("Argentina", stored!.Name);
         Assert.AreEqual(Confederation.CONMEBOL, stored.Confederation);
     }
+    
+    
+    [TestMethod]
+    public void AddStoresTeamFlagAndGetByIdReturnsIt()
+    {
+        string validBase64Flag = "dGVzdA==";
+
+        Team team = new Team(
+            12,
+            "Uruguay",
+            2112,
+            false,
+            Confederation.CONMEBOL,
+            validBase64Flag
+        );
+
+        _repository.Add(team);
+
+        Team? storedTeam = _repository.GetById(12);
+
+        Assert.IsNotNull(storedTeam);
+        Assert.AreEqual(validBase64Flag, storedTeam!.FlagBase64);
+    }
+
+    
+    
+    
 
     private static Team CreateTeam(int id, string name, Confederation confederation)
     {
@@ -151,4 +178,6 @@ public class TeamRepositoryTests
         Assert.AreEqual(expected.IsFictitious, actual.IsFictitious);
         Assert.AreEqual(expected.Confederation, actual.Confederation);
     }
+    
+    
 }
