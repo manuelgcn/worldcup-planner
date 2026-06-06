@@ -231,5 +231,21 @@ public sealed class TeamTests
 
     
     
+    [TestMethod]
+    public void CreateTeamWithEmptyFlag_StoresNull()
+    {
+        Team team = new Team(
+            1,
+            "Uruguay",
+            2100,
+            false,
+            Confederation.CONMEBOL,
+            ""
+        );
+
+        Assert.IsNull(team.FlagBase64);
+    }
+
+    
 
 }
