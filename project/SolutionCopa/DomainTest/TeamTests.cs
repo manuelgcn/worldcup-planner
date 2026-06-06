@@ -212,5 +212,24 @@ public sealed class TeamTests
 
         Assert.AreEqual(validBase64Flag, team.FlagBase64);
     }
+    
+    
+    [TestMethod]
+    public void CannotCreateTeamWithInvalidBase64Flag()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Team(
+                1,
+                "Uruguay",
+                2100,
+                false,
+                Confederation.CONMEBOL,
+                "esto-no-es-base64"
+            )
+        );
+    }
+
+    
+    
 
 }
