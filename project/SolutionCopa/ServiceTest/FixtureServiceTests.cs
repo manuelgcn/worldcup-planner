@@ -117,7 +117,14 @@ public class FixtureServiceTests
         };
     }
 
-    
+    private static List<string> DescribeGroupAssignments(IReadOnlyCollection<Group> groups)
+    {
+        return groups
+            .Select(group => group.Name + ":" + string.Join(",", group.Teams.Select(team => team.Name)))
+            .ToList();
+    }
+
+
     [TestMethod]
     public void CreateFixtureDistributesTeamsInto12GroupsOf4()
     {
@@ -172,9 +179,23 @@ public class FixtureServiceTests
 
         IReadOnlyCollection<Group> groups = service.CreateFixture();
 
-        Group firstGroup = groups.First();
+        // Teams are ranked into 4 bombos by descending FIFA ranking and each group is filled one
+        // bombo at a time, so every group's first team comes from the top bombo. FixtureSeed now
+        // shuffles the draw order within a bombo, so HighRank need not land in group A; what must
+        // hold is that the first slot of every group is taken by one of the highest-ranked teams.
+        List<string> topRankedTeams = teams
+            .OrderByDescending(team => team.FifaRanking)
+            .Take(groups.Count)
+            .Select(team => team.Name)
+            .OrderBy(name => name)
+            .ToList();
 
-        Assert.AreEqual("HighRank", firstGroup.Teams.First().Name);
+        List<string> firstTeamOfEachGroup = groups
+            .Select(group => group.Teams.First().Name)
+            .OrderBy(name => name)
+            .ToList();
+
+        CollectionAssert.AreEqual(topRankedTeams, firstTeamOfEachGroup);
     }
 
 
@@ -344,14 +365,30 @@ public class FixtureServiceTests
         IReadOnlyCollection<Group> run1 = new FixtureService(teams, stadiums, seed: 123).CreateFixture();
         IReadOnlyCollection<Group> run2 = new FixtureService(teams, stadiums, seed: 123).CreateFixture();
 
-        List<string> assignment1 = run1
-            .Select(g => g.Name + ":" + string.Join(",", g.Teams.Select(t => t.Name)))
-            .ToList();
-        List<string> assignment2 = run2
-            .Select(g => g.Name + ":" + string.Join(",", g.Teams.Select(t => t.Name)))
-            .ToList();
+        List<string> assignment1 = DescribeGroupAssignments(run1);
+        List<string> assignment2 = DescribeGroupAssignments(run2);
 
         CollectionAssert.AreEqual(assignment1, assignment2);
+    }
+
+    [TestMethod]
+    public void CreateFixtureWithDifferentSeedsProducesDifferentGroups()
+    {
+        // 48 teams with all-distinct rankings: there are no ranking ties, so the only thing the seed
+        // can influence is the order in which each bombo is drawn. If that is not seeded, every seed
+        // yields identical groups (the bug this fix targets).
+        List<Team> teams = Create48TeamsWithRealisticConfederationQuotas();
+        List<Stadium> stadiums = Create4ValidStadiums();
+
+        List<string> seedZero = DescribeGroupAssignments(
+            new FixtureService(teams, stadiums, seed: 0).CreateFixture());
+        List<string> seedOne = DescribeGroupAssignments(
+            new FixtureService(teams, stadiums, seed: 1).CreateFixture());
+
+        CollectionAssert.AreNotEqual(
+            seedZero,
+            seedOne,
+            "Different FixtureSeed values must produce different group assignments.");
     }
 
     [TestMethod]
