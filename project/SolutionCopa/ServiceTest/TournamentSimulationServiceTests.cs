@@ -92,6 +92,16 @@ public sealed class TournamentSimulationServiceTests
     }
 
     [TestMethod]
+    public void SimulateGroupStage_LogsSimulateGroupStageActionWithSeedAndPerformer()
+    {
+        _service.SimulateGroupStage(Seed, AdminEmail);
+
+        AuditLog log = _auditLogRepository.GetAll().First(entry => entry.Action == AuditActions.SimulateGroupStage);
+        Assert.IsTrue(log.Details.Contains(Seed.ToString()), $"Expected seed in details, got '{log.Details}'");
+        Assert.IsTrue(log.Details.Contains(AdminEmail), $"Expected actor email in details, got '{log.Details}'");
+    }
+
+    [TestMethod]
     public void SimulateGroupStageAndGenerateKnockout_WithoutGroupMatches_ThrowsMatchServicesException()
     {
         MockGroupRepository emptyGroupRepository = new MockGroupRepository();
