@@ -13,7 +13,7 @@ public class Team
 
     public int Id { get; }
     public string Name { get; }
-    public int FifaRanking { get; }
+    public int FifaRanking { get; private set; }
     public bool IsFictitious { get; }
     public Confederation Confederation { get; }
     public string? FlagBase64 { get; private set; }
@@ -43,6 +43,11 @@ public class Team
     {
         ValidateFlag(flagBase64);
         FlagBase64 = NormalizeFlag(flagBase64);
+    }
+
+    public void UpdateFifaRanking(int newFifaRanking)
+    {
+        FifaRanking = Math.Clamp(newFifaRanking, MinFifaRanking, MaxFifaRanking);
     }
 
     private static void ValidateId(int id)
