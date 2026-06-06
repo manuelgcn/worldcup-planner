@@ -17,7 +17,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     private const string MissingTeamsMessage = "Fixture requires exactly 48 teams.";
     private const string MissingStadiumsMessage = "Fixture requires at least 4 stadiums.";
     private const string ClearFixtureDetails = "Previous fixture cleared before regeneration.";
-    private const string DeleteFixtureDetails = "Group stage deleted: groups, journeys and group matches removed.";
+    private const string DeleteFixtureDetails = "Fixture deleted: groups, journeys, group matches and knockout removed.";
 
     private readonly ITeamRepository _teamRepository;
     private readonly IStadiumRepository _stadiumRepository;
@@ -87,6 +87,9 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
 
     public void DeleteGroupStage(string? performedByEmail)
     {
+        // Borrado total del torneo: se elimina la fase 2 (knockout) ANTES que los partidos de grupo
+        // porque las eliminatorias referencian a los partidos de grupo como fuente (FK Matches->Matches).
+        _eliminationRepository.Clear();
         ClearGroupStageStorage();
         _unitOfWork.Commit();
 
