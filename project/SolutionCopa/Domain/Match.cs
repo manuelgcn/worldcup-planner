@@ -1,3 +1,4 @@
+using System.Linq;
 using ProjectCopa.Exceptions;
 
 namespace ProjectCopa;
@@ -15,12 +16,14 @@ public abstract class Match
     private const string SameSourceMatchesMessage = "Home and away source matches must be different.";
     private const string GoalsCannotBeNegativeMessage = "Goals cannot be negative.";
     private const string CannotRemoveGoalWhenZeroMessage = "Cannot remove a goal when the current count is zero.";
+    private const string IncidentTeamNotInMatchMessage = "Incident team must be one of the two teams playing the match.";
 
     public int MatchId { get; private set; }
     public DateTime MatchDate { get; private set; }
 
     private Team? _homeTeam;
     private Team? _awayTeam;
+    private readonly List<MatchIncident> _incidents = new();
 
     public Team? HomeTeam
     {
@@ -48,6 +51,8 @@ public abstract class Match
     public int AwayGoals { get; private set; }
     public Stadium? Stadium { get; private set; }
     public bool WasSimulated { get; private set; }
+
+    public IReadOnlyCollection<MatchIncident> Incidents => _incidents.AsReadOnly();
 
     public void MarkAsSimulated()
     {
@@ -189,6 +194,37 @@ public abstract class Match
         }
 
         return null;
+    }
+
+    public void AddIncident(MatchIncident incident)
+    {
+        ArgumentNullException.ThrowIfNull(incident);
+        EnsureIncidentTeamBelongsToMatch(incident.Team);
+
+        _incidents.Add(incident);
+    }
+
+    public int CountYellowCards(Team team)
+    {
+        return CountIncidents<YellowCardIncident>(team);
+    }
+
+    public int CountRedCards(Team team)
+    {
+        return CountIncidents<RedCardIncident>(team);
+    }
+
+    private int CountIncidents<TIncident>(Team team) where TIncident : MatchIncident
+    {
+        return _incidents.Count(incident => incident is TIncident && ReferenceEquals(incident.Team, team));
+    }
+
+    private void EnsureIncidentTeamBelongsToMatch(Team team)
+    {
+        if (!ReferenceEquals(team, _homeTeam) && !ReferenceEquals(team, _awayTeam))
+        {
+            throw new MatchException(IncidentTeamNotInMatchMessage);
+        }
     }
 
     private static void EnsureValidMatchDate(DateTime matchDate, DateTime minAllowedDate)
