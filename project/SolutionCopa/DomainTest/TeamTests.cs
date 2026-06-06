@@ -317,4 +317,21 @@ public sealed class TeamTests
             team.UpdateFlag(oversizedFlag)
         );
     }
+
+    [TestMethod]
+    public void CanCreateTeamWithFlagAtMaxSize()
+    {
+        string maxSizeFlag = Convert.ToBase64String(new byte[200 * 1024]);
+
+        Team team = new Team(
+            1,
+            "Uruguay",
+            2100,
+            false,
+            Confederation.CONMEBOL,
+            maxSizeFlag
+        );
+
+        Assert.AreEqual(maxSizeFlag, team.FlagBase64);
+    }
 }

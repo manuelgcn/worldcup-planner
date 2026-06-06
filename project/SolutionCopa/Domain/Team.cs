@@ -8,6 +8,8 @@ public class Team
     private const string InvalidNameMessage = "Team name cannot be empty.";
     private const string FifaRankingOutOfRangeMessage = "FIFA ranking must be between {0} and {1}.";
     private const string InvalidFlagMessage = "Flag must be a valid base64 string.";
+    private const int MaxFlagBytes = 200 * 1024;
+    private const string FlagTooLargeMessage = "Flag must not exceed 200 KB once decoded.";
 
     public int Id { get; }
     public string Name { get; }
@@ -76,9 +78,16 @@ public class Team
             return;
         }
 
-        if (!IsValidBase64(flagBase64))
+        byte[]? decoded = DecodeBase64OrNull(flagBase64);
+
+        if (decoded is null)
         {
             throw new ArgumentException(InvalidFlagMessage, nameof(flagBase64));
+        }
+
+        if (decoded.Length > MaxFlagBytes)
+        {
+            throw new ArgumentException(FlagTooLargeMessage, nameof(flagBase64));
         }
     }
 
@@ -97,18 +106,15 @@ public class Team
         return fifaRanking < MinFifaRanking || fifaRanking > MaxFifaRanking;
     }
 
-    
-    private static bool IsValidBase64(string value)
+    private static byte[]? DecodeBase64OrNull(string value)
     {
         try
         {
-            Convert.FromBase64String(value);
-            return true;
+            return Convert.FromBase64String(value);
         }
         catch (FormatException)
         {
-            return false;
+            return null;
         }
     }
-
 }
