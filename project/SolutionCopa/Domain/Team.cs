@@ -15,7 +15,7 @@ public class Team
     public Confederation Confederation { get; }
     public string? FlagBase64 { get; }
 
-    public Team(int id, string name, int fifaRanking, bool isFictitious, Confederation confederation )
+    public Team(int id, string name, int fifaRanking, bool isFictitious, Confederation confederation, string? flagBase64 = null)
     {
         ValidateId(id);
         ValidateName(name);
@@ -25,7 +25,7 @@ public class Team
         FifaRanking = fifaRanking;
         IsFictitious = isFictitious;
         Confederation = confederation;
-        FlagBase64 = null;
+        FlagBase64 = flagBase64;
     }
 
     private static void ValidateId(int id)
@@ -62,5 +62,3 @@ public class Team
         return fifaRanking < MinFifaRanking || fifaRanking > MaxFifaRanking;
     }
 }
-
-

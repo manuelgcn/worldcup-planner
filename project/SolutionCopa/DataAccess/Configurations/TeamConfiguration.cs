@@ -22,5 +22,9 @@ public class TeamConfiguration : IEntityTypeConfiguration<Team>
                .HasConversion<string>()                                 // enum como texto (legible en .sql)
                .HasMaxLength(ConfederationMaxLength)
                .IsRequired();
+        
+        builder.Property(team => team.FlagBase64)
+            .IsRequired(false);
+
     }
 }
