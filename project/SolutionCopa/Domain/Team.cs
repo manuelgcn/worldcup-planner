@@ -1,3 +1,4 @@
+
 namespace ProjectCopa;
 
 public class Team
@@ -28,7 +29,7 @@ public class Team
         FifaRanking = fifaRanking;
         IsFictitious = isFictitious;
         Confederation = confederation;
-        FlagBase64 = flagBase64;
+        FlagBase64 = string.IsNullOrWhiteSpace(flagBase64) ? null : flagBase64;
     }
 
     private static void ValidateId(int id)
