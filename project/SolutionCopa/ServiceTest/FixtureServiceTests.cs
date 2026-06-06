@@ -179,9 +179,23 @@ public class FixtureServiceTests
 
         IReadOnlyCollection<Group> groups = service.CreateFixture();
 
-        Group firstGroup = groups.First();
+        // Teams are ranked into 4 bombos by descending FIFA ranking and each group is filled one
+        // bombo at a time, so every group's first team comes from the top bombo. FixtureSeed now
+        // shuffles the draw order within a bombo, so HighRank need not land in group A; what must
+        // hold is that the first slot of every group is taken by one of the highest-ranked teams.
+        List<string> topRankedTeams = teams
+            .OrderByDescending(team => team.FifaRanking)
+            .Take(groups.Count)
+            .Select(team => team.Name)
+            .OrderBy(name => name)
+            .ToList();
 
-        Assert.AreEqual("HighRank", firstGroup.Teams.First().Name);
+        List<string> firstTeamOfEachGroup = groups
+            .Select(group => group.Teams.First().Name)
+            .OrderBy(name => name)
+            .ToList();
+
+        CollectionAssert.AreEqual(topRankedTeams, firstTeamOfEachGroup);
     }
 
 

@@ -11,6 +11,9 @@ public class FixtureService
     private const int MaxUefaTeamsPerGroup = 2;
     private const int MaxNonUefaTeamsPerGroup = 1;
 
+    // Each group draws exactly one team from each bombo, so there are as many bombos as teams per group.
+    private const int BomboCount = TeamsPerGroup;
+
     private readonly IReadOnlyCollection<Team> teams;
     private readonly IReadOnlyCollection<Stadium> stadiums;
     private readonly IAuditLogService? _auditLogService;
@@ -66,7 +69,8 @@ public class FixtureService
 
     private void AssignTeamsToGroups(List<Group> groups)
     {
-        List<List<Team>> bombos = CreateBombos();
+        Random random = new Random(seed);
+        List<List<Team>> bombos = CreateBombos(random);
 
         List<List<Team>> assignments = new List<List<Team>>();
         for (int i = 0; i < groups.Count; i++)
@@ -92,13 +96,13 @@ public class FixtureService
         }
     }
 
-    private List<List<Team>> CreateBombos()
+    private List<List<Team>> CreateBombos(Random random)
     {
-        List<Team> orderedTeams = OrderTeamsByRankingWithDeterministicTieBreak();
+        List<Team> orderedTeams = OrderTeamsByRankingWithDeterministicTieBreak(random);
 
         List<List<Team>> bombos = new List<List<Team>>();
 
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < BomboCount; i++)
         {
             bombos.Add(
                 orderedTeams
@@ -106,6 +110,13 @@ public class FixtureService
                     .Take(GroupsInTournament)
                     .ToList()
             );
+        }
+
+        // The composition of each bombo (which 12 teams it holds, by ranking) is fixed; FixtureSeed
+        // only decides the draw order within each bombo, which is what makes the group assignment vary.
+        foreach (List<Team> bombo in bombos)
+        {
+            ShuffleDeterministically(bombo, random);
         }
 
         return bombos;
@@ -151,10 +162,8 @@ public class FixtureService
         return sameConfederationCount < maxAllowed;
     }
 
-    private List<Team> OrderTeamsByRankingWithDeterministicTieBreak()
+    private List<Team> OrderTeamsByRankingWithDeterministicTieBreak(Random random)
     {
-        Random random = new Random(seed);
-
         return teams
             .GroupBy(t => t.FifaRanking)
             .OrderByDescending(g => g.Key)
