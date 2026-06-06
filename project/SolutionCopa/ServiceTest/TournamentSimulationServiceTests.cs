@@ -24,6 +24,7 @@ public sealed class TournamentSimulationServiceTests
     private const int SecondMatchDateOffsetDays = 3;
     private const int ThirdMatchDateOffsetDays = 6;
     private const int HomeRankingBase = 2500;
+    private const string AdminEmail = "admin@copa.com";
 
     private MockGroupRepository _groupRepository = null!;
     private MockMatchRepository _matchRepository = null!;
@@ -75,6 +76,19 @@ public sealed class TournamentSimulationServiceTests
         Assert.IsNotNull(_knockoutFixtureGenerator.LastQualifiedTeamsReceived);
         Assert.AreEqual(1, _unitOfWork.CommitCalls);
         Assert.IsTrue(_auditLogRepository.GetAll().Any(log => log.Action == AuditActions.SimulateGroupStageAndGenerateKnockout));
+    }
+
+    [TestMethod]
+    public void SimulateGroupStage_SimulatesAllGroupMatchesWithoutGeneratingKnockout()
+    {
+        _service.SimulateGroupStage(Seed, AdminEmail);
+
+        Assert.AreEqual(GroupCount * MatchesPerGroup, _matchSimulationEngine.SimulateCalls);
+        Assert.AreEqual(GroupCount * MatchesPerGroup, _matchRepository.UpdateCalls);
+        Assert.AreEqual(0, _matchRepository.AddCalls);
+        Assert.AreEqual(0, _eliminationMatchRepository.GetAll().Count);
+        Assert.AreEqual(Seed, _matchSimulationEngine.LastSeedReceived);
+        Assert.IsTrue(_unitOfWork.CommitCalls >= 1);
     }
 
     [TestMethod]
