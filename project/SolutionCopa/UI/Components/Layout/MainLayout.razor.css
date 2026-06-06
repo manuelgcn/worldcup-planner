@@ -16,6 +16,7 @@ main {
 }
 
 .top-row {
+    position: relative;
     background: var(--m26-white);
     border-bottom: 1px solid var(--m26-line);
     justify-content: space-between;
@@ -23,6 +24,17 @@ main {
     display: flex;
     align-items: center;
     gap: .8rem;
+}
+
+/* Subtle mundialista accent under the header */
+.top-row::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: var(--m26-gradient);
 }
 
 .top-link {

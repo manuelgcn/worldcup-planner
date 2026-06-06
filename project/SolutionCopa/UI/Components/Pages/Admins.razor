@@ -7,24 +7,33 @@
 
 <PageTitle>Administración de Usuarios</PageTitle>
 
-<h3>Administración de Usuarios</h3>
-
 @if (!Session.IsLoggedIn)
 {
-    <p>No estas logueado</p>
-    <button @onclick="GoToLogin">Ir a Login</button>
+    <section class="m26-card auth-card">
+        <h1 class="m26-page-title mb-2">Administración de Usuarios</h1>
+        <p class="mb-3">No estás logueado.</p>
+        <button class="btn btn-primary" @onclick="GoToLogin">
+            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Ir a Login
+        </button>
+    </section>
 }
 else if (!IsAdmin)
 {
-    <p>No tenes permisos para acceder a esta sección</p>
+    <div class="alert alert-error" role="alert">
+        <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
+        No tenés permisos para acceder a esta sección.
+    </div>
 }
 else
 {
+    <h1 class="m26-page-title">Administración de Usuarios</h1>
+
     @if (errors.Any())
     {
-        <div class="alert alert-danger">
+        <div class="alert alert-error">
+            <strong>Error:</strong>
             <ul>
-                @foreach (var e in errors)
+                @foreach (string e in errors)
                 {
                     <li>@e</li>
                 }
@@ -35,56 +44,62 @@ else
     @if (!string.IsNullOrWhiteSpace(successMessage))
     {
         <div class="alert alert-success">
-            @successMessage
+            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>@successMessage
         </div>
     }
 
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Email</th>
-                <th>Nombre</th>
-                <th>Roles</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (User user in users)
-            {
-                <tr>
-                    <td>@user.idUser</td>
-                    <td>@user.email</td>
-                    <td>@user.name @user.lastname</td>
-                    <td>
-                        @foreach (var role in user.Roles)
-                        {
-                            <span class="badge bg-secondary me-1">
-                                @role.Role
-                                <button
-                                    class="btn btn-sm btn-link text-danger"
-                                    @onclick="() => RemoveRole(user.idUser, role.Role)">
-                                    x
-                                </button>
-                            </span>
-                        }
-                    </td>
-                    <td>
-                        <select @bind="selectedRole">
-                            @foreach (UserRoles role in Enum.GetValues<UserRoles>())
-                            {
-                                <option value="@role">@role</option>
-                            }
-                        </select>
-                        <button class="btn btn-sm btn-primary"
-                                @onclick="() => AddRole(user.idUser)">
-                            Agregar Rol
-                        </button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <article class="m26-card pane">
+        <div class="table-responsive">
+            <table class="table m26-scoreboard mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Nombre</th>
+                        <th>Roles</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (User user in users)
+                    {
+                        <tr>
+                            <td>@user.idUser</td>
+                            <td>@user.email</td>
+                            <td>@user.name @user.lastname</td>
+                            <td>
+                                @foreach (var role in user.Roles)
+                                {
+                                    <span class="role-chip">
+                                        @role.Role
+                                        <button class="role-remove"
+                                                title="Quitar rol @role.Role"
+                                                aria-label="Quitar rol @role.Role"
+                                                @onclick="() => RemoveRole(user.idUser, role.Role)">
+                                            <i class="bi bi-x-lg" aria-hidden="true"></i>
+                                        </button>
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <div class="role-actions">
+                                    <select class="form-select" @bind="selectedRole" aria-label="Rol a asignar">
+                                        @foreach (UserRoles role in Enum.GetValues<UserRoles>())
+                                        {
+                                            <option value="@role">@role</option>
+                                        }
+                                    </select>
+                                    <button class="btn btn-sm btn-primary" @onclick="() => AddRole(user.idUser)">
+                                        <i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar rol
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </article>
 }
 
 @code {
@@ -127,7 +142,7 @@ else
     {
         errors.Clear();
         successMessage = null;
-        
+
         if (userId == 1)
         {
             errors.Add("El administrador del sistema no puede ser modificado");

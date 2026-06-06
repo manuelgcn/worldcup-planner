@@ -99,6 +99,18 @@ h1:focus {
     background: rgba(255, 215, 0, .15);
 }
 
+.btn-danger {
+    color: var(--m26-white);
+    background: var(--m26-red);
+    border: none;
+}
+
+.btn-danger:hover,
+.btn-danger:focus-visible {
+    color: var(--m26-white);
+    background: #C20025;
+}
+
 .btn-sm {
     border-radius: 8px;
 }
@@ -197,6 +209,8 @@ h1:focus {
 
 .alert {
     border-radius: 12px;
+    border: 1px solid transparent;
+    border-left-width: 4px;
 }
 
 .alert i {
@@ -205,6 +219,35 @@ h1:focus {
 
 .alert ul {
     margin: .5rem 0 0 1.25rem;
+}
+
+.alert-success {
+    background: #E8F5E9;
+    border-color: var(--m26-green);
+    color: #1B3E1C;
+}
+
+.alert-error {
+    background: #FDECEA;
+    border-color: var(--m26-red);
+    color: #5B1A17;
+}
+
+.alert-info {
+    background: rgba(0, 40, 104, .06);
+    border-color: var(--m26-blue);
+    color: #14233F;
+}
+
+.spin {
+    display: inline-block;
+    animation: m26-spin .8s linear infinite;
+}
+
+@keyframes m26-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .m26-empty {

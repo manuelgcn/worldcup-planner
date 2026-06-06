@@ -4,7 +4,7 @@
 @inject UserServices UserServices
 @inject NavigationManager Nav
 
-<PageTitle>Register</PageTitle>
+<PageTitle>Crear cuenta</PageTitle>
 
 <section class="auth-wrap">
     <div class="m26-card auth-card">
@@ -14,7 +14,7 @@
         <div class="auth-body">
             @if (!string.IsNullOrWhiteSpace(error))
             {
-                <div class="alert alert-danger" role="alert">
+                <div class="alert alert-error" role="alert">
                     <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
                     @error
                 </div>

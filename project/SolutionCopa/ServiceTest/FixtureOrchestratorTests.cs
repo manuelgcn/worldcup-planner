@@ -232,6 +232,44 @@ public class FixtureOrchestratorTests
     }
 
     [TestMethod]
+    public void DeleteGroupStage_RemovesAllGroupsJourneysAndMatches()
+    {
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+
+        _orchestrator.DeleteGroupStage(performedByEmail: AdminEmail);
+
+        Assert.AreEqual(0, _groupRepository.GetAll().Count);
+        Assert.AreEqual(0, _journeyRepository.GetAll().Count);
+        Assert.AreEqual(0, _matchRepository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void DeleteGroupStage_LogsDeleteFixtureActionWithPerformer()
+    {
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _auditRepository.GetAll().Clear();
+
+        _orchestrator.DeleteGroupStage(performedByEmail: AdminEmail);
+
+        AuditLog log = _auditRepository.GetAll().First(entry => entry.Action == AuditActions.DeleteFixture);
+        Assert.IsTrue(log.Details.Contains(AdminEmail), $"Expected actor email in details, got '{log.Details}'");
+    }
+
+    [TestMethod]
+    public void DeleteGroupStage_WhenKnockoutGenerated_AlsoRemovesKnockout()
+    {
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        SeedFakeEliminationMatch();
+
+        _orchestrator.DeleteGroupStage(performedByEmail: AdminEmail);
+
+        Assert.AreEqual(0, _groupRepository.GetAll().Count);
+        Assert.AreEqual(0, _matchRepository.GetAll().Count);
+        Assert.AreEqual(0, _eliminationRepository.GetAll().Count);
+        Assert.IsFalse(_orchestrator.IsKnockoutGenerated());
+    }
+
+    [TestMethod]
     public void IsFixtureGenerated_BeforeGeneration_ReturnsFalse()
     {
         Assert.IsFalse(_orchestrator.IsFixtureGenerated());

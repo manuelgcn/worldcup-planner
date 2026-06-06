@@ -19,7 +19,7 @@
 }
 else if (!IsAdmin)
 {
-    <div class="alert alert-danger" role="alert">
+    <div class="alert alert-error" role="alert">
         <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
         No tenés permisos para ver el log.
     </div>
@@ -29,11 +29,12 @@ else
     <h1 class="m26-page-title">Log de auditoría</h1>
 
     <div class="d-flex flex-wrap gap-2 mb-3">
-        <input class="form-control" style="max-width: 280px;"
+        <input class="form-control filter-action"
                placeholder="Filtrar por acción (ej: CREATE_USER)"
+               aria-label="Filtrar por acción"
                @bind="actionFilter" @bind:event="oninput" />
-        <input class="form-control" style="max-width: 200px;" type="date" @bind="fromDate" />
-        <input class="form-control" style="max-width: 200px;" type="date" @bind="toDate" />
+        <input class="form-control filter-date" type="date" aria-label="Desde" @bind="fromDate" />
+        <input class="form-control filter-date" type="date" aria-label="Hasta" @bind="toDate" />
         <button class="btn btn-outline-secondary" @onclick="ClearFilters">
             <i class="bi bi-x-circle" aria-hidden="true"></i> Limpiar
         </button>
@@ -101,4 +102,3 @@ else
         toDate = null;
     }
 }
-``

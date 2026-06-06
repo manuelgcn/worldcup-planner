@@ -459,3 +459,36 @@
     text-decoration: underline;
     padding: .2rem .4rem;
 }
+
+.btn-danger {
+    background: var(--m26-red, #E4002B);
+    color: white;
+    border-color: var(--m26-red, #E4002B);
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #c20025;
+}
+
+/* Danger zone: full tournament reset (delete fixture + knockout) */
+.danger-zone {
+    border-color: rgba(228, 0, 43, .3);
+    background: rgba(228, 0, 43, .04);
+}
+
+.danger-zone h4 {
+    color: var(--m26-red, #E4002B);
+}
+
+.confirm-panel {
+    border: 1px solid rgba(228, 0, 43, .35);
+    background: rgba(228, 0, 43, .06);
+    border-radius: 6px;
+    padding: .8rem 1rem;
+}
+
+.confirm-text {
+    margin: 0 0 .6rem;
+    font-size: .9rem;
+    color: #5b1a17;
+}

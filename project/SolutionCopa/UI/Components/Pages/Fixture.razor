@@ -8,6 +8,7 @@
 @using DataAccess.Interfaces
 @using UI.Components.Fixture
 @inject IFixtureOrchestrator FixtureOrchestrator
+@inject ITournamentSimulationService SimulationService
 @inject IGroupStandingsService StandingsService
 @inject IKnockoutFixtureGenerator KnockoutGenerator
 @inject IGroupRepository GroupRepository
@@ -144,14 +145,24 @@
                         }
                         else
                         {
-                            <text>Cargá resultados en <a href="/matches">/matches</a> o usá <a href="/simulator">/simulator</a> para simular automáticamente. Faltan @pendingGroupMatches partidos.</text>
+                            <text>Simulá todos los partidos de una sola vez, o cargá resultados a mano en <a href="/matches">/matches</a>. Faltan @pendingGroupMatches partidos.</text>
                         }
                     </p>
                     @if (IsAdmin)
                     {
+                        @if (!IsGroupStageComplete)
+                        {
+                            <div class="step-actions">
+                                <label for="simSeedInput">Override SimulationSeed (opcional):</label>
+                                <input id="simSeedInput" type="number" @bind="simulationSeedInput" placeholder="@settings.SimulationSeed.ToString()" />
+                                <button class="btn btn-primary" disabled="@isBusy" @onclick="HandleSimulateGroupStageAsync">
+                                    Simular fase de grupos
+                                </button>
+                            </div>
+                        }
                         <div class="step-actions">
-                            <label>Override CrossingsSeed (opcional):</label>
-                            <input type="number" @bind="crossingsSeedInput" placeholder="@settings.CrossingsSeed.ToString()" />
+                            <label for="crossSeedInput">Override CrossingsSeed (opcional):</label>
+                            <input id="crossSeedInput" type="number" @bind="crossingsSeedInput" placeholder="@settings.CrossingsSeed.ToString()" />
                             <button class="btn btn-primary"
                                     disabled="@(!CanGenerateKnockout || isBusy)"
                                     @onclick="HandleGenerateKnockoutAsync"
@@ -197,6 +208,44 @@
                                     @onclick="HandleSimulateUntilFinalAsync">
                                 Simular hasta el final
                             </button>
+                        </div>
+                    }
+                </section>
+            }
+
+            @* ZONA DE REINICIO — borra todo el torneo (grupos + partidos + fase 2) *@
+            @if (IsAdmin && IsFixtureGenerated)
+            {
+                <section class="step-section danger-zone">
+                    <h4>Reiniciar torneo</h4>
+                    <p class="step-help">
+                        Elimina los 12 grupos, los 72 partidos de fase de grupos y, si existen, los cruces de fase 2.
+                        Volvés al paso de generación del fixture.
+                    </p>
+                    @if (!confirmingDelete)
+                    {
+                        <div class="step-actions">
+                            <button class="btn btn-danger" disabled="@isBusy" @onclick="StartDeleteConfirmation">
+                                <i class="bi bi-trash3" aria-hidden="true"></i>
+                                Borrar fixture
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="confirm-panel" role="alertdialog" aria-label="Confirmar borrado del fixture">
+                            <p class="confirm-text">
+                                <strong>¿Seguro que querés borrar el fixture?</strong>
+                                Se eliminan los grupos, los partidos y los cruces de fase 2. Esta acción no se puede deshacer.
+                            </p>
+                            <div class="step-actions">
+                                <button class="btn btn-secondary" disabled="@isBusy" @onclick="CancelDeleteConfirmation">
+                                    Cancelar
+                                </button>
+                                <button class="btn btn-danger" disabled="@isBusy" @onclick="HandleDeleteFixtureAsync">
+                                    Sí, borrar todo
+                                </button>
+                            </div>
                         </div>
                     }
                 </section>
@@ -250,6 +299,8 @@
     private string? selectedGroupName;
     private int? fixtureSeedInput;
     private int? crossingsSeedInput;
+    private int? simulationSeedInput;
+    private bool confirmingDelete;
 
     private readonly List<string> errors = new();
     private string? successMessage;
@@ -370,6 +421,32 @@
         await RunAdminActionAsync(
             () => FixtureOrchestrator.RegenerateGroupStage(fixtureSeedInput, Session.CurrentUser?.email),
             "Fixture regenerado correctamente.");
+    }
+
+    private async Task HandleSimulateGroupStageAsync()
+    {
+        int seed = simulationSeedInput ?? settings?.SimulationSeed ?? 0;
+        await RunAdminActionAsync(
+            () => SimulationService.SimulateGroupStage(seed, Session.CurrentUser?.email),
+            "Fase de grupos simulada correctamente.");
+    }
+
+    private void StartDeleteConfirmation()
+    {
+        confirmingDelete = true;
+    }
+
+    private void CancelDeleteConfirmation()
+    {
+        confirmingDelete = false;
+    }
+
+    private async Task HandleDeleteFixtureAsync()
+    {
+        confirmingDelete = false;
+        await RunAdminActionAsync(
+            () => FixtureOrchestrator.DeleteGroupStage(Session.CurrentUser?.email),
+            "Fixture borrado. Podés generar uno nuevo.");
     }
 
     private async Task HandleGenerateKnockoutAsync()

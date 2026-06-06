@@ -1,0 +1,51 @@
+.simulator-page {
+    max-width: 900px;
+}
+
+.auth-card {
+    max-width: 480px;
+    padding: 1.25rem;
+}
+
+.auth-card p {
+    margin-bottom: 1rem;
+}
+
+.sim-grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    margin-top: 1rem;
+}
+
+.sim-card-title {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--m26-white);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.sim-card-body {
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .65rem;
+    align-items: flex-start;
+}
+
+.sim-card-body label {
+    font-weight: 600;
+    font-size: .9rem;
+}
+
+.sim-card-body .form-control {
+    max-width: 12rem;
+}
+
+.sim-help {
+    margin: 0;
+    color: #576174;
+    font-size: .9rem;
+}

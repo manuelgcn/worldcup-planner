@@ -159,6 +159,28 @@ public sealed class KnockoutPersistenceIntegrationTests
         Assert.IsTrue(all.Where(match => match.Phase == Phase.RoundOf16).All(match => match.MatchHome != null));
     }
 
+    [TestMethod]
+    public void DeleteGroupStage_AfterKnockoutGenerated_RemovesEverythingAndSurvivesReload()
+    {
+        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _simulationService.SimulateGroupStageAndGenerateKnockout(Seed);
+        Assert.AreEqual(ExpectedRoundOf32Matches, _eliminationRepository.GetAll().Count, "Precondicion: el knockout debe existir.");
+
+        // Borrado total: en SQLite (provider relacional que SI valida FKs) debe borrar la fase 2 y la
+        // fase de grupos sin violar la FK autorreferente Matches->Matches.
+        _fixtureOrchestrator.DeleteGroupStage(performedByEmail: AdminEmail);
+
+        Assert.AreEqual(0, _groupRepository.GetAll().Count);
+        Assert.AreEqual(0, _journeyRepository.GetAll().Count);
+        Assert.AreEqual(0, _matchRepository.GetAll().Count);
+        Assert.AreEqual(0, _eliminationRepository.GetAll().Count);
+
+        // Relee desde repositorios NUEVOS sobre la misma conexion SQLite (simula reiniciar la app).
+        Assert.AreEqual(0, new MatchRepository(_factory).GetAll().Count);
+        Assert.AreEqual(0, new EliminationMatchRepository(_factory).GetAll().Count);
+        Assert.AreEqual(0, new GroupRepository(_factory).GetAll().Count);
+    }
+
     // Simula los 72 partidos de grupos (sin generar la fase 2), dejandolos marcados como jugados.
     private void SimulateGroupStageOnly()
     {
