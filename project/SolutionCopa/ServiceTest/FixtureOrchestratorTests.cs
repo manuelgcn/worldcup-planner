@@ -244,6 +244,18 @@ public class FixtureOrchestratorTests
     }
 
     [TestMethod]
+    public void DeleteGroupStage_LogsDeleteFixtureActionWithPerformer()
+    {
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _auditRepository.GetAll().Clear();
+
+        _orchestrator.DeleteGroupStage(performedByEmail: AdminEmail);
+
+        AuditLog log = _auditRepository.GetAll().First(entry => entry.Action == AuditActions.DeleteFixture);
+        Assert.IsTrue(log.Details.Contains(AdminEmail), $"Expected actor email in details, got '{log.Details}'");
+    }
+
+    [TestMethod]
     public void IsFixtureGenerated_BeforeGeneration_ReturnsFalse()
     {
         Assert.IsFalse(_orchestrator.IsFixtureGenerated());
