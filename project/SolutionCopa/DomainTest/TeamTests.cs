@@ -179,8 +179,8 @@ public sealed class TeamTests
             _ = new ProjectCopa.Team(0, "Argentina", 2400, false, Confederation.CONMEBOL);
         });
     }
-    
-    
+
+
     [TestMethod]
     public void CanCreateTeamWithoutFlag_DefaultFlagIsNull()
     {
@@ -194,5 +194,5 @@ public sealed class TeamTests
 
         Assert.IsNull(team.FlagBase64);
     }
-
+    
 }
