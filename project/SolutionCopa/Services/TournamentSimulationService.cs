@@ -19,14 +19,15 @@ public sealed class TournamentSimulationService(
     private const string FixtureNotGeneratedMessage = "El fixture aún no ha sido generado";
     private const string AuditLogMessage = "La fase de grupos fue simulada y la fase 2 fue generada.";
 
+    public void SimulateGroupStage(int seed, string? performedByEmail)
+    {
+        RunGroupStageSimulation(seed);
+        unitOfWork.Commit();
+    }
+
     public void SimulateGroupStageAndGenerateKnockout(int seed)
     {
-        List<Group> groups = GetOrderedGroups();
-        List<Match> groupStageMatches = GetGroupStageMatches(groups);
-
-        ValidateFixtureGenerated(groupStageMatches);
-
-        SimulateMatches(groupStageMatches, seed);
+        (List<Group> groups, List<Match> groupStageMatches) = RunGroupStageSimulation(seed);
 
         TournamentSettings settings = ResolveTournamentSettings(seed);
         QualifiedTeams qualifiedTeams = ClassifyQualifiedTeams(groups, groupStageMatches, settings);
@@ -35,6 +36,20 @@ public sealed class TournamentSimulationService(
 
         LogSimulation();
         unitOfWork.Commit();
+    }
+
+    // Simula los 72 partidos de la fase de grupos (sin generar la fase 2) y devuelve los grupos y
+    // sus partidos, para que el llamador pueda opcionalmente clasificar y armar el knockout.
+    private (List<Group> Groups, List<Match> Matches) RunGroupStageSimulation(int seed)
+    {
+        List<Group> groups = GetOrderedGroups();
+        List<Match> groupStageMatches = GetGroupStageMatches(groups);
+
+        ValidateFixtureGenerated(groupStageMatches);
+
+        SimulateMatches(groupStageMatches, seed);
+
+        return (groups, groupStageMatches);
     }
 
     private List<Group> GetOrderedGroups()
