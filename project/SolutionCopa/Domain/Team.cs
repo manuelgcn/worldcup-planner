@@ -1,4 +1,3 @@
-
 namespace ProjectCopa;
 
 public class Team
@@ -15,9 +14,15 @@ public class Team
     public int FifaRanking { get; }
     public bool IsFictitious { get; }
     public Confederation Confederation { get; }
-    public string? FlagBase64 { get; }
+    public string? FlagBase64 { get; private set; }
 
-    public Team(int id, string name, int fifaRanking, bool isFictitious, Confederation confederation, string? flagBase64 = null)
+    public Team(
+        int id,
+        string name,
+        int fifaRanking,
+        bool isFictitious,
+        Confederation confederation,
+        string? flagBase64 = null)
     {
         ValidateId(id);
         ValidateName(name);
@@ -29,7 +34,13 @@ public class Team
         FifaRanking = fifaRanking;
         IsFictitious = isFictitious;
         Confederation = confederation;
-        FlagBase64 = string.IsNullOrWhiteSpace(flagBase64) ? null : flagBase64;
+        FlagBase64 = NormalizeFlag(flagBase64);
+    }
+
+    public void UpdateFlag(string? flagBase64)
+    {
+        ValidateFlag(flagBase64);
+        FlagBase64 = NormalizeFlag(flagBase64);
     }
 
     private static void ValidateId(int id)
@@ -52,7 +63,9 @@ public class Team
     {
         if (IsFifaRankingOutOfRange(fifaRanking))
         {
-            throw new ArgumentException(string.Format(FifaRankingOutOfRangeMessage, MinFifaRanking, MaxFifaRanking), nameof(fifaRanking));
+            throw new ArgumentException(
+                string.Format(FifaRankingOutOfRangeMessage, MinFifaRanking, MaxFifaRanking),
+                nameof(fifaRanking));
         }
     }
 
@@ -67,6 +80,11 @@ public class Team
         {
             throw new ArgumentException(InvalidFlagMessage, nameof(flagBase64));
         }
+    }
+
+    private static string? NormalizeFlag(string? flagBase64)
+    {
+        return string.IsNullOrWhiteSpace(flagBase64) ? null : flagBase64;
     }
 
     private static bool IsNameInvalid(string name)
