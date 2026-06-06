@@ -256,6 +256,20 @@ public class FixtureOrchestratorTests
     }
 
     [TestMethod]
+    public void DeleteGroupStage_WhenKnockoutGenerated_AlsoRemovesKnockout()
+    {
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        SeedFakeEliminationMatch();
+
+        _orchestrator.DeleteGroupStage(performedByEmail: AdminEmail);
+
+        Assert.AreEqual(0, _groupRepository.GetAll().Count);
+        Assert.AreEqual(0, _matchRepository.GetAll().Count);
+        Assert.AreEqual(0, _eliminationRepository.GetAll().Count);
+        Assert.IsFalse(_orchestrator.IsKnockoutGenerated());
+    }
+
+    [TestMethod]
     public void IsFixtureGenerated_BeforeGeneration_ReturnsFalse()
     {
         Assert.IsFalse(_orchestrator.IsFixtureGenerated());
