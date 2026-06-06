@@ -7,6 +7,7 @@ public class Team
     private const int MaxFifaRanking = 2500;
     private const string InvalidNameMessage = "Team name cannot be empty.";
     private const string FifaRankingOutOfRangeMessage = "FIFA ranking must be between {0} and {1}.";
+    private const string InvalidFlagMessage = "Flag must be a valid base64 string.";
 
     public int Id { get; }
     public string Name { get; }
@@ -20,6 +21,8 @@ public class Team
         ValidateId(id);
         ValidateName(name);
         ValidateFifaRanking(fifaRanking);
+        ValidateFlag(flagBase64);
+
         Id = id;
         Name = name;
         FifaRanking = fifaRanking;
@@ -52,6 +55,19 @@ public class Team
         }
     }
 
+    private static void ValidateFlag(string? flagBase64)
+    {
+        if (string.IsNullOrWhiteSpace(flagBase64))
+        {
+            return;
+        }
+
+        if (!IsValidBase64(flagBase64))
+        {
+            throw new ArgumentException(InvalidFlagMessage, nameof(flagBase64));
+        }
+    }
+
     private static bool IsNameInvalid(string name)
     {
         return string.IsNullOrEmpty(name) || name.Length > MaxNameLength;
@@ -60,5 +76,11 @@ public class Team
     private static bool IsFifaRankingOutOfRange(int fifaRanking)
     {
         return fifaRanking < MinFifaRanking || fifaRanking > MaxFifaRanking;
+    }
+
+    private static bool IsValidBase64(string value)
+    {
+        Span<byte> buffer = stackalloc byte[value.Length];
+        return Convert.TryFromBase64String(value, buffer, out _);
     }
 }
