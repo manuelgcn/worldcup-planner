@@ -54,5 +54,7 @@ public static class AuditActions
 
     public const string SimulateRound = "SIMULATE_ROUND";
 
+    public const string SimulateGroupStage = "SIMULATE_GROUP_STAGE";
+
     public const string SimulateGroupStageAndGenerateKnockout = "SIMULATE_GROUP_STAGE_AND_GENERATE_KNOCKOUT";
 }

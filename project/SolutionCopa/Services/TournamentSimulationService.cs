@@ -22,6 +22,7 @@ public sealed class TournamentSimulationService(
     public void SimulateGroupStage(int seed, string? performedByEmail)
     {
         RunGroupStageSimulation(seed);
+        LogGroupStageSimulation(seed, performedByEmail);
         unitOfWork.Commit();
     }
 
@@ -132,6 +133,15 @@ public sealed class TournamentSimulationService(
         auditLogService.Log(
             AuditActions.SimulateGroupStageAndGenerateKnockout,
             AuditLogMessage,
+            affectedEntityType: nameof(TournamentSimulationService));
+    }
+
+    private void LogGroupStageSimulation(int seed, string? performedByEmail)
+    {
+        auditLogService.LogPerformedBy(
+            AuditActions.SimulateGroupStage,
+            $"Group stage simulated with seed {seed}.",
+            performedByEmail,
             affectedEntityType: nameof(TournamentSimulationService));
     }
 }
