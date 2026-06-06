@@ -283,6 +283,38 @@ public sealed class TeamTests
         );
     }
 
-    
+    [TestMethod]
+    public void CannotCreateTeamWithFlagExceedingMaxSize()
+    {
+        string oversizedFlag = Convert.ToBase64String(new byte[200 * 1024 + 1]);
 
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Team(
+                1,
+                "Uruguay",
+                2100,
+                false,
+                Confederation.CONMEBOL,
+                oversizedFlag
+            )
+        );
+    }
+
+    [TestMethod]
+    public void UpdateFlagExceedingMaxSize_ThrowsException()
+    {
+        Team team = new Team(
+            1,
+            "Uruguay",
+            2100,
+            false,
+            Confederation.CONMEBOL
+        );
+
+        string oversizedFlag = Convert.ToBase64String(new byte[200 * 1024 + 1]);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateFlag(oversizedFlag)
+        );
+    }
 }
