@@ -162,6 +162,38 @@ public class TeamRepositoryTests
     }
 
     
+    [TestMethod]
+    public void UpdatePersistsModifiedFlag()
+    {
+        Team originalTeam = new Team(
+            13,
+            "Paraguay",
+            1313,
+            false,
+            Confederation.CONMEBOL
+        );
+
+        _repository.Add(originalTeam);
+
+        Team updatedTeam = new Team(
+            13,
+            "Paraguay",
+            1313,
+            false,
+            Confederation.CONMEBOL,
+            "dGVzdA=="
+        );
+
+        _repository.Update(updatedTeam);
+
+        Team? storedTeam = _repository.GetById(13);
+
+        Assert.IsNotNull(storedTeam);
+        Assert.AreEqual("dGVzdA==", storedTeam!.FlagBase64);
+    }
+
+    
+    
     
     
 
