@@ -1,8 +1,8 @@
-
 @page "/teams"
 @using ProjectCopa
 @using Services
 @using Services.Exceptions
+@using Microsoft.AspNetCore.Components.Forms
 @inject TeamServices TeamServices
 @inject SessionState Session
 @inject NavigationManager Nav
@@ -13,7 +13,7 @@
 {
     <section class="m26-card auth-card">
         <h1 class="m26-page-title mb-2">Equipos</h1>
-        <p class="mb-3">No estás logueado.</p>
+        <p class="mb-3">No estas logueado.</p>
         <button class="btn btn-primary" @onclick="GoToLogin">
             <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
             Ir a Login
@@ -24,7 +24,7 @@ else if (!IsAdmin)
 {
     <div class="alert alert-danger" role="alert">
         <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
-        No tenés permisos para administrar equipos.
+        No tenes permisos para administrar equipos.
     </div>
 }
 else
@@ -56,16 +56,19 @@ else
     <section class="admin-grid">
         <article class="m26-card pane">
             <h2 class="pane-title">Crear equipo</h2>
+
             <div class="mb-3">
                 <label class="form-label" for="teamName">Nombre</label>
                 <input id="teamName" class="form-control" placeholder="Nombre" @bind="nombre" />
             </div>
+
             <div class="mb-3">
                 <label class="form-label" for="teamRanking">Ranking FIFA</label>
                 <input id="teamRanking" class="form-control" placeholder="Ranking FIFA" type="number" @bind="rankingFifa" />
             </div>
+
             <div class="mb-3">
-                <label class="form-label" for="teamConfederation">Confederación</label>
+                <label class="form-label" for="teamConfederation">Confederacion</label>
                 <select id="teamConfederation" class="form-select" @bind="confederation">
                     @foreach (Confederation c in Enum.GetValues<Confederation>())
                     {
@@ -73,6 +76,26 @@ else
                     }
                 </select>
             </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="teamFlag">Bandera</label>
+                <InputFile id="teamFlag"
+                           OnChange="OnFlagSelected"
+                           accept=".png,.jpg,.jpeg,.webp,.svg"
+                           class="form-control" />
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(flagBase64) && !string.IsNullOrWhiteSpace(flagContentType))
+            {
+                <div class="mb-3">
+                    <label class="form-label">Preview</label>
+                    <div>
+                        <img src="@($"data:{flagContentType};base64,{flagBase64}")"
+                             alt="Bandera"
+                             style="max-width:120px; max-height:80px;" />
+                    </div>
+                </div>
+            }
 
             <button class="btn btn-primary" @onclick="Create">
                 <i class="bi bi-plus-circle-fill" aria-hidden="true"></i>
@@ -82,6 +105,7 @@ else
 
         <article class="m26-card pane">
             <h2 class="pane-title">Equipos existentes</h2>
+
             @if (!equipos.Any())
             {
                 <div class="m26-empty">
@@ -97,7 +121,7 @@ else
                             <tr>
                                 <th>Nombre</th>
                                 <th>Ranking</th>
-                                <th>Confederación</th>
+                                <th>Confederacion</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -130,6 +154,10 @@ else
     private string nombre = "";
     private int rankingFifa;
     private Confederation confederation;
+    private string? flagBase64;
+    private string? flagContentType;
+
+    private const long MaxFlagSize = 2 * 1024 * 1024;
 
     private readonly List<string> errors = new List<string>();
     private string? successMessage;
@@ -146,7 +174,26 @@ else
 
     private void LoadTeams()
     {
-            equipos = TeamServices.GetTeams();
+        equipos = TeamServices.GetTeams();
+    }
+
+    private async Task OnFlagSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            IBrowserFile file = e.File;
+            flagContentType = file.ContentType;
+
+            await using Stream stream = file.OpenReadStream(MaxFlagSize);
+            using MemoryStream ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+
+            flagBase64 = Convert.ToBase64String(ms.ToArray());
+        }
+        catch (Exception ex)
+        {
+            errors.Add("No se pudo cargar la bandera: " + ex.Message);
+        }
     }
 
     private void Create()
@@ -159,8 +206,13 @@ else
 
         try
         {
-            int nextId = TeamServices.GetTeams().Select(t => t.Id).DefaultIfEmpty(0).Max() + 1;
-            Team team = new Team(nextId, nombre, rankingFifa, false, confederation);
+            int nextId = TeamServices.GetTeams()
+                .Select(t => t.Id)
+                .DefaultIfEmpty(0)
+                .Max() + 1;
+
+            Team team = new Team(nextId, nombre, rankingFifa, false, confederation, flagBase64);
+
             TeamServices.AddTeam(team);
             successMessage = "Equipo creado correctamente";
             ClearForm();
@@ -209,6 +261,8 @@ else
         nombre = "";
         rankingFifa = 0;
         confederation = default;
+        flagBase64 = null;
+        flagContentType = null;
     }
 
     private void GoToLogin()

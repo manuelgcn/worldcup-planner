@@ -168,6 +168,9 @@ namespace DataAccess.Migrations
                     b.Property<int>("FifaRanking")
                         .HasColumnType("int");
 
+                    b.Property<string>("FlagBase64")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("GroupName")
                         .HasColumnType("nvarchar(3)");
 

@@ -97,9 +97,18 @@ public class Team
         return fifaRanking < MinFifaRanking || fifaRanking > MaxFifaRanking;
     }
 
+    
     private static bool IsValidBase64(string value)
     {
-        Span<byte> buffer = stackalloc byte[value.Length];
-        return Convert.TryFromBase64String(value, buffer, out _);
+        try
+        {
+            Convert.FromBase64String(value);
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
+
 }
