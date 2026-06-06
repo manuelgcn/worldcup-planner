@@ -17,6 +17,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     private const string MissingTeamsMessage = "Fixture requires exactly 48 teams.";
     private const string MissingStadiumsMessage = "Fixture requires at least 4 stadiums.";
     private const string ClearFixtureDetails = "Previous fixture cleared before regeneration.";
+    private const string DeleteFixtureDetails = "Group stage deleted: groups, journeys and group matches removed.";
 
     private readonly ITeamRepository _teamRepository;
     private readonly IStadiumRepository _stadiumRepository;
@@ -88,6 +89,8 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     {
         ClearGroupStageStorage();
         _unitOfWork.Commit();
+
+        AuditDeleted(performedByEmail);
     }
 
     private GenerationPlan PrepareGenerationPlan(int? fixtureSeedOverride)
@@ -231,6 +234,15 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         _auditLogService.LogPerformedBy(
             AuditActions.RegenerateFixture,
             $"Fixture regenerated with seed {seed}.",
+            performedByEmail,
+            nameof(FixtureOrchestrator));
+    }
+
+    private void AuditDeleted(string? performedByEmail)
+    {
+        _auditLogService.LogPerformedBy(
+            AuditActions.DeleteFixture,
+            DeleteFixtureDetails,
             performedByEmail,
             nameof(FixtureOrchestrator));
     }

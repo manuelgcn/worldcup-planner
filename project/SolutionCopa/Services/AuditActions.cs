@@ -48,6 +48,8 @@ public static class AuditActions
 
     public const string ClearFixture = "CLEAR_FIXTURE";
 
+    public const string DeleteFixture = "DELETE_FIXTURE";
+
     public const string GenerateKnockout = "GENERATE_KNOCKOUT";
 
     public const string SimulateRound = "SIMULATE_ROUND";
