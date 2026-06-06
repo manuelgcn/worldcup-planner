@@ -84,6 +84,12 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         AuditRegenerated(plan.EffectiveSeed, performedByEmail);
     }
 
+    public void DeleteGroupStage(string? performedByEmail)
+    {
+        ClearGroupStageStorage();
+        _unitOfWork.Commit();
+    }
+
     private GenerationPlan PrepareGenerationPlan(int? fixtureSeedOverride)
     {
         TournamentSettings settings = LoadSettings();
