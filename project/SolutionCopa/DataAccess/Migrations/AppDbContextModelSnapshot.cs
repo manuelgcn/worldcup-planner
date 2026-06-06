@@ -125,6 +125,38 @@ namespace DataAccess.Migrations
                     b.UseTphMappingStrategy();
                 });
 
+            modelBuilder.Entity("ProjectCopa.MatchIncident", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("IncidentType")
+                        .IsRequired()
+                        .HasMaxLength(13)
+                        .HasColumnType("nvarchar(13)");
+
+                    b.Property<int?>("MatchId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Minute")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TeamId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MatchId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("MatchIncidents", (string)null);
+
+                    b.HasDiscriminator<string>("IncidentType").HasValue("MatchIncident");
+
+                    b.UseTphMappingStrategy();
+                });
+
             modelBuilder.Entity("ProjectCopa.Stadium", b =>
                 {
                     b.Property<int>("Id")
@@ -167,6 +199,9 @@ namespace DataAccess.Migrations
 
                     b.Property<int>("FifaRanking")
                         .HasColumnType("int");
+
+                    b.Property<string>("FlagBase64")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("GroupName")
                         .HasColumnType("nvarchar(3)");
@@ -344,6 +379,20 @@ namespace DataAccess.Migrations
                     b.HasDiscriminator().HasValue("Group");
                 });
 
+            modelBuilder.Entity("ProjectCopa.RedCardIncident", b =>
+                {
+                    b.HasBaseType("ProjectCopa.MatchIncident");
+
+                    b.HasDiscriminator().HasValue("RedCard");
+                });
+
+            modelBuilder.Entity("ProjectCopa.YellowCardIncident", b =>
+                {
+                    b.HasBaseType("ProjectCopa.MatchIncident");
+
+                    b.HasDiscriminator().HasValue("YellowCard");
+                });
+
             modelBuilder.Entity("ProjectCopa.Match", b =>
                 {
                     b.HasOne("ProjectCopa.Team", "AwayTeam")
@@ -366,6 +415,22 @@ namespace DataAccess.Migrations
                     b.Navigation("HomeTeam");
 
                     b.Navigation("Stadium");
+                });
+
+            modelBuilder.Entity("ProjectCopa.MatchIncident", b =>
+                {
+                    b.HasOne("ProjectCopa.Match", null)
+                        .WithMany("Incidents")
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("ProjectCopa.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Team");
                 });
 
             modelBuilder.Entity("ProjectCopa.Team", b =>
@@ -422,6 +487,11 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("ProjectCopa.Group", b =>
                 {
                     b.Navigation("Teams");
+                });
+
+            modelBuilder.Entity("ProjectCopa.Match", b =>
+                {
+                    b.Navigation("Incidents");
                 });
 
             modelBuilder.Entity("ProjectCopa.User", b =>

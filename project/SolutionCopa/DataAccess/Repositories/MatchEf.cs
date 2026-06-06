@@ -24,7 +24,8 @@ internal static class MatchEf
             .Include(match => ((MatchGroup)match).Group!).ThenInclude(group => group.Teams)
             .Include(match => ((MatchGroup)match).Journey)
             .Include(match => ((MatchElimination)match).MatchHome)
-            .Include(match => ((MatchElimination)match).MatchAway);
+            .Include(match => ((MatchElimination)match).MatchAway)
+            .Include(match => match.Incidents).ThenInclude(incident => incident.Team);
 
     // Inserta SOLO la fila del partido. Las entidades relacionadas (equipos, estadio, grupo, jornada
     // y partidos fuente) ya estan persistidas: se attachean como Unchanged ANTES del Add para que EF

@@ -1,3 +1,4 @@
+
 using DataAccess.Interfaces;
 using ProjectCopa;
 using Services.Exceptions;
@@ -19,15 +20,17 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
     private const string DuplicateTeamNameMessage = "Team name must be unique in the system.";
     private const string QuotaExceededMessage = "{0} team quota exceeded.";
     private const string FixtureRequires48TeamsMessage = "Fixture ordering requires exactly 48 teams.";
-    private static readonly IReadOnlyDictionary<Confederation, int> QuotasByConfederation = new Dictionary<Confederation, int>
-    {
-        { Confederation.AFC, AfcQuota },
-        { Confederation.CAF, CafQuota },
-        { Confederation.OFC, OfcQuota },
-        { Confederation.UEFA, UefaQuota },
-        { Confederation.CONMEBOL, ConmebolQuota },
-        { Confederation.CONCACAF, ConcacafQuota }
-    };
+
+    private static readonly IReadOnlyDictionary<Confederation, int> QuotasByConfederation =
+        new Dictionary<Confederation, int>
+        {
+            { Confederation.AFC, AfcQuota },
+            { Confederation.CAF, CafQuota },
+            { Confederation.OFC, OfcQuota },
+            { Confederation.UEFA, UefaQuota },
+            { Confederation.CONMEBOL, ConmebolQuota },
+            { Confederation.CONCACAF, ConcacafQuota }
+        };
 
     public void FillToFortyEight(int? completionSeed, string? performedByEmail)
     {
@@ -49,14 +52,21 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
 
             for (int sequence = 0; sequence < missing; sequence++)
             {
-                Team fictitious = CreateFictitiousTeam(nextId, confederation, sequence + existingForConfederation + 1, random);
+                Team fictitious = CreateFictitiousTeam(
+                    nextId,
+                    confederation,
+                    sequence + existingForConfederation + 1,
+                    random);
+
                 teamRepository.Add(fictitious);
+
                 auditLogService?.LogPerformedBy(
                     AuditActions.CreateTeam,
                     $"Generated fictitious team '{fictitious.Name}' with ranking {fictitious.FifaRanking}.",
                     performedByEmail,
                     nameof(Team),
                     fictitious.Id);
+
                 nextId++;
             }
         }
@@ -73,23 +83,28 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
     {
         const int MinRanking = 300;
         const int MaxRanking = 2500;
+
         int ranking = random.Next(MinRanking, MaxRanking + 1);
         string name = $"{confederation}_{sequenceInConfederation:D2}";
-        return new Team(id, name, ranking, isFictitious: true, confederation);
+
+        return new Team(id, name, ranking, true, confederation);
     }
 
     public void AddTeam(Team team)
     {
         ArgumentNullException.ThrowIfNull(team);
+
         ValidateUniqueName(team.Name);
         ValidateConfederationQuota(team.Confederation);
 
         teamRepository.Add(team);
+
         auditLogService?.Log(
             AuditActions.CreateTeam,
             $"Team '{team.Name}' added with ranking {team.FifaRanking}.",
             nameof(Team),
             team.Id);
+
         unitOfWork.Commit();
     }
 
@@ -114,17 +129,20 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
             ?? throw new TeamServicesException(CannotDeleteTeamMessage);
 
         teamRepository.Delete(team);
+
         auditLogService?.Log(
             AuditActions.DeleteTeam,
             $"Team '{team.Name}' removed.",
             nameof(Team),
             team.Id);
+
         unitOfWork.Commit();
     }
 
     public IReadOnlyList<Team> OrderForFixture(IReadOnlyCollection<Team> teams, int fixtureSeed)
     {
         ArgumentNullException.ThrowIfNull(teams);
+
         ValidateFixtureTeamCount(teams.Count);
 
         return BuildFixtureOrder(teams, fixtureSeed);
@@ -169,6 +187,7 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
     private static IReadOnlyList<Team> BuildFixtureOrder(IEnumerable<Team> teams, int fixtureSeed)
     {
         List<Team> orderedTeams = new List<Team>(capacity: FixtureTeamCount);
+
         List<IGrouping<int, Team>> groupsByRanking = teams
             .GroupBy(team => team.FifaRanking)
             .OrderByDescending(group => group.Key)
