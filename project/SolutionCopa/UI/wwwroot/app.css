@@ -99,6 +99,18 @@ h1:focus {
     background: rgba(255, 215, 0, .15);
 }
 
+.btn-danger {
+    color: var(--m26-white);
+    background: var(--m26-red);
+    border: none;
+}
+
+.btn-danger:hover,
+.btn-danger:focus-visible {
+    color: var(--m26-white);
+    background: #C20025;
+}
+
 .btn-sm {
     border-radius: 8px;
 }
