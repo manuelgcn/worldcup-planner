@@ -232,6 +232,18 @@ public class FixtureOrchestratorTests
     }
 
     [TestMethod]
+    public void DeleteGroupStage_RemovesAllGroupsJourneysAndMatches()
+    {
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+
+        _orchestrator.DeleteGroupStage(performedByEmail: AdminEmail);
+
+        Assert.AreEqual(0, _groupRepository.GetAll().Count);
+        Assert.AreEqual(0, _journeyRepository.GetAll().Count);
+        Assert.AreEqual(0, _matchRepository.GetAll().Count);
+    }
+
+    [TestMethod]
     public void IsFixtureGenerated_BeforeGeneration_ReturnsFalse()
     {
         Assert.IsFalse(_orchestrator.IsFixtureGenerated());
