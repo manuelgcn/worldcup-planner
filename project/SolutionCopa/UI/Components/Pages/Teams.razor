@@ -22,7 +22,7 @@
 }
 else if (!IsAdmin)
 {
-    <div class="alert alert-danger" role="alert">
+    <div class="alert alert-error" role="alert">
         <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
         No tenés permisos para administrar equipos.
     </div>
@@ -33,7 +33,7 @@ else
 
     if (errors.Any())
     {
-        <div class="alert alert-danger" role="alert">
+        <div class="alert alert-error" role="alert">
             <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
             Se encontraron errores:
             <ul>

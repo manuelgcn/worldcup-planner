@@ -20,7 +20,7 @@
 }
 else if (!IsAdmin)
 {
-    <div class="alert alert-danger" role="alert">
+    <div class="alert alert-error" role="alert">
         <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
         No tenés permisos para administrar usuarios.
     </div>
@@ -31,7 +31,7 @@ else
 
     if (errors.Any())
     {
-        <div class="alert alert-danger" role="alert">
+        <div class="alert alert-error" role="alert">
             <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
             Se encontraron errores:
             <ul>
@@ -107,49 +107,62 @@ else
 
             @if (!usuarios.Any())
             {
-                <p>No hay usuarios.</p>
+                <div class="m26-empty">
+                    <i class="bi bi-people" aria-hidden="true"></i>
+                    <p class="mb-0">No hay usuarios.</p>
+                </div>
             }
             else
             {
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
-                            <th>Email</th>
-                            <th>Roles</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (User u in usuarios)
-                        {
+                <div class="table-responsive">
+                    <table class="table table-hover m26-scoreboard mb-0">
+                        <thead>
                             <tr>
-                                <td>@u.idUser</td>
-                                <td>@u.name @u.lastname</td>
-                                <td>@u.email</td>
-                                <td>
-                                    @foreach (var r in u.Roles)
-                                    {
-                                        <span class="badge bg-secondary">@r.Role</span>
-                                    }
-                                </td>
-                                <td>
-                                    <button @onclick="() => StartEdit(u)">Editar</button>
-                                    <button disabled="@(u.HasRole(UserRoles.Admin))"
-                                            @onclick="() => AssignRole(u.idUser, UserRoles.Admin)">
-                                        Admin
-                                    </button>
-                                    <button disabled="@(u.HasRole(UserRoles.Editor))"
-                                            @onclick="() => AssignRole(u.idUser, UserRoles.Editor)">
-                                        Editor
-                                    </button>
-                                    <button @onclick="() => Remove(u.idUser)">Eliminar</button>
-                                </td>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Roles</th>
+                                <th>Acciones</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (User u in usuarios)
+                            {
+                                <tr>
+                                    <td>@u.idUser</td>
+                                    <td>@u.name @u.lastname</td>
+                                    <td>@u.email</td>
+                                    <td>
+                                        @foreach (var r in u.Roles)
+                                        {
+                                            <span class="badge bg-secondary me-1">@r.Role</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <button class="btn btn-outline-primary btn-sm" @onclick="() => StartEdit(u)">
+                                                <i class="bi bi-pencil" aria-hidden="true"></i> Editar
+                                            </button>
+                                            <button class="btn btn-outline-secondary btn-sm"
+                                                    disabled="@(u.HasRole(UserRoles.Admin))"
+                                                    @onclick="() => AssignRole(u.idUser, UserRoles.Admin)">
+                                                <i class="bi bi-shield-fill" aria-hidden="true"></i> Admin
+                                            </button>
+                                            <button class="btn btn-outline-secondary btn-sm"
+                                                    disabled="@(u.HasRole(UserRoles.Editor))"
+                                                    @onclick="() => AssignRole(u.idUser, UserRoles.Editor)">
+                                                <i class="bi bi-person-check-fill" aria-hidden="true"></i> Editor
+                                            </button>
+                                            <button class="btn btn-outline-danger btn-sm" @onclick="() => Remove(u.idUser)">
+                                                <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             }
         </article>
     </section>
