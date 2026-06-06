@@ -334,4 +334,34 @@ public sealed class TeamTests
 
         Assert.AreEqual(maxSizeFlag, team.FlagBase64);
     }
+
+    [TestMethod]
+    public void UpdateFifaRankingClampsBelowMinimumTo300()
+    {
+        Team team = new Team(1, "Uruguay", 2100, false, Confederation.CONMEBOL);
+
+        team.UpdateFifaRanking(100);
+
+        Assert.AreEqual(300, team.FifaRanking);
+    }
+
+    [TestMethod]
+    public void UpdateFifaRankingClampsAboveMaximumTo2500()
+    {
+        Team team = new Team(1, "Uruguay", 2100, false, Confederation.CONMEBOL);
+
+        team.UpdateFifaRanking(9999);
+
+        Assert.AreEqual(2500, team.FifaRanking);
+    }
+
+    [TestMethod]
+    public void UpdateFifaRankingAssignsIntermediateValueUnchanged()
+    {
+        Team team = new Team(1, "Uruguay", 2100, false, Confederation.CONMEBOL);
+
+        team.UpdateFifaRanking(1800);
+
+        Assert.AreEqual(1800, team.FifaRanking);
+    }
 }
