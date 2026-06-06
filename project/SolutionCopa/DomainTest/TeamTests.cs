@@ -195,4 +195,22 @@ public sealed class TeamTests
         Assert.IsNull(team.FlagBase64);
     }
     
+    
+    [TestMethod]
+    public void CanCreateTeamWithValidBase64Flag()
+    {
+        string validBase64Flag = "dGVzdA==";
+
+        Team team = new Team(
+            1,
+            "Uruguay",
+            2100,
+            false,
+            Confederation.CONMEBOL,
+            validBase64Flag
+        );
+
+        Assert.AreEqual(validBase64Flag, team.FlagBase64);
+    }
+
 }
