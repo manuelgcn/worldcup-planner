@@ -1,4 +1,5 @@
 using DataAccess.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using ProjectCopa;
 using Services.Exceptions;
 using Services.Interfaces;
@@ -9,6 +10,7 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
 {
     private const string DuplicateStadiumNameMessage = "Stadium name must be unique in the system.";
     private const string StadiumNotFoundMessage = "Stadium was not found.";
+    private const string StadiumReferencedByMatchMessage = "Stadium cannot be deleted because it is referenced by one or more matches.";
     private const int MinimumStadiumsForFixture = 4;
 
     private static readonly (string Name, string City, int Capacity)[] DefaultStadiumSeeds =
@@ -102,7 +104,14 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
     public void RemoveById(int id)
     {
         Stadium stadium = GetById(id);
-        stadiumRepository.Delete(stadium);
+        try
+        {
+            stadiumRepository.Delete(stadium);                          // FK Restrict: SaveChanges falla si un partido lo referencia
+        }
+        catch (DbUpdateException)
+        {
+            throw new StadiumServicesException(StadiumReferencedByMatchMessage);
+        }
         auditLogService?.Log(
             AuditActions.DeleteStadium,
             $"Stadium '{stadium.Name}' removed.",

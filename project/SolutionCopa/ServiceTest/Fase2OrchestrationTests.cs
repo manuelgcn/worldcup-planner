@@ -27,7 +27,7 @@ public class Fase2OrchestrationTests
 
         TournamentSettings settings = new TournamentSettings(1, new DateTime(2026,6,1), 3, 3, fixtureSeed:0, crossingsSeed:777, simulationSeed:0, completionSeed:0);
 
-        EliminationMatchRepository elimRepo = new EliminationMatchRepository();
+        MockEliminationMatchRepository elimRepo = new MockEliminationMatchRepository();
         MockAuditLogRepository auditRepo = new MockAuditLogRepository();
         AuditLogService auditService = AuditLogService.CreateInstance(auditRepo, defaultTournamentSettingsId: settings.Id);
 

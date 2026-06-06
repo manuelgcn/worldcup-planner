@@ -1,5 +1,6 @@
 using ProjectCopa;
 using DataAccess.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Services;
 using ServiceTest.TestDoubles.Mocks;
@@ -239,12 +240,37 @@ public class StadiumServicesTests
             _service.UpdateById(-1, "Ciudad", null, 30000));
     }
 
+    [TestMethod]
+    public void RemoveById_WhenStadiumReferencedByMatch_ThrowsStadiumServicesException()
+    {
+        // En SQL real el FK Restrict hace fallar el SaveChanges con DbUpdateException; el servicio
+        // debe traducirla a StadiumServicesException (InMemory no aplica FKs, por eso usamos un stub).
+        Stadium referenced = new Stadium("Centenario", "Montevideo", null, 60000) { Id = 7 };
+        StadiumServices service = new StadiumServices(
+            new DeleteFailingStadiumRepository(referenced),
+            new MockUnitOfWork());
+
+        Assert.ThrowsException<StadiumServicesException>(() => service.RemoveById(7));
+    }
+
     private static StadiumServices CreateAuditedService(MockAuditLogRepository repository)
     {
         return new StadiumServices(
             new MockStadiumRepository(),
             new MockUnitOfWork(),
             AuditLogService.CreateInstance(repository, 1));
+    }
+
+    // Repositorio que simula el rechazo del FK (estadio referenciado por un partido) al borrar.
+    private sealed class DeleteFailingStadiumRepository(Stadium stadium) : IStadiumRepository
+    {
+        public void Add(Stadium toAdd) { }
+        public void Update(Stadium toUpdate) { }
+        public void Delete(Stadium toDelete) => throw new DbUpdateException("FK violation: stadium referenced by a match.");
+        public Stadium? GetById(int stadiumId) => stadiumId == stadium.Id ? stadium : null;
+        public Stadium? GetByName(string name) => stadium.Name == name ? stadium : null;
+        public bool ExistsByName(string name) => stadium.Name == name;
+        public IReadOnlyCollection<Stadium> GetAll() => new[] { stadium };
     }
 
     [TestMethod]

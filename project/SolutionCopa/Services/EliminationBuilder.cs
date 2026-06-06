@@ -49,10 +49,12 @@ public class EliminationBuilder
             Team away = interleaved[i + 1].Team;
             Stadium stadium = stadiumProvider(i / 2);
             DateTime date = dateProvider(i / 2);
-            MatchGroup sourceHome = MatchGroup.CreateMatchWithConfig(-_nextMatchId, settings.StartDate, home, away, stadium, settings, new Group("X"), Journey.CreateInstance(1));
-            MatchGroup sourceAway = MatchGroup.CreateMatchWithConfig(-(_nextMatchId + 1), settings.StartDate, away, home, stadium, settings, new Group("Y"), Journey.CreateInstance(1));
             string matchCode = $"R32-{_nextMatchId}";
-            MatchElimination elim = MatchElimination.CreateMatchWithConfig(_nextMatchId, date, home, away, stadium, settings, Phase.RoundOf32, matchCode, sourceHome, sourceAway);
+            // R32 es la ronda inicial: los emparejamientos salen de la clasificacion de grupos, no de
+            // partidos previos, asi que se crea SIN partidos fuente. Antes se fabricaban fuentes
+            // sinteticas con ids negativos (y grupos "X"/"Y") solo para satisfacer la invariante del
+            // dominio; con EF Core eso provocaba una violacion de FK al persistir el R32.
+            MatchElimination elim = MatchElimination.CreateInitialRound(_nextMatchId, date, home, away, stadium, settings, Phase.RoundOf32, matchCode);
             result.Add(elim);
             _nextMatchId++;
         }

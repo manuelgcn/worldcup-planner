@@ -14,6 +14,9 @@ public class AppDbContext : DbContext
     public DbSet<Stadium> Stadiums => Set<Stadium>();
     public DbSet<TournamentSettings> TournamentSettings => Set<TournamentSettings>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Group> Groups => Set<Group>();
+    public DbSet<Journey> Journeys => Set<Journey>();
+    public DbSet<Match> Matches => Set<Match>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,5 +27,10 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new StadiumConfiguration());
         modelBuilder.ApplyConfiguration(new TournamentSettingsConfiguration());
         modelBuilder.ApplyConfiguration(new AuditLogConfiguration());
+        modelBuilder.ApplyConfiguration(new GroupConfiguration());
+        modelBuilder.ApplyConfiguration(new JourneyConfiguration());
+        modelBuilder.ApplyConfiguration(new MatchConfiguration());
+        modelBuilder.ApplyConfiguration(new MatchGroupConfiguration());
+        modelBuilder.ApplyConfiguration(new MatchEliminationConfiguration());
     }
 }

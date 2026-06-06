@@ -1,52 +1,70 @@
 using DataAccess.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using ProjectCopa;
 
 namespace DataAccess.Repositories;
 
 public class JourneyRepository : IJourneyRepository
 {
-    private readonly List<Journey> _journeys = new();
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
+
+    public JourneyRepository(IDbContextFactory<AppDbContext> contextFactory)
+    {
+        _contextFactory = contextFactory;
+    }
 
     public void Add(Journey journey)
     {
-        _journeys.Add(journey);
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        context.Journeys.Add(journey);
+        context.SaveChanges();
     }
 
     public void Update(Journey journey)
     {
-        int index = _journeys.FindIndex(existingJourney => existingJourney.Number == journey.Number);
-
-        if (index >= 0)
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        if (context.Journeys.Any(stored => stored.Number == journey.Number))
         {
-            _journeys[index] = journey;
-            return;
+            return;                             // Journey solo tiene Number (PK): nada que actualizar
         }
 
-        _journeys.Add(journey);
+        context.Journeys.Add(journey);
+        context.SaveChanges();
     }
 
     public void Delete(Journey journey)
     {
-        _journeys.RemoveAll(existingJourney => existingJourney.Number == journey.Number);
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        Journey? existing = context.Journeys.FirstOrDefault(stored => stored.Number == journey.Number);
+        if (existing is not null)
+        {
+            context.Journeys.Remove(existing);
+            context.SaveChanges();
+        }
     }
 
     public Journey? GetByNumber(int number)
     {
-        return _journeys.FirstOrDefault(journey => journey.Number == number);
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Journeys.AsNoTracking().FirstOrDefault(journey => journey.Number == number);
     }
 
     public bool ExistsByNumber(int number)
     {
-        return _journeys.Any(journey => journey.Number == number);
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Journeys.AsNoTracking().Any(journey => journey.Number == number);
     }
 
     public IReadOnlyCollection<Journey> GetAll()
     {
-        return _journeys.AsReadOnly();
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Journeys.AsNoTracking().ToList();
     }
 
     public void Clear()
     {
-        _journeys.Clear();
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        context.Journeys.RemoveRange(context.Journeys.ToList());
+        context.SaveChanges();
     }
 }

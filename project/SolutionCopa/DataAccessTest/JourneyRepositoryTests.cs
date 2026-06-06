@@ -1,4 +1,5 @@
 using DataAccess.Repositories;
+using DataAccessTest.TestDoubles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProjectCopa;
 
@@ -12,51 +13,56 @@ public class JourneyRepositoryTests
     [TestInitialize]
     public void Setup()
     {
-        _repository = new JourneyRepository();
+        // Contextos efimeros sobre una BD InMemory aislada por test.
+        _repository = new JourneyRepository(new InMemoryDbContextFactory());
     }
 
     [TestMethod]
     public void AddStoresJourneyAndGetByNumberReturnsIt()
     {
-        Journey journey = Create(1);
+        _repository.Add(Journey.CreateInstance(1));
 
-        _repository.Add(journey);
+        Journey? stored = _repository.GetByNumber(1);
 
-        Journey? storedJourney = _repository.GetByNumber(1);
-        Assert.AreSame(journey, storedJourney);
+        Assert.IsNotNull(stored);
+        Assert.AreEqual(1, stored!.Number);
     }
 
     [TestMethod]
-    public void UpdateReplacesExistingJourneyWithSameNumber()
+    public void AddPersistsJourneyRetrievableFromNewContext()
     {
-        Journey originalJourney = Create(1);
-        Journey updatedJourney = Create(1);
-        _repository.Add(originalJourney);
+        _repository.Add(Journey.CreateInstance(2));     // SaveChanges interno (autosave por operacion)
 
-        _repository.Update(updatedJourney);
+        Journey? stored = _repository.GetByNumber(2);   // contexto nuevo: el dato viene de la "BD"
 
-        Journey? storedJourney = _repository.GetByNumber(1);
-        Assert.IsNotNull(storedJourney);
-        Assert.AreSame(updatedJourney, storedJourney);
+        Assert.IsNotNull(stored);
+        Assert.AreEqual(2, stored!.Number);
     }
 
     [TestMethod]
     public void UpdateAddsJourneyWhenNumberDoesNotExist()
     {
-        Journey journey = Create(2);
+        _repository.Update(Journey.CreateInstance(2));
 
-        _repository.Update(journey);
+        Assert.IsTrue(_repository.ExistsByNumber(2));
+    }
 
-        Assert.AreSame(journey, _repository.GetByNumber(2));
+    [TestMethod]
+    public void UpdateKeepsJourneyWhenNumberAlreadyExists()
+    {
+        _repository.Add(Journey.CreateInstance(1));
+
+        _repository.Update(Journey.CreateInstance(1));
+
+        Assert.AreEqual(1, _repository.GetAll().Count);
     }
 
     [TestMethod]
     public void DeleteRemovesStoredJourney()
     {
-        Journey journey = Create(3);
-        _repository.Add(journey);
+        _repository.Add(Journey.CreateInstance(3));
 
-        _repository.Delete(journey);
+        _repository.Delete(Journey.CreateInstance(3));
 
         Assert.IsNull(_repository.GetByNumber(3));
     }
@@ -64,42 +70,35 @@ public class JourneyRepositoryTests
     [TestMethod]
     public void ExistsByNumberReturnsTrueWhenJourneyIsStored()
     {
-        Journey journey = Create(4);
-        _repository.Add(journey);
+        _repository.Add(Journey.CreateInstance(4));
 
-        bool exists = _repository.ExistsByNumber(4);
-
-        Assert.IsTrue(exists);
+        Assert.IsTrue(_repository.ExistsByNumber(4));
     }
 
     [TestMethod]
     public void ExistsByNumberReturnsFalseWhenJourneyIsNotStored()
     {
-        bool exists = _repository.ExistsByNumber(999);
-
-        Assert.IsFalse(exists);
+        Assert.IsFalse(_repository.ExistsByNumber(999));
     }
 
     [TestMethod]
     public void GetAllReturnsAllStoredJourneys()
     {
-        Journey firstJourney = Create(5);
-        Journey secondJourney = Create(6);
-        _repository.Add(firstJourney);
-        _repository.Add(secondJourney);
+        _repository.Add(Journey.CreateInstance(5));
+        _repository.Add(Journey.CreateInstance(6));
 
         IReadOnlyCollection<Journey> journeys = _repository.GetAll();
 
         Assert.AreEqual(2, journeys.Count);
-        Assert.IsTrue(journeys.Contains(firstJourney));
-        Assert.IsTrue(journeys.Contains(secondJourney));
+        Assert.IsTrue(journeys.Any(journey => journey.Number == 5));
+        Assert.IsTrue(journeys.Any(journey => journey.Number == 6));
     }
 
     [TestMethod]
     public void ClearRemovesAllStoredJourneys()
     {
-        _repository.Add(Create(1));
-        _repository.Add(Create(2));
+        _repository.Add(Journey.CreateInstance(1));
+        _repository.Add(Journey.CreateInstance(2));
 
         _repository.Clear();
 
@@ -112,10 +111,5 @@ public class JourneyRepositoryTests
         _repository.Clear();
 
         Assert.AreEqual(0, _repository.GetAll().Count);
-    }
-
-    private static Journey Create(int number)
-    {
-        return Journey.CreateInstance(number);
     }
 }
