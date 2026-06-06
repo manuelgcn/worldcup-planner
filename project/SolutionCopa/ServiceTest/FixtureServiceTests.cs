@@ -365,12 +365,8 @@ public class FixtureServiceTests
         IReadOnlyCollection<Group> run1 = new FixtureService(teams, stadiums, seed: 123).CreateFixture();
         IReadOnlyCollection<Group> run2 = new FixtureService(teams, stadiums, seed: 123).CreateFixture();
 
-        List<string> assignment1 = run1
-            .Select(g => g.Name + ":" + string.Join(",", g.Teams.Select(t => t.Name)))
-            .ToList();
-        List<string> assignment2 = run2
-            .Select(g => g.Name + ":" + string.Join(",", g.Teams.Select(t => t.Name)))
-            .ToList();
+        List<string> assignment1 = DescribeGroupAssignments(run1);
+        List<string> assignment2 = DescribeGroupAssignments(run2);
 
         CollectionAssert.AreEqual(assignment1, assignment2);
     }
