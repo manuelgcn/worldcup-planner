@@ -56,6 +56,27 @@ public class NotificationTest
     }
 
     
+    [TestMethod]
+    public void CannotCreateNotificationWithEmptyMessage()
+    {
+        User user = new User(
+            1,
+            "Juan",
+            "Perez",
+            "juan@mail.com",
+            "Pass123@",
+            new DateTime(1990, 5, 15)
+        );
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Notification(
+                1,
+                user,
+                ""
+            )
+        );
+    }
+
     
     
     
