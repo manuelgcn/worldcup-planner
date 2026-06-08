@@ -33,4 +33,12 @@ public class NotificationService
             nextId++;
         }
     }
+    
+    public IReadOnlyCollection<Notification> GetUnreadForUser(int userId)
+    {
+        return notificationRepository.GetUnreadByUserId(userId);
+    }
+
+    
+    
 }
