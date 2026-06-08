@@ -50,4 +50,24 @@ public class NotificationRepository : INotificationRepository
             .Where(n => n.UserId == userId && !n.IsRead)
             .ToList();
     }
+
+    public void Update(Notification notification)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+
+        Notification? existing = context.Notifications.FirstOrDefault(n => n.Id == notification.Id);
+        if (existing is null)
+        {
+            context.Notifications.Add(notification);
+        }
+        else
+        {
+            if (notification.IsRead && !existing.IsRead)
+            {
+                existing.MarkAsRead();
+            }
+        }
+
+        context.SaveChanges();
+    }
 }
