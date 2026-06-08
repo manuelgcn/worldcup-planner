@@ -49,6 +49,7 @@ builder.Services.AddSingleton<IAuditLogService>(sp =>
         sp.GetRequiredService<IAuditLogRepository>(),
         1));
 
+
 builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
     new KnockoutFixtureGenerator(
         sp.GetRequiredService<IMatchSimulationEngine>(),
@@ -58,7 +59,9 @@ builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
         sp.GetRequiredService<IStadiumRepository>(),
         sp.GetRequiredService<ITournamentSettingsRepository>(),
         sp.GetRequiredService<IUnitOfWork>(),
-        sp.GetRequiredService<IAuditLogService>()));
+        sp.GetRequiredService<IAuditLogService>(),
+        sp.GetRequiredService<INotificationService>()));
+
 
 builder.Services.AddSingleton<IKnockoutFixtureGenerator>(sp =>
     sp.GetRequiredService<KnockoutFixtureGenerator>());
