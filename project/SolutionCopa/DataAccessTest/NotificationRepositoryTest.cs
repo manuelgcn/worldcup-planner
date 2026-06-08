@@ -96,4 +96,38 @@ public class NotificationRepositoryTest
         Assert.AreEqual(1, unread.First().Id);
         Assert.AreEqual("Resultado 1", unread.First().Message);
     }
+    
+    
+    [TestMethod]
+    public void UpdatePersistsNotificationAsRead()
+    {
+        User user = new User(
+            1,
+            "Juan",
+            "Perez",
+            "juan@mail.com",
+            "Pass123@",
+            new DateTime(1990, 5, 15)
+        );
+
+        Notification notification = new Notification(
+            1,
+            user,
+            "Resultado cargado"
+        );
+
+        _repository.Add(notification);
+
+        notification.MarkAsRead();
+        _repository.Update(notification);
+
+        IReadOnlyCollection<Notification> unread = _repository.GetUnreadByUserId(1);
+
+        Assert.AreEqual(0, unread.Count);
+
+        Notification? stored = _repository.GetById(1);
+        Assert.IsNotNull(stored);
+        Assert.IsTrue(stored!.IsRead);
+    }
+
 }
