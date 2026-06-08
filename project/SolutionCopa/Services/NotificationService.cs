@@ -39,6 +39,18 @@ public class NotificationService
         return notificationRepository.GetUnreadByUserId(userId);
     }
 
+    public void MarkAsRead(int notificationId)
+    {
+        Notification? notification = notificationRepository.GetById(notificationId);
+
+        if (notification is null)
+        {
+            throw new ArgumentException("Notification was not found.");
+        }
+
+        notification.MarkAsRead();
+        notificationRepository.Update(notification);
+    }
     
     
 }
