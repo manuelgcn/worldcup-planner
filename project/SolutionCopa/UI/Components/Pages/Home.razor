@@ -1,5 +1,8 @@
 ﻿@page "/"
+@using ProjectCopa
+@using Services.Interfaces
 @inject SessionState Session
+@inject INotificationService NotificationService
 
 <PageTitle>Inicio</PageTitle>
 
@@ -37,6 +40,44 @@
     </div>
 </section>
 
+@if (Session.IsLoggedIn && Session.CurrentUser is not null && Session.CurrentUser.HasRole(UserRoles.Periodista))
+{
+    <section class="m26-card mt-4">
+        <h2 class="pane-title">Notificaciones</h2>
+
+        @if (!unreadNotifications.Any())
+        {
+            <div class="m26-empty">
+                <i class="bi bi-bell" aria-hidden="true"></i>
+                <p class="mb-0">No tenes notificaciones pendientes.</p>
+            </div>
+        }
+        else
+        {
+            <ul class="list-group list-group-flush">
+                @foreach (Notification notification in unreadNotifications)
+                {
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div>@notification.Message</div>
+                                <small class="text-muted">
+                                    @notification.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                </small>
+                            </div>
+
+                            <button class="btn btn-sm btn-outline-primary"
+                                    @onclick="() => MarkNotificationAsRead(notification.Id)">
+                                Marcar como leida
+                            </button>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+}
+
 <section class="stats-grid">
     <article class="m26-card stat-card">
         <p class="stat-value">48</p>
@@ -51,3 +92,36 @@
         <p class="stat-label">Partidos</p>
     </article>
 </section>
+
+@code {
+    private IReadOnlyCollection<Notification> unreadNotifications = Array.Empty<Notification>();
+
+    protected override void OnInitialized()
+    {
+        LoadUnreadNotifications();
+    }
+
+    private void LoadUnreadNotifications()
+    {
+        if (!Session.IsLoggedIn || Session.CurrentUser is null)
+        {
+            unreadNotifications = Array.Empty<Notification>();
+            return;
+        }
+
+        if (!Session.CurrentUser.HasRole(UserRoles.Periodista))
+        {
+            unreadNotifications = Array.Empty<Notification>();
+            return;
+        }
+
+        unreadNotifications = NotificationService.GetUnreadForUser(Session.CurrentUser.idUser);
+    }
+
+    private void MarkNotificationAsRead(int notificationId)
+    {
+        NotificationService.MarkAsRead(notificationId);
+        LoadUnreadNotifications();
+        StateHasChanged();
+    }
+}

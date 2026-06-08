@@ -227,6 +227,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             _simulationEngine.Simulate(match, seed);
 
             _matchRepository.Update(match);
+            NotifyJournalistsAboutSimulatedResult(match);
             _auditLog?.Log(AuditActions.SimulateMatch, BuildSimulationAuditDetails(match, seed), settings.Id, "Match", match.MatchId);
         }
 
@@ -270,6 +271,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
                 int seed = settings.SimulationSeed + match.MatchId;
                 _simulationEngine.Simulate(match, seed);
                 eliminationRepo.Update(match);
+                NotifyJournalistsAboutSimulatedResult(match);
                 _auditLog?.Log(AuditActions.SimulateMatch, BuildSimulationAuditDetails(match, seed), settings.Id, "Match", match.MatchId);
             }
             catch (Exception ex)
@@ -503,6 +505,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             int seed = settings.SimulationSeed + match.MatchId;
             _simulationEngine.Simulate(match, seed);
             elimRepo.Update(match);
+            NotifyJournalistsAboutSimulatedResult(match);
         }
     }
 
@@ -681,5 +684,21 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         {
             return null;
         }
+    }
+
+    private void NotifyJournalistsAboutSimulatedResult(Match match)
+    {
+        if (_notificationService is null)
+        {
+            return;
+        }
+
+        string home = match.HomeTeam?.Name ?? "Equipo local";
+        string away = match.AwayTeam?.Name ?? "Equipo visitante";
+
+        string message =
+            $"Se simulo resultado del partido {match.MatchId}: {home} {match.HomeGoals}-{match.AwayGoals} {away}.";
+
+        _notificationService.NotifyJournalists(message);
     }
 }
