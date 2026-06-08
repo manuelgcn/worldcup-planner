@@ -69,14 +69,14 @@ public class MatchGroup : Match
         Journey = journey;
     }
 
-    internal static MatchGroup CreateInstance1(int id, DateTime matchDate, Team homeTeam, Team awayTeam, Stadium stadium, TournamentSettings tournamentSettings, Group group, Journey journey)
+    private static MatchGroup CreateInstance(int id, DateTime matchDate, Team homeTeam, Team awayTeam, Stadium stadium, TournamentSettings tournamentSettings, Group group, Journey journey)
     {
         return new MatchGroup(id, matchDate, homeTeam, awayTeam, stadium, tournamentSettings, group, journey);
     }
 
     public static MatchGroup CreateMatchWithConfig(int id, DateTime matchDate, Team homeTeam, Team awayTeam, Stadium stadium, TournamentSettings tournamentSettings, Group group, Journey journey)
     {
-        return CreateInstance1(id, matchDate, homeTeam, awayTeam, stadium, tournamentSettings, group, journey);
+        return CreateInstance(id, matchDate, homeTeam, awayTeam, stadium, tournamentSettings, group, journey);
     }
 
     private static void EnsureRequiredGroup(Group? group)
