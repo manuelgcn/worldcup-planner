@@ -100,4 +100,45 @@ public class NotificationServiceTests
         Assert.IsFalse(unread.Any(n => n.Id == 3));
     }
     
+    
+    
+    [TestMethod]
+    public void MarkAsReadFromService()
+    {
+        MockNotificationRepository notificationRepository = new MockNotificationRepository();
+        MockUserRepository userRepository = new MockUserRepository();
+
+        User journalist = new User(
+            1,
+            "Ana",
+            "Lopez",
+            "ana@mail.com",
+            "Pass123@",
+            new DateTime(1990, 5, 15)
+        );
+        journalist.AddRole(UserRoles.Periodista);
+
+        userRepository.Add(journalist);
+
+        Notification notification = new Notification(
+            1,
+            journalist,
+            "Resultado cargado"
+        );
+
+        notificationRepository.Add(notification);
+
+        NotificationService service = new NotificationService(notificationRepository, userRepository);
+
+        service.MarkAsRead(1);
+
+        IReadOnlyCollection<Notification> unread = service.GetUnreadForUser(1);
+
+        Assert.AreEqual(0, unread.Count);
+
+        Notification? stored = notificationRepository.GetById(1);
+        Assert.IsNotNull(stored);
+        Assert.IsTrue(stored!.IsRead);
+    }
+
 }
