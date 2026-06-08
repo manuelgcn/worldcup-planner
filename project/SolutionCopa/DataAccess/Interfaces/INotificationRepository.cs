@@ -8,4 +8,5 @@ public interface INotificationRepository
     Notification? GetById(int id);
     IReadOnlyCollection<Notification> GetUnreadByUserId(int userId);
     void Update(Notification notification);
+    IReadOnlyCollection<Notification> GetAll();
 }

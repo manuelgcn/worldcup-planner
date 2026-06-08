@@ -1,3 +1,4 @@
+
 using DataAccess.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using ProjectCopa;
@@ -69,5 +70,14 @@ public class NotificationRepository : INotificationRepository
         }
 
         context.SaveChanges();
+    }
+
+    public IReadOnlyCollection<Notification> GetAll()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+
+        return context.Notifications
+            .Include(n => n.User)
+            .ToList();
     }
 }

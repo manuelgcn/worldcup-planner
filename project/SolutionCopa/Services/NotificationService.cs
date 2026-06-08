@@ -1,0 +1,36 @@
+using DataAccess.Interfaces;
+using ProjectCopa;
+
+namespace Services;
+
+public class NotificationService
+{
+    private readonly INotificationRepository notificationRepository;
+    private readonly IUserRepository userRepository;
+
+    public NotificationService(INotificationRepository notificationRepository, IUserRepository userRepository)
+    {
+        this.notificationRepository = notificationRepository;
+        this.userRepository = userRepository;
+    }
+
+    public void NotifyJournalists(string message)
+    {
+        IReadOnlyCollection<User> users = userRepository.GetAll();
+        List<User> journalists = users
+            .Where(u => u.HasRole(UserRoles.Periodista))
+            .ToList();
+
+        int nextId = notificationRepository.GetAll()
+            .Select(n => n.Id)
+            .DefaultIfEmpty(0)
+            .Max() + 1;
+
+        foreach (User journalist in journalists)
+        {
+            Notification notification = new Notification(nextId, journalist, message);
+            notificationRepository.Add(notification);
+            nextId++;
+        }
+    }
+}
