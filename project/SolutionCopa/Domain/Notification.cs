@@ -39,4 +39,8 @@ public class Notification
             throw new ArgumentException(EmptyMessageError, nameof(message));
         }
     }
+    public void MarkAsRead()
+    {
+        IsRead = true;
+    }
 }
