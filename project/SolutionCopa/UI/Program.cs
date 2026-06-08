@@ -22,7 +22,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 
 builder.Services.AddSingleton<ITeamRepository, TeamRepository>();
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
-
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddSingleton<IMatchRepository, MatchRepository>();
 builder.Services.AddSingleton<IStadiumRepository, StadiumRepository>();
 builder.Services.AddSingleton<IGroupRepository, GroupRepository>();
@@ -41,6 +41,7 @@ builder.Services.AddSingleton<GroupServices>();
 builder.Services.AddSingleton<IGroupService>(sp => sp.GetRequiredService<GroupServices>());
 builder.Services.AddSingleton<JourneyServices>();
 builder.Services.AddSingleton<IJourneyService>(sp => sp.GetRequiredService<JourneyServices>());
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 builder.Services.AddSingleton<IMatchSimulationEngine, MatchSimulationEngine>();
 builder.Services.AddSingleton<IAuditLogService>(sp =>

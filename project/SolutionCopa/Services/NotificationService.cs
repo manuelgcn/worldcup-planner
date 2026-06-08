@@ -1,9 +1,10 @@
 using DataAccess.Interfaces;
 using ProjectCopa;
+using Services.Interfaces;
 
 namespace Services;
 
-public class NotificationService
+public class NotificationService : INotificationService
 {
     private readonly INotificationRepository notificationRepository;
     private readonly IUserRepository userRepository;
@@ -33,7 +34,7 @@ public class NotificationService
             nextId++;
         }
     }
-    
+
     public IReadOnlyCollection<Notification> GetUnreadForUser(int userId)
     {
         return notificationRepository.GetUnreadByUserId(userId);
@@ -51,6 +52,4 @@ public class NotificationService
         notification.MarkAsRead();
         notificationRepository.Update(notification);
     }
-    
-    
 }

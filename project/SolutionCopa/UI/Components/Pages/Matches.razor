@@ -7,6 +7,7 @@
 @inject IEliminationMatchRepository EliminationRepository
 @inject IUnitOfWork UnitOfWork
 @inject IStadiumService StadiumServices
+@inject INotificationService NotificationService
 @inject SessionState Session
 @inject NavigationManager Nav
 
@@ -16,7 +17,7 @@
 {
     <section class="m26-card auth-card">
         <h1 class="m26-page-title mb-2">Partidos</h1>
-        <p class="mb-3">No estás logueado.</p>
+        <p class="mb-3">No estas logueado.</p>
         <button class="btn btn-primary" @onclick="GoToLogin">
             <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
             Ir a Login
@@ -208,11 +209,10 @@ else
 
     private List<Match> matches = new();
     private IReadOnlyCollection<ProjectCopa.Stadium> stadiums = Array.Empty<ProjectCopa.Stadium>();
-    
+
     private readonly List<string> errors = new();
     private string? successMessage;
 
-    
     private int? editingMatchId;
     private DateTime editingMatchDate;
     private int editingStadiumId;
@@ -300,7 +300,7 @@ else
     {
         errors.Clear();
         successMessage = null;
-        
+
         editingMatchId = match.MatchId;
         editingMatchDate = match.MatchDate;
         editingStadiumId = match.Stadium?.Id ?? 0;
@@ -327,9 +327,17 @@ else
 
         try
         {
+            int previousHomeGoals = match.HomeGoals;
+            int previousAwayGoals = match.AwayGoals;
+
             UpdateMatch(match);
             PersistChanges();
-            
+
+            if (ResultChanged(previousHomeGoals, previousAwayGoals))
+            {
+                NotifyJournalists(match);
+            }
+
             successMessage = "Partido actualizado correctamente";
             CancelEdit();
             ApplyFilters();
@@ -346,13 +354,9 @@ else
 
     private void UpdateMatch(Match match)
     {
-        
         match.ChangeDate(editingMatchDate);
-
-        
         match.SetGoals(editingHomeGoals, editingAwayGoals);
 
-        
         if (editingStadiumId > 0)
         {
             ProjectCopa.Stadium selectedStadium = StadiumServices.GetById(editingStadiumId);
@@ -363,10 +367,12 @@ else
     private void PersistChanges()
     {
         Match edited = FindEditingMatch();
+
         if (edited is MatchElimination)
             EliminationRepository.Update(edited);
         else
             MatchRepository.Update(edited);
+
         UnitOfWork.Commit();
     }
 
@@ -393,6 +399,22 @@ else
         }
 
         return !errors.Any();
+    }
+
+    private bool ResultChanged(int previousHomeGoals, int previousAwayGoals)
+    {
+        return previousHomeGoals != editingHomeGoals || previousAwayGoals != editingAwayGoals;
+    }
+
+    private void NotifyJournalists(Match match)
+    {
+        string home = match.HomeTeam?.Name ?? "Equipo local";
+        string away = match.AwayTeam?.Name ?? "Equipo visitante";
+
+        string message =
+            $"Se cargo resultado del partido {match.MatchId}: {home} {match.HomeGoals}-{match.AwayGoals} {away}.";
+
+        NotificationService.NotifyJournalists(message);
     }
 
     private void GoToLogin()
