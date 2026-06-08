@@ -6,4 +6,5 @@ public interface INotificationRepository
 {
     void Add(Notification notification);
     Notification? GetById(int id);
+    IReadOnlyCollection<Notification> GetUnreadByUserId(int userId);
 }
