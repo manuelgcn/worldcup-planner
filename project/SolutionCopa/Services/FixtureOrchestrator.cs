@@ -28,6 +28,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     private readonly IEliminationMatchRepository _eliminationRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditLogService _auditLogService;
+    private readonly ISimulationEngineRegistry _simulationEngineRegistry;
 
     public FixtureOrchestrator(
         ITeamRepository teamRepository,
@@ -38,7 +39,8 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         IMatchRepository matchRepository,
         IEliminationMatchRepository eliminationRepository,
         IUnitOfWork unitOfWork,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        ISimulationEngineRegistry simulationEngineRegistry)
     {
         _teamRepository = teamRepository;
         _stadiumRepository = stadiumRepository;
@@ -49,6 +51,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         _eliminationRepository = eliminationRepository;
         _unitOfWork = unitOfWork;
         _auditLogService = auditLogService;
+        _simulationEngineRegistry = simulationEngineRegistry;
     }
 
     public bool IsFixtureGenerated()
@@ -61,28 +64,45 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         return _eliminationRepository.GetAll().Count > 0;
     }
 
-    public void GenerateGroupStage(int? fixtureSeedOverride, string? performedByEmail)
+    public void GenerateGroupStage(int? fixtureSeedOverride, string? selectedEngineName, string? performedByEmail)
     {
         EnsureFixtureNotYetGenerated();
         GenerationPlan plan = PrepareGenerationPlan(fixtureSeedOverride);
+        ApplySimulationEngineSelection(plan.Settings, selectedEngineName);
 
         ExecuteAndCommit(plan);
 
-        AuditGenerated(plan.EffectiveSeed, performedByEmail);
+        AuditGenerated(plan.EffectiveSeed, plan.Settings.SelectedSimulationEngine, performedByEmail);
     }
 
-    public void RegenerateGroupStage(int? fixtureSeedOverride, string? performedByEmail)
+    public void RegenerateGroupStage(int? fixtureSeedOverride, string? selectedEngineName, string? performedByEmail)
     {
         EnsureFixtureGenerated();
         EnsureKnockoutNotYetGenerated();
         GenerationPlan plan = PrepareGenerationPlan(fixtureSeedOverride);
+        ApplySimulationEngineSelection(plan.Settings, selectedEngineName);
 
         ClearGroupStageStorage();
         AuditCleared(performedByEmail);
 
         ExecuteAndCommit(plan);
 
-        AuditRegenerated(plan.EffectiveSeed, performedByEmail);
+        AuditRegenerated(plan.EffectiveSeed, plan.Settings.SelectedSimulationEngine, performedByEmail);
+    }
+
+    // Valida el motor contra el registry (fail-fast antes de tocar el storage), lo persiste en
+    // TournamentSettings y deja el Update dentro del mismo Commit que la generacion del fixture.
+    // Con null se mantiene el motor ya persistido.
+    private void ApplySimulationEngineSelection(TournamentSettings settings, string? selectedEngineName)
+    {
+        if (selectedEngineName == null)
+        {
+            return;
+        }
+
+        IMatchSimulationEngine engine = _simulationEngineRegistry.Resolve(selectedEngineName);
+        settings.SelectSimulationEngine(engine.Name);
+        _settingsRepository.Update(settings);
     }
 
     public void DeleteGroupStage(string? performedByEmail)
@@ -214,11 +234,11 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         return stadiums;
     }
 
-    private void AuditGenerated(int seed, string? performedByEmail)
+    private void AuditGenerated(int seed, string engineName, string? performedByEmail)
     {
         _auditLogService.LogPerformedBy(
             AuditActions.GenerateFixture,
-            $"Fixture generated with seed {seed}.",
+            $"Fixture generated with seed {seed} and simulation engine {engineName}.",
             performedByEmail,
             nameof(FixtureOrchestrator));
     }
@@ -232,11 +252,11 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
             nameof(FixtureOrchestrator));
     }
 
-    private void AuditRegenerated(int seed, string? performedByEmail)
+    private void AuditRegenerated(int seed, string engineName, string? performedByEmail)
     {
         _auditLogService.LogPerformedBy(
             AuditActions.RegenerateFixture,
-            $"Fixture regenerated with seed {seed}.",
+            $"Fixture regenerated with seed {seed} and simulation engine {engineName}.",
             performedByEmail,
             nameof(FixtureOrchestrator));
     }

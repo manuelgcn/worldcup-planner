@@ -412,14 +412,14 @@
     private async Task HandleGenerateFixtureAsync()
     {
         await RunAdminActionAsync(
-            () => FixtureOrchestrator.GenerateGroupStage(fixtureSeedInput, Session.CurrentUser?.email),
+            () => FixtureOrchestrator.GenerateGroupStage(fixtureSeedInput, selectedEngineName: null, Session.CurrentUser?.email),
             "Fixture generado correctamente.");
     }
 
     private async Task HandleRegenerateFixtureAsync()
     {
         await RunAdminActionAsync(
-            () => FixtureOrchestrator.RegenerateGroupStage(fixtureSeedInput, Session.CurrentUser?.email),
+            () => FixtureOrchestrator.RegenerateGroupStage(fixtureSeedInput, selectedEngineName: null, Session.CurrentUser?.email),
             "Fixture regenerado correctamente.");
     }
 
