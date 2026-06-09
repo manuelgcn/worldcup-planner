@@ -42,7 +42,7 @@ builder.Services.AddSingleton<IGroupService>(sp => sp.GetRequiredService<GroupSe
 builder.Services.AddSingleton<JourneyServices>();
 builder.Services.AddSingleton<IJourneyService>(sp => sp.GetRequiredService<JourneyServices>());
 
-builder.Services.AddSingleton<IMatchSimulationEngine, MatchSimulationEngine>();
+builder.Services.AddSingleton<IMatchSimulationEngine, ProbabilisticSimulationEngine>();
 builder.Services.AddSingleton<IAuditLogService>(sp =>
     AuditLogService.CreateInstance(
         sp.GetRequiredService<IAuditLogRepository>(),

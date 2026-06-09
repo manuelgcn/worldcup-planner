@@ -3,7 +3,7 @@ using Services.Interfaces;
 
 namespace Services;
 
-public class MatchSimulationEngine : IMatchSimulationEngine
+public sealed class ProbabilisticSimulationEngine : IMatchSimulationEngine
 {
     private const int MaxGoals = 15;
     private const double GoalDecayFactor = 0.65;
@@ -104,7 +104,8 @@ public class MatchSimulationEngine : IMatchSimulationEngine
         return adjustedChance;
     }
 
-    private static int DerivePerMatchSeed(int simulationSeed, int matchId)
+    // Publico para que otros motores puedan derivar la misma semilla estable por partido.
+    public static int DerivePerMatchSeed(int simulationSeed, int matchId)
     {
         unchecked
         {

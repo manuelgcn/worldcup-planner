@@ -4,14 +4,14 @@ using Services;
 namespace ServiceTest;
 
 [TestClass]
-public sealed class MatchSimulationEngineTests
+public sealed class ProbabilisticSimulationEngineTests
 {
-    private MatchSimulationEngine _simulationEngine = null!;
+    private ProbabilisticSimulationEngine _simulationEngine = null!;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        _simulationEngine = new MatchSimulationEngine();
+        _simulationEngine = new ProbabilisticSimulationEngine();
     }
 
     [TestMethod]

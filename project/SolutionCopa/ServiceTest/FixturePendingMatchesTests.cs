@@ -30,7 +30,7 @@ public class FixturePendingMatchesTests
     private MockAuditLogRepository _auditRepository = null!;
     private AuditLogService _auditService = null!;
     private FixtureOrchestrator _orchestrator = null!;
-    private MatchSimulationEngine _simulationEngine = null!;
+    private ProbabilisticSimulationEngine _simulationEngine = null!;
     private GroupStandingsService _standingsService = null!;
 
     [TestInitialize]
@@ -46,7 +46,7 @@ public class FixturePendingMatchesTests
         _unitOfWork = new MockUnitOfWork();
         _auditRepository = new MockAuditLogRepository();
         _auditService = AuditLogService.CreateInstance(_auditRepository, DefaultSettingsId);
-        _simulationEngine = new MatchSimulationEngine();
+        _simulationEngine = new ProbabilisticSimulationEngine();
 
         _settingsRepository.Add(CreateDefaultSettings());
         SeedStadiums(RequiredStadiumCount);
