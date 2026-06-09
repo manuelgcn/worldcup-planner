@@ -138,6 +138,33 @@ public class TournamentSettingsRepositoryTests
         AssertSameValues(settings, stored!);
     }
 
+    [TestMethod]
+    public void AddPersistsSelectedSimulationEngineRetrievableFromNewContext()
+    {
+        TournamentSettings settings = CreateSettings(id: 13);
+        settings.SelectSimulationEngine("Aleatorio Puro");
+
+        _repository.Add(settings);
+
+        TournamentSettings? stored = _repository.GetById(13);
+        Assert.IsNotNull(stored);
+        Assert.AreEqual("Aleatorio Puro", stored!.SelectedSimulationEngine);
+    }
+
+    [TestMethod]
+    public void UpdatePersistsSelectedSimulationEngineChange()
+    {
+        TournamentSettings settings = CreateSettings(id: 14);
+        _repository.Add(settings);
+
+        settings.SelectSimulationEngine("Aleatorio Puro");
+        _repository.Update(settings);
+
+        TournamentSettings? stored = _repository.GetById(14);
+        Assert.IsNotNull(stored);
+        Assert.AreEqual("Aleatorio Puro", stored!.SelectedSimulationEngine);
+    }
+
     private static TournamentSettings CreateSettings(
         int id = 10,
         DateTime? startDate = null,
@@ -169,5 +196,6 @@ public class TournamentSettingsRepositoryTests
         Assert.AreEqual(expected.CrossingsSeed, actual.CrossingsSeed);
         Assert.AreEqual(expected.SimulationSeed, actual.SimulationSeed);
         Assert.AreEqual(expected.CompletionSeed, actual.CompletionSeed);
+        Assert.AreEqual(expected.SelectedSimulationEngine, actual.SelectedSimulationEngine);
     }
 }
