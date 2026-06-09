@@ -5,6 +5,8 @@ namespace Services;
 
 public sealed class ProbabilisticSimulationEngine : IMatchSimulationEngine
 {
+    public const string EngineName = "Probabilístico";
+
     private const int MaxGoals = 15;
     private const double GoalDecayFactor = 0.65;
     private const double BaseScoringChance = 0.55;
@@ -20,6 +22,8 @@ public sealed class ProbabilisticSimulationEngine : IMatchSimulationEngine
     private const double MaximumPenaltyConversionChance = 0.95;
     private const string HomeTeamRequiredMessage = "Home team is required for simulation.";
     private const string AwayTeamRequiredMessage = "Away team is required for simulation.";
+
+    public string Name => EngineName;
 
     public void Simulate(Match match, int simulationSeed)
     {
