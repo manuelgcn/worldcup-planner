@@ -8,6 +8,7 @@
 @using DataAccess.Interfaces
 @using UI.Components.Fixture
 @inject IFixtureOrchestrator FixtureOrchestrator
+@inject ISimulationEngineRegistry EngineRegistry
 @inject ITournamentSimulationService SimulationService
 @inject IGroupStandingsService StandingsService
 @inject IKnockoutFixtureGenerator KnockoutGenerator
@@ -89,6 +90,7 @@
                     <div><strong>Partidos de grupos:</strong> @groupMatches.Count / 72</div>
                     <div><strong>Pendientes (sin simular):</strong> @pendingGroupMatches</div>
                     <div><strong>Knockout generado:</strong> @(IsKnockoutGenerated ? "sí" : "no")</div>
+                    <div><strong>Motor de simulación:</strong> @settings.SelectedSimulationEngine</div>
                     <div><strong>Fixture seed:</strong> @settings.FixtureSeed</div>
                     <div><strong>Crossings seed:</strong> @settings.CrossingsSeed</div>
                     <div><strong>Simulation seed:</strong> @settings.SimulationSeed</div>
@@ -124,6 +126,13 @@
                     <h4>2. Generar fixture de fase de grupos</h4>
                     <p class="step-help">Reparte los 48 equipos en 12 grupos y crea los 72 partidos.</p>
                     <div class="step-actions">
+                        <label for="engineSelect">Motor de simulación:</label>
+                        <select id="engineSelect" @bind="selectedEngine">
+                            @foreach (string engineName in EngineRegistry.AvailableEngineNames)
+                            {
+                                <option value="@engineName">@engineName</option>
+                            }
+                        </select>
                         <label>Override FixtureSeed (opcional):</label>
                         <input type="number" @bind="fixtureSeedInput" placeholder="@settings.FixtureSeed.ToString()" />
                         <button class="btn btn-primary" disabled="@isBusy" @onclick="HandleGenerateFixtureAsync">
@@ -300,6 +309,7 @@
     private int? fixtureSeedInput;
     private int? crossingsSeedInput;
     private int? simulationSeedInput;
+    private string? selectedEngine;
     private bool confirmingDelete;
 
     private readonly List<string> errors = new();
@@ -366,6 +376,7 @@
         try
         {
             settings = SettingsRepository.GetAll().FirstOrDefault();
+            selectedEngine ??= settings?.SelectedSimulationEngine;
             teamCount = TeamRepository.GetAll().Count;
             stadiumCount = StadiumService.GetAllStadiums().Count;
             groups = GroupRepository.GetAll().OrderBy(group => group.Name).ToList();
@@ -412,7 +423,7 @@
     private async Task HandleGenerateFixtureAsync()
     {
         await RunAdminActionAsync(
-            () => FixtureOrchestrator.GenerateGroupStage(fixtureSeedInput, selectedEngineName: null, Session.CurrentUser?.email),
+            () => FixtureOrchestrator.GenerateGroupStage(fixtureSeedInput, selectedEngine, Session.CurrentUser?.email),
             "Fixture generado correctamente.");
     }
 
