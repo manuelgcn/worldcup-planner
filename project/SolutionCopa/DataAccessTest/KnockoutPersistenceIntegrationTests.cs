@@ -60,7 +60,7 @@ public sealed class KnockoutPersistenceIntegrationTests
         _engine = new ProbabilisticSimulationEngine();
 
         _knockoutGenerator = new KnockoutFixtureGenerator(
-            _engine,
+            new SimulationEngineRegistry([_engine]),
             _matchRepository,
             _eliminationRepository,
             _groupRepository,
@@ -85,7 +85,7 @@ public sealed class KnockoutPersistenceIntegrationTests
             _matchRepository,
             _eliminationRepository,
             _unitOfWork,
-            _engine,
+            new SimulationEngineRegistry([_engine]),
             _auditService,
             _settingsRepository,
             _knockoutGenerator);
