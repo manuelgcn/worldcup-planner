@@ -12,8 +12,10 @@ public class TournamentSettings
     private const int DefaultDaysBetweenJourneys = 3;
     private const int DefaultSeed = 0;
     private const int MaxAllowedMatchesPerDay = 3;
+    private const string DefaultSimulationEngine = "Probabilístico";
     private const string InvalidMaxMatchesPerDayMessage = "MaxMatchesPerDay must be between 1 and 3 inclusive.";
     private const string InvalidDaysBetweenJourneysMessage = "DaysBetweenJourneys must be greater than or equal to 1.";
+    private const string InvalidSimulationEngineMessage = "SelectedSimulationEngine cannot be null or whitespace.";
 
     public int Id { get; }
     public DateTime StartDate { get; }
@@ -23,6 +25,7 @@ public class TournamentSettings
     public int CrossingsSeed { get; }
     public int SimulationSeed { get; }
     public int CompletionSeed { get; }
+    public string SelectedSimulationEngine { get; private set; }
 
     public TournamentSettings()
         : this(
@@ -57,6 +60,21 @@ public class TournamentSettings
         CrossingsSeed = crossingsSeed;
         SimulationSeed = simulationSeed;
         CompletionSeed = completionSeed;
+        SelectedSimulationEngine = DefaultSimulationEngine;
+    }
+
+    public void SelectSimulationEngine(string engineName)
+    {
+        ValidateSimulationEngineName(engineName);
+        SelectedSimulationEngine = engineName;
+    }
+
+    private static void ValidateSimulationEngineName(string engineName)
+    {
+        if (string.IsNullOrWhiteSpace(engineName))
+        {
+            throw new SettingsException(InvalidSimulationEngineMessage);
+        }
     }
 
     private static void ValidateMaxMatchesPerDay(int maxMatchesPerDay)

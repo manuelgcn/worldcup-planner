@@ -24,7 +24,7 @@ public class KnockoutFixtureGeneratorTests
         stadiumRepository.Add(new Stadium("S2", "City2", null, 30000) { Id = 2 });
         stadiumRepository.Add(new Stadium("S3", "City3", null, 30000) { Id = 3 });
         KnockoutFixtureGenerator generator = new KnockoutFixtureGenerator(
-            simulationEngine,
+            new SimulationEngineRegistry([simulationEngine]),
             matchRepository,
             settingsRepository,
             unitOfWork,

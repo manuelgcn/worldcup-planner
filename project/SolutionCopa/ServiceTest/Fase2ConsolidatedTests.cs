@@ -37,7 +37,7 @@ public class Fase2ConsolidatedTests
         MockAuditLogRepository auditRepo = new MockAuditLogRepository();
         AuditLogService auditService = AuditLogService.CreateInstance(auditRepo, defaultTournamentSettingsId: settings.Id);
 
-        Fase2 fase2 = new Fase2(simulation, matchRepo, settingsRepo, uow, auditService);
+        Fase2 fase2 = new Fase2(new SimulationEngineRegistry([simulation]), matchRepo, settingsRepo, uow, auditService);
 
         fase2.OrchestrateAndSimulateEliminationPhase(teamsWithGroup, stadiums, settings, eliminationRepo);
 
@@ -49,7 +49,7 @@ public class Fase2ConsolidatedTests
         Assert.IsTrue(logs.Any(l => l.Action == AuditActions.GenerateKnockout));
 
         ThrowingMatchRepository? throwingRepo = new ThrowingMatchRepository();
-        Fase2 fase2Bad = new Fase2(simulation, throwingRepo, settingsRepo, uow, auditService);
+        Fase2 fase2Bad = new Fase2(new SimulationEngineRegistry([simulation]), throwingRepo, settingsRepo, uow, auditService);
 
         fase2Bad.SimulateEliminationMatches(new [] { 999 });
 

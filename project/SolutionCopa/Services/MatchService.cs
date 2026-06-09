@@ -10,7 +10,7 @@ public class MatchService(
     IMatchRepository matchRepository,
     ITournamentSettingsRepository tournamentSettingsRepository,
     IMatchFactory matchFactory,
-    IMatchSimulationEngine matchSimulationEngine,
+    ISimulationEngineRegistry simulationEngineRegistry,
     IAuditLogService auditLogService,
     IUnitOfWork unitOfWork,
     IEliminationMatchRepository? eliminationMatchRepository = null)
@@ -133,11 +133,12 @@ public class MatchService(
         Match match = GetMatchOrThrow(matchId);
         EnsureGroupMatchIsEditable(match);
         TournamentSettings tournamentSettings = GetSimulationTournamentSettingsOrThrow();
+        IMatchSimulationEngine engine = simulationEngineRegistry.Resolve(tournamentSettings.SelectedSimulationEngine);
 
-        matchSimulationEngine.Simulate(match, tournamentSettings.SimulationSeed);
+        engine.Simulate(match, tournamentSettings.SimulationSeed);
         LogAuditAction(
             AuditActions.SimulateMatch,
-            $"MatchId={matchId} simulated with seed {tournamentSettings.SimulationSeed}.",
+            $"MatchId={matchId} simulated with engine {engine.Name} and seed {tournamentSettings.SimulationSeed}.",
             matchId);
         matchRepository.Update(match);
         unitOfWork.Commit();

@@ -101,7 +101,7 @@ public sealed class MatchServiceTestContext
             MatchRepository,
             TournamentSettingsRepository,
             MatchFactory,
-            SimulationEngine,
+            new SimulationEngineRegistry([SimulationEngine]),
             AuditLogService, // <-- Inyectado directamente en el servicio
             UnitOfWork,
             EliminationMatchRepository);

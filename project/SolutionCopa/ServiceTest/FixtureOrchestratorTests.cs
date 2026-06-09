@@ -61,7 +61,8 @@ public class FixtureOrchestratorTests
             _matchRepository,
             _eliminationRepository,
             _unitOfWork,
-            _auditService);
+            _auditService,
+            new SimulationEngineRegistry([new ProbabilisticSimulationEngine(), new PureRandomSimulationEngine()]));
     }
 
     [TestMethod]
@@ -72,7 +73,7 @@ public class FixtureOrchestratorTests
         _orchestrator = NewOrchestrator();
 
         Assert.ThrowsException<FixtureOrchestratorException>(
-            () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail));
+            () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
     }
 
     [TestMethod]
@@ -83,7 +84,7 @@ public class FixtureOrchestratorTests
         _orchestrator = NewOrchestrator();
 
         Assert.ThrowsException<FixtureOrchestratorException>(
-            () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail));
+            () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
     }
 
     [TestMethod]
@@ -93,13 +94,13 @@ public class FixtureOrchestratorTests
         _orchestrator = NewOrchestrator();
 
         Assert.ThrowsException<FixtureOrchestratorException>(
-            () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail));
+            () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
     }
 
     [TestMethod]
     public void GenerateGroupStage_Persists12Groups()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         Assert.AreEqual(TotalExpectedGroups, _groupRepository.GetAll().Count);
     }
@@ -107,7 +108,7 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void GenerateGroupStage_PersistsGroupNamesAToL()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         List<string> expected = Enumerable.Range(0, TotalExpectedGroups)
             .Select(index => ((char)('A' + index)).ToString())
@@ -123,7 +124,7 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void GenerateGroupStage_PersistsThreeJourneys()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         Assert.AreEqual(TotalExpectedJourneys, _journeyRepository.GetAll().Count);
     }
@@ -131,7 +132,7 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void GenerateGroupStage_PersistsSeventyTwoMatches()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         Assert.AreEqual(TotalExpectedMatches, _matchRepository.GetAll().Count);
     }
@@ -139,7 +140,7 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void GenerateGroupStage_MatchesStartOnSettingsStartDate()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         DateTime earliestMatchDate = _matchRepository.GetAll().Min(match => match.MatchDate);
         Assert.AreEqual(DefaultStartDate.Date, earliestMatchDate.Date);
@@ -148,7 +149,7 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void GenerateGroupStage_MatchesUseTwoPmKickoffOrLater()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         TimeSpan minimumKickoff = new TimeSpan(14, 0, 0);
         Assert.IsTrue(_matchRepository.GetAll().All(match => match.MatchDate.TimeOfDay >= minimumKickoff));
@@ -157,7 +158,7 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void GenerateGroupStage_CallsUnitOfWorkCommit()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         Assert.IsTrue(_unitOfWork.CommitCalls >= 1);
     }
@@ -165,7 +166,7 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void GenerateGroupStage_LogsAuditWithGenerateFixtureAction()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         Assert.IsTrue(_auditRepository.GetAll().Any(log => log.Action == AuditActions.GenerateFixture));
     }
@@ -173,7 +174,7 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void GenerateGroupStage_AuditDetailsContainPerformedByEmail()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         AuditLog log = _auditRepository.GetAll().First(entry => entry.Action == AuditActions.GenerateFixture);
         Assert.IsTrue(log.Details.Contains(AdminEmail), $"Expected actor email in details, got '{log.Details}'");
@@ -182,7 +183,7 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void GenerateGroupStage_AuditDetailsMentionSeed()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: 99, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: 99, selectedEngineName: null, performedByEmail: AdminEmail);
 
         AuditLog log = _auditRepository.GetAll().First(entry => entry.Action == AuditActions.GenerateFixture);
         Assert.IsTrue(log.Details.Contains("99"), $"Expected seed 99 in details, got '{log.Details}'");
@@ -191,18 +192,18 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void GenerateGroupStage_WhenAlreadyGenerated_Throws()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         Assert.ThrowsException<FixtureOrchestratorException>(
-            () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail));
+            () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
     }
 
     [TestMethod]
     public void RegenerateGroupStage_WithoutKnockout_RebuildsFixture()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
-        _orchestrator.RegenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.RegenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         Assert.AreEqual(TotalExpectedGroups, _groupRepository.GetAll().Count);
         Assert.AreEqual(TotalExpectedJourneys, _journeyRepository.GetAll().Count);
@@ -212,10 +213,10 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void RegenerateGroupStage_WithoutKnockout_LogsRegenerateAndClearActions()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
         _auditRepository.GetAll().Clear();
 
-        _orchestrator.RegenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.RegenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         Assert.IsTrue(_auditRepository.GetAll().Any(log => log.Action == AuditActions.ClearFixture));
         Assert.IsTrue(_auditRepository.GetAll().Any(log => log.Action == AuditActions.RegenerateFixture));
@@ -224,17 +225,17 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void RegenerateGroupStage_WhenKnockoutAlreadyGenerated_Throws()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
         SeedFakeEliminationMatch();
 
         Assert.ThrowsException<FixtureOrchestratorException>(
-            () => _orchestrator.RegenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail));
+            () => _orchestrator.RegenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
     }
 
     [TestMethod]
     public void DeleteGroupStage_RemovesAllGroupsJourneysAndMatches()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         _orchestrator.DeleteGroupStage(performedByEmail: AdminEmail);
 
@@ -246,7 +247,7 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void DeleteGroupStage_LogsDeleteFixtureActionWithPerformer()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
         _auditRepository.GetAll().Clear();
 
         _orchestrator.DeleteGroupStage(performedByEmail: AdminEmail);
@@ -258,7 +259,7 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void DeleteGroupStage_WhenKnockoutGenerated_AlsoRemovesKnockout()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
         SeedFakeEliminationMatch();
 
         _orchestrator.DeleteGroupStage(performedByEmail: AdminEmail);
@@ -278,7 +279,7 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void IsFixtureGenerated_AfterGeneration_ReturnsTrue()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         Assert.IsTrue(_orchestrator.IsFixtureGenerated());
     }
@@ -286,7 +287,7 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void IsKnockoutGenerated_BeforeKnockout_ReturnsFalse()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         Assert.IsFalse(_orchestrator.IsKnockoutGenerated());
     }
@@ -294,7 +295,7 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void IsKnockoutGenerated_AfterEliminationMatchExists_ReturnsTrue()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
         SeedFakeEliminationMatch();
 
         Assert.IsTrue(_orchestrator.IsKnockoutGenerated());
@@ -303,13 +304,13 @@ public class FixtureOrchestratorTests
     [TestMethod]
     public void GenerateGroupStage_WithSeedOverride_ProducesDeterministicAndDifferentResults()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: 11, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: 11, selectedEngineName: null, performedByEmail: AdminEmail);
         List<string> firstFirstGroupTeams = _groupRepository.GetByName("A")!.Teams.Select(team => team.Name).ToList();
 
         _matchRepository.Clear();
         _groupRepository.Clear();
         _journeyRepository.Clear();
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: 22, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: 22, selectedEngineName: null, performedByEmail: AdminEmail);
         List<string> secondFirstGroupTeams = _groupRepository.GetByName("A")!.Teams.Select(team => team.Name).ToList();
 
         bool atLeastOneDifference = firstFirstGroupTeams.Zip(secondFirstGroupTeams, (a, b) => a != b).Any(differs => differs);
@@ -327,7 +328,8 @@ public class FixtureOrchestratorTests
             _matchRepository,
             _eliminationRepository,
             _unitOfWork,
-            _auditService);
+            _auditService,
+            new SimulationEngineRegistry([new ProbabilisticSimulationEngine(), new PureRandomSimulationEngine()]));
     }
 
     private static TournamentSettings CreateDefaultSettings()

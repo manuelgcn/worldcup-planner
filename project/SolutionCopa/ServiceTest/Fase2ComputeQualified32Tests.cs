@@ -41,7 +41,7 @@ public class Fase2ComputeQualified32Tests
         PopulateMatches(groups, matchRepo, settings);
  
         Fase2 fase2 = new Fase2(
-            simulationEngine: new MockMatchSimulationEngine(),
+            simulationEngineRegistry: new SimulationEngineRegistry([new MockMatchSimulationEngine()]),
             matchRepository: matchRepo,
             settingsRepository: new MockTournamentSettingsRepository(),
             unitOfWork: new MockUnitOfWork()

@@ -4,18 +4,18 @@ using Services;
 namespace ServiceTest;
 
 [TestClass]
-public sealed class MatchSimulationEngineGroupVarietyTests
+public sealed class ProbabilisticSimulationEngineGroupVarietyTests
 {
     private const int GroupCount = 12;
     private const int TeamsPerGroup = 4;
     private const int FixedSimulationSeed = 42;
 
-    private MatchSimulationEngine _engine = null!;
+    private ProbabilisticSimulationEngine _engine = null!;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        _engine = new MatchSimulationEngine();
+        _engine = new ProbabilisticSimulationEngine();
     }
 
     [TestMethod]

@@ -6,6 +6,9 @@ namespace DataAccess.Configurations;
 
 public class TournamentSettingsConfiguration : IEntityTypeConfiguration<TournamentSettings>
 {
+    private const int SelectedSimulationEngineMaxLength = 60;
+    private const string DefaultSimulationEngine = "Probabilístico";
+
     public void Configure(EntityTypeBuilder<TournamentSettings> builder)
     {
         builder.ToTable("TournamentSettings");
@@ -18,5 +21,9 @@ public class TournamentSettingsConfiguration : IEntityTypeConfiguration<Tourname
         builder.Property(s => s.CrossingsSeed).IsRequired();
         builder.Property(s => s.SimulationSeed).IsRequired();
         builder.Property(s => s.CompletionSeed).IsRequired();
+        builder.Property(s => s.SelectedSimulationEngine)
+               .IsRequired()
+               .HasMaxLength(SelectedSimulationEngineMaxLength)
+               .HasDefaultValue(DefaultSimulationEngine);               // filas existentes quedan en el motor por defecto
     }
 }
