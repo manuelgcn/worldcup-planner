@@ -15,6 +15,12 @@ public sealed class ProbabilisticSimulationEngineTests
     }
 
     [TestMethod]
+    public void Name_IsProbabilistico()
+    {
+        Assert.AreEqual("Probabilístico", _simulationEngine.Name);
+    }
+
+    [TestMethod]
     public void Simulate_WithSameSeed_GeneratesSameResult()
     {
         // Arrange
