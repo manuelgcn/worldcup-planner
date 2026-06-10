@@ -1,4 +1,5 @@
 using DataAccess.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using ProjectCopa;
 using ProjectCopa.Models;
 using Services.Exceptions;
@@ -29,15 +30,16 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditLogService? _auditLog;
     private readonly IStadiumRepository? _stadiumRepository;
-    private readonly INotificationService? _notificationService;
-
+    private readonly IServiceScopeFactory? _scopeFactory;
+    
+    
     public KnockoutFixtureGenerator(
         IMatchSimulationEngine simulationEngine,
         IMatchRepository matchRepository,
         ITournamentSettingsRepository settingsRepository,
         IUnitOfWork unitOfWork,
         IAuditLogService? auditLog = null,
-        INotificationService? notificationService = null)
+        IServiceScopeFactory? scopeFactory = null)
         : this(
             simulationEngine,
             matchRepository,
@@ -45,7 +47,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             unitOfWork,
             auditLog,
             stadiumRepository: null,
-            notificationService: notificationService)
+            scopeFactory: scopeFactory)
     {
     }
 
@@ -56,7 +58,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         IUnitOfWork unitOfWork,
         IAuditLogService? auditLog,
         IStadiumRepository? stadiumRepository,
-        INotificationService? notificationService = null)
+        IServiceScopeFactory? scopeFactory = null)
     {
         _simulationEngine = simulationEngine ?? throw new ArgumentNullException(nameof(simulationEngine));
         _matchRepository = matchRepository ?? throw new ArgumentNullException(nameof(matchRepository));
@@ -64,10 +66,12 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _auditLog = auditLog;
         _stadiumRepository = stadiumRepository;
-        _notificationService = notificationService;
+        _scopeFactory = scopeFactory;
         _eliminationRepository = null;
         _groupRepository = null;
     }
+    
+    
 
     public KnockoutFixtureGenerator(
         IMatchSimulationEngine simulationEngine,
@@ -78,7 +82,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         ITournamentSettingsRepository settingsRepository,
         IUnitOfWork unitOfWork,
         IAuditLogService auditLog,
-        INotificationService? notificationService = null)
+        IServiceScopeFactory? scopeFactory = null)
     {
         _simulationEngine = simulationEngine ?? throw new ArgumentNullException(nameof(simulationEngine));
         _matchRepository = matchRepository ?? throw new ArgumentNullException(nameof(matchRepository));
@@ -88,7 +92,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         _settingsRepository = settingsRepository ?? throw new ArgumentNullException(nameof(settingsRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _auditLog = auditLog ?? throw new ArgumentNullException(nameof(auditLog));
-        _notificationService = notificationService;
+        _scopeFactory = scopeFactory;
     }
 
     public List<Match> GeneratePhase2(QualifiedTeams qualifiedTeams)
@@ -688,10 +692,13 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     private void NotifyJournalistsAboutSimulatedResult(Match match)
     {
-        if (_notificationService is null)
+        if (_scopeFactory is null)
         {
             return;
         }
+
+        using IServiceScope scope = _scopeFactory.CreateScope();
+        INotificationService notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
         string home = match.HomeTeam?.Name ?? "Equipo local";
         string away = match.AwayTeam?.Name ?? "Equipo visitante";
@@ -699,6 +706,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         string message =
             $"Se simulo resultado del partido {match.MatchId}: {home} {match.HomeGoals}-{match.AwayGoals} {away}.";
 
-        _notificationService.NotifyJournalists(message);
+        notificationService.NotifyJournalists(message);
     }
 }
