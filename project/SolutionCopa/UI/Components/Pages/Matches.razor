@@ -123,7 +123,7 @@ else
                 <tbody>
                     @foreach (Match match in matches)
                     {
-                        @if (editingMatchId == match.MatchId)
+                        @if (editingMatchId == match.MatchId && CanEditMatches)
                         {
                             <tr class="row-editing">
                                 <td>@match.MatchId</td>
@@ -147,7 +147,6 @@ else
                                     -
                                     <input class="form-control goal-input" type="number" @bind="editingAwayGoals" min="0" />
                                 </td>
-
                                 <td>
                                     <button class="btn btn-success btn-sm me-1" @onclick="() => SaveEdit(match)">
                                         <i class="bi bi-check-lg" aria-hidden="true"></i>
@@ -168,12 +167,14 @@ else
                                 <td>@match.HomeTeam?.Name vs @match.AwayTeam?.Name</td>
                                 <td>@match.Stadium?.Name</td>
                                 <td>@match.HomeGoals - @match.AwayGoals</td>
-
                                 <td>
-                                    <button class="btn btn-outline-primary btn-sm" @onclick="() => StartEdit(match)">
-                                        <i class="bi bi-pencil" aria-hidden="true"></i>
-                                        Editar
-                                    </button>
+                                    @if (CanEditMatches)
+                                    {
+                                        <button class="btn btn-outline-primary btn-sm" @onclick="() => StartEdit(match)">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                                            Editar
+                                        </button>
+                                    }
                                 </td>
                             </tr>
                         }
@@ -218,6 +219,11 @@ else
     private int editingStadiumId;
     private int editingHomeGoals;
     private int editingAwayGoals;
+
+    private bool CanEditMatches =>
+        Session.IsLoggedIn &&
+        Session.CurrentUser is not null &&
+        (Session.CurrentUser.HasRole(UserRoles.Admin) || Session.CurrentUser.HasRole(UserRoles.Editor));
 
     protected override void OnInitialized()
     {
@@ -298,6 +304,14 @@ else
 
     private void StartEdit(Match match)
     {
+        if (!CanEditMatches)
+        {
+            errors.Clear();
+            successMessage = null;
+            errors.Add("No tenes permisos para editar partidos.");
+            return;
+        }
+
         errors.Clear();
         successMessage = null;
 
@@ -319,6 +333,14 @@ else
 
     private void SaveEdit(Match match)
     {
+        if (!CanEditMatches)
+        {
+            errors.Clear();
+            successMessage = null;
+            errors.Add("No tenes permisos para editar partidos.");
+            return;
+        }
+
         errors.Clear();
         successMessage = null;
 

@@ -34,5 +34,6 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new MatchGroupConfiguration());
         modelBuilder.ApplyConfiguration(new MatchEliminationConfiguration());
         modelBuilder.ApplyConfiguration(new MatchIncidentConfiguration());
+        modelBuilder.ApplyConfiguration(new NotificationConfiguration());
     }
 }
