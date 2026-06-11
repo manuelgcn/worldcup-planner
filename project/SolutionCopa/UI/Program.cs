@@ -78,6 +78,17 @@ builder.Services.AddSingleton<IImportService>(sp =>
         sp.GetRequiredService<IUnitOfWork>(),
         sp.GetRequiredService<ITeamParser>()));
 
+string flagsDirectory = Path.Combine(
+    builder.Environment.ContentRootPath,
+    builder.Configuration.GetValue<string>("Flags:Directory") ?? "flags-master");
+
+builder.Services.AddSingleton<IFlagAssignmentService>(sp =>
+    new FlagAssignmentService(
+        sp.GetRequiredService<ITeamRepository>(),
+        sp.GetRequiredService<IUnitOfWork>(),
+        flagsDirectory,
+        sp.GetRequiredService<IAuditLogService>()));
+
 builder.Services.AddScoped<SessionState>();
 
 var app = builder.Build();

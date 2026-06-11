@@ -1,0 +1,260 @@
+@using ProjectCopa
+@using ProjectCopa.Exceptions
+@using DataAccess.Interfaces
+@using Services.Exceptions
+@using Services.Interfaces
+@inject IMatchRepository MatchRepository
+@inject IEliminationMatchRepository EliminationRepository
+@inject IUnitOfWork UnitOfWork
+@inject IStadiumService StadiumService
+@inject INotificationService NotificationService
+
+<div class="match-result-editor">
+    @if (editorErrors.Any())
+    {
+        <div class="alert alert-error" role="alert">
+            <ul class="mb-0">
+                @foreach (string error in editorErrors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (ShowDateAndStadium)
+    {
+        <div class="editor-row">
+            <label class="form-label">Fecha</label>
+            <input class="form-control" type="datetime-local" @bind="matchDate" />
+            <label class="form-label">Estadio</label>
+            <select class="form-select" @bind="stadiumId">
+                <option value="0">-- Seleccione estadio --</option>
+                @foreach (ProjectCopa.Stadium stadium in stadiums)
+                {
+                    <option value="@stadium.Id">@stadium.Name</option>
+                }
+            </select>
+        </div>
+    }
+
+    <div class="editor-row editor-score">
+        <span class="editor-team">@HomeName</span>
+        <input class="form-control goal-input" type="number" min="0" @bind="homeGoals" aria-label="Goles de @HomeName" />
+        <span class="score-separator">-</span>
+        <input class="form-control goal-input" type="number" min="0" @bind="awayGoals" aria-label="Goles de @AwayName" />
+        <span class="editor-team">@AwayName</span>
+    </div>
+
+    @if (CanEditIncidents)
+    {
+        <details class="editor-incidents">
+            <summary>Incidencias (tarjetas)</summary>
+            <div class="incidents-grid">
+                <div class="incident-item">
+                    <label class="form-label">🟨 @HomeName</label>
+                    <input class="form-control card-input" type="number" min="0" @bind="yellowHome" />
+                </div>
+                <div class="incident-item">
+                    <label class="form-label">🟥 @HomeName</label>
+                    <input class="form-control card-input" type="number" min="0" @bind="redHome" />
+                </div>
+                <div class="incident-item">
+                    <label class="form-label">🟨 @AwayName</label>
+                    <input class="form-control card-input" type="number" min="0" @bind="yellowAway" />
+                </div>
+                <div class="incident-item">
+                    <label class="form-label">🟥 @AwayName</label>
+                    <input class="form-control card-input" type="number" min="0" @bind="redAway" />
+                </div>
+            </div>
+        </details>
+    }
+
+    <div class="editor-actions">
+        <button class="btn btn-success btn-sm" @onclick="SaveAsync">
+            <i class="bi bi-check-lg" aria-hidden="true"></i>
+            Guardar
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" @onclick="CancelAsync">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+            Cancelar
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Match Match { get; set; } = null!;
+    [Parameter] public bool ShowDateAndStadium { get; set; }
+    [Parameter] public EventCallback<string> OnSaved { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private DateTime matchDate;
+    private int stadiumId;
+    private int homeGoals;
+    private int awayGoals;
+    private int yellowHome;
+    private int redHome;
+    private int yellowAway;
+    private int redAway;
+
+    private IReadOnlyCollection<ProjectCopa.Stadium> stadiums = Array.Empty<ProjectCopa.Stadium>();
+    private readonly List<string> editorErrors = new();
+
+    private string HomeName => Match.HomeTeam?.Name ?? "TBD";
+    private string AwayName => Match.AwayTeam?.Name ?? "TBD";
+    private bool CanEditIncidents => Match.HomeTeam is not null && Match.AwayTeam is not null;
+
+    protected override void OnInitialized()
+    {
+        matchDate = Match.MatchDate;
+        stadiumId = Match.Stadium?.Id ?? 0;
+        homeGoals = Match.HomeGoals;
+        awayGoals = Match.AwayGoals;
+
+        if (CanEditIncidents)
+        {
+            yellowHome = Match.CountYellowCards(Match.HomeTeam!);
+            redHome = Match.CountRedCards(Match.HomeTeam!);
+            yellowAway = Match.CountYellowCards(Match.AwayTeam!);
+            redAway = Match.CountRedCards(Match.AwayTeam!);
+        }
+
+        if (ShowDateAndStadium)
+        {
+            stadiums = StadiumService.GetAllStadiums();
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        editorErrors.Clear();
+
+        if (!Validate())
+        {
+            return;
+        }
+
+        try
+        {
+            int previousHomeGoals = Match.HomeGoals;
+            int previousAwayGoals = Match.AwayGoals;
+
+            ApplyEdits();
+            Persist();
+
+            NotificationService.NotifyResultLoaded(Match, previousHomeGoals, previousAwayGoals);
+
+            await OnSaved.InvokeAsync("Resultado guardado correctamente");
+        }
+        catch (MatchException ex)
+        {
+            editorErrors.Add(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            editorErrors.Add(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            editorErrors.Add("Error al guardar el partido: " + ex.Message);
+        }
+    }
+
+    private void ApplyEdits()
+    {
+        if (ShowDateAndStadium)
+        {
+            Match.ChangeDate(matchDate);
+
+            if (stadiumId > 0)
+            {
+                Match.ChangeStadium(StadiumService.GetById(stadiumId));
+            }
+        }
+
+        Match.SetGoals(homeGoals, awayGoals);
+
+        if (CanEditIncidents)
+        {
+            ApplyCardChanges();
+        }
+    }
+
+    private void ApplyCardChanges()
+    {
+        int nextIncidentId = MatchRepository.NextIncidentId();
+
+        nextIncidentId = SyncCards<YellowCardIncident>(Match.HomeTeam!, yellowHome, nextIncidentId,
+            (id, team) => new YellowCardIncident(id, 0, team));
+        nextIncidentId = SyncCards<RedCardIncident>(Match.HomeTeam!, redHome, nextIncidentId,
+            (id, team) => new RedCardIncident(id, 0, team));
+        nextIncidentId = SyncCards<YellowCardIncident>(Match.AwayTeam!, yellowAway, nextIncidentId,
+            (id, team) => new YellowCardIncident(id, 0, team));
+        SyncCards<RedCardIncident>(Match.AwayTeam!, redAway, nextIncidentId,
+            (id, team) => new RedCardIncident(id, 0, team));
+    }
+
+    private int SyncCards<TIncident>(Team team, int desiredCount, int nextIncidentId, Func<int, Team, TIncident> factory)
+        where TIncident : MatchIncident
+    {
+        List<TIncident> current = Match.Incidents
+            .OfType<TIncident>()
+            .Where(incident => ReferenceEquals(incident.Team, team))
+            .ToList();
+
+        for (int i = current.Count; i < desiredCount; i++)
+        {
+            Match.AddIncident(factory(nextIncidentId, team));
+            nextIncidentId++;
+        }
+
+        for (int i = current.Count - 1; i >= desiredCount; i--)
+        {
+            Match.RemoveIncident(current[i]);
+        }
+
+        return nextIncidentId;
+    }
+
+    private void Persist()
+    {
+        if (Match is MatchElimination)
+        {
+            EliminationRepository.Update(Match);
+        }
+        else
+        {
+            MatchRepository.Update(Match);
+        }
+
+        UnitOfWork.Commit();
+    }
+
+    private bool Validate()
+    {
+        if (ShowDateAndStadium && matchDate == default)
+        {
+            editorErrors.Add("La fecha es obligatoria");
+        }
+
+        if (ShowDateAndStadium && stadiumId <= 0)
+        {
+            editorErrors.Add("Debe seleccionar un estadio");
+        }
+
+        if (homeGoals < 0 || awayGoals < 0)
+        {
+            editorErrors.Add("Los goles no pueden ser negativos");
+        }
+
+        if (yellowHome < 0 || redHome < 0 || yellowAway < 0 || redAway < 0)
+        {
+            editorErrors.Add("Las tarjetas no pueden ser negativas");
+        }
+
+        return !editorErrors.Any();
+    }
+
+    private Task CancelAsync() => OnCancel.InvokeAsync();
+}

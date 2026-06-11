@@ -280,6 +280,15 @@
             {
                 <section class="groups-section">
                     <h4>Grupos</h4>
+                    <div class="group-chips" role="navigation" aria-label="Ir a grupo">
+                        @foreach (Group group in groups)
+                        {
+                            <button class="group-chip @(selectedGroupName == group.Name ? "active" : "")"
+                                    @onclick="() => HandleSelectGroup(group.Name)">
+                                @group.Name
+                            </button>
+                        }
+                    </div>
                     <div class="groups-grid">
                         @foreach (Group group in groups)
                         {
@@ -295,7 +304,10 @@
                     <section class="group-detail-section">
                         <GroupDetail GroupName="@selectedGroupName"
                                      Matches="@MatchesForSelectedGroup()"
-                                     OnBack="HandleClearSelection" />
+                                     OnBack="HandleClearSelection"
+                                     CanEdit="@CanEditResults"
+                                     IsLocked="@IsKnockoutGenerated"
+                                     OnResultSaved="HandleResultSaved" />
                     </section>
                 }
             }
@@ -337,6 +349,8 @@
     // Según la letra, el Editor es quien genera fixture, simula y sortea cruces.
     private bool CanManageFixture =>
         IsAdmin || Session.CurrentUser?.HasRole(UserRoles.Editor) == true;
+
+    private bool CanEditResults => CanManageFixture;
 
     private bool IsFixtureGenerated => FixtureOrchestrator.IsFixtureGenerated();
     private bool IsKnockoutGenerated => KnockoutGenerator.IsBracketGenerated();
@@ -437,6 +451,13 @@
     private void HandleClearSelection()
     {
         selectedGroupName = null;
+    }
+
+    private void HandleResultSaved(string message)
+    {
+        errors.Clear();
+        successMessage = message;
+        ReloadState();
     }
 
     private async Task HandleGenerateFixtureAsync()

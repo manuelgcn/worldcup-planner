@@ -5,9 +5,8 @@
 @using DataAccess.Interfaces
 @inject IMatchRepository MatchRepository
 @inject IEliminationMatchRepository EliminationRepository
-@inject IUnitOfWork UnitOfWork
+@inject IKnockoutFixtureGenerator KnockoutGenerator
 @inject IStadiumService StadiumServices
-@inject INotificationService NotificationService
 @inject SessionState Session
 @inject NavigationManager Nav
 
@@ -112,69 +111,59 @@ else
             <table class="table table-hover m26-scoreboard mb-0">
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Fecha</th>
+                        <th>Grupo / Fase</th>
                         <th>Equipos</th>
                         <th>Estadio</th>
                         <th>Resultado</th>
+                        <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (Match match in matches)
                     {
-                        @if (editingMatchId == match.MatchId && CanEditMatches)
+                        <tr>
+                            <td>@match.MatchDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@StageLabel(match)</td>
+                            <td>
+                                <TeamFlag Team="match.HomeTeam" />@match.HomeTeam?.Name
+                                vs
+                                <TeamFlag Team="match.AwayTeam" />@match.AwayTeam?.Name
+                            </td>
+                            <td>@match.Stadium?.Name</td>
+                            <td>@match.HomeGoals - @match.AwayGoals</td>
+                            <td>
+                                <span class="match-status @(IsPlayed(match) ? "played" : "pending")">
+                                    @(IsPlayed(match) ? "Finalizado" : "Pendiente")
+                                </span>
+                            </td>
+                            <td>
+                                @if (CanEditRow(match))
+                                {
+                                    <button class="btn btn-outline-primary btn-sm"
+                                            disabled="@(editingMatchId == match.MatchId)"
+                                            @onclick="() => StartEdit(match)">
+                                        <i class="bi bi-pencil" aria-hidden="true"></i>
+                                        Editar
+                                    </button>
+                                }
+                                else if (CanEditMatches && IsGroupStageLocked && match is MatchGroup)
+                                {
+                                    <span class="text-muted" title="La fase de grupos está cerrada: los cruces de fase 2 ya fueron generados.">
+                                        <i class="bi bi-lock-fill" aria-hidden="true"></i>
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                        @if (editingMatchId == match.MatchId && CanEditRow(match))
                         {
                             <tr class="row-editing">
-                                <td>@match.MatchId</td>
-                                <td>
-                                    <input class="form-control" type="datetime-local" @bind="editingMatchDate" />
-                                </td>
-                                <td>
-                                    @match.HomeTeam?.Name vs @match.AwayTeam?.Name
-                                </td>
-                                <td>
-                                    <select class="form-select" @bind="editingStadiumId">
-                                        <option value="0">-- Seleccione estadio --</option>
-                                        @foreach (var stadium in stadiums)
-                                        {
-                                            <option value="@stadium.Id">@stadium.Name</option>
-                                        }
-                                    </select>
-                                </td>
-                                <td>
-                                    <input class="form-control goal-input" type="number" @bind="editingHomeGoals" min="0" />
-                                    -
-                                    <input class="form-control goal-input" type="number" @bind="editingAwayGoals" min="0" />
-                                </td>
-                                <td>
-                                    <button class="btn btn-success btn-sm me-1" @onclick="() => SaveEdit(match)">
-                                        <i class="bi bi-check-lg" aria-hidden="true"></i>
-                                        Guardar
-                                    </button>
-                                    <button class="btn btn-outline-secondary btn-sm" @onclick="CancelEdit">
-                                        <i class="bi bi-x-lg" aria-hidden="true"></i>
-                                        Cancelar
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                        else
-                        {
-                            <tr>
-                                <td>@match.MatchId</td>
-                                <td>@match.MatchDate.ToString("dd/MM/yyyy HH:mm")</td>
-                                <td>@match.HomeTeam?.Name vs @match.AwayTeam?.Name</td>
-                                <td>@match.Stadium?.Name</td>
-                                <td>@match.HomeGoals - @match.AwayGoals</td>
-                                <td>
-                                    @if (CanEditMatches)
-                                    {
-                                        <button class="btn btn-outline-primary btn-sm" @onclick="() => StartEdit(match)">
-                                            <i class="bi bi-pencil" aria-hidden="true"></i>
-                                            Editar
-                                        </button>
-                                    }
+                                <td colspan="7">
+                                    <MatchResultEditor Match="match"
+                                                       ShowDateAndStadium="true"
+                                                       OnSaved="HandleSaved"
+                                                       OnCancel="CancelEdit" />
                                 </td>
                             </tr>
                         }
@@ -196,6 +185,12 @@ else
     private static readonly string[] groupOptions =
         Enumerable.Range(0, 12).Select(i => ((char)('A' + i)).ToString()).ToArray();
 
+    [SupplyParameterFromQuery(Name = "grupo")]
+    public string? GrupoQueryParam { get; set; }
+
+    [SupplyParameterFromQuery(Name = "fase")]
+    public string? FaseQueryParam { get; set; }
+
     private DateTime? filterFrom;
     private DateTime? filterTo;
     private int filterStadiumId;
@@ -215,21 +210,54 @@ else
     private string? successMessage;
 
     private int? editingMatchId;
-    private DateTime editingMatchDate;
-    private int editingStadiumId;
-    private int editingHomeGoals;
-    private int editingAwayGoals;
 
     private bool CanEditMatches =>
         Session.IsLoggedIn &&
         Session.CurrentUser is not null &&
         (Session.CurrentUser.HasRole(UserRoles.Admin) || Session.CurrentUser.HasRole(UserRoles.Editor));
 
+    private bool IsGroupStageLocked => KnockoutGenerator.IsBracketGenerated();
+
     protected override void OnInitialized()
     {
+        ApplyQueryParameters();
         LoadStadiums();
         ApplyFilters();
     }
+
+    private void ApplyQueryParameters()
+    {
+        if (!string.IsNullOrWhiteSpace(GrupoQueryParam) && groupOptions.Contains(GrupoQueryParam.ToUpperInvariant()))
+        {
+            filterGroup = GrupoQueryParam.ToUpperInvariant();
+        }
+
+        if (!string.IsNullOrWhiteSpace(FaseQueryParam) && Enum.TryParse(FaseQueryParam, ignoreCase: true, out Phase parsedPhase))
+        {
+            filterPhase = parsedPhase;
+        }
+    }
+
+    private bool CanEditRow(Match match)
+    {
+        if (!CanEditMatches)
+        {
+            return false;
+        }
+
+        return match is not MatchGroup || !IsGroupStageLocked;
+    }
+
+    private static bool IsPlayed(Match match) =>
+        match.WasSimulated || match.HomeGoals + match.AwayGoals > 0;
+
+    private static string StageLabel(Match match) =>
+        match switch
+        {
+            MatchGroup groupMatch => $"Grupo {groupMatch.Group?.Name}",
+            MatchElimination eliminationMatch => eliminationMatch.Phase.ToString(),
+            _ => ""
+        };
 
     private void ApplyFilters()
     {
@@ -304,120 +332,21 @@ else
 
     private void StartEdit(Match match)
     {
-        if (!CanEditMatches)
-        {
-            errors.Clear();
-            successMessage = null;
-            errors.Add("No tenes permisos para editar partidos.");
-            return;
-        }
-
         errors.Clear();
         successMessage = null;
-
         editingMatchId = match.MatchId;
-        editingMatchDate = match.MatchDate;
-        editingStadiumId = match.Stadium?.Id ?? 0;
-        editingHomeGoals = match.HomeGoals;
-        editingAwayGoals = match.AwayGoals;
     }
 
     private void CancelEdit()
     {
         editingMatchId = null;
-        editingMatchDate = default;
-        editingStadiumId = 0;
-        editingHomeGoals = 0;
-        editingAwayGoals = 0;
     }
 
-    private void SaveEdit(Match match)
+    private void HandleSaved(string message)
     {
-        if (!CanEditMatches)
-        {
-            errors.Clear();
-            successMessage = null;
-            errors.Add("No tenes permisos para editar partidos.");
-            return;
-        }
-
-        errors.Clear();
-        successMessage = null;
-
-        if (!ValidateEdit())
-            return;
-
-        try
-        {
-            int previousHomeGoals = match.HomeGoals;
-            int previousAwayGoals = match.AwayGoals;
-
-            UpdateMatch(match);
-            PersistChanges();
-
-            NotificationService.NotifyResultLoaded(match, previousHomeGoals, previousAwayGoals);
-
-            successMessage = "Partido actualizado correctamente";
-            CancelEdit();
-            ApplyFilters();
-        }
-        catch (ArgumentException ex)
-        {
-            errors.Add(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            errors.Add("Error al actualizar el partido: " + ex.Message);
-        }
-    }
-
-    private void UpdateMatch(Match match)
-    {
-        match.ChangeDate(editingMatchDate);
-        match.SetGoals(editingHomeGoals, editingAwayGoals);
-
-        if (editingStadiumId > 0)
-        {
-            ProjectCopa.Stadium selectedStadium = StadiumServices.GetById(editingStadiumId);
-            match.ChangeStadium(selectedStadium);
-        }
-    }
-
-    private void PersistChanges()
-    {
-        Match edited = FindEditingMatch();
-
-        if (edited is MatchElimination)
-            EliminationRepository.Update(edited);
-        else
-            MatchRepository.Update(edited);
-
-        UnitOfWork.Commit();
-    }
-
-    private Match FindEditingMatch()
-    {
-        return matches.First(m => m.MatchId == editingMatchId);
-    }
-
-    private bool ValidateEdit()
-    {
-        if (editingMatchDate == default)
-        {
-            errors.Add("La fecha es obligatoria");
-        }
-
-        if (editingStadiumId <= 0)
-        {
-            errors.Add("Debe seleccionar un estadio");
-        }
-
-        if (editingHomeGoals < 0 || editingAwayGoals < 0)
-        {
-            errors.Add("Los goles no pueden ser negativos");
-        }
-
-        return !errors.Any();
+        editingMatchId = null;
+        ApplyFilters();
+        successMessage = message;
     }
 
     private void GoToLogin()

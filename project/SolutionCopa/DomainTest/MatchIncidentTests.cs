@@ -72,6 +72,34 @@ public sealed class MatchIncidentTests
     }
 
     [TestMethod]
+    public void RemoveIncidentDeletesItFromTheMatch()
+    {
+        YellowCardIncident incident = new YellowCardIncident(1, 30, _homeTeam);
+        _match.AddIncident(incident);
+
+        _match.RemoveIncident(incident);
+
+        Assert.AreEqual(0, _match.Incidents.Count);
+        Assert.AreEqual(0, _match.CountYellowCards(_homeTeam));
+    }
+
+    [TestMethod]
+    public void RemoveIncidentRejectsNull()
+    {
+        Assert.ThrowsException<ArgumentNullException>(() =>
+            _match.RemoveIncident(null!));
+    }
+
+    [TestMethod]
+    public void RemoveIncidentRejectsIncidentNotInMatch()
+    {
+        YellowCardIncident notAdded = new YellowCardIncident(1, 30, _homeTeam);
+
+        Assert.ThrowsException<MatchException>(() =>
+            _match.RemoveIncident(notAdded));
+    }
+
+    [TestMethod]
     public void CountsAreCorrectByTeamAndType()
     {
         _match.AddIncident(new YellowCardIncident(1, 10, _homeTeam));

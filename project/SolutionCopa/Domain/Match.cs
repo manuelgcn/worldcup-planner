@@ -17,6 +17,7 @@ public abstract class Match
     private const string GoalsCannotBeNegativeMessage = "Goals cannot be negative.";
     private const string CannotRemoveGoalWhenZeroMessage = "Cannot remove a goal when the current count is zero.";
     private const string IncidentTeamNotInMatchMessage = "Incident team must be one of the two teams playing the match.";
+    private const string IncidentNotInMatchMessage = "Incident does not belong to this match.";
 
     public int MatchId { get; private set; }
     public DateTime MatchDate { get; private set; }
@@ -202,6 +203,22 @@ public abstract class Match
         EnsureIncidentTeamBelongsToMatch(incident.Team);
 
         _incidents.Add(incident);
+    }
+
+    public void RemoveIncident(MatchIncident incident)
+    {
+        ArgumentNullException.ThrowIfNull(incident);
+        EnsureIncidentBelongsToMatch(incident);
+
+        _incidents.Remove(incident);
+    }
+
+    private void EnsureIncidentBelongsToMatch(MatchIncident incident)
+    {
+        if (!_incidents.Contains(incident))
+        {
+            throw new MatchException(IncidentNotInMatchMessage);
+        }
     }
 
     public int CountYellowCards(Team team)

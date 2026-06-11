@@ -64,7 +64,30 @@ internal static class MatchEf
         {
             context.Entry(existing).Property("StadiumId").CurrentValue = match.Stadium.Id;
         }
+        SyncIncidents(context, match);
         context.SaveChanges();
+    }
+
+    // Sincroniza la coleccion de incidencias por diff de Ids contra lo almacenado: borra las que ya
+    // no estan en la instancia editada y agrega las nuevas (con su Team attacheado como Unchanged y
+    // el shadow FK MatchId seteado a mano, porque la instancia trackeada no expone la coleccion mutable).
+    private static void SyncIncidents(AppDbContext context, Match match)
+    {
+        List<MatchIncident> stored = context.Set<MatchIncident>()
+            .Where(incident => EF.Property<int?>(incident, "MatchId") == match.MatchId)
+            .ToList();
+
+        foreach (MatchIncident removed in stored.Where(s => match.Incidents.All(i => i.Id != s.Id)))
+        {
+            context.Remove(removed);
+        }
+
+        foreach (MatchIncident added in match.Incidents.Where(i => stored.All(s => s.Id != i.Id)))
+        {
+            MarkUnchanged(context, added.Team);
+            context.Add(added);
+            context.Entry(added).Property("MatchId").CurrentValue = match.MatchId;
+        }
     }
 
     public static void Delete(IDbContextFactory<AppDbContext> contextFactory, int matchId)
