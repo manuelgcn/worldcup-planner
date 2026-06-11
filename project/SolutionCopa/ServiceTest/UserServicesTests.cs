@@ -47,7 +47,7 @@ public class UserServicesTests
 
         UserServices auditedService = new UserServices(
             userRepo,
-            AuditLogService.CreateInstance(auditRepo, 1)
+            AuditLogService.CreateInstance(auditRepo)
         );
 
         User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
@@ -67,7 +67,7 @@ public class UserServicesTests
 
         UserServices auditedService = new UserServices(
             userRepo,
-            AuditLogService.CreateInstance(auditRepo, 1)
+            AuditLogService.CreateInstance(auditRepo)
         );
 
         User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
@@ -86,7 +86,7 @@ public class UserServicesTests
 
         UserServices auditedService = new UserServices(
             userRepo,
-            AuditLogService.CreateInstance(auditRepo, 1)
+            AuditLogService.CreateInstance(auditRepo)
         );
 
         User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
@@ -105,7 +105,7 @@ public class UserServicesTests
 
         UserServices auditedService = new UserServices(
             userRepo,
-            AuditLogService.CreateInstance(auditRepo, 1)
+            AuditLogService.CreateInstance(auditRepo)
         );
 
         User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
@@ -262,7 +262,7 @@ public class UserServicesTests
 
         UserServices auditedService = new UserServices(
             userRepo,
-            AuditLogService.CreateInstance(auditRepo, 1)
+            AuditLogService.CreateInstance(auditRepo)
         );
 
         User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));

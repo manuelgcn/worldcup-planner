@@ -47,7 +47,8 @@ Referencia: las fases son las de `PLAN_OBLIGATORIO_2.md`.
 - ✅ **Fase 4 (motores de simulación intercambiables)**: `IMatchSimulationEngine`, registro de motores, selección persistida y simulaciones auditadas.
 - ✅ **Fase 5 (notificaciones)**: notificaciones persistidas para periodistas, lectura individual/masiva y UI.
 - ✅ **Fase 6 (exportación CSV/XLSX)**: `IExporter` + `IExportService`, CsvHelper/ClosedXML, exportación de fixture/auditoría por rango, autorización Admin/Periodista y auditoría.
-- ⬜ **Fases 7–12**: desacople de auditoría del torneo, UI rol Periodista, refactor GRASP/Demeter/SOLID, skills de IA, datos de prueba + backups, documentación.
+- ✅ **Fase 7 (auditoría global)**: `AuditLog` desacoplado del torneo (`TournamentSettingsId` nullable como contexto opcional), actor estructurado `PerformedByEmail`, filtros por fecha/acción/usuario ejecutados en SQL (`IAuditLogRepository.GetFiltered`), acciones `SIMULATION_EXECUTED` y `RANKING_UPDATED`, vista y exportación filtradas. Migración `20260611232454_MakeAuditLogsGlobalWithActor`.
+- ⬜ **Fases 8–12**: UI rol Periodista, refactor GRASP/Demeter/SOLID, skills de IA, datos de prueba + backups, documentación.
 
 **Roles**: `UserRoles { Admin, Editor, Periodista }`.
 
@@ -93,9 +94,10 @@ dotnet ef database update --project project/SolutionCopa/DataAccess --startup-pr
 
 ## 7. Auditoría
 
-- Constantes en `Services/AuditActions.cs` (formato `SCREAMING_SNAKE`). Hoy cubren user/team/stadium/group/journey/match/fixture/knockout/simulación.
+- Constantes en `Services/AuditActions.cs` (formato `SCREAMING_SNAKE`). Hoy cubren user/team/stadium/group/journey/match/fixture/knockout/simulación/exportación/notificaciones, más `SIMULATION_EXECUTED` (simulación individual exitosa, registra motor y semilla) y `RANKING_UPDATED` (reservada para Elo post-merge de `feature/ranking-elo`).
 - Toda mutación relevante, uso de semilla y simulación se loggea con **timestamp ISO-8601 + usuario** vía `AuditLogService` / `LogPerformedBy`.
-- `AuditLog.TournamentSettingsId` **todavía es obligatorio**; se vuelve `nullable` en la **Fase 7** (desacople del torneo). Hasta entonces, si necesitás loggear algo "del sistema", seguí el patrón actual y dejá `// TODO Fase 7`.
+- Los logs son **globales (del sistema)**: `Log`/`LogPerformedBy` crean entradas sin torneo; `AuditLog.TournamentSettingsId` es `int?` y solo se pasa explícitamente cuando aporta contexto real. `LogPerformedBy` guarda el actor en `AuditLog.PerformedByEmail` (no concatena " by <email>" en `Details`; los logs históricos conservan el actor dentro de `Details`).
+- Consultas filtradas vía `IAuditLogService.GetFiltered(AuditLogFilterDto)` → `IAuditLogRepository.GetFiltered` (rango de fechas inclusivo + acción y actor parciales case-insensitive, ejecutado en SQL con `IQueryable`). La vista de auditoría y `ExportService.ExportAuditLog` usan estos filtros; no cargar todo y filtrar en memoria.
 
 ## 8. Workflow (gitflow)
 
@@ -130,9 +132,8 @@ En `.github/skills/`: `add-educational-comments`, `create-readme`, `csharp-mstes
 
 ## 11. Próximos pasos
 
-1. **Fase 3 (Elo)** — en curso (otro integrante, `feature/ranking-elo`).
-2. **Fase 7 (auditoría extendida y desacople del torneo)**.
-3. Fases 8–12 según `PLAN_OBLIGATORIO_2.md` (UI Periodista, GRASP/SOLID, skills, datos de prueba, documentación).
+1. **Fase 3 (Elo)** — en curso (otro integrante, `feature/ranking-elo`); al mergear, verificar que `RankingService` audite con `AuditActions.RankingUpdated`.
+2. Fases 8–12 según `PLAN_OBLIGATORIO_2.md` (UI Periodista, GRASP/SOLID, skills, datos de prueba, documentación).
 
 ---
 

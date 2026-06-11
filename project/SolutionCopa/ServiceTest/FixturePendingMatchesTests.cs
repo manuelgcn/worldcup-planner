@@ -45,7 +45,7 @@ public class FixturePendingMatchesTests
         _settingsRepository = new MockTournamentSettingsRepository();
         _unitOfWork = new MockUnitOfWork();
         _auditRepository = new MockAuditLogRepository();
-        _auditService = AuditLogService.CreateInstance(_auditRepository, DefaultSettingsId);
+        _auditService = AuditLogService.CreateInstance(_auditRepository);
         _simulationEngine = new ProbabilisticSimulationEngine();
 
         _settingsRepository.Add(CreateDefaultSettings());
@@ -97,6 +97,9 @@ public class FixturePendingMatchesTests
         Assert.IsFalse(
             logs.Any(log => log.Action == AuditActions.SimulateMatch),
             "Fixture generation must not emit SIMULATE_MATCH audit entries.");
+        Assert.IsFalse(
+            logs.Any(log => log.Action == AuditActions.SimulationExecuted),
+            "Fixture generation must not emit SIMULATION_EXECUTED audit entries.");
         Assert.IsFalse(
             logs.Any(log => log.Action == AuditActions.PublishMatchResult),
             "Fixture generation must not emit PUBLISH_MATCH_RESULT audit entries.");

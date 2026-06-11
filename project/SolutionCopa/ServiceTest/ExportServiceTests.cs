@@ -19,7 +19,7 @@ public sealed class ExportServiceTests
     {
         _matchRepository = new MockMatchRepository();
         _auditRepository = new MockAuditLogRepository();
-        IAuditLogService auditService = AuditLogService.CreateInstance(_auditRepository, 1);
+        IAuditLogService auditService = AuditLogService.CreateInstance(_auditRepository);
         _service = new ExportService(_matchRepository, _auditRepository, new Exporter(), auditService);
     }
 
@@ -84,7 +84,7 @@ public sealed class ExportServiceTests
         Assert.IsTrue(csv.Contains("RoundOf32"));
         Assert.AreEqual("fixture_20260601_20260630.csv", result.FileName);
         Assert.IsTrue(_auditRepository.GetAll().Any(log => log.Action == AuditActions.ExportFixtureCsv));
-        Assert.IsTrue(_auditRepository.GetAll().Any(log => log.Details.Contains(journalist.email)));
+        Assert.IsTrue(_auditRepository.GetAll().Any(log => log.PerformedByEmail == journalist.email));
     }
 
     [TestMethod]
@@ -103,6 +103,57 @@ public sealed class ExportServiceTests
         Assert.AreEqual("audit-log_" + today.ToString("yyyyMMdd") + "_" + today.ToString("yyyyMMdd") + ".xlsx", result.FileName);
         Assert.AreEqual("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", result.ContentType);
         Assert.IsTrue(_auditRepository.GetAll().Any(log => log.Action == AuditActions.ExportAuditXlsx));
+    }
+
+    [TestMethod]
+    public void ExportAuditLogIncludesActorColumn()
+    {
+        _auditRepository.Seed(AuditLog.Create("ACTION", "Det", performedByEmail: "actor@copa.com"));
+        User admin = BuildUser(UserRoles.Admin);
+        DateTime today = DateTime.UtcNow.Date;
+
+        ExportFileDto result = _service.ExportAuditLog(
+            new DateRange(today, today),
+            ExportFormat.Csv,
+            admin);
+        string csv = System.Text.Encoding.UTF8.GetString(result.Content);
+
+        Assert.IsTrue(csv.Contains("PerformedByEmail"));
+        Assert.IsTrue(csv.Contains("actor@copa.com"));
+    }
+
+    [TestMethod]
+    public void ExportAuditLogAppliesActiveActionAndActorFilters()
+    {
+        _auditRepository.Seed(AuditLog.Create("CREATE_USER", "kept", performedByEmail: "admin@copa.com"));
+        _auditRepository.Seed(AuditLog.Create("DELETE_TEAM", "wrong action", performedByEmail: "admin@copa.com"));
+        _auditRepository.Seed(AuditLog.Create("CREATE_USER", "wrong actor", performedByEmail: "editor@copa.com"));
+        User admin = BuildUser(UserRoles.Admin);
+        DateTime today = DateTime.UtcNow.Date;
+
+        ExportFileDto result = _service.ExportAuditLog(
+            new DateRange(today, today),
+            ExportFormat.Csv,
+            admin,
+            new AuditLogFilterDto { Action = "create", PerformedByEmail = "admin" });
+        string csv = System.Text.Encoding.UTF8.GetString(result.Content);
+
+        Assert.IsTrue(csv.Contains("kept"));
+        Assert.IsFalse(csv.Contains("wrong action"));
+        Assert.IsFalse(csv.Contains("wrong actor"));
+    }
+
+    [TestMethod]
+    public void ExportRecordsRequesterAsStructuredActor()
+    {
+        User admin = BuildUser(UserRoles.Admin);
+        DateTime today = DateTime.UtcNow.Date;
+
+        _service.ExportAuditLog(new DateRange(today, today), ExportFormat.Csv, admin);
+
+        AuditLog exportLog = _auditRepository.GetAll().Single(log => log.Action == AuditActions.ExportAuditCsv);
+        Assert.AreEqual(admin.email, exportLog.PerformedByEmail);
+        Assert.IsFalse(exportLog.Details.Contains(admin.email));
     }
 
     private static User BuildUser(UserRoles role)

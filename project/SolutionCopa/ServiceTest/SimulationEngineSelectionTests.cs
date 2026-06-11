@@ -35,7 +35,7 @@ public sealed class SimulationEngineSelectionTests
             new IMatchSimulationEngine[] { _defaultEngineSpy, _selectedEngineSpy });
         _settingsRepository = new MockTournamentSettingsRepository();
         _auditLogRepository = new MockAuditLogRepository();
-        _auditLogService = AuditLogService.CreateInstance(_auditLogRepository, SettingsId);
+        _auditLogService = AuditLogService.CreateInstance(_auditLogRepository);
         _unitOfWork = new MockUnitOfWork();
 
         TournamentSettings settings = new TournamentSettings(
@@ -84,7 +84,7 @@ public sealed class SimulationEngineSelectionTests
 
         service.SimulateMatch(MatchId);
 
-        AuditLog log = _auditLogRepository.GetAll().First(entry => entry.Action == AuditActions.SimulateMatch);
+        AuditLog log = _auditLogRepository.GetAll().First(entry => entry.Action == AuditActions.SimulationExecuted);
         Assert.IsTrue(log.Details.Contains(PureRandomName), $"Expected engine name in details, got '{log.Details}'");
     }
 
@@ -120,7 +120,7 @@ public sealed class SimulationEngineSelectionTests
 
         generator.SimulateEliminationMatches(new[] { MatchId });
 
-        AuditLog log = _auditLogRepository.GetAll().First(entry => entry.Action == AuditActions.SimulateMatch);
+        AuditLog log = _auditLogRepository.GetAll().First(entry => entry.Action == AuditActions.SimulationExecuted);
         Assert.IsTrue(log.Details.Contains(PureRandomName), $"Expected engine name in details, got '{log.Details}'");
     }
 

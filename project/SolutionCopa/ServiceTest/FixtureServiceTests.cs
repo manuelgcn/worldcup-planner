@@ -57,7 +57,7 @@ public class FixtureServiceTests
         List<Team> teams = Create48ValidTeams();
         List<Stadium> stadiums = Create4ValidStadiums();
         MockAuditLogRepository repository = new MockAuditLogRepository();
-        FixtureService service = new FixtureService(teams, stadiums, auditLogService: AuditLogService.CreateInstance(repository, 1));
+        FixtureService service = new FixtureService(teams, stadiums, auditLogService: AuditLogService.CreateInstance(repository));
 
         service.CreateFixture();
 

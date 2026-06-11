@@ -52,7 +52,7 @@ public sealed class TournamentSimulationServiceTests
         SeedSettings();
         _matchRepository.ResetCounters();
 
-        AuditLogService auditLogService = AuditLogService.CreateInstance(_auditLogRepository, 1);
+        AuditLogService auditLogService = AuditLogService.CreateInstance(_auditLogRepository);
         _service = new TournamentSimulationService(
             _groupRepository,
             _matchRepository,
@@ -98,7 +98,7 @@ public sealed class TournamentSimulationServiceTests
 
         AuditLog log = _auditLogRepository.GetAll().First(entry => entry.Action == AuditActions.SimulateGroupStage);
         Assert.IsTrue(log.Details.Contains(Seed.ToString()), $"Expected seed in details, got '{log.Details}'");
-        Assert.IsTrue(log.Details.Contains(AdminEmail), $"Expected actor email in details, got '{log.Details}'");
+        Assert.AreEqual(AdminEmail, log.PerformedByEmail);
     }
 
     [TestMethod]
@@ -113,7 +113,7 @@ public sealed class TournamentSimulationServiceTests
         emptyGroupRepository.Seed(FirstGroupId, new Group("A"));
         emptySettingsRepository.Add(new TournamentSettings(1, new DateTime(StartYear, StartMonth, StartDay), 3, 3, Seed, Seed, Seed, Seed));
 
-        AuditLogService auditLogService = AuditLogService.CreateInstance(_auditLogRepository, 1);
+        AuditLogService auditLogService = AuditLogService.CreateInstance(_auditLogRepository);
         TournamentSimulationService service = new TournamentSimulationService(
             emptyGroupRepository,
             emptyMatchRepository,

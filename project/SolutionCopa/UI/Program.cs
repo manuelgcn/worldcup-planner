@@ -49,9 +49,7 @@ builder.Services.AddSingleton<IMatchSimulationEngine, ProbabilisticSimulationEng
 builder.Services.AddSingleton<IMatchSimulationEngine, PureRandomSimulationEngine>(); // OCP: nuevos motores se agregan aca sin tocar consumidores
 builder.Services.AddSingleton<ISimulationEngineRegistry, SimulationEngineRegistry>();
 builder.Services.AddSingleton<IAuditLogService>(sp =>
-    AuditLogService.CreateInstance(
-        sp.GetRequiredService<IAuditLogRepository>(),
-        1));
+    AuditLogService.CreateInstance(sp.GetRequiredService<IAuditLogRepository>()));
 
 
 builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>

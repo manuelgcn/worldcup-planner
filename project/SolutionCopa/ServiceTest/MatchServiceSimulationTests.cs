@@ -69,7 +69,7 @@ public sealed class MatchServiceSimulationTests
         _context.Service.SimulateMatch(MatchId);
 
         // Assert
-        Assert.IsTrue(_context.AuditLogs.Any(log => log.Action == "SIMULATE_MATCH"));
+        Assert.IsTrue(_context.AuditLogs.Any(log => log.Action == "SIMULATION_EXECUTED"));
     }
 
     [TestMethod]

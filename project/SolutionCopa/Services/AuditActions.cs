@@ -18,6 +18,12 @@ public static class AuditActions
 
     public const string SimulateMatch = "SIMULATE_MATCH";
 
+    // Simulacion individual ejecutada con exito (registra motor y semilla);
+    // las operaciones agregadas conservan sus acciones (SIMULATE_ROUND, etc.).
+    public const string SimulationExecuted = "SIMULATION_EXECUTED";
+
+    public const string RankingUpdated = "RANKING_UPDATED";
+
     public const string PublishMatchResult = "PUBLISH_MATCH_RESULT";
 
     public const string CreateTeam = "CREATE_TEAM";

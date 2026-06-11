@@ -82,7 +82,55 @@ public sealed class AuditLogTests
     public void SetId_ValidId_UpdatesIdProperty()
     {
         int expectedId = 15;
-        _auditLog.SetId(expectedId); 
+        _auditLog.SetId(expectedId);
         Assert.AreEqual(expectedId, _auditLog.Id);
+    }
+
+    [TestMethod]
+    public void Create_WithoutTournamentSettingsId_CreatesGlobalLog()
+    {
+        AuditLog globalLog = AuditLog.Create("Action", ValidDetails);
+        Assert.IsNull(globalLog.TournamentSettingsId);
+    }
+
+    [TestMethod]
+    public void Create_WithNullTournamentSettingsId_CreatesGlobalLog()
+    {
+        AuditLog globalLog = AuditLog.Create("Action", ValidDetails, tournamentSettingsId: null);
+        Assert.IsNull(globalLog.TournamentSettingsId);
+    }
+
+    [TestMethod]
+    public void Create_WithTournamentSettingsId_KeepsOptionalContext()
+    {
+        Assert.AreEqual(ValidSettingsId, _auditLog.TournamentSettingsId);
+    }
+
+    [TestMethod]
+    public void Create_WithPerformedByEmail_StoresActor()
+    {
+        AuditLog logWithActor = AuditLog.Create("Action", ValidDetails, performedByEmail: "admin@copa.com");
+        Assert.AreEqual("admin@copa.com", logWithActor.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void Create_WithoutPerformedByEmail_LeavesActorNull()
+    {
+        AuditLog logWithoutActor = AuditLog.Create("Action", ValidDetails);
+        Assert.IsNull(logWithoutActor.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void Create_WithWhitespacePerformedByEmail_NormalizesActorToNull()
+    {
+        AuditLog logWithBlankActor = AuditLog.Create("Action", ValidDetails, performedByEmail: "   ");
+        Assert.IsNull(logWithBlankActor.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void Create_WithPaddedPerformedByEmail_TrimsActor()
+    {
+        AuditLog logWithPaddedActor = AuditLog.Create("Action", ValidDetails, performedByEmail: "  admin@copa.com  ");
+        Assert.AreEqual("admin@copa.com", logWithPaddedActor.PerformedByEmail);
     }
 }

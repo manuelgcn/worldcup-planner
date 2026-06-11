@@ -137,7 +137,7 @@ public class MatchService(
 
         engine.Simulate(match, tournamentSettings.SimulationSeed);
         LogAuditAction(
-            AuditActions.SimulateMatch,
+            AuditActions.SimulationExecuted,
             $"MatchId={matchId} simulated with engine {engine.Name} and seed {tournamentSettings.SimulationSeed}.",
             matchId);
         matchRepository.Update(match);

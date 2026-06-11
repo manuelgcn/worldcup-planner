@@ -47,10 +47,14 @@ namespace DataAccess.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<string>("PerformedByEmail")
+                        .HasMaxLength(254)
+                        .HasColumnType("nvarchar(254)");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("TournamentSettingsId")
+                    b.Property<int?>("TournamentSettingsId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

@@ -229,7 +229,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
             _matchRepository.Update(match);
             NotifyJournalistsAboutSimulatedResult(match);
-            _auditLog?.Log(AuditActions.SimulateMatch, BuildSimulationAuditDetails(match, seed, engine.Name), settings.Id, "Match", match.MatchId);
+            _auditLog?.Log(AuditActions.SimulationExecuted, BuildSimulationAuditDetails(match, seed, engine.Name), settings.Id, "Match", match.MatchId);
         }
 
         _unitOfWork.Commit();
@@ -274,7 +274,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
                 engine.Simulate(match, seed);
                 eliminationRepo.Update(match);
                 NotifyJournalistsAboutSimulatedResult(match);
-                _auditLog?.Log(AuditActions.SimulateMatch, BuildSimulationAuditDetails(match, seed, engine.Name), settings.Id, "Match", match.MatchId);
+                _auditLog?.Log(AuditActions.SimulationExecuted, BuildSimulationAuditDetails(match, seed, engine.Name), settings.Id, "Match", match.MatchId);
             }
             catch (Exception ex)
             {
