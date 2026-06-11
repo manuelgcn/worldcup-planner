@@ -86,6 +86,15 @@ public class MatchRepository : IMatchRepository
         return MatchEf.WithGraph(context.Matches).ToList();
     }
 
+    public int NextIncidentId()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        int maxId = context.Set<MatchIncident>().AsNoTracking()
+            .Select(incident => (int?)incident.Id)
+            .Max() ?? 0;
+        return maxId + 1;
+    }
+
     public void Clear()
     {
         using AppDbContext context = _contextFactory.CreateDbContext();

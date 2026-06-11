@@ -22,7 +22,7 @@
             </button>
         </section>
     }
-    else if (!IsAdmin)
+    else if (!CanSimulate)
     {
         <div class="alert alert-error">
             <i class="bi bi-shield-lock" aria-hidden="true"></i>
@@ -103,8 +103,10 @@
     private string? successMessage;
     private TournamentSettings? settings;
 
-    private bool IsAdmin =>
-        Session.CurrentUser?.HasRole(UserRoles.Admin) == true;
+    // Según la letra, la simulación es tarea del Editor (el Admin también puede).
+    private bool CanSimulate =>
+        Session.CurrentUser?.HasRole(UserRoles.Admin) == true ||
+        Session.CurrentUser?.HasRole(UserRoles.Editor) == true;
 
     protected override void OnInitialized()
     {

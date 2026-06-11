@@ -134,6 +134,15 @@ public sealed class MockMatchRepository : IMatchRepository
         return _matches.Values.ToList();
     }
 
+    public int NextIncidentId()
+    {
+        int maxId = _matches.Values
+            .SelectMany(match => match.Incidents)
+            .Select(incident => (int?)incident.Id)
+            .Max() ?? 0;
+        return maxId + 1;
+    }
+
     public void Clear()
     {
         _matches.Clear();

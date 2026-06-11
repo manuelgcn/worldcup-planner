@@ -70,6 +70,7 @@ public class Fase2ConsolidatedTests
         public List<Match> GetByPhase(Phase phase) => throw new NotImplementedException();
         public List<Match> GetByDateRange(DateTime from, DateTime to) => throw new NotImplementedException();
         public List<Match> GetAll() => throw new NotImplementedException();
+        public int NextIncidentId() => throw new NotImplementedException();
         public void Clear() => throw new NotImplementedException();
     }
 }
