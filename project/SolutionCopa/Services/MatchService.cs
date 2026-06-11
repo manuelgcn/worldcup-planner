@@ -144,6 +144,26 @@ public class MatchService(
         unitOfWork.Commit();
     }
 
+    public void AddYellowCard(int matchId, int teamId, int minute, string? performedByEmail)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void AddRedCard(int matchId, int teamId, int minute, string? performedByEmail)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void RemoveIncident(int matchId, int incidentId, string? performedByEmail)
+    {
+        throw new NotImplementedException();
+    }
+
+    public List<MatchIncidentDto> GetIncidents(int matchId)
+    {
+        throw new NotImplementedException();
+    }
+
     public MatchDto GetById(int matchId)
     {
         return MapToDto(GetMatchOrThrow(matchId));

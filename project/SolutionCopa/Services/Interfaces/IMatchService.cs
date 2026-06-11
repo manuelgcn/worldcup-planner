@@ -16,4 +16,8 @@ public interface IMatchService
     void RemoveGoal(int matchId, bool isHomeTeam);
     void PublishResult(int matchId);
     void SimulateMatch(int matchId);
+    void AddYellowCard(int matchId, int teamId, int minute, string? performedByEmail);
+    void AddRedCard(int matchId, int teamId, int minute, string? performedByEmail);
+    void RemoveIncident(int matchId, int incidentId, string? performedByEmail);
+    List<MatchIncidentDto> GetIncidents(int matchId);
 }
