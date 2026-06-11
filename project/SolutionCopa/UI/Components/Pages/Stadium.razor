@@ -30,27 +30,7 @@ else
 {
     <h1 class="m26-page-title">Estadios</h1>
 
-    if (errors.Any())
-    {
-        <div class="alert alert-error" role="alert">
-            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
-            Se encontraron errores:
-            <ul>
-                @foreach (string error in errors)
-                {
-                    <li>@error</li>
-                }
-            </ul>
-        </div>
-    }
-
-    if (!string.IsNullOrWhiteSpace(successMessage))
-    {
-        <div class="alert alert-success" role="alert">
-            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-            @successMessage
-        </div>
-    }
+    <FeedbackAlerts Errors="errors" SuccessMessage="@successMessage" />
 
     <section class="admin-grid">
         <article class="m26-card pane">

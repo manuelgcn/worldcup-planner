@@ -1,0 +1,28 @@
+@* Bloque unificado de feedback (errores + exito) para no repetir el mismo markup en cada pagina. *@
+
+@if (Errors is not null && Errors.Any())
+{
+    <div class="alert alert-error" role="alert">
+        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+        Se encontraron errores:
+        <ul class="mb-0">
+            @foreach (string error in Errors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(SuccessMessage))
+{
+    <div class="alert alert-success" role="alert">
+        <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+        @SuccessMessage
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyCollection<string>? Errors { get; set; }
+    [Parameter] public string? SuccessMessage { get; set; }
+}

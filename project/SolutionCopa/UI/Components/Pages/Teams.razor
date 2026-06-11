@@ -32,27 +32,7 @@ else
 {
     <h1 class="m26-page-title">Equipos</h1>
 
-    @if (errors.Any())
-    {
-        <div class="alert alert-error" role="alert">
-            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
-            Se encontraron errores:
-            <ul>
-                @foreach (string error in errors)
-                {
-                    <li>@error</li>
-                }
-            </ul>
-        </div>
-    }
-
-    @if (!string.IsNullOrWhiteSpace(successMessage))
-    {
-        <div class="alert alert-success" role="alert">
-            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-            @successMessage
-        </div>
-    }
+    <FeedbackAlerts Errors="errors" SuccessMessage="@successMessage" />
 
     <section class="admin-grid">
         <article class="m26-card pane">
@@ -149,10 +129,23 @@ else
                                         <span class="m26-conf-badge conf-@equipo.Confederation">@equipo.Confederation</span>
                                     </td>
                                     <td class="text-end">
-                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => Remove(equipo.Name)">
-                                            <i class="bi bi-trash" aria-hidden="true"></i>
-                                            Eliminar
-                                        </button>
+                                        @if (confirmingDeleteName == equipo.Name)
+                                        {
+                                            <span class="me-2">¿Eliminar <strong>@equipo.Name</strong>?</span>
+                                            <button class="btn btn-danger btn-sm me-1" @onclick="() => Remove(equipo.Name)">
+                                                Sí, eliminar
+                                            </button>
+                                            <button class="btn btn-outline-secondary btn-sm" @onclick="CancelDelete">
+                                                Cancelar
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-outline-danger btn-sm" @onclick="() => StartDelete(equipo.Name)">
+                                                <i class="bi bi-trash" aria-hidden="true"></i>
+                                                Eliminar
+                                            </button>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -242,10 +235,23 @@ else
         }
     }
 
+    private string? confirmingDeleteName;
+
+    private void StartDelete(string nombreEquipo)
+    {
+        confirmingDeleteName = nombreEquipo;
+    }
+
+    private void CancelDelete()
+    {
+        confirmingDeleteName = null;
+    }
+
     private void Remove(string nombreEquipo)
     {
         errors.Clear();
         successMessage = null;
+        confirmingDeleteName = null;
 
         try
         {

@@ -1,0 +1,83 @@
+@page "/ranking"
+@using ProjectCopa
+@using Services
+@inject TeamServices TeamServices
+@inject SessionState Session
+@inject NavigationManager Nav
+
+<PageTitle>Ranking FIFA</PageTitle>
+
+@if (!Session.IsLoggedIn)
+{
+    <section class="m26-card auth-card">
+        <h1 class="m26-page-title mb-2">Ranking FIFA</h1>
+        <p class="mb-3">No estas logueado.</p>
+        <button class="btn btn-primary" @onclick="GoToLogin">
+            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+            Ir a Login
+        </button>
+    </section>
+}
+else
+{
+    <h1 class="m26-page-title">Ranking FIFA</h1>
+    <p class="text-muted">Equipos ordenados por su ranking FIFA actual.</p>
+
+    @if (!RankedTeams.Any())
+    {
+        <div class="m26-empty">
+            <i class="bi bi-people" aria-hidden="true"></i>
+            <p class="mb-0">No hay equipos cargados.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive m26-card table-wrap">
+            <table class="table table-hover m26-scoreboard mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Equipo</th>
+                        <th>Confederacion</th>
+                        <th>Ranking FIFA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int position = 0;
+                    }
+                    @foreach (Team team in RankedTeams)
+                    {
+                        position++;
+                        <tr>
+                            <td>@position</td>
+                            <td>
+                                @team.Name
+                                @if (team.IsFictitious)
+                                {
+                                    <span class="badge bg-secondary ms-1">Ficticio</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="m26-conf-badge conf-@team.Confederation">@team.Confederation</span>
+                            </td>
+                            <td><strong>@team.FifaRanking</strong></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@code {
+    private IEnumerable<Team> RankedTeams =>
+        TeamServices.GetTeams()
+            .OrderByDescending(team => team.FifaRanking)
+            .ThenBy(team => team.Name);
+
+    private void GoToLogin()
+    {
+        Nav.NavigateTo("/login");
+    }
+}
