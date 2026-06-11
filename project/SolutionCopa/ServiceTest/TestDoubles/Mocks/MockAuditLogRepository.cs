@@ -17,13 +17,6 @@ public class MockAuditLogRepository: IAuditLogRepository
         return _logs;
     }
 
-    public List<AuditLog> GetByDateRange(DateTime from, DateTime to)
-    {
-        return _logs
-            .Where(log => log.Timestamp >= from && log.Timestamp <= to)
-            .ToList();
-    }
-
     public List<AuditLog> GetFiltered(DateTime? from, DateTime? to, string? action, string? performedByEmail)
     {
         return _logs

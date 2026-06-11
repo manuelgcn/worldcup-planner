@@ -28,16 +28,6 @@ public sealed class AuditLogRepository : IAuditLogRepository
         return context.AuditLogs.AsNoTracking().OrderBy(l => l.Id).ToList();  // orden de insercion (Id ascendente)
     }
 
-    public List<AuditLog> GetByDateRange(DateTime from, DateTime to)
-    {
-        using AppDbContext context = _contextFactory.CreateDbContext();
-        return context.AuditLogs.AsNoTracking()
-            .Where(log => log.Timestamp >= from && log.Timestamp <= to)
-            .OrderBy(log => log.Timestamp)
-            .ThenBy(log => log.Id)
-            .ToList();
-    }
-
     // Filtros combinados aplicados sobre IQueryable: el WHERE se ejecuta en SQL,
     // nunca se materializa la tabla completa para filtrar en memoria.
     // ToLower().Contains se traduce a LOWER(...) LIKE para que accion y actor
