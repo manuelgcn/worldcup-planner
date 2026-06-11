@@ -6,9 +6,17 @@
         <h4>Grupo @GroupName — Partidos</h4>
         <div class="group-detail-actions">
             <button class="btn btn-secondary" @onclick="HandleBack">Volver</button>
-            <button class="btn btn-link" @onclick="NavigateToMatchesPage">Editar en /matches</button>
+            <button class="btn btn-link" @onclick="NavigateToMatchesPage">Ver en listado de partidos</button>
         </div>
     </div>
+
+    @if (IsLocked)
+    {
+        <p class="group-detail-locked">
+            <i class="bi bi-lock-fill" aria-hidden="true"></i>
+            La fase de grupos está cerrada: los cruces de fase 2 ya fueron generados.
+        </p>
+    }
 
     @if (Matches.Count == 0)
     {
@@ -27,6 +35,11 @@
                         <th>Resultado</th>
                         <th>Visitante</th>
                         <th>Estadio</th>
+                        <th>Estado</th>
+                        @if (ShowEditColumn)
+                        {
+                            <th></th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
@@ -38,7 +51,33 @@
                             <td>@match.HomeGoals - @match.AwayGoals</td>
                             <td>@match.AwayTeam?.Name</td>
                             <td>@match.Stadium?.Name</td>
+                            <td>
+                                <span class="match-status @(IsPlayed(match) ? "played" : "pending")">
+                                    @(IsPlayed(match) ? "Finalizado" : "Pendiente")
+                                </span>
+                            </td>
+                            @if (ShowEditColumn)
+                            {
+                                <td class="text-end">
+                                    <button class="btn btn-outline-primary btn-sm"
+                                            disabled="@(editingMatchId == match.MatchId)"
+                                            @onclick="() => StartEdit(match)">
+                                        <i class="bi bi-pencil" aria-hidden="true"></i>
+                                        Cargar resultado
+                                    </button>
+                                </td>
+                            }
                         </tr>
+                        @if (editingMatchId == match.MatchId && ShowEditColumn)
+                        {
+                            <tr class="row-editing">
+                                <td colspan="@ColumnCount">
+                                    <MatchResultEditor Match="match"
+                                                       OnSaved="HandleSaved"
+                                                       OnCancel="CancelEdit" />
+                                </td>
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>
@@ -50,6 +89,15 @@
     [Parameter, EditorRequired] public string GroupName { get; set; } = "";
     [Parameter, EditorRequired] public List<MatchGroup> Matches { get; set; } = new();
     [Parameter] public EventCallback OnBack { get; set; }
+    [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public bool IsLocked { get; set; }
+    [Parameter] public EventCallback<string> OnResultSaved { get; set; }
+
+    private int? editingMatchId;
+
+    private bool ShowEditColumn => CanEdit && !IsLocked;
+
+    private int ColumnCount => ShowEditColumn ? 7 : 6;
 
     private IEnumerable<IGrouping<int, MatchGroup>> GroupedByJourney =>
         Matches
@@ -57,7 +105,26 @@
             .ThenBy(match => match.MatchDate)
             .GroupBy(match => match.Journey?.Number ?? 0);
 
+    private static bool IsPlayed(MatchGroup match) =>
+        match.WasSimulated || match.HomeGoals + match.AwayGoals > 0;
+
     private Task HandleBack() => OnBack.InvokeAsync();
+
+    private void StartEdit(MatchGroup match)
+    {
+        editingMatchId = match.MatchId;
+    }
+
+    private void CancelEdit()
+    {
+        editingMatchId = null;
+    }
+
+    private async Task HandleSaved(string message)
+    {
+        editingMatchId = null;
+        await OnResultSaved.InvokeAsync(message);
+    }
 
     private void NavigateToMatchesPage()
     {
