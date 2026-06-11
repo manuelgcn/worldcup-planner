@@ -339,6 +339,13 @@ public sealed class MatchServiceTestContext
         {
             return auditLogs;
         }
+
+        public List<AuditLog> GetByDateRange(DateTime from, DateTime to)
+        {
+            return auditLogs
+                .Where(log => log.Timestamp >= from && log.Timestamp <= to)
+                .ToList();
+        }
     }
 
     public static CreateMatchRequestDto NewGroupMatchRequest(int id)

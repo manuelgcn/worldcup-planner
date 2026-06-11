@@ -2,6 +2,7 @@ using ProjectCopa;
 using Services;
 using Services.DTOs;
 using Services.Exceptions;
+using Services.Interfaces;
 using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest;

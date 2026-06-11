@@ -17,6 +17,13 @@ public class MockAuditLogRepository: IAuditLogRepository
         return _logs;
     }
 
+    public List<AuditLog> GetByDateRange(DateTime from, DateTime to)
+    {
+        return _logs
+            .Where(log => log.Timestamp >= from && log.Timestamp <= to)
+            .ToList();
+    }
+
     public void Seed(AuditLog log)
     {
         _logs.Add(log);
