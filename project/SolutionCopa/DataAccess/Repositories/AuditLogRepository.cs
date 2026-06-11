@@ -27,4 +27,14 @@ public sealed class AuditLogRepository : IAuditLogRepository
         using AppDbContext context = _contextFactory.CreateDbContext();
         return context.AuditLogs.AsNoTracking().OrderBy(l => l.Id).ToList();  // orden de insercion (Id ascendente)
     }
+
+    public List<AuditLog> GetByDateRange(DateTime from, DateTime to)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.AuditLogs.AsNoTracking()
+            .Where(log => log.Timestamp >= from && log.Timestamp <= to)
+            .OrderBy(log => log.Timestamp)
+            .ThenBy(log => log.Id)
+            .ToList();
+    }
 }

@@ -63,4 +63,12 @@ public static class AuditActions
     public const string NotificationRead = "NOTIFICATION_READ";
 
     public const string NotificationReadAll = "NOTIFICATION_READ_ALL";
+
+    public const string ExportFixtureCsv = "EXPORT_FIXTURE_CSV";
+
+    public const string ExportFixtureXlsx = "EXPORT_FIXTURE_XLSX";
+
+    public const string ExportAuditCsv = "EXPORT_AUDIT_CSV";
+
+    public const string ExportAuditXlsx = "EXPORT_AUDIT_XLSX";
 }

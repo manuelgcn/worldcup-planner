@@ -111,6 +111,10 @@
                         <i class="bi bi-person-gear" aria-hidden="true"></i> Usuarios
                     </NavLink>
                 </div>
+            }
+
+            @if (IsAdmin || Session.IsJournalist)
+            {
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="audit-log">
                         <i class="bi bi-journal-text" aria-hidden="true"></i> Log

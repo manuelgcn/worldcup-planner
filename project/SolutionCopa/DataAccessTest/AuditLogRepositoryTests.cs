@@ -66,4 +66,18 @@ public class AuditLogRepositoryTests
 
         Assert.AreEqual(1, _repository.GetAll().Count);
     }
+
+    [TestMethod]
+    public void GetByDateRangeReturnsOnlyLogsInsideInclusiveRange()
+    {
+        AuditLog log = AuditLog.Create("TODAY", "Created today", 1);
+        _repository.Add(log);
+
+        List<AuditLog> result = _repository.GetByDateRange(
+            log.Timestamp.AddSeconds(-1),
+            log.Timestamp.AddSeconds(1));
+
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual("TODAY", result[0].Action);
+    }
 }
