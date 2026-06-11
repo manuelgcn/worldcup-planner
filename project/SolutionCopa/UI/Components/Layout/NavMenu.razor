@@ -71,6 +71,22 @@
             </div>
 
 
+            @if (IsAdmin || IsEditor)
+            {
+                <div class="nav-section">Gestión del torneo</div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="simulator">
+                        <i class="bi bi-dice-5-fill" aria-hidden="true"></i> Simulador
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="import">
+                        <i class="bi bi-upload" aria-hidden="true"></i> Importar
+                    </NavLink>
+                </div>
+            }
+
             @if (IsAdmin)
             {
                 <div class="nav-section">Administración</div>
@@ -83,16 +99,6 @@
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="stadiums">
                         <i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Estadios
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="import">
-                        <i class="bi bi-upload" aria-hidden="true"></i> Importar
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="simulator">
-                        <i class="bi bi-dice-5-fill" aria-hidden="true"></i> Simulador
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
@@ -120,7 +126,10 @@
     private int unreadCount;
 
     private bool IsAdmin =>
-        Session.CurrentUser!.Roles.Any(r => r.Role == UserRoles.Admin);
+        Session.CurrentUser?.HasRole(UserRoles.Admin) == true;
+
+    private bool IsEditor =>
+        Session.CurrentUser?.HasRole(UserRoles.Editor) == true;
 
     protected override void OnInitialized()
     {
