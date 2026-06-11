@@ -42,6 +42,26 @@ public sealed class ExportServiceTests
     }
 
     [TestMethod]
+    public void ExportFixtureRejectsUnsupportedFormatWithoutAuditLog()
+    {
+        User admin = BuildUser(UserRoles.Admin);
+
+        Assert.ThrowsException<ExportServiceException>(() =>
+            _service.ExportFixture(new DateRange(Date(1), Date(30)), (ExportFormat)999, admin));
+        Assert.AreEqual(0, _auditRepository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void ExportFixtureRejectedByRoleDoesNotCreateAuditLog()
+    {
+        User editor = BuildUser(UserRoles.Editor);
+
+        Assert.ThrowsException<ExportServiceException>(() =>
+            _service.ExportFixture(new DateRange(Date(1), Date(30)), ExportFormat.Csv, editor));
+        Assert.AreEqual(0, _auditRepository.GetAll().Count);
+    }
+
+    [TestMethod]
     public void ExportFixtureIncludesGroupAndEliminationMatchesAndAuditsFile()
     {
         Team home = new Team(1, "Uruguay", 1800, false, Confederation.CONMEBOL);
@@ -71,7 +91,6 @@ public sealed class ExportServiceTests
     public void ExportAuditLogUsesDateRangeAndAuditsXlsxFile()
     {
         _auditRepository.Seed(AuditLog.Create("OLD", "Old", 1));
-        Thread.Sleep(5);
         _auditRepository.Seed(AuditLog.Create("CURRENT", "Current", 1));
         User admin = BuildUser(UserRoles.Admin);
         DateTime today = DateTime.UtcNow.Date;

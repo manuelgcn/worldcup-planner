@@ -42,6 +42,8 @@ builder.Services.AddSingleton<IGroupService>(sp => sp.GetRequiredService<GroupSe
 builder.Services.AddSingleton<JourneyServices>();
 builder.Services.AddSingleton<IJourneyService>(sp => sp.GetRequiredService<JourneyServices>());
 builder.Services.AddSingleton<INotificationService, NotificationService>();
+builder.Services.AddSingleton<IExporter, Exporter>();
+builder.Services.AddSingleton<IExportService, ExportService>();
 
 builder.Services.AddSingleton<IMatchSimulationEngine, ProbabilisticSimulationEngine>();
 builder.Services.AddSingleton<IMatchSimulationEngine, PureRandomSimulationEngine>(); // OCP: nuevos motores se agregan aca sin tocar consumidores

@@ -2,10 +2,14 @@
 @using ProjectCopa
 @using Services
 @using Services.DTOs
+@using Services.Exceptions
 @using Services.Interfaces
+@using Microsoft.JSInterop
 @inject IAuditLogService AuditLogService
+@inject IExportService ExportService
 @inject SessionState Session
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <PageTitle>Log de auditoría</PageTitle>
 
@@ -17,7 +21,7 @@
         <button class="btn btn-primary" @onclick="@(() => Nav.NavigateTo("/login"))">Ir a Login</button>
     </section>
 }
-else if (!IsAdmin)
+else if (!CanExport)
 {
     <div class="alert alert-error" role="alert">
         <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
@@ -38,16 +42,19 @@ else
         <button class="btn btn-outline-secondary" @onclick="ClearFilters">
             <i class="bi bi-x-circle" aria-hidden="true"></i> Limpiar
         </button>
-        <button class="btn btn-outline-primary" @onclick="PrepareExport">
+        <select class="form-select filter-action" aria-label="Formato de exportación" @bind="exportFormat">
+            <option value="@ExportFormat.Csv">CSV</option>
+            <option value="@ExportFormat.Xlsx">XLSX</option>
+        </select>
+        <button class="btn btn-outline-primary" disabled="@isExporting" @onclick="ExportAsync">
             <i class="bi bi-download" aria-hidden="true"></i> Exportar log
         </button>
-        @if (exportDataUri is not null)
-        {
-            <a class="btn btn-primary" download="audit-log.txt" href="@exportDataUri">
-                <i class="bi bi-file-earmark-text" aria-hidden="true"></i> Descargar audit-log.txt
-            </a>
-        }
     </div>
+
+    @if (!string.IsNullOrWhiteSpace(exportError))
+    {
+        <div class="alert alert-error" role="alert">@exportError</div>
+    }
 
     <article class="m26-card pane">
         @if (!Filtered.Any())
@@ -93,8 +100,13 @@ else
     private DateTime? fromDate;
     private DateTime? toDate;
 
-    private bool IsAdmin =>
-        Session.IsLoggedIn && Session.CurrentUser!.HasRole(UserRoles.Admin);
+    private ExportFormat exportFormat = ExportFormat.Csv;
+    private bool isExporting;
+    private string? exportError;
+
+    private bool CanExport =>
+        Session.IsLoggedIn &&
+        (Session.CurrentUser!.HasRole(UserRoles.Admin) || Session.CurrentUser.HasRole(UserRoles.Periodista));
 
     private IEnumerable<AuditLogDto> Filtered =>
         AuditLogService.GetAll()
@@ -109,15 +121,37 @@ else
         actionFilter = "";
         fromDate = null;
         toDate = null;
-        exportDataUri = null;
+        exportError = null;
     }
 
-    private string? exportDataUri;
-
-    private void PrepareExport()
+    private async Task ExportAsync()
     {
-        string content = AuditLogService.ExportAsText();
-        string base64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(content));
-        exportDataUri = $"data:text/plain;charset=utf-8;base64,{base64}";
+        exportError = null;
+        isExporting = true;
+        try
+        {
+            List<AuditLogDto> logs = AuditLogService.GetAll();
+            DateTime defaultDate = DateTime.UtcNow.Date;
+            DateTime exportFrom = fromDate?.Date ?? logs.Select(log => log.Timestamp.Date).DefaultIfEmpty(defaultDate).Min();
+            DateTime exportTo = toDate?.Date ?? logs.Select(log => log.Timestamp.Date).DefaultIfEmpty(defaultDate).Max();
+            ExportFileDto file = ExportService.ExportAuditLog(
+                new DateRange(exportFrom, exportTo),
+                exportFormat,
+                Session.CurrentUser!);
+
+            await JS.InvokeVoidAsync(
+                "downloadExportFile",
+                file.FileName,
+                file.ContentType,
+                Convert.ToBase64String(file.Content));
+        }
+        catch (ExportServiceException ex)
+        {
+            exportError = ex.Message;
+        }
+        finally
+        {
+            isExporting = false;
+        }
     }
 }

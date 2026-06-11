@@ -6,6 +6,7 @@
 @using Services.Exceptions
 @using Services.Interfaces
 @using DataAccess.Interfaces
+@using Microsoft.JSInterop
 @using UI.Components.Fixture
 @inject IFixtureOrchestrator FixtureOrchestrator
 @inject ISimulationEngineRegistry EngineRegistry
@@ -20,8 +21,10 @@
 @inject TeamServices TeamServices
 @inject IStadiumService StadiumService
 @inject StadiumServices StadiumServicesImpl
+@inject IExportService ExportService
 @inject SessionState Session
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <PageTitle>Fixture y Cruces</PageTitle>
 
@@ -112,6 +115,29 @@
                     </div>
                 </details>
             </details>
+
+            @if (CanExport)
+            {
+                <section class="step-section">
+                    <h4>Exportar fixture</h4>
+                    <p class="step-help">Descargá los partidos de grupos y eliminatorias dentro del rango seleccionado.</p>
+                    <div class="step-actions">
+                        <label for="exportFixtureFrom">Desde:</label>
+                        <input id="exportFixtureFrom" type="date" @bind="exportFromDate" />
+                        <label for="exportFixtureTo">Hasta:</label>
+                        <input id="exportFixtureTo" type="date" @bind="exportToDate" />
+                        <label for="exportFixtureFormat">Formato:</label>
+                        <select id="exportFixtureFormat" @bind="exportFormat">
+                            <option value="@ExportFormat.Csv">CSV</option>
+                            <option value="@ExportFormat.Xlsx">XLSX</option>
+                        </select>
+                        <button class="btn btn-outline-primary" disabled="@isExporting" @onclick="HandleExportFixtureAsync">
+                            <i class="bi bi-download" aria-hidden="true"></i>
+                            Exportar fixture
+                        </button>
+                    </div>
+                </section>
+            }
 
             @* PASO 1: cargar equipos y estadios demo *@
             @if (IsAdmin && (teamCount < 48 || stadiumCount < 4))
@@ -338,6 +364,10 @@
     private int? simulationSeedInput;
     private string? selectedEngine;
     private bool confirmingDelete;
+    private DateTime? exportFromDate;
+    private DateTime? exportToDate;
+    private ExportFormat exportFormat = ExportFormat.Csv;
+    private bool isExporting;
 
     private readonly List<string> errors = new();
     private string? successMessage;
@@ -349,6 +379,9 @@
     // Según la letra, el Editor es quien genera fixture, simula y sortea cruces.
     private bool CanManageFixture =>
         IsAdmin || Session.CurrentUser?.HasRole(UserRoles.Editor) == true;
+
+    private bool CanExport =>
+        IsAdmin || Session.CurrentUser?.HasRole(UserRoles.Periodista) == true;
 
     private bool CanEditResults => CanManageFixture;
 
@@ -416,6 +449,11 @@
             groupMatches = MatchRepository.GetAll().OfType<MatchGroup>().ToList();
             eliminationMatches = EliminationRepository.GetAll().OfType<MatchElimination>().ToList();
             pendingGroupMatches = StandingsService.PendingGroupStageMatchCount();
+            List<DateTime> matchDates = groupMatches.Select(match => match.MatchDate)
+                .Concat(eliminationMatches.Select(match => match.MatchDate))
+                .ToList();
+            exportFromDate ??= matchDates.Count > 0 ? matchDates.Min().Date : settings?.StartDate.Date ?? DateTime.UtcNow.Date;
+            exportToDate ??= matchDates.Count > 0 ? matchDates.Max().Date : exportFromDate;
         }
         catch (Exception ex)
         {
@@ -527,6 +565,33 @@
         await RunAdminActionAsync(
             () => TeamServices.FillToFortyEight(completionSeed, Session.CurrentUser?.email),
             "Equipos demo cargados.");
+    }
+
+    private async Task HandleExportFixtureAsync()
+    {
+        errors.Clear();
+        isExporting = true;
+        try
+        {
+            ExportFileDto file = ExportService.ExportFixture(
+                new DateRange(exportFromDate ?? DateTime.UtcNow.Date, exportToDate ?? DateTime.UtcNow.Date),
+                exportFormat,
+                Session.CurrentUser!);
+
+            await JS.InvokeVoidAsync(
+                "downloadExportFile",
+                file.FileName,
+                file.ContentType,
+                Convert.ToBase64String(file.Content));
+        }
+        catch (ExportServiceException ex)
+        {
+            errors.Add(ex.Message);
+        }
+        finally
+        {
+            isExporting = false;
+        }
     }
 
     private async Task HandleSeedStadiumsAsync()
