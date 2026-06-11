@@ -1,6 +1,6 @@
 ﻿@page "/"
-@using ProjectCopa
 @using Services.Interfaces
+@implements IDisposable
 @inject SessionState Session
 @inject INotificationService NotificationService
 
@@ -40,42 +40,15 @@
     </div>
 </section>
 
-@if (Session.IsLoggedIn && Session.CurrentUser is not null && Session.CurrentUser.HasRole(UserRoles.Periodista))
+@if (Session.IsLoggedIn && Session.IsJournalist && unreadCount > 0)
 {
-    <section class="m26-card mt-4">
-        <h2 class="pane-title">Notificaciones</h2>
-
-        @if (!unreadNotifications.Any())
-        {
-            <div class="m26-empty">
-                <i class="bi bi-bell" aria-hidden="true"></i>
-                <p class="mb-0">No tenes notificaciones pendientes.</p>
-            </div>
-        }
-        else
-        {
-            <ul class="list-group list-group-flush">
-                @foreach (Notification notification in unreadNotifications)
-                {
-                    <li class="list-group-item">
-                        <div class="d-flex justify-content-between align-items-start gap-3">
-                            <div>
-                                <div>@notification.Message</div>
-                                <small class="text-muted">
-                                    @notification.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
-                                </small>
-                            </div>
-
-                            <button class="btn btn-sm btn-outline-primary"
-                                    @onclick="() => MarkNotificationAsRead(notification.Id)">
-                                Marcar como leida
-                            </button>
-                        </div>
-                    </li>
-                }
-            </ul>
-        }
-    </section>
+    <div class="alert alert-warning d-flex align-items-center gap-2 mt-4" role="alert">
+        <i class="bi bi-bell-fill" aria-hidden="true"></i>
+        <span>
+            Tenés @unreadCount @(unreadCount == 1 ? "notificación sin leer" : "notificaciones sin leer").
+        </span>
+        <a class="alert-link" href="/notifications">Ver notificaciones</a>
+    </div>
 }
 
 <section class="stats-grid">
@@ -94,39 +67,29 @@
 </section>
 
 @code {
-    private IReadOnlyCollection<Notification> unreadNotifications = Array.Empty<Notification>();
+    private int unreadCount;
 
     protected override void OnInitialized()
     {
-        LoadUnreadNotifications();
+        Session.OnChange += HandleSessionChanged;
+        LoadUnreadCount();
     }
 
-    private void LoadUnreadNotifications()
+    private void HandleSessionChanged()
     {
-        if (!Session.IsLoggedIn || Session.CurrentUser is null)
-        {
-            unreadNotifications = Array.Empty<Notification>();
-            return;
-        }
-
-        if (!Session.CurrentUser.HasRole(UserRoles.Periodista))
-        {
-            unreadNotifications = Array.Empty<Notification>();
-            return;
-        }
-
-        unreadNotifications = NotificationService.GetUnreadForUser(Session.CurrentUser.idUser);
+        LoadUnreadCount();
+        InvokeAsync(StateHasChanged);
     }
 
-    private void MarkNotificationAsRead(int notificationId)
+    private void LoadUnreadCount()
     {
-        if (Session.CurrentUser is null)
-        {
-            return;
-        }
+        unreadCount = Session.IsJournalist
+            ? NotificationService.CountUnreadForUser(Session.CurrentUser!.idUser)
+            : 0;
+    }
 
-        NotificationService.MarkAsRead(notificationId, Session.CurrentUser.idUser);
-        LoadUnreadNotifications();
-        StateHasChanged();
+    public void Dispose()
+    {
+        Session.OnChange -= HandleSessionChanged;
     }
 }

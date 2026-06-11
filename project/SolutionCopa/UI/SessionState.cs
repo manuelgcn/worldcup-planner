@@ -8,6 +8,8 @@ public class SessionState
 
     public bool IsLoggedIn => CurrentUser != null;
 
+    public bool IsJournalist => CurrentUser?.HasRole(UserRoles.Periodista) == true;
+
     public event Action? OnChange;
 
     public void Login(User user)
