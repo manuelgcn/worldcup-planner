@@ -24,6 +24,20 @@ public class MockAuditLogRepository: IAuditLogRepository
             .ToList();
     }
 
+    public List<AuditLog> GetFiltered(DateTime? from, DateTime? to, string? action, string? performedByEmail)
+    {
+        return _logs
+            .Where(log => !from.HasValue || log.Timestamp >= from.Value)
+            .Where(log => !to.HasValue || log.Timestamp <= to.Value)
+            .Where(log => string.IsNullOrWhiteSpace(action)
+                || log.Action.Contains(action.Trim(), StringComparison.OrdinalIgnoreCase))
+            .Where(log => string.IsNullOrWhiteSpace(performedByEmail)
+                || (log.PerformedByEmail != null && log.PerformedByEmail.Contains(performedByEmail.Trim(), StringComparison.OrdinalIgnoreCase)))
+            .OrderBy(log => log.Timestamp)
+            .ThenBy(log => log.Id)
+            .ToList();
+    }
+
     public void Seed(AuditLog log)
     {
         _logs.Add(log);
