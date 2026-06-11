@@ -22,7 +22,7 @@
         {
             position++;
             <tr class="@RowClass(position)">
-                <td>@row.Team.Name</td>
+                <td class="text-nowrap"><TeamFlag Team="row.Team" />@row.Team.Name</td>
                 <td>@row.GamesPlayed</td>
                 <td>@row.Wins</td>
                 <td>@row.Draws</td>
