@@ -192,6 +192,101 @@ public class NotificationServiceTests
         StringAssert.Contains(stored.First().Message, "3-0");
     }
 
+    [TestMethod]
+    public void CountUnreadForUserReturnsOnlyUnreadOfThatUser()
+    {
+        User journalist = BuildJournalist(JournalistId, "ana@mail.com");
+        User other = BuildJournalist(2, "luis@mail.com");
+        userRepository.Add(journalist);
+        userRepository.Add(other);
+
+        notificationRepository.Add(new Notification(1, journalist, "Resultado 1"));
+        notificationRepository.Add(new Notification(2, journalist, "Resultado 2"));
+        Notification read = new Notification(3, journalist, "Resultado 3");
+        read.MarkAsRead();
+        notificationRepository.Add(read);
+        notificationRepository.Add(new Notification(4, other, "Resultado 4"));
+
+        int count = service.CountUnreadForUser(JournalistId);
+
+        Assert.AreEqual(2, count);
+    }
+
+    [TestMethod]
+    public void CountUnreadForUserReturnsZeroWhenUserHasNoNotifications()
+    {
+        Assert.AreEqual(0, service.CountUnreadForUser(JournalistId));
+    }
+
+    [TestMethod]
+    public void MarkAllAsReadMarksEveryUnreadNotificationOfUser()
+    {
+        User journalist = BuildJournalist(JournalistId, "ana@mail.com");
+        userRepository.Add(journalist);
+
+        notificationRepository.Add(new Notification(1, journalist, "Resultado 1"));
+        notificationRepository.Add(new Notification(2, journalist, "Resultado 2"));
+
+        service.MarkAllAsRead(JournalistId);
+
+        Assert.AreEqual(0, service.CountUnreadForUser(JournalistId));
+        Assert.IsTrue(notificationRepository.GetAll().All(n => n.IsRead));
+    }
+
+    [TestMethod]
+    public void MarkAllAsReadDoesNotAffectOtherUsers()
+    {
+        User journalist = BuildJournalist(JournalistId, "ana@mail.com");
+        User other = BuildJournalist(2, "luis@mail.com");
+        userRepository.Add(journalist);
+        userRepository.Add(other);
+
+        notificationRepository.Add(new Notification(1, journalist, "Resultado 1"));
+        notificationRepository.Add(new Notification(2, other, "Resultado 2"));
+
+        service.MarkAllAsRead(JournalistId);
+
+        Assert.AreEqual(1, service.CountUnreadForUser(2));
+    }
+
+    [TestMethod]
+    public void MarkAllAsReadLogsSingleAuditEntry()
+    {
+        MockAuditLogRepository auditRepository = new MockAuditLogRepository();
+        AuditLogService auditLogService = AuditLogService.CreateInstance(auditRepository, 1);
+        NotificationService auditedService = new NotificationService(
+            notificationRepository,
+            userRepository,
+            auditLogService);
+
+        User journalist = BuildJournalist(JournalistId, "ana@mail.com");
+        userRepository.Add(journalist);
+
+        notificationRepository.Add(new Notification(1, journalist, "Resultado 1"));
+        notificationRepository.Add(new Notification(2, journalist, "Resultado 2"));
+
+        auditedService.MarkAllAsRead(JournalistId);
+
+        List<AuditLog> logs = auditRepository.GetAll();
+        Assert.AreEqual(1, logs.Count);
+        Assert.AreEqual(AuditActions.NotificationReadAll, logs[0].Action);
+    }
+
+    [TestMethod]
+    public void MarkAllAsReadWithoutUnreadDoesNotLogAudit()
+    {
+        MockAuditLogRepository auditRepository = new MockAuditLogRepository();
+        AuditLogService auditLogService = AuditLogService.CreateInstance(auditRepository, 1);
+        NotificationService auditedService = new NotificationService(
+            notificationRepository,
+            userRepository,
+            auditLogService);
+
+        auditedService.MarkAllAsRead(JournalistId);
+
+        Assert.AreEqual(0, auditRepository.GetAll().Count);
+    }
+
     private static User BuildJournalist(int id, string email)
     {
         User journalist = new User(

@@ -33,6 +33,11 @@ public class MockNotificationRepository : INotificationRepository
             .ToList();
     }
 
+    public int CountUnreadByUserId(int userId)
+    {
+        return notifications.Count(n => n.UserId == userId && !n.IsRead);
+    }
+
     public void Update(Notification notification)
     {
         Notification existing = notifications.FirstOrDefault(n => n.Id == notification.Id)

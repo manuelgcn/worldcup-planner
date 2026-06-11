@@ -47,6 +47,14 @@ public class NotificationRepository : INotificationRepository
             .ToList();
     }
 
+    public int CountUnreadByUserId(int userId)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+
+        return context.Notifications
+            .Count(n => n.UserId == userId && !n.IsRead);
+    }
+
     public void Update(Notification notification)
     {
         using AppDbContext context = _contextFactory.CreateDbContext();

@@ -147,6 +147,34 @@ public class NotificationRepositoryTest
         Assert.ThrowsException<InvalidOperationException>(() => _repository.Update(notification));
     }
 
+    [TestMethod]
+    public void CountUnreadByUserIdCountsOnlyUnreadOfThatUser()
+    {
+        User firstUser = SeedUser(1, "juan@mail.com");
+        User secondUser = SeedUser(2, "ana@mail.com");
+
+        Notification unread1 = new Notification(1, firstUser, "Resultado 1");
+        Notification unread2 = new Notification(2, firstUser, "Resultado 2");
+        Notification read = new Notification(3, firstUser, "Resultado 3");
+        read.MarkAsRead();
+        Notification otherUser = new Notification(4, secondUser, "Resultado 4");
+
+        _repository.Add(unread1);
+        _repository.Add(unread2);
+        _repository.Add(read);
+        _repository.Add(otherUser);
+
+        Assert.AreEqual(2, _repository.CountUnreadByUserId(1));
+    }
+
+    [TestMethod]
+    public void CountUnreadByUserIdReturnsZeroWhenUserHasNoNotifications()
+    {
+        SeedUser(1, "juan@mail.com");
+
+        Assert.AreEqual(0, _repository.CountUnreadByUserId(1));
+    }
+
     private User SeedUser(int id, string email)
     {
         User user = new User(
