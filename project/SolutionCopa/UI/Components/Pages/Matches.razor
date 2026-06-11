@@ -131,7 +131,9 @@ else
                                     <input class="form-control" type="datetime-local" @bind="editingMatchDate" />
                                 </td>
                                 <td>
-                                    @match.HomeTeam?.Name vs @match.AwayTeam?.Name
+                                    <TeamFlag Team="match.HomeTeam" />@match.HomeTeam?.Name
+                                    vs
+                                    <TeamFlag Team="match.AwayTeam" />@match.AwayTeam?.Name
                                 </td>
                                 <td>
                                     <select class="form-select" @bind="editingStadiumId">
@@ -164,7 +166,11 @@ else
                             <tr>
                                 <td>@match.MatchId</td>
                                 <td>@match.MatchDate.ToString("dd/MM/yyyy HH:mm")</td>
-                                <td>@match.HomeTeam?.Name vs @match.AwayTeam?.Name</td>
+                                <td>
+                                    <TeamFlag Team="match.HomeTeam" />@match.HomeTeam?.Name
+                                    vs
+                                    <TeamFlag Team="match.AwayTeam" />@match.AwayTeam?.Name
+                                </td>
                                 <td>@match.Stadium?.Name</td>
                                 <td>@match.HomeGoals - @match.AwayGoals</td>
                                 <td>

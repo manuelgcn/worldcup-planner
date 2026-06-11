@@ -291,3 +291,32 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+/* Banderas de equipos */
+.team-flag {
+    width: 24px;
+    height: 16px;
+    object-fit: cover;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+    vertical-align: text-bottom;
+    margin-right: 0.35rem;
+    flex-shrink: 0;
+}
+
+.team-flag-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e9ecef;
+    color: #6c757d;
+    font-size: 0.65rem;
+    box-shadow: none;
+    border: 1px dashed #adb5bd;
+}
+
+.team-flag-lg {
+    width: 48px;
+    height: 32px;
+    font-size: 1rem;
+}

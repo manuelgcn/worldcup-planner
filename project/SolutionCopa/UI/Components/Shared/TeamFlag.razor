@@ -1,0 +1,22 @@
+@using ProjectCopa
+
+@if (Team is not null && !string.IsNullOrWhiteSpace(Team.FlagBase64))
+{
+    <img class="team-flag @SizeClass"
+         src="@ImageHelper.GetDataUri(Team.FlagBase64)"
+         alt="Bandera de @Team.Name"
+         title="@Team.Name" />
+}
+else
+{
+    <span class="team-flag team-flag-placeholder @SizeClass" title="@(Team?.Name ?? "Sin equipo")" aria-hidden="true">
+        <i class="bi bi-flag"></i>
+    </span>
+}
+
+@code {
+    [Parameter] public Team? Team { get; set; }
+    [Parameter] public bool Large { get; set; }
+
+    private string SizeClass => Large ? "team-flag-lg" : "";
+}

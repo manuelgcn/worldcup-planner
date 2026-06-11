@@ -3,7 +3,7 @@
 <div class="bracket-cell @PlayedClass()">
     <div class="bracket-cell-code">@Match.MatchCode</div>
     <div class="bracket-cell-team @WinnerClass(true)">
-        <span class="team-name">@TeamName(Match.HomeTeam)</span>
+        <span class="team-name"><TeamFlag Team="Match.HomeTeam" />@TeamName(Match.HomeTeam)</span>
         <span class="team-score">
             @Match.HomeGoals@if (Match.WonByPenalties)
             {
@@ -12,7 +12,7 @@
         </span>
     </div>
     <div class="bracket-cell-team @WinnerClass(false)">
-        <span class="team-name">@TeamName(Match.AwayTeam)</span>
+        <span class="team-name"><TeamFlag Team="Match.AwayTeam" />@TeamName(Match.AwayTeam)</span>
         <span class="team-score">
             @Match.AwayGoals@if (Match.WonByPenalties)
             {
