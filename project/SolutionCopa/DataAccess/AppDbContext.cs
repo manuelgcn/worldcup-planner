@@ -18,7 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<Journey> Journeys => Set<Journey>();
     public DbSet<Match> Matches => Set<Match>();
     public DbSet<MatchIncident> MatchIncidents => Set<MatchIncident>();
-
+    public DbSet<Notification> Notifications => Set<Notification>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -34,5 +34,6 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new MatchGroupConfiguration());
         modelBuilder.ApplyConfiguration(new MatchEliminationConfiguration());
         modelBuilder.ApplyConfiguration(new MatchIncidentConfiguration());
+        modelBuilder.ApplyConfiguration(new NotificationConfiguration());
     }
 }

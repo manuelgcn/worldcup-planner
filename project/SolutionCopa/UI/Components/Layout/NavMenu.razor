@@ -1,6 +1,10 @@
 ﻿@using ProjectCopa
+@using Microsoft.AspNetCore.Components.Routing
+@using Services.Interfaces
 @implements IDisposable
 @inject SessionState Session
+@inject INotificationService NotificationService
+@inject NavigationManager Nav
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -41,7 +45,20 @@
                     <i class="bi bi-person-vcard-fill" aria-hidden="true"></i> Mi perfil
                 </NavLink>
             </div>
-            
+
+            @if (Session.IsJournalist)
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="notifications">
+                        <i class="bi bi-bell" aria-hidden="true"></i> Notificaciones
+                        @if (unreadCount > 0)
+                        {
+                            <span class="badge rounded-pill bg-danger ms-1">@unreadCount</span>
+                        }
+                    </NavLink>
+                </div>
+            }
+
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="fixture">
                     <i class="bi bi-diagram-3-fill" aria-hidden="true"></i> Fixture
@@ -100,16 +117,40 @@
 </div>
 
 @code {
+    private int unreadCount;
+
     private bool IsAdmin =>
         Session.CurrentUser!.Roles.Any(r => r.Role == UserRoles.Admin);
 
     protected override void OnInitialized()
     {
-        Session.OnChange += StateHasChanged;
+        Session.OnChange += HandleSessionChanged;
+        Nav.LocationChanged += HandleLocationChanged;
+        LoadUnreadCount();
+    }
+
+    private void HandleSessionChanged()
+    {
+        LoadUnreadCount();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        LoadUnreadCount();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void LoadUnreadCount()
+    {
+        unreadCount = Session.IsJournalist
+            ? NotificationService.CountUnreadForUser(Session.CurrentUser!.idUser)
+            : 0;
     }
 
     public void Dispose()
     {
-        Session.OnChange -= StateHasChanged;
+        Session.OnChange -= HandleSessionChanged;
+        Nav.LocationChanged -= HandleLocationChanged;
     }
 }

@@ -57,4 +57,8 @@ public static class AuditActions
     public const string SimulateGroupStage = "SIMULATE_GROUP_STAGE";
 
     public const string SimulateGroupStageAndGenerateKnockout = "SIMULATE_GROUP_STAGE_AND_GENERATE_KNOCKOUT";
+
+    public const string NotificationRead = "NOTIFICATION_READ";
+
+    public const string NotificationReadAll = "NOTIFICATION_READ_ALL";
 }
