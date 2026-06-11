@@ -56,7 +56,7 @@ public sealed class KnockoutPersistenceIntegrationTests
         _eliminationRepository = new EliminationMatchRepository(_factory);
         _auditRepository = new AuditLogRepository(_factory);
         _unitOfWork = new UnitOfWorkRepository();
-        _auditService = AuditLogService.CreateInstance(_auditRepository, SettingsId);
+        _auditService = AuditLogService.CreateInstance(_auditRepository);
         _engine = new ProbabilisticSimulationEngine();
 
         _knockoutGenerator = new KnockoutFixtureGenerator(

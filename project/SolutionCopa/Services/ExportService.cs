@@ -36,14 +36,12 @@ public sealed class ExportService(
         return file;
     }
 
-    public ExportFileDto ExportAuditLog(DateRange range, ExportFormat format, User requestedBy)
+    public ExportFileDto ExportAuditLog(DateRange range, ExportFormat format, User requestedBy, AuditLogFilterDto? filter = null)
     {
         EnsureAuthorized(requestedBy);
         (DateTime from, DateTime to) = NormalizeRange(range);
 
-        List<AuditLogExportRow> rows = auditLogRepository.GetByDateRange(from, to)
-            .OrderBy(log => log.Timestamp)
-            .ThenBy(log => log.Id)
+        List<AuditLogExportRow> rows = auditLogRepository.GetFiltered(from, to, filter?.Action, filter?.PerformedByEmail)
             .Select(MapAuditLogRow)
             .ToList();
 
@@ -124,6 +122,7 @@ public sealed class ExportService(
             Action = log.Action,
             Details = log.Details,
             TournamentSettingsId = log.TournamentSettingsId,
+            PerformedByEmail = log.PerformedByEmail,
             EntityType = log.AffectedEntityType,
             EntityId = log.AffectedEntityId
         };

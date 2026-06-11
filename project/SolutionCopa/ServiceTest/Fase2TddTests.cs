@@ -29,7 +29,7 @@ public class Fase2TddTests
         var simulation = new MockMatchSimulationEngine();
         var uow = new ServiceTest.TestDoubles.Mocks.MockUnitOfWork();
         var auditRepo = new MockAuditLogRepository();
-        var auditService = AuditLogService.CreateInstance(auditRepo, defaultTournamentSettingsId: settings.Id);
+        var auditService = AuditLogService.CreateInstance(auditRepo);
 
         var fase2 = new Fase2(new SimulationEngineRegistry([simulation]), matchRepo, settingsRepo, uow, auditService);
 

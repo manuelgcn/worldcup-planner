@@ -258,7 +258,7 @@ public class StadiumServicesTests
         return new StadiumServices(
             new MockStadiumRepository(),
             new MockUnitOfWork(),
-            AuditLogService.CreateInstance(repository, 1));
+            AuditLogService.CreateInstance(repository));
     }
 
     // Repositorio que simula el rechazo del FK (estadio referenciado por un partido) al borrar.
@@ -321,7 +321,7 @@ public class StadiumServicesTests
         StadiumServices auditedService = new StadiumServices(
             new MockStadiumRepository(),
             new MockUnitOfWork(),
-            AuditLogService.CreateInstance(auditRepo, 1));
+            AuditLogService.CreateInstance(auditRepo));
 
         auditedService.SeedDefaultStadiums(performedByEmail: "admin@copa.com");
 

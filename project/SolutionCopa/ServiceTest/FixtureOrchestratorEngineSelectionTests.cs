@@ -58,7 +58,7 @@ public sealed class FixtureOrchestratorEngineSelectionTests
             _matchRepository,
             _eliminationRepository,
             _unitOfWork,
-            AuditLogService.CreateInstance(_auditRepository, DefaultSettingsId),
+            AuditLogService.CreateInstance(_auditRepository),
             new SimulationEngineRegistry(new IMatchSimulationEngine[]
             {
                 new ProbabilisticSimulationEngine(),

@@ -19,7 +19,7 @@ public sealed class ExportServiceTests
     {
         _matchRepository = new MockMatchRepository();
         _auditRepository = new MockAuditLogRepository();
-        IAuditLogService auditService = AuditLogService.CreateInstance(_auditRepository, 1);
+        IAuditLogService auditService = AuditLogService.CreateInstance(_auditRepository);
         _service = new ExportService(_matchRepository, _auditRepository, new Exporter(), auditService);
     }
 
@@ -84,7 +84,7 @@ public sealed class ExportServiceTests
         Assert.IsTrue(csv.Contains("RoundOf32"));
         Assert.AreEqual("fixture_20260601_20260630.csv", result.FileName);
         Assert.IsTrue(_auditRepository.GetAll().Any(log => log.Action == AuditActions.ExportFixtureCsv));
-        Assert.IsTrue(_auditRepository.GetAll().Any(log => log.Details.Contains(journalist.email)));
+        Assert.IsTrue(_auditRepository.GetAll().Any(log => log.PerformedByEmail == journalist.email));
     }
 
     [TestMethod]

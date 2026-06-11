@@ -27,7 +27,7 @@ public sealed class FlagAssignmentServiceTests
             _teamRepository,
             _unitOfWork,
             _flagsDirectory,
-            AuditLogService.CreateInstance(_auditLogRepository, 1));
+            AuditLogService.CreateInstance(_auditLogRepository));
     }
 
     [TestCleanup]
@@ -168,7 +168,7 @@ public sealed class FlagAssignmentServiceTests
         List<AuditLog> logs = _auditLogRepository.GetAll();
         Assert.AreEqual(1, logs.Count);
         Assert.AreEqual(AuditActions.AssignTeamFlags, logs[0].Action);
-        StringAssert.Contains(logs[0].Details, "admin@copa.com");
+        Assert.AreEqual("admin@copa.com", logs[0].PerformedByEmail);
     }
 
     [TestMethod]

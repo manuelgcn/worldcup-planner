@@ -6,49 +6,41 @@ using Services.Interfaces;
 
 namespace Services;
 
+// Los logs de auditoria son globales (del sistema): TournamentSettingsId solo se
+// registra cuando el caller lo pasa explicitamente porque aporta contexto real.
 public sealed class AuditLogService : IAuditLogService
 {
-    private const string ActorSeparator = " by ";
-
-    private readonly int _defaultTournamentSettingsId;
     private readonly IAuditLogRepository _repository;
 
-    private AuditLogService(IAuditLogRepository repository, int defaultTournamentSettingsId)
+    private AuditLogService(IAuditLogRepository repository)
     {
         _repository = repository;
-        _defaultTournamentSettingsId = defaultTournamentSettingsId;
     }
 
-    public static AuditLogService CreateInstance(IAuditLogRepository repository, int defaultTournamentSettingsId)
+    public static AuditLogService CreateInstance(IAuditLogRepository repository)
     {
-        return new AuditLogService(repository, defaultTournamentSettingsId);
+        return new AuditLogService(repository);
     }
 
     public void Log(string action, string details, int tournamentSettingsId, string? affectedEntityType = null, int? affectedEntityId = null)
     {
-        AuditLog log = AuditLog.Create(action, details, tournamentSettingsId, affectedEntityType, affectedEntityId);
-        _repository.Add(log);
+        AddLog(action, details, tournamentSettingsId, affectedEntityType, affectedEntityId, performedByEmail: null);
     }
 
     public void Log(string action, string details, string? affectedEntityType = null, int? affectedEntityId = null)
     {
-        Log(action, details, _defaultTournamentSettingsId, affectedEntityType, affectedEntityId);
+        AddLog(action, details, tournamentSettingsId: null, affectedEntityType, affectedEntityId, performedByEmail: null);
     }
 
     public void LogPerformedBy(string action, string details, string? performedByEmail, string? affectedEntityType = null, int? affectedEntityId = null)
     {
-        string detailsWithActor = AppendActor(details, performedByEmail);
-        Log(action, detailsWithActor, _defaultTournamentSettingsId, affectedEntityType, affectedEntityId);
+        AddLog(action, details, tournamentSettingsId: null, affectedEntityType, affectedEntityId, performedByEmail);
     }
 
-    private static string AppendActor(string details, string? performedByEmail)
+    private void AddLog(string action, string details, int? tournamentSettingsId, string? affectedEntityType, int? affectedEntityId, string? performedByEmail)
     {
-        if (string.IsNullOrWhiteSpace(performedByEmail))
-        {
-            return details;
-        }
-
-        return $"{details}{ActorSeparator}{performedByEmail}";
+        AuditLog log = AuditLog.Create(action, details, tournamentSettingsId, affectedEntityType, affectedEntityId, performedByEmail);
+        _repository.Add(log);
     }
 
     public List<AuditLogDto> GetAll()
@@ -59,57 +51,50 @@ public sealed class AuditLogService : IAuditLogService
             .ToList();
     }
 
-    public List<AuditLogDto> GetByTournamentSettings(int tournamentSettingsId)
+    public List<AuditLogDto> GetFiltered(AuditLogFilterDto filter)
     {
-        List<AuditLogDto> filtered = new List<AuditLogDto>();
-        List<AuditLog> logs = _repository.GetAll();
+        ArgumentNullException.ThrowIfNull(filter);
 
-        foreach (AuditLog log in logs)
-        {
-            if (log.TournamentSettingsId == tournamentSettingsId)
-            {
-                filtered.Add(MapToDto(log));
-            }
-        }
-
-        return filtered;
+        List<AuditLog> logs = _repository.GetFiltered(filter.From, filter.To, filter.Action, filter.PerformedByEmail);
+        return logs
+            .Select(MapToDto)
+            .ToList();
     }
 
-    public string ExportAsText(int? tournamentSettingsId = null)
+    public string ExportAsText()
     {
-        IEnumerable<AuditLog> toExport = GetLogsToExport(tournamentSettingsId);
+        List<AuditLog> logs = _repository.GetAll();
 
         StringBuilder sb = new StringBuilder();
-        foreach (AuditLog log in toExport.OrderBy(l => l.Timestamp))
+        foreach (AuditLog log in logs.OrderBy(l => l.Timestamp))
         {
             sb.AppendLine(FormatLogLine(log));
         }
 
-        return sb.ToString().TrimEnd(); 
-    }
-
-    private IEnumerable<AuditLog> GetLogsToExport(int? tournamentSettingsId)
-    {
-        List<AuditLog> logs = _repository.GetAll();
-        if (tournamentSettingsId.HasValue)
-        {
-            return logs
-                .Where(l => l.TournamentSettingsId == tournamentSettingsId.Value);
-        }
-
-        return logs;
+        return sb.ToString().TrimEnd();
     }
 
     private static string FormatLogLine(AuditLog log)
     {
-        string entityPart = string.Empty;
-            
-        if (ExistLogEntity(log))
+        StringBuilder line = new StringBuilder();
+        line.Append($"[{log.Timestamp.ToString("o")}] Action: {log.Action} | Details: {log.Details}");
+
+        if (!string.IsNullOrWhiteSpace(log.PerformedByEmail))
         {
-            entityPart = $" | Entity: {log.AffectedEntityType} - ID: {log.AffectedEntityId!.Value}";
+            line.Append($" | PerformedBy: {log.PerformedByEmail}");
         }
 
-        return $"[{log.Timestamp.ToString("o")}] Action: {log.Action} | Details: {log.Details} | TournamentID: {log.TournamentSettingsId}{entityPart}";
+        if (log.TournamentSettingsId.HasValue)
+        {
+            line.Append($" | TournamentID: {log.TournamentSettingsId.Value}");
+        }
+
+        if (ExistLogEntity(log))
+        {
+            line.Append($" | Entity: {log.AffectedEntityType} - ID: {log.AffectedEntityId!.Value}");
+        }
+
+        return line.ToString();
     }
 
     private static bool ExistLogEntity(AuditLog log)
@@ -125,6 +110,7 @@ public sealed class AuditLogService : IAuditLogService
             Action = log.Action,
             Details = log.Details,
             TournamentSettingsId = log.TournamentSettingsId,
+            PerformedByEmail = log.PerformedByEmail,
             EntityType = log.AffectedEntityType,
             EntityId = log.AffectedEntityId
         };

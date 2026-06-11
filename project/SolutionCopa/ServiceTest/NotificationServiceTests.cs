@@ -131,7 +131,7 @@ public class NotificationServiceTests
     public void MarkAsReadLogsAuditEntry()
     {
         MockAuditLogRepository auditRepository = new MockAuditLogRepository();
-        AuditLogService auditLogService = AuditLogService.CreateInstance(auditRepository, 1);
+        AuditLogService auditLogService = AuditLogService.CreateInstance(auditRepository);
         NotificationService auditedService = new NotificationService(
             notificationRepository,
             userRepository,
@@ -253,7 +253,7 @@ public class NotificationServiceTests
     public void MarkAllAsReadLogsSingleAuditEntry()
     {
         MockAuditLogRepository auditRepository = new MockAuditLogRepository();
-        AuditLogService auditLogService = AuditLogService.CreateInstance(auditRepository, 1);
+        AuditLogService auditLogService = AuditLogService.CreateInstance(auditRepository);
         NotificationService auditedService = new NotificationService(
             notificationRepository,
             userRepository,
@@ -276,7 +276,7 @@ public class NotificationServiceTests
     public void MarkAllAsReadWithoutUnreadDoesNotLogAudit()
     {
         MockAuditLogRepository auditRepository = new MockAuditLogRepository();
-        AuditLogService auditLogService = AuditLogService.CreateInstance(auditRepository, 1);
+        AuditLogService auditLogService = AuditLogService.CreateInstance(auditRepository);
         NotificationService auditedService = new NotificationService(
             notificationRepository,
             userRepository,

@@ -46,7 +46,7 @@ public class FixtureOrchestratorTests
         _settingsRepository = new MockTournamentSettingsRepository();
         _unitOfWork = new MockUnitOfWork();
         _auditRepository = new MockAuditLogRepository();
-        _auditService = AuditLogService.CreateInstance(_auditRepository, DefaultSettingsId);
+        _auditService = AuditLogService.CreateInstance(_auditRepository);
 
         _settingsRepository.Add(CreateDefaultSettings());
         SeedStadiums(RequiredStadiumCount);
@@ -177,7 +177,7 @@ public class FixtureOrchestratorTests
         _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         AuditLog log = _auditRepository.GetAll().First(entry => entry.Action == AuditActions.GenerateFixture);
-        Assert.IsTrue(log.Details.Contains(AdminEmail), $"Expected actor email in details, got '{log.Details}'");
+        Assert.AreEqual(AdminEmail, log.PerformedByEmail);
     }
 
     [TestMethod]
@@ -253,7 +253,7 @@ public class FixtureOrchestratorTests
         _orchestrator.DeleteGroupStage(performedByEmail: AdminEmail);
 
         AuditLog log = _auditRepository.GetAll().First(entry => entry.Action == AuditActions.DeleteFixture);
-        Assert.IsTrue(log.Details.Contains(AdminEmail), $"Expected actor email in details, got '{log.Details}'");
+        Assert.AreEqual(AdminEmail, log.PerformedByEmail);
     }
 
     [TestMethod]

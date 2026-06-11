@@ -29,7 +29,7 @@ public class Fase2OrchestrationTests
 
         MockEliminationMatchRepository elimRepo = new MockEliminationMatchRepository();
         MockAuditLogRepository auditRepo = new MockAuditLogRepository();
-        AuditLogService auditService = AuditLogService.CreateInstance(auditRepo, defaultTournamentSettingsId: settings.Id);
+        AuditLogService auditService = AuditLogService.CreateInstance(auditRepo);
 
         EliminationOrchestrator orchestrator = new EliminationOrchestrator(elimRepo, auditService);
 

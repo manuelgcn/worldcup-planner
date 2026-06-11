@@ -45,7 +45,7 @@ public class FixturePendingMatchesTests
         _settingsRepository = new MockTournamentSettingsRepository();
         _unitOfWork = new MockUnitOfWork();
         _auditRepository = new MockAuditLogRepository();
-        _auditService = AuditLogService.CreateInstance(_auditRepository, DefaultSettingsId);
+        _auditService = AuditLogService.CreateInstance(_auditRepository);
         _simulationEngine = new ProbabilisticSimulationEngine();
 
         _settingsRepository.Add(CreateDefaultSettings());

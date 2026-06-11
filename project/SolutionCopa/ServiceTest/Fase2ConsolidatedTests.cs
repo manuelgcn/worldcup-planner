@@ -35,7 +35,7 @@ public class Fase2ConsolidatedTests
         MockMatchSimulationEngine simulation = new ServiceTest.TestDoubles.Mocks.MockMatchSimulationEngine();
         MockUnitOfWork uow = new ServiceTest.TestDoubles.Mocks.MockUnitOfWork();
         MockAuditLogRepository auditRepo = new MockAuditLogRepository();
-        AuditLogService auditService = AuditLogService.CreateInstance(auditRepo, defaultTournamentSettingsId: settings.Id);
+        AuditLogService auditService = AuditLogService.CreateInstance(auditRepo);
 
         Fase2 fase2 = new Fase2(new SimulationEngineRegistry([simulation]), matchRepo, settingsRepo, uow, auditService);
 

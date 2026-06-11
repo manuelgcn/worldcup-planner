@@ -35,7 +35,7 @@ public sealed class SimulationEngineSelectionTests
             new IMatchSimulationEngine[] { _defaultEngineSpy, _selectedEngineSpy });
         _settingsRepository = new MockTournamentSettingsRepository();
         _auditLogRepository = new MockAuditLogRepository();
-        _auditLogService = AuditLogService.CreateInstance(_auditLogRepository, SettingsId);
+        _auditLogService = AuditLogService.CreateInstance(_auditLogRepository);
         _unitOfWork = new MockUnitOfWork();
 
         TournamentSettings settings = new TournamentSettings(

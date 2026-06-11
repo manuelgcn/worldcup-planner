@@ -10,6 +10,6 @@ public interface IAuditLogService
     void LogPerformedBy(string action, string details, string? performedByEmail, string? affectedEntityType = null, int? affectedEntityId = null);
 
     List<AuditLogDto> GetAll();
-    List<AuditLogDto> GetByTournamentSettings(int tournamentSettingsId);
-    string ExportAsText(int? tournamentSettingsId = null);
+    List<AuditLogDto> GetFiltered(AuditLogFilterDto filter);
+    string ExportAsText();
 }
