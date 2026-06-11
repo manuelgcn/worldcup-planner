@@ -26,7 +26,16 @@
 <PageTitle>Fixture y Cruces</PageTitle>
 
 <div class="fixture-page">
-    <h1 class="m26-page-title mb-2">Fixture y Cruces — Mundial 2026</h1>
+    <h1 class="m26-page-title mb-2">
+        Fixture y Cruces — Mundial 2026
+        @if (Session.IsLoggedIn && settings is not null && IsFixtureGenerated)
+        {
+            <span class="engine-badge" title="Motor de simulación seleccionado">
+                <i class="bi bi-cpu" aria-hidden="true"></i>
+                @settings.SelectedSimulationEngine
+            </span>
+        }
+    </h1>
 
     @if (!Session.IsLoggedIn)
     {
@@ -91,11 +100,17 @@
                     <div><strong>Pendientes (sin simular):</strong> @pendingGroupMatches</div>
                     <div><strong>Knockout generado:</strong> @(IsKnockoutGenerated ? "sí" : "no")</div>
                     <div><strong>Motor de simulación:</strong> @settings.SelectedSimulationEngine</div>
-                    <div><strong>Fixture seed:</strong> @settings.FixtureSeed</div>
-                    <div><strong>Crossings seed:</strong> @settings.CrossingsSeed</div>
-                    <div><strong>Simulation seed:</strong> @settings.SimulationSeed</div>
-                    <div><strong>Start date:</strong> @settings.StartDate.ToString("yyyy-MM-dd")</div>
                 </div>
+                <details class="status-advanced">
+                    <summary>Configuración avanzada (semillas y fechas)</summary>
+                    <div class="status-grid">
+                        <div><strong>Fixture seed:</strong> @settings.FixtureSeed</div>
+                        <div><strong>Crossings seed:</strong> @settings.CrossingsSeed</div>
+                        <div><strong>Simulation seed:</strong> @settings.SimulationSeed</div>
+                        <div><strong>Completion seed:</strong> @settings.CompletionSeed</div>
+                        <div><strong>Start date:</strong> @settings.StartDate.ToString("yyyy-MM-dd")</div>
+                    </div>
+                </details>
             </details>
 
             @* PASO 1: cargar equipos y estadios demo *@
@@ -120,7 +135,7 @@
             }
 
             @* PASO 2: generar fixture *@
-            @if (IsAdmin && teamCount >= 48 && stadiumCount >= 4 && !IsFixtureGenerated)
+            @if (CanManageFixture && teamCount >= 48 && stadiumCount >= 4 && !IsFixtureGenerated)
             {
                 <section class="step-section">
                     <h4>2. Generar fixture de fase de grupos</h4>
@@ -157,7 +172,7 @@
                             <text>Simulá todos los partidos de una sola vez, o cargá resultados a mano en <a href="/matches">/matches</a>. Faltan @pendingGroupMatches partidos.</text>
                         }
                     </p>
-                    @if (IsAdmin)
+                    @if (CanManageFixture)
                     {
                         @if (!IsGroupStageComplete)
                         {
@@ -204,7 +219,7 @@
                             <text>Simulá ronda por ronda o de un saque hasta el final.</text>
                         }
                     </p>
-                    @if (IsAdmin)
+                    @if (CanManageFixture)
                     {
                         <div class="step-actions">
                             <button class="btn btn-secondary"
@@ -318,6 +333,10 @@
 
     private bool IsAdmin =>
         Session.CurrentUser?.HasRole(UserRoles.Admin) == true;
+
+    // Según la letra, el Editor es quien genera fixture, simula y sortea cruces.
+    private bool CanManageFixture =>
+        IsAdmin || Session.CurrentUser?.HasRole(UserRoles.Editor) == true;
 
     private bool IsFixtureGenerated => FixtureOrchestrator.IsFixtureGenerated();
     private bool IsKnockoutGenerated => KnockoutGenerator.IsBracketGenerated();

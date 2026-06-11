@@ -291,3 +291,34 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+/* Badge del motor de simulacion junto al titulo del fixture */
+.engine-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: 0.75rem;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    background: #e7f1ff;
+    color: #0a58ca;
+    font-size: 0.95rem;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+/* Stat card con texto en lugar de numero */
+.stat-value-text {
+    font-size: 1.35rem;
+    line-height: 2.4rem;
+}
+
+.status-advanced {
+    margin-top: 0.5rem;
+}
+
+.status-advanced summary {
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
