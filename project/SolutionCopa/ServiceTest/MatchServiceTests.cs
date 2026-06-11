@@ -293,6 +293,22 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
+    public void UpdateMatch_WithDateChange_AppliesChange()
+    {
+        // Arrange
+        CreateMatchRequestDto createRequest = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(createRequest);
+        DateTime newDate = new DateTime(2026, 6, 22, 18, 0, 0);
+        UpdateMatchRequestDto updateRequest = new UpdateMatchRequestDto { MatchDate = newDate };
+
+        // Act
+        MatchDto result = _context.Service.UpdateMatch(matchId: 1, request: updateRequest);
+
+        // Assert
+        Assert.AreEqual(newDate, result.MatchDate);
+    }
+
+    [TestMethod]
     public void UpdateMatch_WithoutChanges_StillUpdates()
     {
         // Arrange
