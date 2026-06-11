@@ -1,10 +1,12 @@
 @page "/teams"
-@using System.Text
 @using ProjectCopa
 @using Services
+@using Services.DTOs
 @using Services.Exceptions
+@using Services.Interfaces
 @using Microsoft.AspNetCore.Components.Forms
 @inject TeamServices TeamServices
+@inject IFlagAssignmentService FlagAssignmentService
 @inject SessionState Session
 @inject NavigationManager Nav
 
@@ -107,6 +109,17 @@ else
         <article class="m26-card pane">
             <h2 class="pane-title">Equipos existentes</h2>
 
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <button class="btn btn-outline-primary" @onclick="AssignFlags">
+                    <i class="bi bi-flag-fill" aria-hidden="true"></i>
+                    Asignar banderas
+                </button>
+                <div class="form-check mb-0">
+                    <input id="overwriteFlags" class="form-check-input" type="checkbox" @bind="overwriteFlags" />
+                    <label class="form-check-label" for="overwriteFlags">Sobrescribir existentes</label>
+                </div>
+            </div>
+
             @if (!equipos.Any())
             {
                 <div class="m26-empty">
@@ -132,16 +145,7 @@ else
                             {
                                 <tr>
                                     <td>
-                                        @if (!string.IsNullOrWhiteSpace(equipo.FlagBase64))
-                                        {
-                                            <img src="@GetDataUri(equipo.FlagBase64)"
-                                                 alt="Bandera de @equipo.Name"
-                                                 style="max-width:60px; max-height:40px;" />
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">Sin bandera</span>
-                                        }
+                                        <TeamFlag Team="equipo" Large="true" />
                                     </td>
                                     <td>@equipo.Name</td>
                                     <td>@equipo.FifaRanking</td>
@@ -242,6 +246,45 @@ else
         }
     }
 
+    private bool overwriteFlags;
+
+    private void AssignFlags()
+    {
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            FlagAssignmentResult result = FlagAssignmentService.AssignFlags(
+                overwriteFlags,
+                Session.CurrentUser?.email);
+
+            successMessage = BuildFlagAssignmentMessage(result);
+            LoadTeams();
+        }
+        catch (Exception ex)
+        {
+            errors.Add("No se pudieron asignar las banderas: " + ex.Message);
+        }
+    }
+
+    private static string BuildFlagAssignmentMessage(FlagAssignmentResult result)
+    {
+        string message = $"Se asignaron {result.AssignedCount} banderas";
+
+        if (result.SkippedExistingCount > 0)
+        {
+            message += $", {result.SkippedExistingCount} ya tenían bandera";
+        }
+
+        if (result.UnmappedTeamNames.Count > 0)
+        {
+            message += $" ({result.UnmappedTeamNames.Count} sin mapeo: {string.Join(", ", result.UnmappedTeamNames)})";
+        }
+
+        return message;
+    }
+
     private void Remove(string nombreEquipo)
     {
         errors.Clear();
@@ -286,78 +329,6 @@ else
 
     private string GetPreviewDataUri()
     {
-        if (string.IsNullOrWhiteSpace(flagBase64))
-        {
-            return "";
-        }
-
-        string mimeType = !string.IsNullOrWhiteSpace(flagContentType)
-            ? flagContentType
-            : GuessImageMimeType(flagBase64);
-
-        return $"data:{mimeType};base64,{flagBase64}";
-    }
-
-    private string GetDataUri(string? base64)
-    {
-        if (string.IsNullOrWhiteSpace(base64))
-        {
-            return "";
-        }
-
-        string mimeType = GuessImageMimeType(base64);
-        return $"data:{mimeType};base64,{base64}";
-    }
-
-    private string GuessImageMimeType(string base64)
-    {
-        try
-        {
-            byte[] bytes = Convert.FromBase64String(base64);
-
-            if (bytes.Length >= 8 &&
-                bytes[0] == 0x89 &&
-                bytes[1] == 0x50 &&
-                bytes[2] == 0x4E &&
-                bytes[3] == 0x47)
-            {
-                return "image/png";
-            }
-
-            if (bytes.Length >= 3 &&
-                bytes[0] == 0xFF &&
-                bytes[1] == 0xD8 &&
-                bytes[2] == 0xFF)
-            {
-                return "image/jpeg";
-            }
-
-            if (bytes.Length >= 12 &&
-                bytes[0] == 0x52 &&
-                bytes[1] == 0x49 &&
-                bytes[2] == 0x46 &&
-                bytes[3] == 0x46 &&
-                bytes[8] == 0x57 &&
-                bytes[9] == 0x45 &&
-                bytes[10] == 0x42 &&
-                bytes[11] == 0x50)
-            {
-                return "image/webp";
-            }
-
-            string text = Encoding.UTF8.GetString(bytes);
-            string trimmed = text.TrimStart();
-
-            if (trimmed.StartsWith("<svg", StringComparison.OrdinalIgnoreCase) ||
-                trimmed.StartsWith("<?xml", StringComparison.OrdinalIgnoreCase))
-            {
-                return "image/svg+xml";
-            }
-        }
-        catch
-        {
-        }
-
-        return "image/png";
+        return ImageHelper.GetDataUri(flagBase64, flagContentType);
     }
 }

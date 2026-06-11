@@ -26,6 +26,8 @@ public static class AuditActions
 
     public const string DeleteTeam = "DELETE_TEAM";
 
+    public const string AssignTeamFlags = "ASSIGN_TEAM_FLAGS";
+
     public const string CreateStadium = "CREATE_STADIUM";
 
     public const string UpdateStadium = "UPDATE_STADIUM";

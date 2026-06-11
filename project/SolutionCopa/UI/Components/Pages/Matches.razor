@@ -126,7 +126,11 @@ else
                         <tr>
                             <td>@match.MatchDate.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>@StageLabel(match)</td>
-                            <td>@match.HomeTeam?.Name vs @match.AwayTeam?.Name</td>
+                            <td>
+                                <TeamFlag Team="match.HomeTeam" />@match.HomeTeam?.Name
+                                vs
+                                <TeamFlag Team="match.AwayTeam" />@match.AwayTeam?.Name
+                            </td>
                             <td>@match.Stadium?.Name</td>
                             <td>@match.HomeGoals - @match.AwayGoals</td>
                             <td>
