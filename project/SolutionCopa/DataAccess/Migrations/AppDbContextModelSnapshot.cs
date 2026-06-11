@@ -270,6 +270,13 @@ namespace DataAccess.Migrations
                     b.Property<int>("MaxMatchesPerDay")
                         .HasColumnType("int");
 
+                    b.Property<string>("SelectedSimulationEngine")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)")
+                        .HasDefaultValue("Probabilístico");
+
                     b.Property<int>("SimulationSeed")
                         .HasColumnType("int");
 

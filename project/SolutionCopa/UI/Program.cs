@@ -43,7 +43,9 @@ builder.Services.AddSingleton<JourneyServices>();
 builder.Services.AddSingleton<IJourneyService>(sp => sp.GetRequiredService<JourneyServices>());
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
-builder.Services.AddSingleton<IMatchSimulationEngine, MatchSimulationEngine>();
+builder.Services.AddSingleton<IMatchSimulationEngine, ProbabilisticSimulationEngine>();
+builder.Services.AddSingleton<IMatchSimulationEngine, PureRandomSimulationEngine>(); // OCP: nuevos motores se agregan aca sin tocar consumidores
+builder.Services.AddSingleton<ISimulationEngineRegistry, SimulationEngineRegistry>();
 builder.Services.AddSingleton<IAuditLogService>(sp =>
     AuditLogService.CreateInstance(
         sp.GetRequiredService<IAuditLogRepository>(),
@@ -52,7 +54,7 @@ builder.Services.AddSingleton<IAuditLogService>(sp =>
 
 builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
     new KnockoutFixtureGenerator(
-        sp.GetRequiredService<IMatchSimulationEngine>(),
+        sp.GetRequiredService<ISimulationEngineRegistry>(),
         sp.GetRequiredService<IMatchRepository>(),
         sp.GetRequiredService<IEliminationMatchRepository>(),
         sp.GetRequiredService<IGroupRepository>(),

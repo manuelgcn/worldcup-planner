@@ -58,7 +58,7 @@ public sealed class TournamentSimulationServiceTests
             _matchRepository,
             _eliminationMatchRepository,
             _unitOfWork,
-            _matchSimulationEngine,
+            new SimulationEngineRegistry([_matchSimulationEngine]),
             auditLogService,
             _tournamentSettingsRepository,
             _knockoutFixtureGenerator);
@@ -119,7 +119,7 @@ public sealed class TournamentSimulationServiceTests
             emptyMatchRepository,
             emptyEliminationRepository,
             emptyUnitOfWork,
-            _matchSimulationEngine,
+            new SimulationEngineRegistry([_matchSimulationEngine]),
             auditLogService,
             emptySettingsRepository,
             emptyKnockoutFixtureGenerator);

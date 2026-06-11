@@ -11,12 +11,12 @@ public sealed class TournamentEndToEndSimulationTests
     private const int TeamsPerGroup = 4;
     private const int FirstKnockoutMatchId = 2000;
 
-    private MatchSimulationEngine _engine = null!;
+    private ProbabilisticSimulationEngine _engine = null!;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        _engine = new MatchSimulationEngine();
+        _engine = new ProbabilisticSimulationEngine();
     }
 
     [TestMethod]

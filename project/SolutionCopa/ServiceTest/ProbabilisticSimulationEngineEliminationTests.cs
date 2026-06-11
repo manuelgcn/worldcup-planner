@@ -4,18 +4,18 @@ using Services;
 namespace ServiceTest;
 
 [TestClass]
-public sealed class MatchSimulationEngineEliminationTests
+public sealed class ProbabilisticSimulationEngineEliminationTests
 {
     private const int FixedSimulationSeed = 42;
     private const int FirstMatchId = 2000;
     private const int LastMatchId = 2100;
 
-    private MatchSimulationEngine _engine = null!;
+    private ProbabilisticSimulationEngine _engine = null!;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        _engine = new MatchSimulationEngine();
+        _engine = new ProbabilisticSimulationEngine();
     }
 
     [TestMethod]

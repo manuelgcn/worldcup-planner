@@ -212,7 +212,7 @@ public class KnockoutFixtureGeneratorExtensionTests
     private KnockoutFixtureGenerator NewGenerator()
     {
         return new KnockoutFixtureGenerator(
-            _simulationEngine,
+            new SimulationEngineRegistry([_simulationEngine]),
             _matchRepository,
             _eliminationRepository,
             _groupRepository,
