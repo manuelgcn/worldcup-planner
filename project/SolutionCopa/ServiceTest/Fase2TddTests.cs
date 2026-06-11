@@ -38,7 +38,7 @@ public class Fase2TddTests
 
         // Assert
         var logs = auditRepo.GetAll();
-        Assert.IsTrue(logs.Any(l => l.Action == AuditActions.SimulateMatch && l.TournamentSettingsId == settings.Id && l.AffectedEntityType == "Match" && l.AffectedEntityId == 5));
+        Assert.IsTrue(logs.Any(l => l.Action == AuditActions.SimulationExecuted && l.TournamentSettingsId == settings.Id && l.AffectedEntityType == "Match" && l.AffectedEntityId == 5));
         var seed = settings.SimulationSeed + 5;
         Assert.IsTrue(logs.Any(l => l.Details.Contains($"seed {seed}")));
         Assert.IsTrue(simulation.SimulateWasCalled);

@@ -414,6 +414,18 @@ public class AuditLogServiceTests
     }
 
     [TestMethod]
+    public void AuditActions_DefinesRankingUpdatedConstant()
+    {
+        Assert.AreEqual("RANKING_UPDATED", AuditActions.RankingUpdated);
+    }
+
+    [TestMethod]
+    public void AuditActions_DefinesSimulationExecutedConstant()
+    {
+        Assert.AreEqual("SIMULATION_EXECUTED", AuditActions.SimulationExecuted);
+    }
+
+    [TestMethod]
     public void GetAll_PreservesInsertionOrder()
     {
         _service.Log("FIRST", "first action");
