@@ -355,10 +355,7 @@ else
             UpdateMatch(match);
             PersistChanges();
 
-            if (ResultChanged(previousHomeGoals, previousAwayGoals))
-            {
-                NotifyJournalists(match);
-            }
+            NotificationService.NotifyResultLoaded(match, previousHomeGoals, previousAwayGoals);
 
             successMessage = "Partido actualizado correctamente";
             CancelEdit();
@@ -421,22 +418,6 @@ else
         }
 
         return !errors.Any();
-    }
-
-    private bool ResultChanged(int previousHomeGoals, int previousAwayGoals)
-    {
-        return previousHomeGoals != editingHomeGoals || previousAwayGoals != editingAwayGoals;
-    }
-
-    private void NotifyJournalists(Match match)
-    {
-        string home = match.HomeTeam?.Name ?? "Equipo local";
-        string away = match.AwayTeam?.Name ?? "Equipo visitante";
-
-        string message =
-            $"Se cargo resultado del partido {match.MatchId}: {home} {match.HomeGoals}-{match.AwayGoals} {away}.";
-
-        NotificationService.NotifyJournalists(message);
     }
 
     private void GoToLogin()

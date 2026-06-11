@@ -1,3 +1,4 @@
+using DataAccess;
 using DataAccess.Repositories;
 using DataAccessTest.TestDoubles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -8,25 +9,20 @@ namespace DataAccessTest;
 [TestClass]
 public class NotificationRepositoryTest
 {
+    private InMemoryDbContextFactory _contextFactory = null!;
     private NotificationRepository _repository = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        _repository = new NotificationRepository(new InMemoryDbContextFactory());
+        _contextFactory = new InMemoryDbContextFactory();
+        _repository = new NotificationRepository(_contextFactory);
     }
 
     [TestMethod]
     public void AddStoresNotificationAndGetByIdReturnsIt()
     {
-        User user = new User(
-            1,
-            "Juan",
-            "Perez",
-            "juan@mail.com",
-            "Pass123@",
-            new DateTime(1990, 5, 15)
-        );
+        User user = SeedUser(1, "juan@mail.com");
 
         Notification notification = new Notification(
             1,
@@ -44,12 +40,29 @@ public class NotificationRepositoryTest
         Assert.AreEqual("Resultado cargado", stored.Message);
         Assert.IsFalse(stored.IsRead);
     }
-    
-    
+
     [TestMethod]
-    public void GetUnreadByUserIdTest()
+    public void AddGeneratesIdWhenIdIsZero()
     {
-        User firstUser = new User(
+        User user = SeedUser(1, "juan@mail.com");
+
+        Notification first = new Notification(0, user, "Resultado 1");
+        Notification second = new Notification(0, user, "Resultado 2");
+
+        _repository.Add(first);
+        _repository.Add(second);
+
+        IReadOnlyCollection<Notification> stored = _repository.GetAll();
+
+        Assert.AreEqual(2, stored.Count);
+        Assert.IsTrue(stored.All(n => n.Id > 0));
+        Assert.AreEqual(2, stored.Select(n => n.Id).Distinct().Count());
+    }
+
+    [TestMethod]
+    public void AddThrowsWhenUserDoesNotExist()
+    {
+        User unsavedUser = new User(
             1,
             "Juan",
             "Perez",
@@ -58,14 +71,16 @@ public class NotificationRepositoryTest
             new DateTime(1990, 5, 15)
         );
 
-        User secondUser = new User(
-            2,
-            "Ana",
-            "Lopez",
-            "ana@mail.com",
-            "Pass123@",
-            new DateTime(1992, 7, 10)
-        );
+        Notification notification = new Notification(1, unsavedUser, "Resultado cargado");
+
+        Assert.ThrowsException<InvalidOperationException>(() => _repository.Add(notification));
+    }
+
+    [TestMethod]
+    public void GetUnreadByUserIdTest()
+    {
+        User firstUser = SeedUser(1, "juan@mail.com");
+        User secondUser = SeedUser(2, "ana@mail.com");
 
         Notification unreadForFirstUser = new Notification(
             1,
@@ -96,19 +111,11 @@ public class NotificationRepositoryTest
         Assert.AreEqual(1, unread.First().Id);
         Assert.AreEqual("Resultado 1", unread.First().Message);
     }
-    
-    
+
     [TestMethod]
     public void UpdatePersistsNotificationAsRead()
     {
-        User user = new User(
-            1,
-            "Juan",
-            "Perez",
-            "juan@mail.com",
-            "Pass123@",
-            new DateTime(1990, 5, 15)
-        );
+        User user = SeedUser(1, "juan@mail.com");
 
         Notification notification = new Notification(
             1,
@@ -130,4 +137,31 @@ public class NotificationRepositoryTest
         Assert.IsTrue(stored!.IsRead);
     }
 
+    [TestMethod]
+    public void UpdateThrowsWhenNotificationDoesNotExist()
+    {
+        User user = SeedUser(1, "juan@mail.com");
+
+        Notification notification = new Notification(1, user, "Resultado cargado");
+
+        Assert.ThrowsException<InvalidOperationException>(() => _repository.Update(notification));
+    }
+
+    private User SeedUser(int id, string email)
+    {
+        User user = new User(
+            id,
+            "Juan",
+            "Perez",
+            email,
+            "Pass123@",
+            new DateTime(1990, 5, 15)
+        );
+
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        context.Users.Add(user);
+        context.SaveChanges();
+
+        return user;
+    }
 }

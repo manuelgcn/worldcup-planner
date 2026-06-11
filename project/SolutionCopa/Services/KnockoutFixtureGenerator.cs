@@ -1,5 +1,4 @@
 using DataAccess.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
 using ProjectCopa;
 using ProjectCopa.Models;
 using Services.Exceptions;
@@ -30,16 +29,15 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditLogService? _auditLog;
     private readonly IStadiumRepository? _stadiumRepository;
-    private readonly IServiceScopeFactory? _scopeFactory;
-    
-    
+    private readonly INotificationService? _notificationService;
+
     public KnockoutFixtureGenerator(
         ISimulationEngineRegistry simulationEngineRegistry,
         IMatchRepository matchRepository,
         ITournamentSettingsRepository settingsRepository,
         IUnitOfWork unitOfWork,
         IAuditLogService? auditLog = null,
-        IServiceScopeFactory? scopeFactory = null)
+        INotificationService? notificationService = null)
         : this(
             simulationEngineRegistry,
             matchRepository,
@@ -47,7 +45,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             unitOfWork,
             auditLog,
             stadiumRepository: null,
-            scopeFactory: scopeFactory)
+            notificationService: notificationService)
     {
     }
 
@@ -58,7 +56,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         IUnitOfWork unitOfWork,
         IAuditLogService? auditLog,
         IStadiumRepository? stadiumRepository,
-        IServiceScopeFactory? scopeFactory = null)
+        INotificationService? notificationService = null)
     {
         _simulationEngineRegistry = simulationEngineRegistry ?? throw new ArgumentNullException(nameof(simulationEngineRegistry));
         _matchRepository = matchRepository ?? throw new ArgumentNullException(nameof(matchRepository));
@@ -66,12 +64,10 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _auditLog = auditLog;
         _stadiumRepository = stadiumRepository;
-        _scopeFactory = scopeFactory;
+        _notificationService = notificationService;
         _eliminationRepository = null;
         _groupRepository = null;
     }
-    
-    
 
     public KnockoutFixtureGenerator(
         ISimulationEngineRegistry simulationEngineRegistry,
@@ -82,7 +78,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         ITournamentSettingsRepository settingsRepository,
         IUnitOfWork unitOfWork,
         IAuditLogService auditLog,
-        IServiceScopeFactory? scopeFactory = null)
+        INotificationService? notificationService = null)
     {
         _simulationEngineRegistry = simulationEngineRegistry ?? throw new ArgumentNullException(nameof(simulationEngineRegistry));
         _matchRepository = matchRepository ?? throw new ArgumentNullException(nameof(matchRepository));
@@ -92,7 +88,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         _settingsRepository = settingsRepository ?? throw new ArgumentNullException(nameof(settingsRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _auditLog = auditLog ?? throw new ArgumentNullException(nameof(auditLog));
-        _scopeFactory = scopeFactory;
+        _notificationService = notificationService;
     }
 
     public List<Match> GeneratePhase2(QualifiedTeams qualifiedTeams)
@@ -700,20 +696,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     private void NotifyJournalistsAboutSimulatedResult(Match match)
     {
-        if (_scopeFactory is null)
-        {
-            return;
-        }
-
-        using IServiceScope scope = _scopeFactory.CreateScope();
-        INotificationService notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
-
-        string home = match.HomeTeam?.Name ?? "Equipo local";
-        string away = match.AwayTeam?.Name ?? "Equipo visitante";
-
-        string message =
-            $"Se simulo resultado del partido {match.MatchId}: {home} {match.HomeGoals}-{match.AwayGoals} {away}.";
-
-        notificationService.NotifyJournalists(message);
+        _notificationService?.NotifyMatchSimulated(match);
     }
 }

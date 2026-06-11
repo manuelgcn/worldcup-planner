@@ -120,7 +120,12 @@
 
     private void MarkNotificationAsRead(int notificationId)
     {
-        NotificationService.MarkAsRead(notificationId);
+        if (Session.CurrentUser is null)
+        {
+            return;
+        }
+
+        NotificationService.MarkAsRead(notificationId, Session.CurrentUser.idUser);
         LoadUnreadNotifications();
         StateHasChanged();
     }

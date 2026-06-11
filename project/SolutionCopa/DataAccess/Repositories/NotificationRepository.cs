@@ -1,4 +1,3 @@
-
 using DataAccess.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using ProjectCopa;
@@ -7,6 +6,9 @@ namespace DataAccess.Repositories;
 
 public class NotificationRepository : INotificationRepository
 {
+    private const string UserNotFoundMessage = "Cannot store a notification for a user that does not exist.";
+    private const string NotificationNotFoundMessage = "Cannot update a notification that does not exist.";
+
     private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
     public NotificationRepository(IDbContextFactory<AppDbContext> contextFactory)
@@ -18,17 +20,10 @@ public class NotificationRepository : INotificationRepository
     {
         using AppDbContext context = _contextFactory.CreateDbContext();
 
-        User? existingUser = context.Users.FirstOrDefault(u => u.idUser == notification.UserId);
+        User existingUser = context.Users.FirstOrDefault(u => u.idUser == notification.UserId)
+            ?? throw new InvalidOperationException(UserNotFoundMessage);
 
-        if (existingUser is null)
-        {
-            context.Users.Add(notification.User);
-        }
-        else
-        {
-            notification.User = existingUser;
-        }
-
+        notification.User = existingUser;
         context.Notifications.Add(notification);
         context.SaveChanges();
     }
@@ -56,17 +51,12 @@ public class NotificationRepository : INotificationRepository
     {
         using AppDbContext context = _contextFactory.CreateDbContext();
 
-        Notification? existing = context.Notifications.FirstOrDefault(n => n.Id == notification.Id);
-        if (existing is null)
+        Notification existing = context.Notifications.FirstOrDefault(n => n.Id == notification.Id)
+            ?? throw new InvalidOperationException(NotificationNotFoundMessage);
+
+        if (notification.IsRead && !existing.IsRead)
         {
-            context.Notifications.Add(notification);
-        }
-        else
-        {
-            if (notification.IsRead && !existing.IsRead)
-            {
-                existing.MarkAsRead();
-            }
+            existing.MarkAsRead();
         }
 
         context.SaveChanges();
