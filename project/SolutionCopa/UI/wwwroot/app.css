@@ -292,6 +292,117 @@ h1:focus {
     border-color: #929292;
 }
 
+/* Navegacion por chips de grupos en el fixture */
+.group-chips {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0.5rem 0;
+    background: var(--bs-body-bg, #fff);
+}
+
+.group-chip {
+    min-width: 2.2rem;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid #adb5bd;
+    border-radius: 999px;
+    background: transparent;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.group-chip:hover {
+    background: #e9ecef;
+}
+
+.group-chip.active {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+
+/* Badge de estado de partido */
+.match-status {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.match-status.pending {
+    background: #fff3cd;
+    color: #664d03;
+}
+
+.match-status.played {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+/* Editor de resultado compartido */
+.match-result-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    background: #f8f9fa;
+}
+
+.match-result-editor .editor-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.match-result-editor .editor-row .form-label {
+    margin-bottom: 0;
+    font-weight: 600;
+}
+
+.match-result-editor .editor-score .editor-team {
+    font-weight: 600;
+    min-width: 8rem;
+}
+
+.match-result-editor .goal-input,
+.match-result-editor .card-input {
+    width: 5rem;
+    display: inline-block;
+}
+
+.match-result-editor .editor-incidents summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.match-result-editor .incidents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+}
+
+.match-result-editor .editor-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.group-detail-locked {
+    color: #664d03;
+    background: #fff3cd;
+    border-radius: 0.4rem;
+    padding: 0.4rem 0.7rem;
+    display: inline-block;
+}
+
 /* Banderas de equipos */
 .team-flag {
     width: 24px;
