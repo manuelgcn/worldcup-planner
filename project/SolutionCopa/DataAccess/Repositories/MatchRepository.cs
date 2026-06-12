@@ -80,9 +80,43 @@ public class MatchRepository : IMatchRepository
             .ToList();
     }
 
+    // Resuelve TODOS los filtros en una sola consulta sobre la jerarquia TPH "Matches":
+    // construye el IQueryable, aplica los Where opcionales ANTES de materializar y recien
+    // ahi hace ToList. No combina EliminationRepository (la TPH ya trae las eliminatorias),
+    // por eso no hay duplicacion. From es inclusivo y To exclusivo (lo fija el caso de uso).
     public List<Match> Search(MatchQueryCriteria criteria)
     {
-        throw new NotImplementedException();
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        IQueryable<Match> query = MatchEf.WithGraph(context.Matches);
+
+        if (criteria.From.HasValue)
+        {
+            query = query.Where(match => match.MatchDate >= criteria.From.Value);
+        }
+
+        if (criteria.To.HasValue)
+        {
+            query = query.Where(match => match.MatchDate < criteria.To.Value);
+        }
+
+        if (criteria.StadiumId.HasValue)
+        {
+            query = query.Where(match => match.Stadium != null && match.Stadium.Id == criteria.StadiumId.Value);
+        }
+
+        if (!string.IsNullOrEmpty(criteria.GroupName))
+        {
+            query = query.Where(match =>
+                match is MatchGroup && ((MatchGroup)match).Group != null && ((MatchGroup)match).Group!.Name == criteria.GroupName);
+        }
+
+        if (criteria.Phase.HasValue)
+        {
+            query = query.Where(match =>
+                match is MatchElimination && ((MatchElimination)match).Phase == criteria.Phase.Value);
+        }
+
+        return query.ToList();
     }
 
     public List<Match> GetAll()

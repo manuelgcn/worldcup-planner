@@ -54,6 +54,7 @@ builder.Services.AddSingleton<IAuditLogService>(sp =>
 builder.Services.AddSingleton<IRankingService, RankingService>();
 builder.Services.AddSingleton<IMatchFactory, MatchFactory>();
 builder.Services.AddSingleton<IMatchService, MatchService>();
+builder.Services.AddSingleton<IMatchQueryService, MatchQueryService>();
 
 
 builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
