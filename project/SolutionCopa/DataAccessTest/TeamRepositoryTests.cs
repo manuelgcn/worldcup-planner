@@ -192,6 +192,24 @@ public class TeamRepositoryTests
         Assert.AreEqual("dGVzdA==", storedTeam!.FlagBase64);
     }
 
+    [TestMethod]
+    public void UpdatePersistsModifiedFifaRanking()
+    {
+        Team team = new Team(14, "Colombia", 1400, false, Confederation.CONMEBOL);
+        _repository.Add(team);
+
+        // Misma situacion que el ranking Elo: instancia detached (GetById usa AsNoTracking)
+        // mutada en memoria; Update debe llevar el nuevo ranking a la base.
+        Team detachedTeam = _repository.GetById(14)!;
+        detachedTeam.UpdateFifaRanking(1450);
+
+        _repository.Update(detachedTeam);
+
+        Team? storedTeam = _repository.GetById(14);
+        Assert.IsNotNull(storedTeam);
+        Assert.AreEqual(1450, storedTeam!.FifaRanking);
+    }
+
     
     
     
