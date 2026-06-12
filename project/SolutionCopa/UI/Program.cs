@@ -22,7 +22,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 
 builder.Services.AddSingleton<ITeamRepository, TeamRepository>();
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
-
+builder.Services.AddSingleton<INotificationRepository, NotificationRepository>();
 builder.Services.AddSingleton<IMatchRepository, MatchRepository>();
 builder.Services.AddSingleton<IStadiumRepository, StadiumRepository>();
 builder.Services.AddSingleton<IGroupRepository, GroupRepository>();
@@ -41,23 +41,31 @@ builder.Services.AddSingleton<GroupServices>();
 builder.Services.AddSingleton<IGroupService>(sp => sp.GetRequiredService<GroupServices>());
 builder.Services.AddSingleton<JourneyServices>();
 builder.Services.AddSingleton<IJourneyService>(sp => sp.GetRequiredService<JourneyServices>());
+builder.Services.AddSingleton<INotificationService, NotificationService>();
+builder.Services.AddSingleton<IExporter, Exporter>();
+builder.Services.AddSingleton<IExportService, ExportService>();
 
-builder.Services.AddSingleton<IMatchSimulationEngine, MatchSimulationEngine>();
+builder.Services.AddSingleton<IMatchSimulationEngine, ProbabilisticSimulationEngine>();
+builder.Services.AddSingleton<IMatchSimulationEngine, PureRandomSimulationEngine>(); // OCP: nuevos motores se agregan aca sin tocar consumidores
+builder.Services.AddSingleton<ISimulationEngineRegistry, SimulationEngineRegistry>();
 builder.Services.AddSingleton<IAuditLogService>(sp =>
-    AuditLogService.CreateInstance(
-        sp.GetRequiredService<IAuditLogRepository>(),
-        1));
+    AuditLogService.CreateInstance(sp.GetRequiredService<IAuditLogRepository>()));
+
+builder.Services.AddSingleton<IMatchFactory, MatchFactory>();
+builder.Services.AddSingleton<IMatchService, MatchService>();
+
 
 builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
     new KnockoutFixtureGenerator(
-        sp.GetRequiredService<IMatchSimulationEngine>(),
+        sp.GetRequiredService<ISimulationEngineRegistry>(),
         sp.GetRequiredService<IMatchRepository>(),
         sp.GetRequiredService<IEliminationMatchRepository>(),
         sp.GetRequiredService<IGroupRepository>(),
         sp.GetRequiredService<IStadiumRepository>(),
         sp.GetRequiredService<ITournamentSettingsRepository>(),
         sp.GetRequiredService<IUnitOfWork>(),
-        sp.GetRequiredService<IAuditLogService>()));
+        sp.GetRequiredService<IAuditLogService>(),
+        sp.GetRequiredService<INotificationService>()));
 
 builder.Services.AddSingleton<IKnockoutFixtureGenerator>(sp =>
     sp.GetRequiredService<KnockoutFixtureGenerator>());
@@ -72,6 +80,17 @@ builder.Services.AddSingleton<IImportService>(sp =>
         sp.GetRequiredService<ITeamRepository>(),
         sp.GetRequiredService<IUnitOfWork>(),
         sp.GetRequiredService<ITeamParser>()));
+
+string flagsDirectory = Path.Combine(
+    builder.Environment.ContentRootPath,
+    builder.Configuration.GetValue<string>("Flags:Directory") ?? "flags-master");
+
+builder.Services.AddSingleton<IFlagAssignmentService>(sp =>
+    new FlagAssignmentService(
+        sp.GetRequiredService<ITeamRepository>(),
+        sp.GetRequiredService<IUnitOfWork>(),
+        flagsDirectory,
+        sp.GetRequiredService<IAuditLogService>()));
 
 builder.Services.AddScoped<SessionState>();
 
@@ -157,6 +176,26 @@ using (var scope = app.Services.CreateScope())
     else if (!editor.HasRole(UserRoles.Editor))
     {
         userServices.AssignRole(editor.idUser, UserRoles.Editor);
+    }
+
+    var journalist = userServices.GetAllUsers().FirstOrDefault(u => u.email == "periodista@copa.com");
+
+    if (journalist == null)
+    {
+        journalist = new User(
+            0,
+            "Periodista",
+            "Sistema",
+            "periodista@copa.com",
+            "Periodista@123",
+            new DateTime(1998, 3, 10)
+        );
+        journalist.AddRole(UserRoles.Periodista);
+        userServices.AddUser(journalist);
+    }
+    else if (!journalist.HasRole(UserRoles.Periodista))
+    {
+        userServices.AssignRole(journalist.idUser, UserRoles.Periodista);
     }
 }
 

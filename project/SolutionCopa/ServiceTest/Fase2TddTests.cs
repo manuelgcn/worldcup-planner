@@ -29,16 +29,16 @@ public class Fase2TddTests
         var simulation = new MockMatchSimulationEngine();
         var uow = new ServiceTest.TestDoubles.Mocks.MockUnitOfWork();
         var auditRepo = new MockAuditLogRepository();
-        var auditService = AuditLogService.CreateInstance(auditRepo, defaultTournamentSettingsId: settings.Id);
+        var auditService = AuditLogService.CreateInstance(auditRepo);
 
-        var fase2 = new Fase2(simulation, matchRepo, settingsRepo, uow, auditService);
+        var fase2 = new Fase2(new SimulationEngineRegistry([simulation]), matchRepo, settingsRepo, uow, auditService);
 
         // Act
         fase2.SimulateEliminationMatches(new [] { 5 });
 
         // Assert
         var logs = auditRepo.GetAll();
-        Assert.IsTrue(logs.Any(l => l.Action == AuditActions.SimulateMatch && l.TournamentSettingsId == settings.Id && l.AffectedEntityType == "Match" && l.AffectedEntityId == 5));
+        Assert.IsTrue(logs.Any(l => l.Action == AuditActions.SimulationExecuted && l.TournamentSettingsId == settings.Id && l.AffectedEntityType == "Match" && l.AffectedEntityId == 5));
         var seed = settings.SimulationSeed + 5;
         Assert.IsTrue(logs.Any(l => l.Details.Contains($"seed {seed}")));
         Assert.IsTrue(simulation.SimulateWasCalled);

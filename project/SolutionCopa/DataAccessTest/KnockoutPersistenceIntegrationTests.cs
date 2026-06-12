@@ -38,7 +38,7 @@ public sealed class KnockoutPersistenceIntegrationTests
     private AuditLogRepository _auditRepository = null!;
     private UnitOfWorkRepository _unitOfWork = null!;
     private AuditLogService _auditService = null!;
-    private MatchSimulationEngine _engine = null!;
+    private ProbabilisticSimulationEngine _engine = null!;
     private KnockoutFixtureGenerator _knockoutGenerator = null!;
     private FixtureOrchestrator _fixtureOrchestrator = null!;
     private TournamentSimulationService _simulationService = null!;
@@ -56,11 +56,11 @@ public sealed class KnockoutPersistenceIntegrationTests
         _eliminationRepository = new EliminationMatchRepository(_factory);
         _auditRepository = new AuditLogRepository(_factory);
         _unitOfWork = new UnitOfWorkRepository();
-        _auditService = AuditLogService.CreateInstance(_auditRepository, SettingsId);
-        _engine = new MatchSimulationEngine();
+        _auditService = AuditLogService.CreateInstance(_auditRepository);
+        _engine = new ProbabilisticSimulationEngine();
 
         _knockoutGenerator = new KnockoutFixtureGenerator(
-            _engine,
+            new SimulationEngineRegistry([_engine]),
             _matchRepository,
             _eliminationRepository,
             _groupRepository,
@@ -78,14 +78,15 @@ public sealed class KnockoutPersistenceIntegrationTests
             _matchRepository,
             _eliminationRepository,
             _unitOfWork,
-            _auditService);
+            _auditService,
+            new SimulationEngineRegistry([_engine]));
 
         _simulationService = new TournamentSimulationService(
             _groupRepository,
             _matchRepository,
             _eliminationRepository,
             _unitOfWork,
-            _engine,
+            new SimulationEngineRegistry([_engine]),
             _auditService,
             _settingsRepository,
             _knockoutGenerator);
@@ -101,7 +102,7 @@ public sealed class KnockoutPersistenceIntegrationTests
     [TestMethod]
     public void SimulateGroupStageAndGenerateKnockout_PersistsRoundOf32WithoutSyntheticSources()
     {
-        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         // Camino del boton "Simular" (Simulator.razor): simula los 72 partidos de grupos y genera y
         // persiste los 16 partidos de R32. Antes del fix, esta linea rompia con una violacion de FK.
@@ -126,7 +127,7 @@ public sealed class KnockoutPersistenceIntegrationTests
         // Camino alternativo (pagina Fixture): el mismo EliminationBuilder.CreateRoundOf32, antes
         // tambien rompia aca. Se simula la fase de grupos sin generar la fase 2 y luego se genera el
         // bracket por separado.
-        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
         SimulateGroupStageOnly();
 
         _knockoutGenerator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
@@ -139,7 +140,7 @@ public sealed class KnockoutPersistenceIntegrationTests
     [TestMethod]
     public void SimulateUntilFinal_ProducesPersistedChampionAndBracketChainThatSurvivesReload()
     {
-        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
         _simulationService.SimulateGroupStageAndGenerateKnockout(Seed);
 
         // Simula ronda a ronda hasta la Final. R16 en adelante SI tienen fuentes reales (los partidos
@@ -162,7 +163,7 @@ public sealed class KnockoutPersistenceIntegrationTests
     [TestMethod]
     public void DeleteGroupStage_AfterKnockoutGenerated_RemovesEverythingAndSurvivesReload()
     {
-        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
         _simulationService.SimulateGroupStageAndGenerateKnockout(Seed);
         Assert.AreEqual(ExpectedRoundOf32Matches, _eliminationRepository.GetAll().Count, "Precondicion: el knockout debe existir.");
 

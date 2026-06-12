@@ -1,5 +1,16 @@
-﻿@page "/"
+@page "/"
+@using ProjectCopa
+@using Services.Interfaces
+@using DataAccess.Interfaces
+@implements IDisposable
 @inject SessionState Session
+@inject INotificationService NotificationService
+@inject ITeamRepository TeamRepository
+@inject IStadiumService StadiumService
+@inject IMatchRepository MatchRepository
+@inject IEliminationMatchRepository EliminationRepository
+@inject IFixtureOrchestrator FixtureOrchestrator
+@inject IKnockoutFixtureGenerator KnockoutGenerator
 
 <PageTitle>Inicio</PageTitle>
 
@@ -8,14 +19,14 @@
         <p class="hero-kicker">TORNEO INTERNACIONAL</p>
         <h1 class="hero-title">LA COPA</h1>
         <p class="hero-subtitle">
-            48 selecciones, 16 sedes y 104 partidos.
+            @TournamentStatusText
         </p>
         <div class="hero-cta">
             @if (Session.IsLoggedIn)
             {
-                <a class="btn btn-primary btn-lg" href="/fixture">
-                    <i class="bi bi-diagram-3-fill" aria-hidden="true"></i>
-                    Ver Fixture
+                <a class="btn btn-primary btn-lg" href="@PrimaryCta.Href">
+                    <i class="bi @PrimaryCta.Icon" aria-hidden="true"></i>
+                    @PrimaryCta.Label
                 </a>
                 <a class="btn btn-outline-primary btn-lg" href="/matches">
                     <i class="bi bi-calendar-event-fill" aria-hidden="true"></i>
@@ -37,17 +48,166 @@
     </div>
 </section>
 
+@if (Session.IsLoggedIn && Session.IsJournalist && unreadCount > 0)
+{
+    <div class="alert alert-warning d-flex align-items-center gap-2 mt-4" role="alert">
+        <i class="bi bi-bell-fill" aria-hidden="true"></i>
+        <span>
+            Tenés @unreadCount @(unreadCount == 1 ? "notificación sin leer" : "notificaciones sin leer").
+        </span>
+        <a class="alert-link" href="/notifications">Ver notificaciones</a>
+    </div>
+}
+
 <section class="stats-grid">
     <article class="m26-card stat-card">
-        <p class="stat-value">48</p>
+        <p class="stat-value">@teamCount / 48</p>
         <p class="stat-label">Equipos</p>
     </article>
     <article class="m26-card stat-card">
-        <p class="stat-value">16</p>
+        <p class="stat-value">@stadiumCount</p>
         <p class="stat-label">Estadios</p>
     </article>
     <article class="m26-card stat-card">
-        <p class="stat-value">104</p>
-        <p class="stat-label">Partidos</p>
+        <p class="stat-value">@playedMatches / @totalMatches</p>
+        <p class="stat-label">Partidos jugados</p>
+    </article>
+    <article class="m26-card stat-card">
+        <p class="stat-value stat-value-text">@TournamentStageLabel</p>
+        <p class="stat-label">Estado del torneo</p>
     </article>
 </section>
+
+@code {
+    private int unreadCount;
+    private int teamCount;
+    private int stadiumCount;
+    private int playedMatches;
+    private int totalMatches;
+    private bool isFixtureGenerated;
+    private bool isKnockoutGenerated;
+    private string? championName;
+
+    private sealed record CtaLink(string Label, string Href, string Icon);
+
+    private bool CanManageTournament =>
+        Session.CurrentUser?.HasRole(UserRoles.Admin) == true ||
+        Session.CurrentUser?.HasRole(UserRoles.Editor) == true;
+
+    private string TournamentStatusText
+    {
+        get
+        {
+            if (championName is not null)
+            {
+                return $"El torneo está completo: ¡{championName} es el campeón del mundo!";
+            }
+            if (isKnockoutGenerated)
+            {
+                return "El bracket eliminatorio está en curso.";
+            }
+            if (isFixtureGenerated)
+            {
+                return $"Fase de grupos en juego: {playedMatches} de {totalMatches} partidos disputados.";
+            }
+            return $"Preparando el torneo: {teamCount} de 48 equipos y {stadiumCount} estadios cargados.";
+        }
+    }
+
+    private string TournamentStageLabel
+    {
+        get
+        {
+            if (championName is not null) return "¡Hay campeón!";
+            if (isKnockoutGenerated) return "Bracket en curso";
+            if (isFixtureGenerated) return "Fase de grupos";
+            return "En preparación";
+        }
+    }
+
+    private CtaLink PrimaryCta
+    {
+        get
+        {
+            if (!isFixtureGenerated && CanManageTournament)
+            {
+                return new CtaLink("Generar fixture", "/fixture", "bi-magic");
+            }
+            if (isFixtureGenerated && !isKnockoutGenerated && playedMatches < totalMatches && CanManageTournament)
+            {
+                return new CtaLink("Cargar resultados", "/fixture", "bi-pencil-square");
+            }
+            return new CtaLink("Ver Fixture", "/fixture", "bi-diagram-3-fill");
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Session.OnChange += HandleSessionChanged;
+        LoadState();
+    }
+
+    private void HandleSessionChanged()
+    {
+        LoadState();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void LoadState()
+    {
+        LoadUnreadCount();
+        LoadTournamentStats();
+    }
+
+    private void LoadTournamentStats()
+    {
+        try
+        {
+            teamCount = TeamRepository.GetAll().Count;
+            stadiumCount = StadiumService.GetAllStadiums().Count;
+
+            List<Match> allMatches = MatchRepository.GetAll()
+                .Concat(EliminationRepository.GetAll())
+                .ToList();
+
+            totalMatches = allMatches.Count;
+            playedMatches = allMatches.Count(IsPlayed);
+            isFixtureGenerated = FixtureOrchestrator.IsFixtureGenerated();
+            isKnockoutGenerated = KnockoutGenerator.IsBracketGenerated();
+            championName = FindChampionName(allMatches);
+        }
+        catch (Exception)
+        {
+            // La home no debe romperse si la base aún no está disponible: se muestran ceros.
+        }
+    }
+
+    private static bool IsPlayed(Match match) =>
+        match.WasSimulated || match.HomeGoals + match.AwayGoals > 0;
+
+    private static string? FindChampionName(List<Match> allMatches)
+    {
+        MatchElimination? final = allMatches
+            .OfType<MatchElimination>()
+            .FirstOrDefault(match => match.Phase == Phase.Final);
+
+        if (final is null || !final.WasSimulated)
+        {
+            return null;
+        }
+
+        return final.GetWinner()?.Name;
+    }
+
+    private void LoadUnreadCount()
+    {
+        unreadCount = Session.IsJournalist
+            ? NotificationService.CountUnreadForUser(Session.CurrentUser!.idUser)
+            : 0;
+    }
+
+    public void Dispose()
+    {
+        Session.OnChange -= HandleSessionChanged;
+    }
+}

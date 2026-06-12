@@ -1,5 +1,4 @@
 @page "/login"
-@using System.Security.Cryptography
 @using ProjectCopa
 @using Services
 @inject UserServices UserServices
@@ -61,6 +60,11 @@
                         Email: <code>editor@copa.com</code><br />
                         Password: <code>Editor@123</code>
                     </li>
+                    <li class="mt-2">
+                        <strong>Periodista</strong><br />
+                        Email: <code>periodista@copa.com</code><br />
+                        Password: <code>Periodista@123</code>
+                    </li>
                 </ul>
             </div>
 
@@ -81,23 +85,22 @@
         {
             ValidateInput();
 
-            User user = UserServices.GetUserByEmail(email);
-            string passwordHash = Hash(password);
-
-            if (user.password != passwordHash)
-            {
-                errors.Add("Credenciales invalidas");
-                return;
-            }
+            User user = UserServices.Authenticate(email, password);
 
             Session.Login(user);
-            Nav.NavigateTo("/");
+            Nav.NavigateTo(HomeRouteFor(user));
         }
         catch (ArgumentException ex)
         {
             errors.Add(ex.Message);
         }
     }
+
+    // El Periodista aterriza en sus notificaciones; el resto en el inicio.
+    private static string HomeRouteFor(User user) =>
+        user.HasRole(UserRoles.Periodista) && !user.HasRole(UserRoles.Admin) && !user.HasRole(UserRoles.Editor)
+            ? "/notifications"
+            : "/";
 
     private void ValidateInput()
     {
@@ -115,12 +118,5 @@
         {
             throw new ArgumentException("Corrige los errores del formulario");
         }
-    }
-
-    private static string Hash(string password)
-    {
-        using SHA256 sha = SHA256.Create();
-        byte[] bytes = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
-        return Convert.ToBase64String(bytes);
     }
 }

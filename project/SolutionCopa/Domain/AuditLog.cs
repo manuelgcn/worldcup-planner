@@ -7,7 +7,8 @@ public sealed class AuditLog
     public DateTime Timestamp { get; }
     public string Action { get; }
     public string Details { get; }
-    public int TournamentSettingsId { get; }
+    public int? TournamentSettingsId { get; }
+    public string? PerformedByEmail { get; }
     public string? AffectedEntityType { get; }
     public int? AffectedEntityId { get; }
 
@@ -25,9 +26,10 @@ public sealed class AuditLog
         DateTime timestampUtc,
         string action,
         string details,
-        int tournamentSettingsId,
-        string? affectedEntityType = null,
-        int? affectedEntityId = null)
+        int? tournamentSettingsId,
+        string? affectedEntityType,
+        int? affectedEntityId,
+        string? performedByEmail)
     {
         Timestamp = timestampUtc;
         Action = action;
@@ -35,6 +37,7 @@ public sealed class AuditLog
         TournamentSettingsId = tournamentSettingsId;
         AffectedEntityType = affectedEntityType;
         AffectedEntityId = affectedEntityId;
+        PerformedByEmail = performedByEmail;
     }
 
     private static void EnsureActionIsValid(string? action)
@@ -50,20 +53,32 @@ public sealed class AuditLog
         return action.Trim();
     }
 
+    private static string? NormalizeActor(string? performedByEmail)
+    {
+        if (string.IsNullOrWhiteSpace(performedByEmail))
+        {
+            return null;
+        }
+
+        return performedByEmail.Trim();
+    }
+
     public static AuditLog Create(
         string? action,
         string? details,
-        int tournamentSettingsId,
+        int? tournamentSettingsId = null,
         string? affectedEntityType = null,
-        int? affectedEntityId = null)
+        int? affectedEntityId = null,
+        string? performedByEmail = null)
     {
         EnsureActionIsValid(action);
 
         string cleanAction = TrimAction(action!);
         string cleanDetails = details ?? string.Empty;
+        string? cleanActor = NormalizeActor(performedByEmail);
         DateTime timestampUtc = DateTime.UtcNow;
 
-        return new AuditLog(timestampUtc, cleanAction, cleanDetails, tournamentSettingsId, affectedEntityType, affectedEntityId);
+        return new AuditLog(timestampUtc, cleanAction, cleanDetails, tournamentSettingsId, affectedEntityType, affectedEntityId, cleanActor);
     }
 
     public void SetId(int id)

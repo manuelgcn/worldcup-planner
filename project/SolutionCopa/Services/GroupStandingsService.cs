@@ -44,6 +44,14 @@ public sealed class GroupStandingsService : IGroupStandingsService
             .ToList();
     }
 
+    public List<GroupStandingDto> GetStandingsForAllGroups()
+    {
+        return _groupRepository.GetAll()
+            .OrderBy(group => group.Name)
+            .SelectMany(group => GetStandings(group.Name))
+            .ToList();
+    }
+
     public bool IsGroupStageComplete()
     {
         IReadOnlyCollection<MatchGroup> groupMatches = GetAllGroupMatches();

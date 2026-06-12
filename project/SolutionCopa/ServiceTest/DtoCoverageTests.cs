@@ -122,13 +122,21 @@ public sealed class DtoCoverageTests
     }
 
     [TestMethod]
-    public void ExportAuditLogsRequestDtoCanStoreTournamentSettingsId()
+    public void AuditLogFilterDtoCanStoreAllOptionalFilters()
     {
-        ExportAuditLogsRequestDto dto = new ExportAuditLogsRequestDto
+        DateTime from = new DateTime(2026, 6, 1);
+        DateTime to = new DateTime(2026, 6, 30);
+        AuditLogFilterDto dto = new AuditLogFilterDto
         {
-            TournamentSettingsId = 8
+            From = from,
+            To = to,
+            Action = "CREATE_USER",
+            PerformedByEmail = "admin@copa.com"
         };
 
-        Assert.AreEqual(8, dto.TournamentSettingsId);
+        Assert.AreEqual(from, dto.From);
+        Assert.AreEqual(to, dto.To);
+        Assert.AreEqual("CREATE_USER", dto.Action);
+        Assert.AreEqual("admin@copa.com", dto.PerformedByEmail);
     }
 }

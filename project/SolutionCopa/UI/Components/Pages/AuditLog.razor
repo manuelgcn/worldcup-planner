@@ -2,10 +2,14 @@
 @using ProjectCopa
 @using Services
 @using Services.DTOs
+@using Services.Exceptions
 @using Services.Interfaces
+@using Microsoft.JSInterop
 @inject IAuditLogService AuditLogService
+@inject IExportService ExportService
 @inject SessionState Session
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <PageTitle>Log de auditoría</PageTitle>
 
@@ -17,7 +21,7 @@
         <button class="btn btn-primary" @onclick="@(() => Nav.NavigateTo("/login"))">Ir a Login</button>
     </section>
 }
-else if (!IsAdmin)
+else if (!CanExport)
 {
     <div class="alert alert-error" role="alert">
         <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
@@ -32,16 +36,32 @@ else
         <input class="form-control filter-action"
                placeholder="Filtrar por acción (ej: CREATE_USER)"
                aria-label="Filtrar por acción"
-               @bind="actionFilter" @bind:event="oninput" />
-        <input class="form-control filter-date" type="date" aria-label="Desde" @bind="fromDate" />
-        <input class="form-control filter-date" type="date" aria-label="Hasta" @bind="toDate" />
+               @bind="actionFilter" @bind:event="oninput" @bind:after="LoadLogs" />
+        <input class="form-control filter-action"
+               placeholder="Filtrar por usuario (email)"
+               aria-label="Filtrar por usuario"
+               @bind="emailFilter" @bind:event="oninput" @bind:after="LoadLogs" />
+        <input class="form-control filter-date" type="date" aria-label="Desde" @bind="fromDate" @bind:after="LoadLogs" />
+        <input class="form-control filter-date" type="date" aria-label="Hasta" @bind="toDate" @bind:after="LoadLogs" />
         <button class="btn btn-outline-secondary" @onclick="ClearFilters">
             <i class="bi bi-x-circle" aria-hidden="true"></i> Limpiar
         </button>
+        <select class="form-select filter-action" aria-label="Formato de exportación" @bind="exportFormat">
+            <option value="@ExportFormat.Csv">CSV</option>
+            <option value="@ExportFormat.Xlsx">XLSX</option>
+        </select>
+        <button class="btn btn-outline-primary" disabled="@isExporting" @onclick="ExportAsync">
+            <i class="bi bi-download" aria-hidden="true"></i> Exportar log
+        </button>
     </div>
 
+    @if (!string.IsNullOrWhiteSpace(exportError))
+    {
+        <div class="alert alert-error" role="alert">@exportError</div>
+    }
+
     <article class="m26-card pane">
-        @if (!Filtered.Any())
+        @if (!logs.Any())
         {
             <div class="m26-empty">
                 <i class="bi bi-journal-x" aria-hidden="true"></i>
@@ -56,17 +76,21 @@ else
                         <tr>
                             <th>Timestamp</th>
                             <th>Acción</th>
+                            <th>Usuario</th>
+                            <th>Torneo</th>
                             <th>Entidad</th>
                             <th>ID</th>
                             <th>Detalle</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (AuditLogDto log in Filtered)
+                        @foreach (AuditLogDto log in logs)
                         {
                             <tr>
                                 <td>@log.Timestamp.ToString("o")</td>
                                 <td><span class="m26-conf-badge">@log.Action</span></td>
+                                <td>@(log.PerformedByEmail ?? "—")</td>
+                                <td>@(log.TournamentSettingsId?.ToString() ?? "—")</td>
                                 <td>@(log.EntityType ?? "—")</td>
                                 <td>@(log.EntityId?.ToString() ?? "—")</td>
                                 <td>@log.Details</td>
@@ -81,24 +105,85 @@ else
 
 @code {
     private string actionFilter = "";
+    private string emailFilter = "";
     private DateTime? fromDate;
     private DateTime? toDate;
 
-    private bool IsAdmin =>
-        Session.IsLoggedIn && Session.CurrentUser!.HasRole(UserRoles.Admin);
+    private List<AuditLogDto> logs = new();
 
-    private IEnumerable<AuditLogDto> Filtered =>
-        AuditLogService.GetAll()
-            .Where(l => string.IsNullOrWhiteSpace(actionFilter)
-                || l.Action.Contains(actionFilter, StringComparison.OrdinalIgnoreCase))
-            .Where(l => !fromDate.HasValue || l.Timestamp.Date >= fromDate.Value.Date)
-            .Where(l => !toDate.HasValue || l.Timestamp.Date <= toDate.Value.Date)
-            .OrderByDescending(l => l.Timestamp);
+    private ExportFormat exportFormat = ExportFormat.Csv;
+    private bool isExporting;
+    private string? exportError;
+
+    private bool CanExport =>
+        Session.IsLoggedIn &&
+        (Session.CurrentUser!.HasRole(UserRoles.Admin) || Session.CurrentUser.HasRole(UserRoles.Periodista));
+
+    protected override void OnInitialized()
+    {
+        if (CanExport)
+        {
+            LoadLogs();
+        }
+    }
+
+    // El filtrado corre en el servicio/repositorio (SQL); la vista solo ordena para presentar.
+    private void LoadLogs()
+    {
+        logs = AuditLogService.GetFiltered(BuildFilter())
+            .OrderByDescending(l => l.Timestamp)
+            .ToList();
+    }
+
+    private AuditLogFilterDto BuildFilter()
+    {
+        return new AuditLogFilterDto
+        {
+            From = fromDate?.Date,
+            To = toDate?.Date.AddDays(1).AddTicks(-1),
+            Action = string.IsNullOrWhiteSpace(actionFilter) ? null : actionFilter,
+            PerformedByEmail = string.IsNullOrWhiteSpace(emailFilter) ? null : emailFilter
+        };
+    }
 
     private void ClearFilters()
     {
         actionFilter = "";
+        emailFilter = "";
         fromDate = null;
         toDate = null;
+        exportError = null;
+        LoadLogs();
+    }
+
+    private async Task ExportAsync()
+    {
+        exportError = null;
+        isExporting = true;
+        try
+        {
+            DateTime defaultDate = DateTime.UtcNow.Date;
+            DateTime exportFrom = fromDate?.Date ?? logs.Select(log => log.Timestamp.Date).DefaultIfEmpty(defaultDate).Min();
+            DateTime exportTo = toDate?.Date ?? logs.Select(log => log.Timestamp.Date).DefaultIfEmpty(defaultDate).Max();
+            ExportFileDto file = ExportService.ExportAuditLog(
+                new DateRange(exportFrom, exportTo),
+                exportFormat,
+                Session.CurrentUser!,
+                BuildFilter());
+
+            await JS.InvokeVoidAsync(
+                "downloadExportFile",
+                file.FileName,
+                file.ContentType,
+                Convert.ToBase64String(file.Content));
+        }
+        catch (ExportServiceException ex)
+        {
+            exportError = ex.Message;
+        }
+        finally
+        {
+            isExporting = false;
+        }
     }
 }

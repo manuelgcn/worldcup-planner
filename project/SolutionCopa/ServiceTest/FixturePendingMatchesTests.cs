@@ -30,7 +30,7 @@ public class FixturePendingMatchesTests
     private MockAuditLogRepository _auditRepository = null!;
     private AuditLogService _auditService = null!;
     private FixtureOrchestrator _orchestrator = null!;
-    private MatchSimulationEngine _simulationEngine = null!;
+    private ProbabilisticSimulationEngine _simulationEngine = null!;
     private GroupStandingsService _standingsService = null!;
 
     [TestInitialize]
@@ -45,8 +45,8 @@ public class FixturePendingMatchesTests
         _settingsRepository = new MockTournamentSettingsRepository();
         _unitOfWork = new MockUnitOfWork();
         _auditRepository = new MockAuditLogRepository();
-        _auditService = AuditLogService.CreateInstance(_auditRepository, DefaultSettingsId);
-        _simulationEngine = new MatchSimulationEngine();
+        _auditService = AuditLogService.CreateInstance(_auditRepository);
+        _simulationEngine = new ProbabilisticSimulationEngine();
 
         _settingsRepository.Add(CreateDefaultSettings());
         SeedStadiums(RequiredStadiumCount);
@@ -61,7 +61,8 @@ public class FixturePendingMatchesTests
             _matchRepository,
             _eliminationRepository,
             _unitOfWork,
-            _auditService);
+            _auditService,
+            new SimulationEngineRegistry([_simulationEngine]));
 
         _standingsService = new GroupStandingsService(
             _matchRepository,
@@ -72,7 +73,7 @@ public class FixturePendingMatchesTests
     [TestMethod]
     public void GenerateGroupStage_LeavesAllMatchesPending_NoGoalsNoWinnerNotSimulated()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         List<MatchGroup> groupMatches = _matchRepository.GetAll().OfType<MatchGroup>().ToList();
 
@@ -89,13 +90,16 @@ public class FixturePendingMatchesTests
     [TestMethod]
     public void GenerateGroupStage_DoesNotLogAnySimulationOrPublishAuditEntries()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         IReadOnlyCollection<AuditLog> logs = _auditRepository.GetAll();
 
         Assert.IsFalse(
             logs.Any(log => log.Action == AuditActions.SimulateMatch),
             "Fixture generation must not emit SIMULATE_MATCH audit entries.");
+        Assert.IsFalse(
+            logs.Any(log => log.Action == AuditActions.SimulationExecuted),
+            "Fixture generation must not emit SIMULATION_EXECUTED audit entries.");
         Assert.IsFalse(
             logs.Any(log => log.Action == AuditActions.PublishMatchResult),
             "Fixture generation must not emit PUBLISH_MATCH_RESULT audit entries.");
@@ -110,7 +114,7 @@ public class FixturePendingMatchesTests
     [TestMethod]
     public void GenerateGroupStage_AllStandingsShowZeroGamesPlayedAndZeroPoints()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         foreach (Group group in _groupRepository.GetAll())
         {
@@ -132,7 +136,7 @@ public class FixturePendingMatchesTests
     [TestMethod]
     public void SimulatingOneMatch_OnlyAffectsItsTwoTeamsInStandings()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
         TournamentSettings settings = _settingsRepository.GetById(DefaultSettingsId)!;
 
         MatchGroup chosen = _matchRepository.GetAll().OfType<MatchGroup>().First();
@@ -154,7 +158,7 @@ public class FixturePendingMatchesTests
     [TestMethod]
     public void SimulatingOneMatch_LeavesAllOthersPending()
     {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, performedByEmail: AdminEmail);
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
         TournamentSettings settings = _settingsRepository.GetById(DefaultSettingsId)!;
 
         List<MatchGroup> groupMatches = _matchRepository.GetAll().OfType<MatchGroup>().ToList();

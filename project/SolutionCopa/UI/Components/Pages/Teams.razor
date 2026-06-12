@@ -1,9 +1,12 @@
 @page "/teams"
 @using ProjectCopa
 @using Services
+@using Services.DTOs
 @using Services.Exceptions
+@using Services.Interfaces
 @using Microsoft.AspNetCore.Components.Forms
 @inject TeamServices TeamServices
+@inject IFlagAssignmentService FlagAssignmentService
 @inject SessionState Session
 @inject NavigationManager Nav
 
@@ -13,7 +16,7 @@
 {
     <section class="m26-card auth-card">
         <h1 class="m26-page-title mb-2">Equipos</h1>
-        <p class="mb-3">No estás logueado.</p>
+        <p class="mb-3">No estas logueado.</p>
         <button class="btn btn-primary" @onclick="GoToLogin">
             <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
             Ir a Login
@@ -24,34 +27,14 @@ else if (!IsAdmin)
 {
     <div class="alert alert-error" role="alert">
         <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
-        No tenés permisos para administrar equipos.
+        No tenes permisos para administrar equipos.
     </div>
 }
 else
 {
     <h1 class="m26-page-title">Equipos</h1>
 
-    if (errors.Any())
-    {
-        <div class="alert alert-error" role="alert">
-            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
-            Se encontraron errores:
-            <ul>
-                @foreach (string error in errors)
-                {
-                    <li>@error</li>
-                }
-            </ul>
-        </div>
-    }
-
-    if (!string.IsNullOrWhiteSpace(successMessage))
-    {
-        <div class="alert alert-success" role="alert">
-            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-            @successMessage
-        </div>
-    }
+    <FeedbackAlerts Errors="errors" SuccessMessage="@successMessage" />
 
     <section class="admin-grid">
         <article class="m26-card pane">
@@ -68,7 +51,7 @@ else
             </div>
 
             <div class="mb-3">
-                <label class="form-label" for="teamConfederation">Confederación</label>
+                <label class="form-label" for="teamConfederation">Confederacion</label>
                 <select id="teamConfederation" class="form-select" @bind="confederation">
                     @foreach (Confederation c in Enum.GetValues<Confederation>())
                     {
@@ -85,12 +68,12 @@ else
                            class="form-control" />
             </div>
 
-            @if (!string.IsNullOrWhiteSpace(flagBase64) && !string.IsNullOrWhiteSpace(flagContentType))
+            @if (!string.IsNullOrWhiteSpace(flagBase64))
             {
                 <div class="mb-3">
                     <label class="form-label">Preview</label>
                     <div>
-                        <img src="@($"data:{flagContentType};base64,{flagBase64}")"
+                        <img src="@GetPreviewDataUri()"
                              alt="Bandera"
                              style="max-width:120px; max-height:80px;" />
                     </div>
@@ -106,6 +89,17 @@ else
         <article class="m26-card pane">
             <h2 class="pane-title">Equipos existentes</h2>
 
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <button class="btn btn-outline-primary" @onclick="AssignFlags">
+                    <i class="bi bi-flag-fill" aria-hidden="true"></i>
+                    Asignar banderas
+                </button>
+                <div class="form-check mb-0">
+                    <input id="overwriteFlags" class="form-check-input" type="checkbox" @bind="overwriteFlags" />
+                    <label class="form-check-label" for="overwriteFlags">Sobrescribir existentes</label>
+                </div>
+            </div>
+
             @if (!equipos.Any())
             {
                 <div class="m26-empty">
@@ -119,9 +113,10 @@ else
                     <table class="table table-hover m26-scoreboard mb-0">
                         <thead>
                             <tr>
+                                <th>Bandera</th>
                                 <th>Nombre</th>
                                 <th>Ranking</th>
-                                <th>Confederación</th>
+                                <th>Confederacion</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -129,16 +124,32 @@ else
                             @foreach (Team equipo in equipos)
                             {
                                 <tr>
+                                    <td>
+                                        <TeamFlag Team="equipo" Large="true" />
+                                    </td>
                                     <td>@equipo.Name</td>
                                     <td>@equipo.FifaRanking</td>
                                     <td>
                                         <span class="m26-conf-badge conf-@equipo.Confederation">@equipo.Confederation</span>
                                     </td>
                                     <td class="text-end">
-                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => Remove(equipo.Name)">
-                                            <i class="bi bi-trash" aria-hidden="true"></i>
-                                            Eliminar
-                                        </button>
+                                        @if (confirmingDeleteName == equipo.Name)
+                                        {
+                                            <span class="me-2">¿Eliminar <strong>@equipo.Name</strong>?</span>
+                                            <button class="btn btn-danger btn-sm me-1" @onclick="() => Remove(equipo.Name)">
+                                                Sí, eliminar
+                                            </button>
+                                            <button class="btn btn-outline-secondary btn-sm" @onclick="CancelDelete">
+                                                Cancelar
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-outline-danger btn-sm" @onclick="() => StartDelete(equipo.Name)">
+                                                <i class="bi bi-trash" aria-hidden="true"></i>
+                                                Eliminar
+                                            </button>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -157,9 +168,9 @@ else
     private string? flagBase64;
     private string? flagContentType;
 
-    private const long MaxFlagSize = 2 * 1024 * 1024;
-
-    private readonly List<string> errors = new List<string>();
+    private const long MaxFlagSize = 200 * 1024;
+    
+    private readonly List<string> errors = new();
     private string? successMessage;
 
     private IReadOnlyCollection<Team> equipos = Array.Empty<Team>();
@@ -185,7 +196,7 @@ else
             flagContentType = file.ContentType;
 
             await using Stream stream = file.OpenReadStream(MaxFlagSize);
-            using MemoryStream ms = new MemoryStream();
+            using MemoryStream ms = new();
             await stream.CopyToAsync(ms);
 
             flagBase64 = Convert.ToBase64String(ms.ToArray());
@@ -228,10 +239,62 @@ else
         }
     }
 
+    private string? confirmingDeleteName;
+
+    private void StartDelete(string nombreEquipo)
+    {
+        confirmingDeleteName = nombreEquipo;
+    }
+
+    private void CancelDelete()
+    {
+        confirmingDeleteName = null;
+    }
+
+    private bool overwriteFlags;
+
+    private void AssignFlags()
+    {
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            FlagAssignmentResult result = FlagAssignmentService.AssignFlags(
+                overwriteFlags,
+                Session.CurrentUser?.email);
+
+            successMessage = BuildFlagAssignmentMessage(result);
+            LoadTeams();
+        }
+        catch (Exception ex)
+        {
+            errors.Add("No se pudieron asignar las banderas: " + ex.Message);
+        }
+    }
+
+    private static string BuildFlagAssignmentMessage(FlagAssignmentResult result)
+    {
+        string message = $"Se asignaron {result.AssignedCount} banderas";
+
+        if (result.SkippedExistingCount > 0)
+        {
+            message += $", {result.SkippedExistingCount} ya tenían bandera";
+        }
+
+        if (result.UnmappedTeamNames.Count > 0)
+        {
+            message += $" ({result.UnmappedTeamNames.Count} sin mapeo: {string.Join(", ", result.UnmappedTeamNames)})";
+        }
+
+        return message;
+    }
+
     private void Remove(string nombreEquipo)
     {
         errors.Clear();
         successMessage = null;
+        confirmingDeleteName = null;
 
         try
         {
@@ -268,5 +331,10 @@ else
     private void GoToLogin()
     {
         Nav.NavigateTo("/login");
+    }
+
+    private string GetPreviewDataUri()
+    {
+        return ImageHelper.GetDataUri(flagBase64, flagContentType);
     }
 }

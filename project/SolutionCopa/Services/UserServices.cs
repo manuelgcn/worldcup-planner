@@ -6,6 +6,8 @@ namespace Services;
 
 public class UserServices
 {
+    private const string InvalidCredentialsMessage = "Credenciales invalidas";
+
     private readonly IAuditLogService? _auditLogService;
     private readonly IUserRepository _userRepository;
 
@@ -61,6 +63,16 @@ public class UserServices
             nameof(User),
             user.idUser
         );
+    }
+
+    public User Authenticate(string email, string password)
+    {
+        User? user = _userRepository.GetByEmail(email);
+
+        if (user == null || !user.PasswordMatches(password))
+            throw new ArgumentException(InvalidCredentialsMessage);
+
+        return user;
     }
 
     public User GetUserByEmail(string email)

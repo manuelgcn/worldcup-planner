@@ -6,8 +6,10 @@
 @using Services.Exceptions
 @using Services.Interfaces
 @using DataAccess.Interfaces
+@using Microsoft.JSInterop
 @using UI.Components.Fixture
 @inject IFixtureOrchestrator FixtureOrchestrator
+@inject ISimulationEngineRegistry EngineRegistry
 @inject ITournamentSimulationService SimulationService
 @inject IGroupStandingsService StandingsService
 @inject IKnockoutFixtureGenerator KnockoutGenerator
@@ -19,13 +21,24 @@
 @inject TeamServices TeamServices
 @inject IStadiumService StadiumService
 @inject StadiumServices StadiumServicesImpl
+@inject IExportService ExportService
 @inject SessionState Session
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <PageTitle>Fixture y Cruces</PageTitle>
 
 <div class="fixture-page">
-    <h1 class="m26-page-title mb-2">Fixture y Cruces — Mundial 2026</h1>
+    <h1 class="m26-page-title mb-2">
+        Fixture y Cruces — Mundial 2026
+        @if (Session.IsLoggedIn && settings is not null && IsFixtureGenerated)
+        {
+            <span class="engine-badge" title="Motor de simulación seleccionado">
+                <i class="bi bi-cpu" aria-hidden="true"></i>
+                @settings.SelectedSimulationEngine
+            </span>
+        }
+    </h1>
 
     @if (!Session.IsLoggedIn)
     {
@@ -89,12 +102,42 @@
                     <div><strong>Partidos de grupos:</strong> @groupMatches.Count / 72</div>
                     <div><strong>Pendientes (sin simular):</strong> @pendingGroupMatches</div>
                     <div><strong>Knockout generado:</strong> @(IsKnockoutGenerated ? "sí" : "no")</div>
-                    <div><strong>Fixture seed:</strong> @settings.FixtureSeed</div>
-                    <div><strong>Crossings seed:</strong> @settings.CrossingsSeed</div>
-                    <div><strong>Simulation seed:</strong> @settings.SimulationSeed</div>
-                    <div><strong>Start date:</strong> @settings.StartDate.ToString("yyyy-MM-dd")</div>
+                    <div><strong>Motor de simulación:</strong> @settings.SelectedSimulationEngine</div>
                 </div>
+                <details class="status-advanced">
+                    <summary>Configuración avanzada (semillas y fechas)</summary>
+                    <div class="status-grid">
+                        <div><strong>Fixture seed:</strong> @settings.FixtureSeed</div>
+                        <div><strong>Crossings seed:</strong> @settings.CrossingsSeed</div>
+                        <div><strong>Simulation seed:</strong> @settings.SimulationSeed</div>
+                        <div><strong>Completion seed:</strong> @settings.CompletionSeed</div>
+                        <div><strong>Start date:</strong> @settings.StartDate.ToString("yyyy-MM-dd")</div>
+                    </div>
+                </details>
             </details>
+
+            @if (CanExport)
+            {
+                <section class="step-section">
+                    <h4>Exportar fixture</h4>
+                    <p class="step-help">Descargá los partidos de grupos y eliminatorias dentro del rango seleccionado.</p>
+                    <div class="step-actions">
+                        <label for="exportFixtureFrom">Desde:</label>
+                        <input id="exportFixtureFrom" type="date" @bind="exportFromDate" />
+                        <label for="exportFixtureTo">Hasta:</label>
+                        <input id="exportFixtureTo" type="date" @bind="exportToDate" />
+                        <label for="exportFixtureFormat">Formato:</label>
+                        <select id="exportFixtureFormat" @bind="exportFormat">
+                            <option value="@ExportFormat.Csv">CSV</option>
+                            <option value="@ExportFormat.Xlsx">XLSX</option>
+                        </select>
+                        <button class="btn btn-outline-primary" disabled="@isExporting" @onclick="HandleExportFixtureAsync">
+                            <i class="bi bi-download" aria-hidden="true"></i>
+                            Exportar fixture
+                        </button>
+                    </div>
+                </section>
+            }
 
             @* PASO 1: cargar equipos y estadios demo *@
             @if (IsAdmin && (teamCount < 48 || stadiumCount < 4))
@@ -118,12 +161,19 @@
             }
 
             @* PASO 2: generar fixture *@
-            @if (IsAdmin && teamCount >= 48 && stadiumCount >= 4 && !IsFixtureGenerated)
+            @if (CanManageFixture && teamCount >= 48 && stadiumCount >= 4 && !IsFixtureGenerated)
             {
                 <section class="step-section">
                     <h4>2. Generar fixture de fase de grupos</h4>
                     <p class="step-help">Reparte los 48 equipos en 12 grupos y crea los 72 partidos.</p>
                     <div class="step-actions">
+                        <label for="engineSelect">Motor de simulación:</label>
+                        <select id="engineSelect" @bind="selectedEngine">
+                            @foreach (string engineName in EngineRegistry.AvailableEngineNames)
+                            {
+                                <option value="@engineName">@engineName</option>
+                            }
+                        </select>
                         <label>Override FixtureSeed (opcional):</label>
                         <input type="number" @bind="fixtureSeedInput" placeholder="@settings.FixtureSeed.ToString()" />
                         <button class="btn btn-primary" disabled="@isBusy" @onclick="HandleGenerateFixtureAsync">
@@ -148,7 +198,7 @@
                             <text>Simulá todos los partidos de una sola vez, o cargá resultados a mano en <a href="/matches">/matches</a>. Faltan @pendingGroupMatches partidos.</text>
                         }
                     </p>
-                    @if (IsAdmin)
+                    @if (CanManageFixture)
                     {
                         @if (!IsGroupStageComplete)
                         {
@@ -195,7 +245,7 @@
                             <text>Simulá ronda por ronda o de un saque hasta el final.</text>
                         }
                     </p>
-                    @if (IsAdmin)
+                    @if (CanManageFixture)
                     {
                         <div class="step-actions">
                             <button class="btn btn-secondary"
@@ -256,6 +306,15 @@
             {
                 <section class="groups-section">
                     <h4>Grupos</h4>
+                    <div class="group-chips" role="navigation" aria-label="Ir a grupo">
+                        @foreach (Group group in groups)
+                        {
+                            <button class="group-chip @(selectedGroupName == group.Name ? "active" : "")"
+                                    @onclick="() => HandleSelectGroup(group.Name)">
+                                @group.Name
+                            </button>
+                        }
+                    </div>
                     <div class="groups-grid">
                         @foreach (Group group in groups)
                         {
@@ -271,7 +330,10 @@
                     <section class="group-detail-section">
                         <GroupDetail GroupName="@selectedGroupName"
                                      Matches="@MatchesForSelectedGroup()"
-                                     OnBack="HandleClearSelection" />
+                                     OnBack="HandleClearSelection"
+                                     CanEdit="@CanEditResults"
+                                     IsLocked="@IsKnockoutGenerated"
+                                     OnResultSaved="HandleResultSaved" />
                     </section>
                 }
             }
@@ -300,7 +362,12 @@
     private int? fixtureSeedInput;
     private int? crossingsSeedInput;
     private int? simulationSeedInput;
+    private string? selectedEngine;
     private bool confirmingDelete;
+    private DateTime? exportFromDate;
+    private DateTime? exportToDate;
+    private ExportFormat exportFormat = ExportFormat.Csv;
+    private bool isExporting;
 
     private readonly List<string> errors = new();
     private string? successMessage;
@@ -308,6 +375,15 @@
 
     private bool IsAdmin =>
         Session.CurrentUser?.HasRole(UserRoles.Admin) == true;
+
+    // Según la letra, el Editor es quien genera fixture, simula y sortea cruces.
+    private bool CanManageFixture =>
+        IsAdmin || Session.CurrentUser?.HasRole(UserRoles.Editor) == true;
+
+    private bool CanExport =>
+        IsAdmin || Session.CurrentUser?.HasRole(UserRoles.Periodista) == true;
+
+    private bool CanEditResults => CanManageFixture;
 
     private bool IsFixtureGenerated => FixtureOrchestrator.IsFixtureGenerated();
     private bool IsKnockoutGenerated => KnockoutGenerator.IsBracketGenerated();
@@ -366,12 +442,18 @@
         try
         {
             settings = SettingsRepository.GetAll().FirstOrDefault();
+            selectedEngine ??= settings?.SelectedSimulationEngine;
             teamCount = TeamRepository.GetAll().Count;
             stadiumCount = StadiumService.GetAllStadiums().Count;
             groups = GroupRepository.GetAll().OrderBy(group => group.Name).ToList();
             groupMatches = MatchRepository.GetAll().OfType<MatchGroup>().ToList();
             eliminationMatches = EliminationRepository.GetAll().OfType<MatchElimination>().ToList();
             pendingGroupMatches = StandingsService.PendingGroupStageMatchCount();
+            List<DateTime> matchDates = groupMatches.Select(match => match.MatchDate)
+                .Concat(eliminationMatches.Select(match => match.MatchDate))
+                .ToList();
+            exportFromDate ??= matchDates.Count > 0 ? matchDates.Min().Date : settings?.StartDate.Date ?? DateTime.UtcNow.Date;
+            exportToDate ??= matchDates.Count > 0 ? matchDates.Max().Date : exportFromDate;
         }
         catch (Exception ex)
         {
@@ -409,17 +491,24 @@
         selectedGroupName = null;
     }
 
+    private void HandleResultSaved(string message)
+    {
+        errors.Clear();
+        successMessage = message;
+        ReloadState();
+    }
+
     private async Task HandleGenerateFixtureAsync()
     {
         await RunAdminActionAsync(
-            () => FixtureOrchestrator.GenerateGroupStage(fixtureSeedInput, Session.CurrentUser?.email),
+            () => FixtureOrchestrator.GenerateGroupStage(fixtureSeedInput, selectedEngine, Session.CurrentUser?.email),
             "Fixture generado correctamente.");
     }
 
     private async Task HandleRegenerateFixtureAsync()
     {
         await RunAdminActionAsync(
-            () => FixtureOrchestrator.RegenerateGroupStage(fixtureSeedInput, Session.CurrentUser?.email),
+            () => FixtureOrchestrator.RegenerateGroupStage(fixtureSeedInput, selectedEngineName: null, Session.CurrentUser?.email),
             "Fixture regenerado correctamente.");
     }
 
@@ -476,6 +565,33 @@
         await RunAdminActionAsync(
             () => TeamServices.FillToFortyEight(completionSeed, Session.CurrentUser?.email),
             "Equipos demo cargados.");
+    }
+
+    private async Task HandleExportFixtureAsync()
+    {
+        errors.Clear();
+        isExporting = true;
+        try
+        {
+            ExportFileDto file = ExportService.ExportFixture(
+                new DateRange(exportFromDate ?? DateTime.UtcNow.Date, exportToDate ?? DateTime.UtcNow.Date),
+                exportFormat,
+                Session.CurrentUser!);
+
+            await JS.InvokeVoidAsync(
+                "downloadExportFile",
+                file.FileName,
+                file.ContentType,
+                Convert.ToBase64String(file.Content));
+        }
+        catch (ExportServiceException ex)
+        {
+            errors.Add(ex.Message);
+        }
+        finally
+        {
+            isExporting = false;
+        }
     }
 
     private async Task HandleSeedStadiumsAsync()

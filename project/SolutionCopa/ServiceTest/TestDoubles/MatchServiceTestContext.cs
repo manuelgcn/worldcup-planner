@@ -87,7 +87,7 @@ public sealed class MatchServiceTestContext
     
     private void BuildServices()
     {
-        AuditLogService = AuditLogService.CreateInstance(AuditLogRepository, 1);
+        AuditLogService = AuditLogService.CreateInstance(AuditLogRepository);
 
         // 1. Construimos la fábrica con sus responsabilidades de lectura, incluyendo IStadiumRepository
         MatchFactory = new MatchFactory(
@@ -103,7 +103,7 @@ public sealed class MatchServiceTestContext
             MatchRepository,
             TournamentSettingsRepository,
             MatchFactory,
-            SimulationEngine,
+            new SimulationEngineRegistry([SimulationEngine]),
             AuditLogService, // <-- Inyectado directamente en el servicio
             RankingServiceMock.Object,
             UnitOfWork,
@@ -341,6 +341,18 @@ public sealed class MatchServiceTestContext
         public List<AuditLog> GetAll()
         {
             return auditLogs;
+        }
+
+        public List<AuditLog> GetFiltered(DateTime? from, DateTime? to, string? action, string? performedByEmail)
+        {
+            return auditLogs
+                .Where(log => !from.HasValue || log.Timestamp >= from.Value)
+                .Where(log => !to.HasValue || log.Timestamp <= to.Value)
+                .Where(log => string.IsNullOrWhiteSpace(action)
+                    || log.Action.Contains(action.Trim(), StringComparison.OrdinalIgnoreCase))
+                .Where(log => string.IsNullOrWhiteSpace(performedByEmail)
+                    || (log.PerformedByEmail != null && log.PerformedByEmail.Contains(performedByEmail.Trim(), StringComparison.OrdinalIgnoreCase)))
+                .ToList();
         }
     }
 

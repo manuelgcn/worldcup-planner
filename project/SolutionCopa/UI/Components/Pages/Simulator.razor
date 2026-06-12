@@ -1,7 +1,9 @@
 @page "/simulator"
 @using ProjectCopa
+@using DataAccess.Interfaces
 @using Services.Interfaces
 @inject ITournamentSimulationService TournamentSimulationService
+@inject ITournamentSettingsRepository SettingsRepository
 @inject SessionState Session
 @inject NavigationManager Nav
 
@@ -20,7 +22,7 @@
             </button>
         </section>
     }
-    else if (!IsAdmin)
+    else if (!CanSimulate)
     {
         <div class="alert alert-error">
             <i class="bi bi-shield-lock" aria-hidden="true"></i>
@@ -53,6 +55,7 @@
             <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
             Esta acción simula los 72 partidos de la fase de grupos y genera los cruces de fase 2 de una sola vez.
             Para hacerlo paso a paso, usá la página de <a href="/fixture">Fixture</a>.
+            Motor de simulación: <strong>@(settings?.SelectedSimulationEngine ?? "sin configurar")</strong>.
         </div>
 
         <div class="sim-grid">
@@ -98,9 +101,17 @@
     private bool isBusy;
     private readonly List<string> errors = new();
     private string? successMessage;
+    private TournamentSettings? settings;
 
-    private bool IsAdmin =>
-        Session.CurrentUser?.HasRole(UserRoles.Admin) == true;
+    // Según la letra, la simulación es tarea del Editor (el Admin también puede).
+    private bool CanSimulate =>
+        Session.CurrentUser?.HasRole(UserRoles.Admin) == true ||
+        Session.CurrentUser?.HasRole(UserRoles.Editor) == true;
+
+    protected override void OnInitialized()
+    {
+        settings = SettingsRepository.GetAll().FirstOrDefault();
+    }
 
     private async Task SimulateWithSeedAsync()
     {

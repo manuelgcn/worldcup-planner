@@ -46,7 +46,7 @@ public class KnockoutFixtureGeneratorExtensionTests
         _simulationEngine = new MockMatchSimulationEngine();
         _unitOfWork = new MockUnitOfWork();
         _auditRepository = new MockAuditLogRepository();
-        _auditService = AuditLogService.CreateInstance(_auditRepository, DefaultSettingsId);
+        _auditService = AuditLogService.CreateInstance(_auditRepository);
 
         SeedStadiums();
         SeedSettings();
@@ -102,7 +102,7 @@ public class KnockoutFixtureGeneratorExtensionTests
         _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
 
         AuditLog log = _auditRepository.GetAll().First(entry => entry.Action == AuditActions.GenerateKnockout);
-        Assert.IsTrue(log.Details.Contains(AdminEmail));
+        Assert.AreEqual(AdminEmail, log.PerformedByEmail);
     }
 
     [TestMethod]
@@ -212,7 +212,7 @@ public class KnockoutFixtureGeneratorExtensionTests
     private KnockoutFixtureGenerator NewGenerator()
     {
         return new KnockoutFixtureGenerator(
-            _simulationEngine,
+            new SimulationEngineRegistry([_simulationEngine]),
             _matchRepository,
             _eliminationRepository,
             _groupRepository,

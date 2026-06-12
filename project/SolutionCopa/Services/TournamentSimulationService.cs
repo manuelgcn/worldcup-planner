@@ -11,46 +11,55 @@ public sealed class TournamentSimulationService(
     IMatchRepository matchRepository,
     IEliminationMatchRepository eliminationMatchRepository,
     IUnitOfWork unitOfWork,
-    IMatchSimulationEngine matchSimulationEngine,
+    ISimulationEngineRegistry simulationEngineRegistry,
     IAuditLogService auditLogService,
     ITournamentSettingsRepository tournamentSettingsRepository,
-    IKnockoutFixtureGenerator knockoutFixtureGenerator) : ITournamentSimulationService
+    IKnockoutFixtureGenerator knockoutFixtureGenerator,
+    INotificationService? notificationService = null) : ITournamentSimulationService
 {
     private const string FixtureNotGeneratedMessage = "El fixture aún no ha sido generado";
-    private const string AuditLogMessage = "La fase de grupos fue simulada y la fase 2 fue generada.";
 
     public void SimulateGroupStage(int seed, string? performedByEmail)
     {
-        RunGroupStageSimulation(seed);
-        LogGroupStageSimulation(seed, performedByEmail);
+        IMatchSimulationEngine engine = ResolveSelectedEngine(seed);
+        RunGroupStageSimulation(seed, engine);
+        LogGroupStageSimulation(seed, engine.Name, performedByEmail);
         unitOfWork.Commit();
     }
 
     public void SimulateGroupStageAndGenerateKnockout(int seed)
     {
-        (List<Group> groups, List<Match> groupStageMatches) = RunGroupStageSimulation(seed);
-
         TournamentSettings settings = ResolveTournamentSettings(seed);
+        IMatchSimulationEngine engine = simulationEngineRegistry.Resolve(settings.SelectedSimulationEngine);
+
+        (List<Group> groups, List<Match> groupStageMatches) = RunGroupStageSimulation(seed, engine);
+
         QualifiedTeams qualifiedTeams = ClassifyQualifiedTeams(groups, groupStageMatches, settings);
 
         GenerateAndPersistKnockoutPhase(qualifiedTeams);
 
-        LogSimulation();
+        LogSimulation(engine.Name);
         unitOfWork.Commit();
     }
 
     // Simula los 72 partidos de la fase de grupos (sin generar la fase 2) y devuelve los grupos y
     // sus partidos, para que el llamador pueda opcionalmente clasificar y armar el knockout.
-    private (List<Group> Groups, List<Match> Matches) RunGroupStageSimulation(int seed)
+    private (List<Group> Groups, List<Match> Matches) RunGroupStageSimulation(int seed, IMatchSimulationEngine engine)
     {
         List<Group> groups = GetOrderedGroups();
         List<Match> groupStageMatches = GetGroupStageMatches(groups);
 
         ValidateFixtureGenerated(groupStageMatches);
 
-        SimulateMatches(groupStageMatches, seed);
+        SimulateMatches(groupStageMatches, seed, engine);
 
         return (groups, groupStageMatches);
+    }
+
+    private IMatchSimulationEngine ResolveSelectedEngine(int seed)
+    {
+        TournamentSettings settings = ResolveTournamentSettings(seed);
+        return simulationEngineRegistry.Resolve(settings.SelectedSimulationEngine);
     }
 
     private List<Group> GetOrderedGroups()
@@ -85,12 +94,13 @@ public sealed class TournamentSimulationService(
         }
     }
 
-    private void SimulateMatches(List<Match> matches, int seed)
+    private void SimulateMatches(List<Match> matches, int seed, IMatchSimulationEngine engine)
     {
         foreach (Match match in matches)
         {
-            matchSimulationEngine.Simulate(match, seed);
+            engine.Simulate(match, seed);
             matchRepository.Update(match);
+            notificationService?.NotifyMatchSimulated(match);
         }
     }
 
@@ -128,19 +138,19 @@ public sealed class TournamentSimulationService(
             completionSeed: seed);
     }
 
-    private void LogSimulation()
+    private void LogSimulation(string engineName)
     {
         auditLogService.Log(
             AuditActions.SimulateGroupStageAndGenerateKnockout,
-            AuditLogMessage,
+            $"La fase de grupos fue simulada con el motor {engineName} y la fase 2 fue generada.",
             affectedEntityType: nameof(TournamentSimulationService));
     }
 
-    private void LogGroupStageSimulation(int seed, string? performedByEmail)
+    private void LogGroupStageSimulation(int seed, string engineName, string? performedByEmail)
     {
         auditLogService.LogPerformedBy(
             AuditActions.SimulateGroupStage,
-            $"Group stage simulated with seed {seed}.",
+            $"Group stage simulated with engine {engineName} and seed {seed}.",
             performedByEmail,
             affectedEntityType: nameof(TournamentSimulationService));
     }
