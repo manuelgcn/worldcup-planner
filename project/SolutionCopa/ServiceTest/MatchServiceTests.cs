@@ -1,3 +1,5 @@
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using ProjectCopa;
 using DomainTest.TestDoubles;
 using Services.DTOs;
@@ -843,5 +845,21 @@ public sealed class MatchServiceTest
             homeTeam: homeTeam,
             awayTeam: awayTeam,
             stadium: stadium);
+    }
+
+    [TestMethod]
+    public void PublishResult_ShouldCallRankingService()
+    {
+        // Arrange
+        CreateMatchRequestDto request = MatchServiceTestContext.NewGroupMatchRequest(10);
+        _context.Service.CreateMatch(request);
+
+        // Act
+        _context.Service.PublishResult(10);
+
+        // Assert
+        _context.RankingServiceMock.Verify(
+            r => r.ApplyMatchResult(It.IsAny<ProjectCopa.Match>(), MatchPhase.GroupStage),
+            Times.Once);
     }
 }

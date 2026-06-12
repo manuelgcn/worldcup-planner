@@ -12,6 +12,7 @@ public class MatchService(
     IMatchFactory matchFactory,
     IMatchSimulationEngine matchSimulationEngine,
     IAuditLogService auditLogService,
+    IRankingService rankingService,
     IUnitOfWork unitOfWork,
     IEliminationMatchRepository? eliminationMatchRepository = null)
     : IMatchService
