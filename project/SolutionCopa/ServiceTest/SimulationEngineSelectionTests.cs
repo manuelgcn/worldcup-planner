@@ -152,6 +152,7 @@ public sealed class SimulationEngineSelectionTests
             new StubMatchFactory(),
             _registry,
             _auditLogService,
+            new Moq.Mock<IRankingService>().Object,
             _unitOfWork);
     }
 

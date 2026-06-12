@@ -1,5 +1,6 @@
 using DataAccess.Interfaces;
 using DataAccess.Repositories;
+using Moq;
 using ProjectCopa;
 using Services;
 using Services.DTOs;
@@ -29,6 +30,7 @@ public sealed class MatchServiceTestContext
     public MockMatchRepository MatchRepository { get; } = new MockMatchRepository();
     public MockEliminationMatchRepository EliminationMatchRepository { get; } = new MockEliminationMatchRepository();
     public MockMatchSimulationEngine SimulationEngine { get; } = new MockMatchSimulationEngine();
+    public Mock<IRankingService> RankingServiceMock { get; } = new Mock<IRankingService>();
     public MockUnitOfWork UnitOfWork { get; } = new MockUnitOfWork();
     public IReadOnlyCollection<AuditLog> AuditLogs => _auditLog.AsReadOnly();
 
@@ -103,6 +105,7 @@ public sealed class MatchServiceTestContext
             MatchFactory,
             new SimulationEngineRegistry([SimulationEngine]),
             AuditLogService, // <-- Inyectado directamente en el servicio
+            RankingServiceMock.Object,
             UnitOfWork,
             EliminationMatchRepository);
     }
