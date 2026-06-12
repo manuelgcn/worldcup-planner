@@ -286,6 +286,24 @@ public class UserTests
         Assert.AreEqual(exactly18YearsOld, user.dateOfBirth);
     }
 
+    
+    [TestMethod]
+    public void CannotCreateUserWhoIsOneDayYoungerThan18()
+    {
+        DateTime oneDayYoungerThan18 = DateTime.Today.AddYears(-18).AddDays(1);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@mail.com",
+                "Pass123@",
+                oneDayYoungerThan18
+            )
+        );
+    }
+
 
     
 }
