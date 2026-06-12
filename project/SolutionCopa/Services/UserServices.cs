@@ -4,7 +4,7 @@ using DataAccess.Interfaces;
 
 namespace Services;
 
-public class UserServices
+public class UserServices : IUserService
 {
     private const string InvalidCredentialsMessage = "Credenciales invalidas";
 

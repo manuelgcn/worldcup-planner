@@ -33,6 +33,7 @@ builder.Services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 
 builder.Services.AddSingleton<UserServices>();
+builder.Services.AddSingleton<IUserService>(sp => sp.GetRequiredService<UserServices>());
 
 builder.Services.AddSingleton<TeamServices>();
 builder.Services.AddSingleton<StadiumServices>();

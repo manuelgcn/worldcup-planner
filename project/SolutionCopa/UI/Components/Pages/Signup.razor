@@ -1,7 +1,8 @@
 @page "/signup"
 @using ProjectCopa
 @using Services
-@inject UserServices UserServices
+@using Services.Interfaces
+@inject IUserService UserServices
 @inject NavigationManager Nav
 
 <PageTitle>Crear cuenta</PageTitle>

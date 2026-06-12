@@ -1,8 +1,9 @@
 @page "/admin/users"
 @using ProjectCopa
 @using Services
+@using Services.Interfaces
 @inject SessionState Session
-@inject UserServices UserServices
+@inject IUserService UserServices
 @inject NavigationManager Nav
 
 <PageTitle>Administración de Usuarios</PageTitle>
