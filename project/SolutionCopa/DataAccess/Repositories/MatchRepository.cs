@@ -80,6 +80,11 @@ public class MatchRepository : IMatchRepository
             .ToList();
     }
 
+    public List<Match> Search(MatchQueryCriteria criteria)
+    {
+        throw new NotImplementedException();
+    }
+
     public List<Match> GetAll()
     {
         using AppDbContext context = _contextFactory.CreateDbContext();
