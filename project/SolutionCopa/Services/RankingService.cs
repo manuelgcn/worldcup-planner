@@ -1,3 +1,4 @@
+using DataAccess.Interfaces;
 using ProjectCopa;
 using Services.Interfaces;
 
@@ -6,10 +7,12 @@ namespace Services;
 public class RankingService : IRankingService
 {
     private readonly IAuditLogService _auditLogService;
+    private readonly ITeamRepository _teamRepository;
 
-    public RankingService(IAuditLogService auditLogService)
+    public RankingService(IAuditLogService auditLogService, ITeamRepository teamRepository)
     {
         _auditLogService = auditLogService;
+        _teamRepository = teamRepository;
     }
 
     public void ApplyMatchResult(Match match, MatchPhase phase)
