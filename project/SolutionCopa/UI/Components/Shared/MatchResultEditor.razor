@@ -5,7 +5,6 @@
 @using Services.Interfaces
 @inject IMatchService MatchService
 @inject IStadiumService StadiumService
-@inject INotificationService NotificationService
 @inject SessionState Session
 
 <div class="match-result-editor">
@@ -221,9 +220,6 @@
 
         try
         {
-            int previousHomeGoals = Match.HomeGoals;
-            int previousAwayGoals = Match.AwayGoals;
-
             if (ShowDateAndStadium)
             {
                 MatchService.UpdateMatch(Match.MatchId, new UpdateMatchRequestDto
@@ -233,11 +229,9 @@
                 });
             }
 
-            MatchService.SetGoals(Match.MatchId, homeGoals, awayGoals);
-
-            // Refleja el nuevo resultado en la copia local (detached) que usa la notificacion.
-            Match.SetGoals(homeGoals, awayGoals);
-            NotificationService.NotifyResultLoaded(Match, previousHomeGoals, previousAwayGoals);
+            // El servicio es el controlador del caso de uso: registra goles, ranking,
+            // auditoria y notificacion. La UI solo captura datos y delega.
+            MatchService.RegisterResult(Match.MatchId, homeGoals, awayGoals, PerformedByEmail);
 
             await OnSaved.InvokeAsync("Resultado guardado correctamente");
         }
