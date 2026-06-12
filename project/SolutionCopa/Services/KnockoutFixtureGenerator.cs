@@ -522,19 +522,9 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         }
     }
 
-    // Misma orquestacion que MatchService.ApplyRankingUpdate: deriva la fase del tipo de
-    // partido y respeta el flag persistido RankingApplied para no recalcular el Elo. Se
-    // invoca ANTES del Update del repositorio para que el flag viaje en el mismo guardado.
     private void ApplyRankingUpdate(Match match)
     {
-        if (_rankingService == null || match.RankingApplied)
-        {
-            return;
-        }
-
-        MatchPhase phase = match is MatchGroup ? MatchPhase.GroupStage : MatchPhase.Knockout;
-        _rankingService.ApplyMatchResult(match, phase);
-        match.MarkRankingApplied();
+        _rankingService?.ApplyMatchResultOnce(match);
     }
 
     private IMatchSimulationEngine ResolveSelectedEngine(TournamentSettings settings)

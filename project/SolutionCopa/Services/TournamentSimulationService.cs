@@ -106,19 +106,9 @@ public sealed class TournamentSimulationService(
         }
     }
 
-    // Misma orquestacion que MatchService.ApplyRankingUpdate: deriva la fase del tipo de
-    // partido y respeta el flag persistido RankingApplied para no recalcular el Elo. Se
-    // invoca ANTES del Update del repositorio para que el flag viaje en el mismo guardado.
     private void ApplyRankingUpdate(Match match)
     {
-        if (rankingService == null || match.RankingApplied)
-        {
-            return;
-        }
-
-        MatchPhase phase = match is MatchGroup ? MatchPhase.GroupStage : MatchPhase.Knockout;
-        rankingService.ApplyMatchResult(match, phase);
-        match.MarkRankingApplied();
+        rankingService?.ApplyMatchResultOnce(match);
     }
 
     private static QualifiedTeams ClassifyQualifiedTeams(List<Group> groups, List<Match> matches, TournamentSettings settings)
