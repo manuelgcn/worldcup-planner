@@ -12,7 +12,7 @@
 {
     <section class="m26-card auth-card">
         <h1 class="m26-page-title mb-2">Usuarios</h1>
-        <p class="mb-3">No estás logueado.</p>
+        <p class="mb-3">No estas logueado.</p>
         <button class="btn btn-primary" @onclick="GoToLogin">
             <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
             Ir a Login
@@ -23,14 +23,14 @@ else if (!IsAdmin)
 {
     <div class="alert alert-error" role="alert">
         <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
-        No tenés permisos para administrar usuarios.
+        No tenes permisos para administrar usuarios.
     </div>
 }
 else
 {
     <h1 class="m26-page-title">Usuarios</h1>
 
-    if (errors.Any())
+    @if (errors.Any())
     {
         <div class="alert alert-error" role="alert">
             <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
@@ -44,7 +44,7 @@ else
         </div>
     }
 
-    if (!string.IsNullOrWhiteSpace(successMessage))
+    @if (!string.IsNullOrWhiteSpace(successMessage))
     {
         <div class="alert alert-success" role="alert">
             <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
@@ -60,10 +60,12 @@ else
                 <label class="form-label" for="userName">Nombre</label>
                 <input id="userName" class="form-control" @bind="name" />
             </div>
+
             <div class="mb-3">
                 <label class="form-label" for="userLastname">Apellido</label>
                 <input id="userLastname" class="form-control" @bind="lastname" />
             </div>
+
             <div class="mb-3">
                 <label class="form-label" for="userEmail">Email</label>
                 <input id="userEmail" class="form-control" @bind="email" />
@@ -72,13 +74,15 @@ else
             @if (editingUserId is null)
             {
                 <div class="mb-3">
-                    <label class="form-label" for="userPassword">Contraseña</label>
+                    <label class="form-label" for="userPassword">Contrasena</label>
                     <input id="userPassword" class="form-control" type="password" @bind="password" />
                 </div>
+
                 <div class="mb-3">
                     <label class="form-label" for="userBirth">Fecha de nacimiento</label>
                     <input id="userBirth" class="form-control" type="date" @bind="dateOfBirth" />
                 </div>
+
                 <div class="mb-3">
                     <label class="form-label">Rol inicial</label>
                     <select class="form-select" @bind="initialRole">
@@ -144,16 +148,28 @@ else
                                             <button class="btn btn-outline-primary btn-sm" @onclick="() => StartEdit(u)">
                                                 <i class="bi bi-pencil" aria-hidden="true"></i> Editar
                                             </button>
+
                                             <button class="btn btn-outline-secondary btn-sm"
-                                                    disabled="@(u.HasRole(UserRoles.Admin))"
-                                                    @onclick="() => AssignRole(u.idUser, UserRoles.Admin)">
-                                                <i class="bi bi-shield-fill" aria-hidden="true"></i> Admin
+                                                    disabled="@(u.idUser == 1)"
+                                                    @onclick="() => ToggleRole(u, UserRoles.Admin)">
+                                                <i class="bi bi-shield-fill" aria-hidden="true"></i>
+                                                Admin
                                             </button>
+
                                             <button class="btn btn-outline-secondary btn-sm"
-                                                    disabled="@(u.HasRole(UserRoles.Editor))"
-                                                    @onclick="() => AssignRole(u.idUser, UserRoles.Editor)">
-                                                <i class="bi bi-person-check-fill" aria-hidden="true"></i> Editor
+                                                    disabled="@(u.idUser == 1)"
+                                                    @onclick="() => ToggleRole(u, UserRoles.Editor)">
+                                                <i class="bi bi-person-check-fill" aria-hidden="true"></i>
+                                                Editor
                                             </button>
+
+                                            <button class="btn btn-outline-secondary btn-sm"
+                                                    disabled="@(u.idUser == 1)"
+                                                    @onclick="() => ToggleRole(u, UserRoles.Periodista)">
+                                                <i class="bi bi-newspaper" aria-hidden="true"></i>
+                                                Periodista
+                                            </button>
+
                                             <button class="btn btn-outline-danger btn-sm" @onclick="() => Remove(u.idUser)">
                                                 <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
                                             </button>
@@ -199,6 +215,9 @@ else
 
     private void Create()
     {
+        errors.Clear();
+        successMessage = null;
+
         try
         {
             var user = new User(0, name, lastname, email, password, dateOfBirth);
@@ -207,6 +226,7 @@ else
             UserServices.AddUser(user);
 
             successMessage = "Usuario creado";
+            ClearForm();
             LoadUsers();
         }
         catch (Exception ex)
@@ -217,6 +237,9 @@ else
 
     private void StartEdit(User u)
     {
+        errors.Clear();
+        successMessage = null;
+
         editingUserId = u.idUser;
         name = u.name;
         lastname = u.lastname ?? "";
@@ -226,15 +249,20 @@ else
     private void CancelEdit()
     {
         editingUserId = null;
+        ClearForm();
     }
 
     private void SaveEdit()
     {
+        errors.Clear();
+        successMessage = null;
+
         try
         {
             UserServices.UpdateUser(editingUserId!.Value, name, lastname, email);
             successMessage = "Usuario actualizado";
             editingUserId = null;
+            ClearForm();
             LoadUsers();
         }
         catch (Exception ex)
@@ -245,14 +273,55 @@ else
 
     private void Remove(int id)
     {
-        UserServices.RemoveUser(id);
-        LoadUsers();
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            UserServices.RemoveUser(id);
+            successMessage = "Usuario eliminado";
+            LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            errors.Add(ex.Message);
+        }
     }
 
-    private void AssignRole(int id, UserRoles role)
+    private void ToggleRole(User user, UserRoles role)
     {
-        UserServices.AssignRole(id, role);
-        LoadUsers();
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            if (user.HasRole(role))
+            {
+                UserServices.RemoveRole(user.idUser, role);
+                successMessage = $"Rol {role} removido";
+            }
+            else
+            {
+                UserServices.AssignRole(user.idUser, role);
+                successMessage = $"Rol {role} asignado";
+            }
+
+            LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void ClearForm()
+    {
+        name = "";
+        lastname = "";
+        email = "";
+        password = "";
+        dateOfBirth = DateTime.Today;
+        initialRole = UserRoles.Editor;
     }
 
     private void GoToLogin()

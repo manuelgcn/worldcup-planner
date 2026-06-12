@@ -47,13 +47,16 @@ public class UserServices : IUserService
 
     public void RemoveRole(int userId, UserRoles role)
     {
+        if (userId == 1)
+            throw new ArgumentException("El usuario administrador del sistema no puede ser modificado");
+
         User user = GetUserById(userId);
 
         if (!user.Roles.Any(r => r.Role == role))
             return;
 
         if (user.Roles.Count == 1)
-            throw new ArgumentException("User must have at least one role");
+            throw new ArgumentException("El usuario debe tener al menos un rol");
 
         user.RemoveRoles(role);
 
@@ -66,6 +69,7 @@ public class UserServices : IUserService
             user.idUser
         );
     }
+
 
     public User Authenticate(string email, string password)
     {
@@ -152,5 +156,43 @@ public class UserServices : IUserService
             nameof(User),
             user.idUser
         );
+    }
+    
+    public void ToggleRole(int userId, UserRoles role)
+    {
+        if (userId == 1)
+            throw new ArgumentException("El usuario administrador del sistema no puede ser modificado");
+
+        User user = GetUserById(userId);
+
+        bool hasRole = user.Roles.Any(r => r.Role == role);
+
+        if (hasRole)
+        {
+            if (user.Roles.Count == 1)
+                throw new ArgumentException("El usuario debe tener al menos un rol");
+
+            user.RemoveRoles(role);
+
+            _auditLogService.Log(
+                AuditActions.RemoveUserRoles,
+                $"Role={role} removed from UserId={user.idUser}.",
+                nameof(User),
+                user.idUser
+            );
+        }
+        else
+        {
+            user.AddRole(role);
+
+            _auditLogService.Log(
+                AuditActions.AssignUserRole,
+                $"Role={role} assigned to UserId={user.idUser}.",
+                nameof(User),
+                user.idUser
+            );
+        }
+
+        _userRepository.Update(user);
     }
 }
