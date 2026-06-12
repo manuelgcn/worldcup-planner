@@ -22,4 +22,22 @@ public sealed class EloRankingCycleTests
         int result = EloRankingCalculator.Compute(1000, 1000, EloResult.Win, MatchPhase.Knockout);
         Assert.AreEqual(1023, result);
     }
+
+    [TestMethod]
+    public void Compute_ResultAboveUpperBound_ShouldClampTo2500()
+    {
+        // 2495 vs 2495, Win, Knockout -> delta = 22.5 -> 23
+        // 2495 + 23 = 2518 -> Should clamp to 2500
+        int result = EloRankingCalculator.Compute(2495, 2495, EloResult.Win, MatchPhase.Knockout);
+        Assert.AreEqual(2500, result);
+    }
+
+    [TestMethod]
+    public void Compute_ResultBelowLowerBound_ShouldClampTo300()
+    {
+        // 300 vs 2500, Loss, Knockout -> delta will be negative
+        // Should clamp to 300
+        int result = EloRankingCalculator.Compute(300, 2500, EloResult.Loss, MatchPhase.Knockout);
+        Assert.AreEqual(300, result);
+    }
 }

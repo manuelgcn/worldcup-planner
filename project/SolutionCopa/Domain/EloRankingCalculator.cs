@@ -30,7 +30,7 @@ public static class EloRankingCalculator
 
         int newRating = (int)Math.Round(newRatingDouble, MidpointRounding.AwayFromZero);
 
-        newRating = Math.Clamp(newRating, MinRanking, MaxRanking);
+        // newRating = Math.Clamp(newRating, MinRanking, MaxRanking);
 
         return newRating;
     }
