@@ -26,6 +26,10 @@ public static class AuditActions
 
     public const string PublishMatchResult = "PUBLISH_MATCH_RESULT";
 
+    public const string IncidentAdded = "INCIDENT_ADDED";
+
+    public const string IncidentRemoved = "INCIDENT_REMOVED";
+
     public const string CreateTeam = "CREATE_TEAM";
 
     public const string UpdateTeam = "UPDATE_TEAM";

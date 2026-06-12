@@ -1,13 +1,12 @@
 @using ProjectCopa
 @using ProjectCopa.Exceptions
-@using DataAccess.Interfaces
+@using Services.DTOs
 @using Services.Exceptions
 @using Services.Interfaces
-@inject IMatchRepository MatchRepository
-@inject IEliminationMatchRepository EliminationRepository
-@inject IUnitOfWork UnitOfWork
+@inject IMatchService MatchService
 @inject IStadiumService StadiumService
 @inject INotificationService NotificationService
+@inject SessionState Session
 
 <div class="match-result-editor">
     @if (editorErrors.Any())
@@ -48,26 +47,58 @@
 
     @if (CanEditIncidents)
     {
-        <details class="editor-incidents">
-            <summary>Incidencias (tarjetas)</summary>
+        <details class="editor-incidents" open="@incidents.Any()">
+            <summary>
+                Incidencias (tarjetas) —
+                🟨 @HomeName: @CountByType(Match.HomeTeam!.Id, MatchIncidentDto.YellowCardType)
+                🟥 @CountByType(Match.HomeTeam!.Id, MatchIncidentDto.RedCardType) |
+                🟨 @AwayName: @CountByType(Match.AwayTeam!.Id, MatchIncidentDto.YellowCardType)
+                🟥 @CountByType(Match.AwayTeam!.Id, MatchIncidentDto.RedCardType)
+            </summary>
+
             <div class="incidents-grid">
                 <div class="incident-item">
-                    <label class="form-label">🟨 @HomeName</label>
-                    <input class="form-control card-input" type="number" min="0" @bind="yellowHome" />
+                    <label class="form-label">Equipo</label>
+                    <select class="form-select" @bind="newIncidentTeamId">
+                        <option value="@Match.HomeTeam!.Id">@HomeName</option>
+                        <option value="@Match.AwayTeam!.Id">@AwayName</option>
+                    </select>
                 </div>
                 <div class="incident-item">
-                    <label class="form-label">🟥 @HomeName</label>
-                    <input class="form-control card-input" type="number" min="0" @bind="redHome" />
+                    <label class="form-label">Tipo</label>
+                    <select class="form-select" @bind="newIncidentType">
+                        <option value="@MatchIncidentDto.YellowCardType">🟨 Amarilla</option>
+                        <option value="@MatchIncidentDto.RedCardType">🟥 Roja</option>
+                    </select>
                 </div>
                 <div class="incident-item">
-                    <label class="form-label">🟨 @AwayName</label>
-                    <input class="form-control card-input" type="number" min="0" @bind="yellowAway" />
+                    <label class="form-label">Minuto</label>
+                    <input class="form-control card-input" type="number" min="0" max="130" @bind="newIncidentMinute" />
                 </div>
-                <div class="incident-item">
-                    <label class="form-label">🟥 @AwayName</label>
-                    <input class="form-control card-input" type="number" min="0" @bind="redAway" />
+                <div class="incident-item incident-actions">
+                    <button class="btn btn-outline-primary btn-sm" @onclick="AddIncident">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                        Agregar
+                    </button>
                 </div>
             </div>
+
+            @if (incidents.Any())
+            {
+                <ul class="incident-list list-unstyled mb-0">
+                    @foreach (MatchIncidentDto incident in incidents.OrderBy(i => i.Minute))
+                    {
+                        <li class="incident-row">
+                            <span>@CardEmoji(incident.Type) @incident.TeamName — min @incident.Minute</span>
+                            <button class="btn btn-outline-danger btn-sm"
+                                    title="Eliminar incidencia"
+                                    @onclick="() => RemoveIncident(incident.Id)">
+                                <i class="bi bi-trash" aria-hidden="true"></i>
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
         </details>
     }
 
@@ -93,10 +124,11 @@
     private int stadiumId;
     private int homeGoals;
     private int awayGoals;
-    private int yellowHome;
-    private int redHome;
-    private int yellowAway;
-    private int redAway;
+
+    private List<MatchIncidentDto> incidents = new();
+    private int newIncidentTeamId;
+    private string newIncidentType = MatchIncidentDto.YellowCardType;
+    private int newIncidentMinute;
 
     private IReadOnlyCollection<ProjectCopa.Stadium> stadiums = Array.Empty<ProjectCopa.Stadium>();
     private readonly List<string> editorErrors = new();
@@ -104,6 +136,7 @@
     private string HomeName => Match.HomeTeam?.Name ?? "TBD";
     private string AwayName => Match.AwayTeam?.Name ?? "TBD";
     private bool CanEditIncidents => Match.HomeTeam is not null && Match.AwayTeam is not null;
+    private string? PerformedByEmail => Session.CurrentUser?.email;
 
     protected override void OnInitialized()
     {
@@ -114,15 +147,66 @@
 
         if (CanEditIncidents)
         {
-            yellowHome = Match.CountYellowCards(Match.HomeTeam!);
-            redHome = Match.CountRedCards(Match.HomeTeam!);
-            yellowAway = Match.CountYellowCards(Match.AwayTeam!);
-            redAway = Match.CountRedCards(Match.AwayTeam!);
+            newIncidentTeamId = Match.HomeTeam!.Id;
+            LoadIncidents();
         }
 
         if (ShowDateAndStadium)
         {
             stadiums = StadiumService.GetAllStadiums();
+        }
+    }
+
+    private void LoadIncidents()
+    {
+        incidents = MatchService.GetIncidents(Match.MatchId);
+    }
+
+    private int CountByType(int teamId, string type) =>
+        incidents.Count(incident => incident.TeamId == teamId && incident.Type == type);
+
+    private static string CardEmoji(string type) =>
+        type == MatchIncidentDto.RedCardType ? "🟥" : "🟨";
+
+    private void AddIncident()
+    {
+        editorErrors.Clear();
+
+        try
+        {
+            if (newIncidentType == MatchIncidentDto.RedCardType)
+            {
+                MatchService.AddRedCard(Match.MatchId, newIncidentTeamId, newIncidentMinute, PerformedByEmail);
+            }
+            else
+            {
+                MatchService.AddYellowCard(Match.MatchId, newIncidentTeamId, newIncidentMinute, PerformedByEmail);
+            }
+
+            LoadIncidents();
+        }
+        catch (MatchException ex)
+        {
+            editorErrors.Add(ex.Message);
+        }
+        catch (MatchServicesException ex)
+        {
+            editorErrors.Add(ex.Message);
+        }
+    }
+
+    private void RemoveIncident(int incidentId)
+    {
+        editorErrors.Clear();
+
+        try
+        {
+            MatchService.RemoveIncident(Match.MatchId, incidentId, PerformedByEmail);
+            LoadIncidents();
+        }
+        catch (MatchServicesException ex)
+        {
+            editorErrors.Add(ex.Message);
         }
     }
 
@@ -140,14 +224,28 @@
             int previousHomeGoals = Match.HomeGoals;
             int previousAwayGoals = Match.AwayGoals;
 
-            ApplyEdits();
-            Persist();
+            if (ShowDateAndStadium)
+            {
+                MatchService.UpdateMatch(Match.MatchId, new UpdateMatchRequestDto
+                {
+                    MatchDate = matchDate,
+                    StadiumId = stadiumId
+                });
+            }
 
+            MatchService.SetGoals(Match.MatchId, homeGoals, awayGoals);
+
+            // Refleja el nuevo resultado en la copia local (detached) que usa la notificacion.
+            Match.SetGoals(homeGoals, awayGoals);
             NotificationService.NotifyResultLoaded(Match, previousHomeGoals, previousAwayGoals);
 
             await OnSaved.InvokeAsync("Resultado guardado correctamente");
         }
         catch (MatchException ex)
+        {
+            editorErrors.Add(ex.Message);
+        }
+        catch (MatchServicesException ex)
         {
             editorErrors.Add(ex.Message);
         }
@@ -159,76 +257,6 @@
         {
             editorErrors.Add("Error al guardar el partido: " + ex.Message);
         }
-    }
-
-    private void ApplyEdits()
-    {
-        if (ShowDateAndStadium)
-        {
-            Match.ChangeDate(matchDate);
-
-            if (stadiumId > 0)
-            {
-                Match.ChangeStadium(StadiumService.GetById(stadiumId));
-            }
-        }
-
-        Match.SetGoals(homeGoals, awayGoals);
-
-        if (CanEditIncidents)
-        {
-            ApplyCardChanges();
-        }
-    }
-
-    private void ApplyCardChanges()
-    {
-        int nextIncidentId = MatchRepository.NextIncidentId();
-
-        nextIncidentId = SyncCards<YellowCardIncident>(Match.HomeTeam!, yellowHome, nextIncidentId,
-            (id, team) => new YellowCardIncident(id, 0, team));
-        nextIncidentId = SyncCards<RedCardIncident>(Match.HomeTeam!, redHome, nextIncidentId,
-            (id, team) => new RedCardIncident(id, 0, team));
-        nextIncidentId = SyncCards<YellowCardIncident>(Match.AwayTeam!, yellowAway, nextIncidentId,
-            (id, team) => new YellowCardIncident(id, 0, team));
-        SyncCards<RedCardIncident>(Match.AwayTeam!, redAway, nextIncidentId,
-            (id, team) => new RedCardIncident(id, 0, team));
-    }
-
-    private int SyncCards<TIncident>(Team team, int desiredCount, int nextIncidentId, Func<int, Team, TIncident> factory)
-        where TIncident : MatchIncident
-    {
-        List<TIncident> current = Match.Incidents
-            .OfType<TIncident>()
-            .Where(incident => ReferenceEquals(incident.Team, team))
-            .ToList();
-
-        for (int i = current.Count; i < desiredCount; i++)
-        {
-            Match.AddIncident(factory(nextIncidentId, team));
-            nextIncidentId++;
-        }
-
-        for (int i = current.Count - 1; i >= desiredCount; i--)
-        {
-            Match.RemoveIncident(current[i]);
-        }
-
-        return nextIncidentId;
-    }
-
-    private void Persist()
-    {
-        if (Match is MatchElimination)
-        {
-            EliminationRepository.Update(Match);
-        }
-        else
-        {
-            MatchRepository.Update(Match);
-        }
-
-        UnitOfWork.Commit();
     }
 
     private bool Validate()
@@ -246,11 +274,6 @@
         if (homeGoals < 0 || awayGoals < 0)
         {
             editorErrors.Add("Los goles no pueden ser negativos");
-        }
-
-        if (yellowHome < 0 || redHome < 0 || yellowAway < 0 || redAway < 0)
-        {
-            editorErrors.Add("Las tarjetas no pueden ser negativas");
         }
 
         return !editorErrors.Any();

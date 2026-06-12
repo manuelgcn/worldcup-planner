@@ -79,6 +79,32 @@ public class UserServicesTests
     }
 
     [TestMethod]
+    public void Authenticate_WithValidCredentials_ReturnsUser()
+    {
+        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        service.AddUser(user);
+
+        User authenticated = service.Authenticate("juan@mail.com", "Pass123@");
+
+        Assert.AreEqual(user.idUser, authenticated.idUser);
+    }
+
+    [TestMethod]
+    public void Authenticate_WithWrongPassword_Throws()
+    {
+        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        service.AddUser(user);
+
+        Assert.ThrowsException<ArgumentException>(() => service.Authenticate("juan@mail.com", "Wrong123@"));
+    }
+
+    [TestMethod]
+    public void Authenticate_WithUnknownEmail_Throws()
+    {
+        Assert.ThrowsException<ArgumentException>(() => service.Authenticate("nobody@mail.com", "Pass123@"));
+    }
+
+    [TestMethod]
     public void RemoveUser_LogsAuditEntry()
     {
         MockUserRepository userRepo = new MockUserRepository();

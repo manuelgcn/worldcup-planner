@@ -51,6 +51,9 @@ builder.Services.AddSingleton<ISimulationEngineRegistry, SimulationEngineRegistr
 builder.Services.AddSingleton<IAuditLogService>(sp =>
     AuditLogService.CreateInstance(sp.GetRequiredService<IAuditLogRepository>()));
 
+builder.Services.AddSingleton<IMatchFactory, MatchFactory>();
+builder.Services.AddSingleton<IMatchService, MatchService>();
+
 
 builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
     new KnockoutFixtureGenerator(
@@ -173,6 +176,26 @@ using (var scope = app.Services.CreateScope())
     else if (!editor.HasRole(UserRoles.Editor))
     {
         userServices.AssignRole(editor.idUser, UserRoles.Editor);
+    }
+
+    var journalist = userServices.GetAllUsers().FirstOrDefault(u => u.email == "periodista@copa.com");
+
+    if (journalist == null)
+    {
+        journalist = new User(
+            0,
+            "Periodista",
+            "Sistema",
+            "periodista@copa.com",
+            "Periodista@123",
+            new DateTime(1998, 3, 10)
+        );
+        journalist.AddRole(UserRoles.Periodista);
+        userServices.AddUser(journalist);
+    }
+    else if (!journalist.HasRole(UserRoles.Periodista))
+    {
+        userServices.AssignRole(journalist.idUser, UserRoles.Periodista);
     }
 }
 

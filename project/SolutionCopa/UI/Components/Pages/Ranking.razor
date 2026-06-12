@@ -1,7 +1,10 @@
 @page "/ranking"
 @using ProjectCopa
 @using Services
+@using Services.DTOs
+@using Services.Interfaces
 @inject TeamServices TeamServices
+@inject IGroupStandingsService StandingsService
 @inject SessionState Session
 @inject NavigationManager Nav
 
@@ -21,7 +24,7 @@
 else
 {
     <h1 class="m26-page-title">Ranking FIFA</h1>
-    <p class="text-muted">Equipos ordenados por su ranking FIFA actual.</p>
+    <p class="text-muted">Equipos ordenados por su ranking FIFA actual, con sus estadísticas de fase de grupos.</p>
 
     @if (!RankedTeams.Any())
     {
@@ -40,6 +43,14 @@ else
                         <th>Equipo</th>
                         <th>Confederacion</th>
                         <th>Ranking FIFA</th>
+                        <th title="Partidos jugados">PJ</th>
+                        <th title="Ganados">G</th>
+                        <th title="Empatados">E</th>
+                        <th title="Perdidos">P</th>
+                        <th title="Goles a favor">GF</th>
+                        <th title="Goles en contra">GC</th>
+                        <th title="Diferencia de gol">DG</th>
+                        <th title="Puntos">Pts</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -49,6 +60,7 @@ else
                     @foreach (Team team in RankedTeams)
                     {
                         position++;
+                        GroupStandingDto? stats = StatsFor(team);
                         <tr>
                             <td>@position</td>
                             <td>
@@ -62,6 +74,21 @@ else
                                 <span class="m26-conf-badge conf-@team.Confederation">@team.Confederation</span>
                             </td>
                             <td><strong>@team.FifaRanking</strong></td>
+                            @if (stats is null)
+                            {
+                                <td colspan="8" class="text-muted">Sin fixture</td>
+                            }
+                            else
+                            {
+                                <td>@stats.GamesPlayed</td>
+                                <td>@stats.Wins</td>
+                                <td>@stats.Draws</td>
+                                <td>@stats.Losses</td>
+                                <td>@stats.GoalsFor</td>
+                                <td>@stats.GoalsAgainst</td>
+                                <td>@stats.GoalDifference</td>
+                                <td><strong>@stats.Points</strong></td>
+                            }
                         </tr>
                     }
                 </tbody>
@@ -71,10 +98,21 @@ else
 }
 
 @code {
+    private Dictionary<int, GroupStandingDto> statsByTeamId = new();
+
     private IEnumerable<Team> RankedTeams =>
         TeamServices.GetTeams()
             .OrderByDescending(team => team.FifaRanking)
             .ThenBy(team => team.Name);
+
+    protected override void OnInitialized()
+    {
+        statsByTeamId = StandingsService.GetStandingsForAllGroups()
+            .ToDictionary(standing => standing.Team.Id);
+    }
+
+    private GroupStandingDto? StatsFor(Team team) =>
+        statsByTeamId.GetValueOrDefault(team.Id);
 
     private void GoToLogin()
     {

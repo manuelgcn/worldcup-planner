@@ -77,6 +77,11 @@ public class MatchFactory(
     
     public void ApplyUpdate(Match match, UpdateMatchRequestDto request)
     {
+        if (request.MatchDate.HasValue)
+        {
+            match.ChangeDate(request.MatchDate.Value);
+        }
+
         if (request.StadiumId.HasValue)
         {
             Stadium stadium = GetStadiumOrThrow(request.StadiumId.Value);

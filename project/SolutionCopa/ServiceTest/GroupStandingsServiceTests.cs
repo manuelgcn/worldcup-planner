@@ -159,6 +159,38 @@ public class GroupStandingsServiceTests
     }
 
     [TestMethod]
+    public void GetStandingsForAllGroups_ReturnsTeamsFromEveryGroup()
+    {
+        Group otherGroup = new Group("B");
+        Team otherHome = new Team(99, "Other-H", 1500, false, Confederation.UEFA);
+        Team otherAway = new Team(98, "Other-A", 1500, false, Confederation.UEFA);
+        otherGroup.AddTeam(otherHome);
+        otherGroup.AddTeam(otherAway);
+        _groupRepository.Add(otherGroup);
+
+        AddPlayedMatch(matchId: 1, home: _teamAlpha, away: _teamBravo, homeGoals: 2, awayGoals: 0);
+        Journey journey = Journey.CreateInstance(1);
+        MatchGroup otherMatch = MatchGroup.CreateInstance(id: 2, matchDate: DefaultStartDate, homeTeam: otherHome, awayTeam: otherAway, stadium: _stadium, group: otherGroup, journey: journey);
+        otherMatch.SetGoals(5, 0);
+        _matchRepository.Add(otherMatch);
+
+        List<GroupStandingDto> standings = _service.GetStandingsForAllGroups();
+
+        Assert.AreEqual(6, standings.Count);
+        GroupStandingDto other = standings.First(standing => standing.Team.Id == otherHome.Id);
+        Assert.AreEqual(3, other.Points);
+        Assert.AreEqual(5, other.GoalsFor);
+    }
+
+    [TestMethod]
+    public void GetStandingsForAllGroups_WithoutGroups_ReturnsEmpty()
+    {
+        _groupRepository.Clear();
+
+        Assert.AreEqual(0, _service.GetStandingsForAllGroups().Count);
+    }
+
+    [TestMethod]
     public void IsGroupStageComplete_WithoutAnyMatches_ReturnsFalse()
     {
         Assert.IsFalse(_service.IsGroupStageComplete());
