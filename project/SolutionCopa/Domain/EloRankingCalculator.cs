@@ -28,7 +28,7 @@ public static class EloRankingCalculator
 
         double newRatingDouble = rankingActual + delta;
 
-        int newRating = (int)Math.Round(newRatingDouble, MidpointRounding.AwayFromZero);
+        int newRating = (int)Math.Round(newRatingDouble, MidpointRounding.ToZero);
 
         newRating = Math.Clamp(newRating, MinRanking, MaxRanking);
 
