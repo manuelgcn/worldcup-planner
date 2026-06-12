@@ -96,9 +96,14 @@ public sealed class SimulationEngineSelectionTests
         KnockoutFixtureGenerator generator = new KnockoutFixtureGenerator(
             _registry,
             matchRepository,
+            new MockEliminationMatchRepository(),
+            new MockGroupRepository(),
+            new MockStadiumRepository(),
             _settingsRepository,
             _unitOfWork,
-            _auditLogService);
+            _auditLogService,
+            new MockNotificationService(),
+            new MockRankingService());
 
         generator.SimulateEliminationMatches(new[] { MatchId });
 
@@ -114,9 +119,14 @@ public sealed class SimulationEngineSelectionTests
         KnockoutFixtureGenerator generator = new KnockoutFixtureGenerator(
             _registry,
             matchRepository,
+            new MockEliminationMatchRepository(),
+            new MockGroupRepository(),
+            new MockStadiumRepository(),
             _settingsRepository,
             _unitOfWork,
-            _auditLogService);
+            _auditLogService,
+            new MockNotificationService(),
+            new MockRankingService());
 
         generator.SimulateEliminationMatches(new[] { MatchId });
 

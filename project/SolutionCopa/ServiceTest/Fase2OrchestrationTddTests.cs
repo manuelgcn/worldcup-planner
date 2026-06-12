@@ -37,7 +37,17 @@ public class Fase2OrchestrationTddTests
         MockAuditLogRepository auditRepo = new MockAuditLogRepository();
         AuditLogService auditService = AuditLogService.CreateInstance(auditRepo);
 
-        Fase2 fase2 = new Fase2(new SimulationEngineRegistry([simulation]), matchRepo, settingsRepo, uow, auditService);
+        Fase2 fase2 = new Fase2(
+            new SimulationEngineRegistry([simulation]),
+            matchRepo,
+            eliminationRepo,
+            new MockGroupRepository(),
+            new MockStadiumRepository(),
+            settingsRepo,
+            uow,
+            auditService,
+            new MockNotificationService(),
+            new MockRankingService());
 
         // Act
         fase2.OrchestrateAndSimulateEliminationPhase(teamsWithGroup, stadiums, settings, eliminationRepo);

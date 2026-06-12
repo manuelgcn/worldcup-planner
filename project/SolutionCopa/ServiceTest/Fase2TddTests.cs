@@ -31,7 +31,17 @@ public class Fase2TddTests
         var auditRepo = new MockAuditLogRepository();
         var auditService = AuditLogService.CreateInstance(auditRepo);
 
-        var fase2 = new Fase2(new SimulationEngineRegistry([simulation]), matchRepo, settingsRepo, uow, auditService);
+        var fase2 = new Fase2(
+            new SimulationEngineRegistry([simulation]),
+            matchRepo,
+            new MockEliminationMatchRepository(),
+            new MockGroupRepository(),
+            new MockStadiumRepository(),
+            settingsRepo,
+            uow,
+            auditService,
+            new MockNotificationService(),
+            new MockRankingService());
 
         // Act
         fase2.SimulateEliminationMatches(new [] { 5 });
