@@ -231,6 +231,79 @@ public class UserTests
 
         Assert.AreEqual(1, usuario.Roles.Count);
     }
+    
+    
+    [TestMethod]
+    public void CannotCreateUserWithFutureDateOfBirth()
+    {
+        DateTime futureDate = DateTime.Today.AddDays(1);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@mail.com",
+                "Pass123@",
+                futureDate
+            )
+        );
+    }
+
+    
+    [TestMethod]
+    public void CannotCreateUserYoungerThan18()
+    {
+        DateTime underageDate = DateTime.Today.AddYears(-17);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@mail.com",
+                "Pass123@",
+                underageDate
+            )
+        );
+    }
+
+    
+    [TestMethod]
+    public void CanCreateUserWhoIsExactly18YearsOld()
+    {
+        DateTime exactly18YearsOld = DateTime.Today.AddYears(-18);
+
+        User user = new User(
+            1,
+            "Juan",
+            "Perez",
+            "juan@mail.com",
+            "Pass123@",
+            exactly18YearsOld
+        );
+
+        Assert.AreEqual(exactly18YearsOld, user.dateOfBirth);
+    }
+
+    
+    [TestMethod]
+    public void CannotCreateUserWhoIsOneDayYoungerThan18()
+    {
+        DateTime oneDayYoungerThan18 = DateTime.Today.AddYears(-18).AddDays(1);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@mail.com",
+                "Pass123@",
+                oneDayYoungerThan18
+            )
+        );
+    }
+
 
     
 }
