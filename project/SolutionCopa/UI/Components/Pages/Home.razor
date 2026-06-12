@@ -1,16 +1,11 @@
 @page "/"
 @using ProjectCopa
 @using Services.Interfaces
-@using DataAccess.Interfaces
+@using Services.DTOs
 @implements IDisposable
 @inject SessionState Session
 @inject INotificationService NotificationService
-@inject ITeamRepository TeamRepository
-@inject IStadiumService StadiumService
-@inject IMatchRepository MatchRepository
-@inject IEliminationMatchRepository EliminationRepository
-@inject IFixtureOrchestrator FixtureOrchestrator
-@inject IKnockoutFixtureGenerator KnockoutGenerator
+@inject ITournamentDashboardService DashboardService
 
 <PageTitle>Inicio</PageTitle>
 
@@ -163,40 +158,19 @@
     {
         try
         {
-            teamCount = TeamRepository.GetAll().Count;
-            stadiumCount = StadiumService.GetAllStadiums().Count;
-
-            List<Match> allMatches = MatchRepository.GetAll()
-                .Concat(EliminationRepository.GetAll())
-                .ToList();
-
-            totalMatches = allMatches.Count;
-            playedMatches = allMatches.Count(IsPlayed);
-            isFixtureGenerated = FixtureOrchestrator.IsFixtureGenerated();
-            isKnockoutGenerated = KnockoutGenerator.IsBracketGenerated();
-            championName = FindChampionName(allMatches);
+            TournamentDashboardDto overview = DashboardService.GetOverview();
+            teamCount = overview.TeamCount;
+            stadiumCount = overview.StadiumCount;
+            totalMatches = overview.TotalMatches;
+            playedMatches = overview.PlayedMatches;
+            isFixtureGenerated = overview.IsFixtureGenerated;
+            isKnockoutGenerated = overview.IsKnockoutGenerated;
+            championName = overview.ChampionName;
         }
         catch (Exception)
         {
             // La home no debe romperse si la base aún no está disponible: se muestran ceros.
         }
-    }
-
-    private static bool IsPlayed(Match match) =>
-        match.WasSimulated || match.HomeGoals + match.AwayGoals > 0;
-
-    private static string? FindChampionName(List<Match> allMatches)
-    {
-        MatchElimination? final = allMatches
-            .OfType<MatchElimination>()
-            .FirstOrDefault(match => match.Phase == Phase.Final);
-
-        if (final is null || !final.WasSimulated)
-        {
-            return null;
-        }
-
-        return final.GetWinner()?.Name;
     }
 
     private void LoadUnreadCount()
