@@ -17,6 +17,34 @@ public class TournamentDashboardService(
 {
     public TournamentDashboardDto GetOverview()
     {
-        throw new NotImplementedException();
+        List<Match> matches = matchRepository.GetAll();
+
+        return new TournamentDashboardDto
+        {
+            TeamCount = teamRepository.GetAll().Count,
+            StadiumCount = stadiumRepository.GetAll().Count,
+            TotalMatches = matches.Count,
+            PlayedMatches = matches.Count(IsPlayed),
+            IsFixtureGenerated = fixtureOrchestrator.IsFixtureGenerated(),
+            IsKnockoutGenerated = fixtureOrchestrator.IsKnockoutGenerated(),
+            ChampionName = FindChampionName(matches)
+        };
+    }
+
+    private static bool IsPlayed(Match match) =>
+        match.WasSimulated || match.HomeGoals + match.AwayGoals > 0;
+
+    private static string? FindChampionName(IEnumerable<Match> matches)
+    {
+        MatchElimination? final = matches
+            .OfType<MatchElimination>()
+            .FirstOrDefault(match => match.Phase == Phase.Final);
+
+        if (final is null || !final.WasSimulated)
+        {
+            return null;
+        }
+
+        return final.GetWinner()?.Name;
     }
 }
