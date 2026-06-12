@@ -44,6 +44,11 @@ public sealed class GroupStandingsService : IGroupStandingsService
             .ToList();
     }
 
+    public List<GroupStandingDto> GetStandingsForAllGroups()
+    {
+        throw new NotImplementedException();
+    }
+
     public bool IsGroupStageComplete()
     {
         IReadOnlyCollection<MatchGroup> groupMatches = GetAllGroupMatches();
