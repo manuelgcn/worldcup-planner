@@ -231,6 +231,25 @@ public class UserTests
 
         Assert.AreEqual(1, usuario.Roles.Count);
     }
+    
+    
+    [TestMethod]
+    public void CannotCreateUserWithFutureDateOfBirth()
+    {
+        DateTime futureDate = DateTime.Today.AddDays(1);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@mail.com",
+                "Pass123@",
+                futureDate
+            )
+        );
+    }
+
 
     
 }
