@@ -15,7 +15,8 @@ public sealed class TournamentSimulationService(
     IAuditLogService auditLogService,
     ITournamentSettingsRepository tournamentSettingsRepository,
     IKnockoutFixtureGenerator knockoutFixtureGenerator,
-    INotificationService? notificationService = null) : ITournamentSimulationService
+    INotificationService? notificationService = null,
+    IRankingService? rankingService = null) : ITournamentSimulationService
 {
     private const string FixtureNotGeneratedMessage = "El fixture aún no ha sido generado";
 
