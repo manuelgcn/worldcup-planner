@@ -12,7 +12,7 @@ public class User
     private const string PasswordMissingUppercaseMessage = "La contrasena debe contener al menos una mayuscula";
     private const string PasswordMissingDigitMessage = "La contrasena debe contener al menos un numero";
     private const string PasswordMissingSpecialCharMessage = "La contrasena debe contener al menos un caracter especial";
-
+    private const string FutureDateOfBirthMessage = "La fecha de nacimiento no puede ser futura";
     public int idUser { get; set; }
 
     public string name { get; set; }
@@ -35,6 +35,7 @@ public class User
     {
         ValidateEmail(email);
         ValidatePassword(password);
+        ValidateDateOfBirth(dateOfBirth);
 
         idUser = id;
         this.name = name;
@@ -68,6 +69,14 @@ public class User
             throw new ArgumentException(PasswordMissingSpecialCharMessage);
     }
 
+    
+    private void ValidateDateOfBirth(DateTime dateOfBirth)
+    {
+        if (dateOfBirth.Date > DateTime.Today)
+            throw new ArgumentException(FutureDateOfBirthMessage);
+    }
+
+    
     private string EncryptPassword(string password)
     {
         using SHA256 sha = SHA256.Create();
