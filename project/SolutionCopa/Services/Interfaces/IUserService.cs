@@ -13,4 +13,5 @@ public interface IUserService
     void RemoveUser(int id);
     void UpdateUser(int id, string name, string lastname, string email);
     void AssignRole(int userId, UserRoles role);
+    void ToggleRole(int userId, UserRoles role);
 }
