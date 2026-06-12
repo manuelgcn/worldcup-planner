@@ -36,6 +36,7 @@ builder.Services.AddSingleton<UserServices>();
 builder.Services.AddSingleton<IUserService>(sp => sp.GetRequiredService<UserServices>());
 
 builder.Services.AddSingleton<TeamServices>();
+builder.Services.AddSingleton<ITeamService>(sp => sp.GetRequiredService<TeamServices>());
 builder.Services.AddSingleton<StadiumServices>();
 builder.Services.AddSingleton<IStadiumService>(sp => sp.GetRequiredService<StadiumServices>());
 builder.Services.AddSingleton<GroupServices>();

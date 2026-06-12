@@ -5,6 +5,7 @@ namespace Services.Interfaces;
 public interface ITeamService
 {
     void AddTeam(Team team);
+    void FillToFortyEight(int? completionSeed, string? performedByEmail);
     IReadOnlyCollection<Team> GetTeams();
     Team FindByName(string name);
     void RemoveTeam(string name);
