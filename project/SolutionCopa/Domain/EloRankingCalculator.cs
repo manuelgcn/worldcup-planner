@@ -22,7 +22,7 @@ public static class EloRankingCalculator
             _ => 0.5
         };
 
-        double phaseMultiplier = phase == MatchPhase.Knockout ? 1.5 : 1.0;
+        double phaseMultiplier = 1.0;
 
         double delta = K * (score - expected) * phaseMultiplier;
 

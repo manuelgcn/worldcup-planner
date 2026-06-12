@@ -40,4 +40,13 @@ public sealed class EloRankingCycleTests
         int result = EloRankingCalculator.Compute(300, 2500, EloResult.Loss, MatchPhase.Knockout);
         Assert.AreEqual(300, result);
     }
+
+    [TestMethod]
+    public void Compute_KnockoutMultiplier_ShouldApplyOnePointFiveFactor()
+    {
+        // 1200 vs 1500, Win, Knockout -> delta = 30 * (1 - 0.33386) * 1.5 = 29.9763
+        // 1200 + 29.9763 = 1229.9763 -> Rounds to 1230
+        int result = EloRankingCalculator.Compute(1200, 1500, EloResult.Win, MatchPhase.Knockout);
+        Assert.AreEqual(1230, result);
+    }
 }
