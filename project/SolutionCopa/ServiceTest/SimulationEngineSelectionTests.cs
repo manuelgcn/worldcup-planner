@@ -138,7 +138,9 @@ public sealed class SimulationEngineSelectionTests
             _registry,
             _auditLogService,
             _settingsRepository,
-            new MockKnockoutFixtureGenerator());
+            new MockKnockoutFixtureGenerator(),
+            new MockNotificationService(),
+            new Moq.Mock<IRankingService>().Object);
     }
 
     private MatchService CreateMatchService()
@@ -154,7 +156,8 @@ public sealed class SimulationEngineSelectionTests
             _auditLogService,
             new Moq.Mock<IRankingService>().Object,
             new MockNotificationService(),
-            _unitOfWork);
+            _unitOfWork,
+            new MockEliminationMatchRepository());
     }
 
     private static void SeedGroupWithMatches(MockGroupRepository groupRepository, MockMatchRepository matchRepository)

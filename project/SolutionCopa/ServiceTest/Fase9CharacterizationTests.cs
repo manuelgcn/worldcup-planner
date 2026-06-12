@@ -34,7 +34,7 @@ public sealed class Fase9NotifyResultLoadedCharacterizationTests
         _notificationRepository = new MockNotificationRepository();
         _userRepository = new MockUserRepository();
         _userRepository.Add(BuildJournalist(JournalistId, "ana@mail.com"));
-        _service = new NotificationService(_notificationRepository, _userRepository);
+        _service = new NotificationService(_notificationRepository, _userRepository, new MockAuditLogService());
     }
 
     // (a) NotifyResultLoaded NO notifica siempre: solo cuando el marcador del partido
@@ -179,7 +179,7 @@ public sealed class Fase9MatchServiceResultFlowCharacterizationTests
         MockNotificationRepository notificationRepository = new MockNotificationRepository();
         MockUserRepository userRepository = new MockUserRepository();
         userRepository.Add(BuildJournalist(JournalistId: 1, "ana@mail.com"));
-        _ = new NotificationService(notificationRepository, userRepository);
+        _ = new NotificationService(notificationRepository, userRepository, new MockAuditLogService());
 
         _context.Service.SetGoals(MatchId, homeGoals: 2, awayGoals: 1);
 

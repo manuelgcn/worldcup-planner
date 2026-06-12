@@ -6,8 +6,12 @@ using Services.Interfaces;
 
 namespace Services;
 
-public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork unitOfWork, IAuditLogService? auditLogService = null) : IStadiumService
+public class StadiumServices : IStadiumService
 {
+    private readonly IStadiumRepository stadiumRepository;
+    private readonly IUnitOfWork unitOfWork;
+    private readonly IAuditLogService auditLogService;
+
     private const string DuplicateStadiumNameMessage = "Stadium name must be unique in the system.";
     private const string StadiumNotFoundMessage = "Stadium was not found.";
     private const string StadiumReferencedByMatchMessage = "Stadium cannot be deleted because it is referenced by one or more matches.";
@@ -24,6 +28,14 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
         ("Hard Rock Stadium", "Miami Gardens", 65000),
         ("Estadio BBVA", "Monterrey", 51000)
     };
+
+    public StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork unitOfWork, IAuditLogService auditLogService)
+    {
+        ArgumentNullException.ThrowIfNull(auditLogService);
+        this.stadiumRepository = stadiumRepository;
+        this.unitOfWork = unitOfWork;
+        this.auditLogService = auditLogService;
+    }
 
     public IReadOnlyCollection<Stadium> GetAllStadiums()
     {
@@ -56,7 +68,7 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
 
             Stadium stadium = new Stadium(name, city, null, capacity) { Id = nextId };
             stadiumRepository.Add(stadium);
-            auditLogService?.LogPerformedBy(
+            auditLogService.LogPerformedBy(
                 AuditActions.CreateStadium,
                 $"Generated default stadium '{stadium.Name}' in {stadium.City}.",
                 performedByEmail,
@@ -80,7 +92,7 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
 
         stadiumRepository.Add(stadium);
         
-        auditLogService?.Log(
+        auditLogService.Log(
             AuditActions.CreateStadium,
             $"Stadium '{stadium.Name}' created in {stadium.City}.",
             nameof(Stadium));
@@ -112,7 +124,7 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
         {
             throw new StadiumServicesException(StadiumReferencedByMatchMessage);
         }
-        auditLogService?.Log(
+        auditLogService.Log(
             AuditActions.DeleteStadium,
             $"Stadium '{stadium.Name}' removed.",
             nameof(Stadium));
@@ -124,7 +136,7 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
         Stadium stadium = GetById(id);
         stadium.Update(city, description, capacity);
         stadiumRepository.Update(stadium);
-        auditLogService?.Log(
+        auditLogService.Log(
             AuditActions.UpdateStadium,
             $"Stadium '{stadium.Name}' updated.",
             nameof(Stadium));

@@ -6,22 +6,17 @@ using Services.Interfaces;
 
 namespace Services;
 
-public class MatchService(
-    IMatchRepository matchRepository,
-    ITournamentSettingsRepository tournamentSettingsRepository,
-    IMatchFactory matchFactory,
-    ISimulationEngineRegistry simulationEngineRegistry,
-    IAuditLogService auditLogService,
-    IRankingService rankingService,
-    INotificationService notificationService,
-    IUnitOfWork unitOfWork,
-    IEliminationMatchRepository? eliminationMatchRepository = null)
-    : IMatchService
+public class MatchService : IMatchService
 {
-    // INotificationService es colaborador obligatorio: el servicio es el unico responsable
-    // de avisar a periodistas, por eso se valida fail-fast en lugar de aceptarlo nulo.
-    private readonly INotificationService notificationService =
-        notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+    private readonly IMatchRepository matchRepository;
+    private readonly ITournamentSettingsRepository tournamentSettingsRepository;
+    private readonly IMatchFactory matchFactory;
+    private readonly ISimulationEngineRegistry simulationEngineRegistry;
+    private readonly IAuditLogService auditLogService;
+    private readonly IRankingService rankingService;
+    private readonly INotificationService notificationService;
+    private readonly IUnitOfWork unitOfWork;
+    private readonly IEliminationMatchRepository eliminationMatchRepository;
 
     private const int DefaultTournamentSettingsId = 1;
     private const string MatchIdAlreadyExistsMessage = "Match ID already exists";
@@ -34,6 +29,30 @@ public class MatchService(
     private const string IncidentNotFoundMessage = "Incident not found";
     private const string IncidentTeamNotInMatchMessage = "Incident team must be one of the two teams playing the match";
     private const string ResultRegisteredDetailTemplate = "MatchId={0} result registered: {1}-{2}.";
+
+    public MatchService(
+        IMatchRepository matchRepository,
+        ITournamentSettingsRepository tournamentSettingsRepository,
+        IMatchFactory matchFactory,
+        ISimulationEngineRegistry simulationEngineRegistry,
+        IAuditLogService auditLogService,
+        IRankingService rankingService,
+        INotificationService notificationService,
+        IUnitOfWork unitOfWork,
+        IEliminationMatchRepository eliminationMatchRepository)
+    {
+        ArgumentNullException.ThrowIfNull(notificationService);
+        ArgumentNullException.ThrowIfNull(eliminationMatchRepository);
+        this.matchRepository = matchRepository;
+        this.tournamentSettingsRepository = tournamentSettingsRepository;
+        this.matchFactory = matchFactory;
+        this.simulationEngineRegistry = simulationEngineRegistry;
+        this.auditLogService = auditLogService;
+        this.rankingService = rankingService;
+        this.notificationService = notificationService;
+        this.unitOfWork = unitOfWork;
+        this.eliminationMatchRepository = eliminationMatchRepository;
+    }
 
     public MatchDto CreateMatch(CreateMatchRequestDto request)
     {
@@ -386,11 +405,6 @@ public class MatchService(
     private void EnsureGroupMatchIsEditable(Match match)
     {
         if (match is not MatchGroup)
-        {
-            return;
-        }
-
-        if (eliminationMatchRepository == null)
         {
             return;
         }

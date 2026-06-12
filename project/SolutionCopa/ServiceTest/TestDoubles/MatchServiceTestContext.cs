@@ -94,7 +94,7 @@ public sealed class MatchServiceTestContext
 
         // NotificationService real, respaldado por repos inspeccionables: permite verificar que
         // MatchService (no la UI) avisa a periodistas al simular/registrar resultados.
-        NotificationService = new NotificationService(NotificationRepository, UserRepository);
+        NotificationService = new NotificationService(NotificationRepository, UserRepository, AuditLogService);
 
         // 1. Construimos la fábrica con sus responsabilidades de lectura, incluyendo IStadiumRepository
         MatchFactory = new MatchFactory(

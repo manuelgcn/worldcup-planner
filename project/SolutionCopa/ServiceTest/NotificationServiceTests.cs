@@ -20,7 +20,7 @@ public class NotificationServiceTests
     {
         notificationRepository = new MockNotificationRepository();
         userRepository = new MockUserRepository();
-        service = new NotificationService(notificationRepository, userRepository);
+        service = new NotificationService(notificationRepository, userRepository, new MockAuditLogService());
     }
 
     [TestMethod]
