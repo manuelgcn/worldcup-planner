@@ -5,10 +5,22 @@ using Services.Interfaces;
 
 namespace Services;
 
-public class GroupServices(IGroupRepository groupRepository, IUnitOfWork unitOfWork, IAuditLogService? auditLogService = null) : IGroupService
+public class GroupServices : IGroupService
 {
+    private readonly IGroupRepository groupRepository;
+    private readonly IUnitOfWork unitOfWork;
+    private readonly IAuditLogService auditLogService;
+
     private const string DuplicateGroupNameMessage = "Group name must be unique in the system.";
     private const string GroupNotFoundMessage = "Group was not found.";
+
+    public GroupServices(IGroupRepository groupRepository, IUnitOfWork unitOfWork, IAuditLogService auditLogService)
+    {
+        ArgumentNullException.ThrowIfNull(auditLogService);
+        this.groupRepository = groupRepository;
+        this.unitOfWork = unitOfWork;
+        this.auditLogService = auditLogService;
+    }
 
     public IReadOnlyCollection<Group> GetAllGroups()
     {
@@ -25,7 +37,7 @@ public class GroupServices(IGroupRepository groupRepository, IUnitOfWork unitOfW
         }
 
         groupRepository.Add(group);
-        auditLogService?.Log(
+        auditLogService.Log(
             AuditActions.CreateGroup,
             $"Group '{group.Name}' created.",
             nameof(Group));
@@ -44,7 +56,7 @@ public class GroupServices(IGroupRepository groupRepository, IUnitOfWork unitOfW
     {
         Group group = GetByName(name);
         groupRepository.Delete(group);
-        auditLogService?.Log(
+        auditLogService.Log(
             AuditActions.DeleteGroup,
             $"Group '{group.Name}' removed.",
             nameof(Group));

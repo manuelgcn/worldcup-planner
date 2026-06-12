@@ -5,10 +5,22 @@ using Services.Interfaces;
 
 namespace Services;
 
-public class JourneyServices(IJourneyRepository journeyRepository, IUnitOfWork unitOfWork, IAuditLogService? auditLogService = null) : IJourneyService
+public class JourneyServices : IJourneyService
 {
+    private readonly IJourneyRepository journeyRepository;
+    private readonly IUnitOfWork unitOfWork;
+    private readonly IAuditLogService auditLogService;
+
     private const string DuplicateJourneyNumberMessage = "Journey number must be unique in the system.";
     private const string JourneyNotFoundMessage = "Journey was not found.";
+
+    public JourneyServices(IJourneyRepository journeyRepository, IUnitOfWork unitOfWork, IAuditLogService auditLogService)
+    {
+        ArgumentNullException.ThrowIfNull(auditLogService);
+        this.journeyRepository = journeyRepository;
+        this.unitOfWork = unitOfWork;
+        this.auditLogService = auditLogService;
+    }
 
     public IReadOnlyCollection<Journey> GetAllJourneys()
     {
@@ -25,7 +37,7 @@ public class JourneyServices(IJourneyRepository journeyRepository, IUnitOfWork u
         }
 
         journeyRepository.Add(journey);
-        auditLogService?.Log(
+        auditLogService.Log(
             AuditActions.CreateJourney,
             $"Journey '{journey.Number}' created.",
             nameof(Journey),
@@ -43,7 +55,7 @@ public class JourneyServices(IJourneyRepository journeyRepository, IUnitOfWork u
     {
         Journey journey = GetByNumber(number);
         journeyRepository.Delete(journey);
-        auditLogService?.Log(
+        auditLogService.Log(
             AuditActions.DeleteJourney,
             $"Journey '{journey.Number}' removed.",
             nameof(Journey),

@@ -4,15 +4,17 @@ using DataAccess.Interfaces;
 
 namespace Services;
 
-public class UserServices
+public class UserServices : IUserService
 {
     private const string InvalidCredentialsMessage = "Credenciales invalidas";
 
-    private readonly IAuditLogService? _auditLogService;
+    private readonly IAuditLogService _auditLogService;
     private readonly IUserRepository _userRepository;
 
-    public UserServices(IUserRepository userRepository, IAuditLogService? auditLogService = null)
+    public UserServices(IUserRepository userRepository, IAuditLogService auditLogService)
     {
+        ArgumentNullException.ThrowIfNull(userRepository);
+        ArgumentNullException.ThrowIfNull(auditLogService);
         _userRepository = userRepository;
         _auditLogService = auditLogService;
     }
@@ -35,7 +37,7 @@ public class UserServices
 
         _userRepository.Add(user);
 
-        _auditLogService?.Log(
+        _auditLogService.Log(
             AuditActions.CreateUser,
             $"UserId={user.idUser} created with email={user.email}.",
             nameof(User),
@@ -57,7 +59,7 @@ public class UserServices
 
         _userRepository.Update(user);
 
-        _auditLogService?.Log(
+        _auditLogService.Log(
             AuditActions.RemoveUserRoles,
             $"Role={role} removed from UserId={user.idUser}.",
             nameof(User),
@@ -104,7 +106,7 @@ public class UserServices
 
         _userRepository.Remove(user);
 
-        _auditLogService?.Log(
+        _auditLogService.Log(
             AuditActions.DeleteUser,
             $"UserId={user.idUser} deleted.",
             nameof(User),
@@ -128,7 +130,7 @@ public class UserServices
 
         _userRepository.Update(user);
 
-        _auditLogService?.Log(
+        _auditLogService.Log(
             AuditActions.UpdateUser,
             $"UserId={user.idUser} updated.",
             nameof(User),
@@ -144,7 +146,7 @@ public class UserServices
 
         _userRepository.Update(user);
 
-        _auditLogService?.Log(
+        _auditLogService.Log(
             AuditActions.AssignUserRole,
             $"Role={role} assigned to UserId={user.idUser}.",
             nameof(User),

@@ -14,7 +14,7 @@ public class UserServicesTests
     public void Setup()
     {
         repository = new MockUserRepository();
-        service = new UserServices(repository);
+        service = new UserServices(repository, new MockAuditLogService());
     }
 
     private static User BuildUser(

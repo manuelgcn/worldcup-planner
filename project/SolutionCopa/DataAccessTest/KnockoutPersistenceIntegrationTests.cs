@@ -67,7 +67,12 @@ public sealed class KnockoutPersistenceIntegrationTests
             _stadiumRepository,
             _settingsRepository,
             _unitOfWork,
-            _auditService);
+            _auditService,
+            new NotificationService(
+                new NotificationRepository(_factory),
+                new UserRepository(_factory),
+                _auditService),
+            new RankingService(_auditService, _teamRepository));
 
         _fixtureOrchestrator = new FixtureOrchestrator(
             _teamRepository,
@@ -89,7 +94,12 @@ public sealed class KnockoutPersistenceIntegrationTests
             new SimulationEngineRegistry([_engine]),
             _auditService,
             _settingsRepository,
-            _knockoutGenerator);
+            _knockoutGenerator,
+            new NotificationService(
+                new NotificationRepository(_factory),
+                new UserRepository(_factory),
+                _auditService),
+            new RankingService(_auditService, _teamRepository));
 
         SeedSettings();
         SeedStadiums(StadiumCount);

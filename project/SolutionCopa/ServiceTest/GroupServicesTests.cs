@@ -17,7 +17,7 @@ public sealed class GroupServicesTests
     {
         _repo = new MockGroupRepository();
         _uow = new MockUnitOfWork();
-        _service = new GroupServices(_repo, _uow);
+        _service = new GroupServices(_repo, _uow, new MockAuditLogService());
     }
 
     [TestMethod]

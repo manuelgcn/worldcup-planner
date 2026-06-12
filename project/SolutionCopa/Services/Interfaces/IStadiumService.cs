@@ -5,6 +5,7 @@ namespace Services.Interfaces;
 public interface IStadiumService
 {
     IReadOnlyCollection<Stadium> GetAllStadiums();
+    void SeedDefaultStadiums(string? performedByEmail);
     void AddStadium(Stadium stadium);
     Stadium GetById(int id);
     Stadium GetByName(string name);

@@ -23,56 +23,14 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     private readonly ISimulationEngineRegistry _simulationEngineRegistry;
     private readonly IMatchRepository _matchRepository;
-    private readonly IEliminationMatchRepository? _eliminationRepository;
-    private readonly IGroupRepository? _groupRepository;
+    private readonly IEliminationMatchRepository _eliminationRepository;
+    private readonly IGroupRepository _groupRepository;
     private readonly ITournamentSettingsRepository _settingsRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IAuditLogService? _auditLog;
-    private readonly IStadiumRepository? _stadiumRepository;
-    private readonly INotificationService? _notificationService;
-    private readonly IRankingService? _rankingService;
-
-    public KnockoutFixtureGenerator(
-        ISimulationEngineRegistry simulationEngineRegistry,
-        IMatchRepository matchRepository,
-        ITournamentSettingsRepository settingsRepository,
-        IUnitOfWork unitOfWork,
-        IAuditLogService? auditLog = null,
-        INotificationService? notificationService = null,
-        IRankingService? rankingService = null)
-        : this(
-            simulationEngineRegistry,
-            matchRepository,
-            settingsRepository,
-            unitOfWork,
-            auditLog,
-            stadiumRepository: null,
-            notificationService: notificationService,
-            rankingService: rankingService)
-    {
-    }
-
-    public KnockoutFixtureGenerator(
-        ISimulationEngineRegistry simulationEngineRegistry,
-        IMatchRepository matchRepository,
-        ITournamentSettingsRepository settingsRepository,
-        IUnitOfWork unitOfWork,
-        IAuditLogService? auditLog,
-        IStadiumRepository? stadiumRepository,
-        INotificationService? notificationService = null,
-        IRankingService? rankingService = null)
-    {
-        _simulationEngineRegistry = simulationEngineRegistry ?? throw new ArgumentNullException(nameof(simulationEngineRegistry));
-        _matchRepository = matchRepository ?? throw new ArgumentNullException(nameof(matchRepository));
-        _settingsRepository = settingsRepository ?? throw new ArgumentNullException(nameof(settingsRepository));
-        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-        _auditLog = auditLog;
-        _stadiumRepository = stadiumRepository;
-        _notificationService = notificationService;
-        _rankingService = rankingService;
-        _eliminationRepository = null;
-        _groupRepository = null;
-    }
+    private readonly IAuditLogService _auditLog;
+    private readonly IStadiumRepository _stadiumRepository;
+    private readonly INotificationService _notificationService;
+    private readonly IRankingService _rankingService;
 
     public KnockoutFixtureGenerator(
         ISimulationEngineRegistry simulationEngineRegistry,
@@ -83,17 +41,27 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         ITournamentSettingsRepository settingsRepository,
         IUnitOfWork unitOfWork,
         IAuditLogService auditLog,
-        INotificationService? notificationService = null,
-        IRankingService? rankingService = null)
+        INotificationService notificationService,
+        IRankingService rankingService)
     {
-        _simulationEngineRegistry = simulationEngineRegistry ?? throw new ArgumentNullException(nameof(simulationEngineRegistry));
-        _matchRepository = matchRepository ?? throw new ArgumentNullException(nameof(matchRepository));
-        _eliminationRepository = eliminationRepository ?? throw new ArgumentNullException(nameof(eliminationRepository));
-        _groupRepository = groupRepository ?? throw new ArgumentNullException(nameof(groupRepository));
-        _stadiumRepository = stadiumRepository ?? throw new ArgumentNullException(nameof(stadiumRepository));
-        _settingsRepository = settingsRepository ?? throw new ArgumentNullException(nameof(settingsRepository));
-        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-        _auditLog = auditLog ?? throw new ArgumentNullException(nameof(auditLog));
+        ArgumentNullException.ThrowIfNull(simulationEngineRegistry);
+        ArgumentNullException.ThrowIfNull(matchRepository);
+        ArgumentNullException.ThrowIfNull(eliminationRepository);
+        ArgumentNullException.ThrowIfNull(groupRepository);
+        ArgumentNullException.ThrowIfNull(stadiumRepository);
+        ArgumentNullException.ThrowIfNull(settingsRepository);
+        ArgumentNullException.ThrowIfNull(unitOfWork);
+        ArgumentNullException.ThrowIfNull(auditLog);
+        ArgumentNullException.ThrowIfNull(notificationService);
+        ArgumentNullException.ThrowIfNull(rankingService);
+        _simulationEngineRegistry = simulationEngineRegistry;
+        _matchRepository = matchRepository;
+        _eliminationRepository = eliminationRepository;
+        _groupRepository = groupRepository;
+        _stadiumRepository = stadiumRepository;
+        _settingsRepository = settingsRepository;
+        _unitOfWork = unitOfWork;
+        _auditLog = auditLog;
         _notificationService = notificationService;
         _rankingService = rankingService;
     }
@@ -103,13 +71,10 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         ArgumentNullException.ThrowIfNull(qualifiedTeams);
 
         TournamentSettings settings = LoadSettingsOrThrow();
-        IStadiumRepository stadiumRepository = _stadiumRepository
-            ?? throw new InvalidOperationException(StadiumsRequiredMessage);
-
-        List<Stadium> stadiums = stadiumRepository.GetAll().ToList();
+        List<Stadium> stadiums = _stadiumRepository.GetAll().ToList();
         if (stadiums.Count == 0)
         {
-            throw new InvalidOperationException(StadiumsRequiredMessage);
+            throw new KnockoutGeneratorException(StadiumsRequiredMessage);
         }
 
         List<(Team Team, string Group)> qualifiedWithGroups = FlattenQualifiedTeams(qualifiedTeams);
@@ -161,7 +126,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
         _unitOfWork.Commit();
 
-        _auditLog?.LogPerformedBy(
+        _auditLog.LogPerformedBy(
             AuditActions.GenerateKnockout,
             $"Knockout bracket generated with seed {effectiveSeed}.",
             performedByEmail,
@@ -217,7 +182,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         TournamentSettings? settings = _settingsRepository.GetAll().FirstOrDefault();
         if (settings == null)
         {
-            throw new InvalidOperationException("Tournament settings are required to simulate matches.");
+            throw new KnockoutGeneratorException("Tournament settings are required to simulate matches.");
         }
 
         int baseSeed = settings.SimulationSeed;
@@ -237,7 +202,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
             _matchRepository.Update(match);
             NotifyJournalistsAboutSimulatedResult(match);
-            _auditLog?.Log(AuditActions.SimulationExecuted, BuildSimulationAuditDetails(match, seed, engine.Name), settings.Id, "Match", match.MatchId);
+            _auditLog.Log(AuditActions.SimulationExecuted, BuildSimulationAuditDetails(match, seed, engine.Name), settings.Id, "Match", match.MatchId);
         }
 
         _unitOfWork.Commit();
@@ -268,7 +233,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
         EliminationOrchestrator orchestrator = new EliminationOrchestrator(
             eliminationRepo,
-            _auditLog ?? throw new InvalidOperationException("AuditLogService required"));
+            _auditLog);
 
         orchestrator.OrchestrateEliminationPhase(entries, stadiums, settings, crossingsSeedOverride);
 
@@ -283,11 +248,11 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
                 ApplyRankingUpdate(match);
                 eliminationRepo.Update(match);
                 NotifyJournalistsAboutSimulatedResult(match);
-                _auditLog?.Log(AuditActions.SimulationExecuted, BuildSimulationAuditDetails(match, seed, engine.Name), settings.Id, "Match", match.MatchId);
+                _auditLog.Log(AuditActions.SimulationExecuted, BuildSimulationAuditDetails(match, seed, engine.Name), settings.Id, "Match", match.MatchId);
             }
             catch (Exception ex)
             {
-                _auditLog?.Log(AuditActions.SimulateMatch, $"Failed to simulate match {match.MatchId}: {ex.Message}", settings.Id, "Match", match.MatchId);
+                _auditLog.Log(AuditActions.SimulateMatch, $"Failed to simulate match {match.MatchId}: {ex.Message}", settings.Id, "Match", match.MatchId);
             }
         }
 
@@ -524,7 +489,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     private void ApplyRankingUpdate(Match match)
     {
-        _rankingService?.ApplyMatchResultOnce(match);
+        _rankingService.ApplyMatchResultOnce(match);
     }
 
     private IMatchSimulationEngine ResolveSelectedEngine(TournamentSettings settings)
@@ -535,7 +500,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private void CommitAndAuditRound(Phase phase, string? performedByEmail)
     {
         _unitOfWork.Commit();
-        _auditLog?.LogPerformedBy(
+        _auditLog.LogPerformedBy(
             AuditActions.SimulateRound,
             $"Simulated phase {phase}.",
             performedByEmail,
@@ -544,11 +509,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     private bool HasPendingMatches()
     {
-        if (_eliminationRepository == null)
-        {
-            return false;
-        }
-
         List<MatchElimination> all = LoadAllEliminationMatches(_eliminationRepository);
         if (all.Count == 0)
         {
@@ -574,7 +534,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private TournamentSettings LoadSettingsOrThrow()
     {
         return _settingsRepository.GetAll().FirstOrDefault()
-            ?? throw new InvalidOperationException(TournamentSettingsRequiredMessage);
+            ?? throw new KnockoutGeneratorException(TournamentSettingsRequiredMessage);
     }
 
     private static TournamentSettings WithCrossingsSeed(TournamentSettings settings, int crossingsSeed)
@@ -635,23 +595,18 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     private IEliminationMatchRepository RequireEliminationRepository()
     {
-        return _eliminationRepository
-            ?? throw new InvalidOperationException("IEliminationMatchRepository was not configured for this generator instance.");
+        return _eliminationRepository;
     }
 
     private IGroupRepository RequireGroupRepository()
     {
-        return _groupRepository
-            ?? throw new InvalidOperationException("IGroupRepository was not configured for this generator instance.");
+        return _groupRepository;
     }
 
     private Stadium ResolveStadium()
     {
-        IStadiumRepository stadiumRepository = _stadiumRepository
-            ?? throw new InvalidOperationException(StadiumsRequiredMessage);
-
-        Stadium? stadium = stadiumRepository.GetAll().FirstOrDefault();
-        return stadium ?? throw new InvalidOperationException(StadiumsRequiredMessage);
+        Stadium? stadium = _stadiumRepository.GetAll().FirstOrDefault();
+        return stadium ?? throw new KnockoutGeneratorException(StadiumsRequiredMessage);
     }
 
     private int NextMatchId(IEliminationMatchRepository elimRepo)
@@ -688,7 +643,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         {
             if (!qualifiedTeams.GroupByTeamId.TryGetValue(team.Id, out string? groupName) || string.IsNullOrWhiteSpace(groupName))
             {
-                throw new InvalidOperationException($"{MissingGroupForTeamMessagePrefix}{team.Id}.");
+                throw new KnockoutGeneratorException($"{MissingGroupForTeamMessagePrefix}{team.Id}.");
             }
 
             qualifiedWithGroups.Add((team, groupName));
@@ -711,6 +666,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     private void NotifyJournalistsAboutSimulatedResult(Match match)
     {
-        _notificationService?.NotifyMatchSimulated(match);
+        _notificationService.NotifyMatchSimulated(match);
     }
 }

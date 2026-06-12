@@ -17,7 +17,7 @@ public sealed class TeamServicesTests
     {
         _repo = new MockTeamRepository();
         _uow = new MockUnitOfWork();
-        _service = new TeamServices(_repo, _uow);
+        _service = new TeamServices(_repo, _uow, new MockAuditLogService());
     }
 
     [TestMethod]
@@ -304,7 +304,7 @@ public sealed class TeamServicesTests
 
         MockTeamRepository repo2 = new MockTeamRepository();
         MockUnitOfWork uow2 = new MockUnitOfWork();
-        TeamServices service2 = new TeamServices(repo2, uow2);
+        TeamServices service2 = new TeamServices(repo2, uow2, new MockAuditLogService());
         service2.FillToFortyEight(completionSeed: 42, performedByEmail: null);
         List<int> secondRankings = service2.GetTeams().Select(team => team.FifaRanking).OrderBy(rank => rank).ToList();
 

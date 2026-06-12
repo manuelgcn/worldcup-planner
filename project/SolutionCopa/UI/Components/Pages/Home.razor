@@ -1,16 +1,12 @@
 @page "/"
 @using ProjectCopa
 @using Services.Interfaces
-@using DataAccess.Interfaces
+@using Services.DTOs
 @implements IDisposable
 @inject SessionState Session
 @inject INotificationService NotificationService
-@inject ITeamRepository TeamRepository
-@inject IStadiumService StadiumService
-@inject IMatchRepository MatchRepository
-@inject IEliminationMatchRepository EliminationRepository
-@inject IFixtureOrchestrator FixtureOrchestrator
-@inject IKnockoutFixtureGenerator KnockoutGenerator
+@inject ITournamentDashboardService DashboardService
+@inject ILogger<Home> Logger
 
 <PageTitle>Inicio</PageTitle>
 
@@ -59,6 +55,11 @@
     </div>
 }
 
+@if (!string.IsNullOrWhiteSpace(loadError))
+{
+    <div class="alert alert-error mt-4" role="alert">@loadError</div>
+}
+
 <section class="stats-grid">
     <article class="m26-card stat-card">
         <p class="stat-value">@teamCount / 48</p>
@@ -79,6 +80,9 @@
 </section>
 
 @code {
+    private const string DashboardLoadErrorMessage =
+        "No se pudo cargar el resumen del torneo. Intentá nuevamente más tarde.";
+
     private int unreadCount;
     private int teamCount;
     private int stadiumCount;
@@ -87,6 +91,7 @@
     private bool isFixtureGenerated;
     private bool isKnockoutGenerated;
     private string? championName;
+    private string? loadError;
 
     private sealed record CtaLink(string Label, string Href, string Icon);
 
@@ -161,42 +166,24 @@
 
     private void LoadTournamentStats()
     {
+        loadError = null;
+
         try
         {
-            teamCount = TeamRepository.GetAll().Count;
-            stadiumCount = StadiumService.GetAllStadiums().Count;
-
-            List<Match> allMatches = MatchRepository.GetAll()
-                .Concat(EliminationRepository.GetAll())
-                .ToList();
-
-            totalMatches = allMatches.Count;
-            playedMatches = allMatches.Count(IsPlayed);
-            isFixtureGenerated = FixtureOrchestrator.IsFixtureGenerated();
-            isKnockoutGenerated = KnockoutGenerator.IsBracketGenerated();
-            championName = FindChampionName(allMatches);
+            TournamentDashboardDto overview = DashboardService.GetOverview();
+            teamCount = overview.TeamCount;
+            stadiumCount = overview.StadiumCount;
+            totalMatches = overview.TotalMatches;
+            playedMatches = overview.PlayedMatches;
+            isFixtureGenerated = overview.IsFixtureGenerated;
+            isKnockoutGenerated = overview.IsKnockoutGenerated;
+            championName = overview.ChampionName;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // La home no debe romperse si la base aún no está disponible: se muestran ceros.
+            Logger.LogError(ex, "Unexpected error while loading the tournament dashboard.");
+            loadError = DashboardLoadErrorMessage;
         }
-    }
-
-    private static bool IsPlayed(Match match) =>
-        match.WasSimulated || match.HomeGoals + match.AwayGoals > 0;
-
-    private static string? FindChampionName(List<Match> allMatches)
-    {
-        MatchElimination? final = allMatches
-            .OfType<MatchElimination>()
-            .FirstOrDefault(match => match.Phase == Phase.Final);
-
-        if (final is null || !final.WasSimulated)
-        {
-            return null;
-        }
-
-        return final.GetWinner()?.Name;
     }
 
     private void LoadUnreadCount()

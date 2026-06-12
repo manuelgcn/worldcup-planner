@@ -1,10 +1,10 @@
 @page "/matches"
 @using ProjectCopa
+@using Services.DTOs
 @using Services.Exceptions
 @using Services.Interfaces
-@using DataAccess.Interfaces
-@inject IMatchRepository MatchRepository
-@inject IEliminationMatchRepository EliminationRepository
+@inject IMatchQueryService MatchQuery
+@inject IMatchService MatchService
 @inject IKnockoutFixtureGenerator KnockoutGenerator
 @inject IStadiumService StadiumServices
 @inject SessionState Session
@@ -121,17 +121,13 @@ else
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (Match match in matches)
+                    @foreach (MatchListItemDto match in matches)
                     {
                         <tr>
                             <td>@match.MatchDate.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>@StageLabel(match)</td>
-                            <td>
-                                <TeamFlag Team="match.HomeTeam" />@match.HomeTeam?.Name
-                                vs
-                                <TeamFlag Team="match.AwayTeam" />@match.AwayTeam?.Name
-                            </td>
-                            <td>@match.Stadium?.Name</td>
+                            <td>@match.HomeTeamName vs @match.AwayTeamName</td>
+                            <td>@match.StadiumName</td>
                             <td>@match.HomeGoals - @match.AwayGoals</td>
                             <td>
                                 <span class="match-status @(IsPlayed(match) ? "played" : "pending")">
@@ -148,7 +144,7 @@ else
                                         Editar
                                     </button>
                                 }
-                                else if (CanEditMatches && IsGroupStageLocked && match is MatchGroup)
+                                else if (CanEditMatches && IsGroupStageLocked && match.GroupName is not null)
                                 {
                                     <span class="text-muted" title="La fase de grupos está cerrada: los cruces de fase 2 ya fueron generados.">
                                         <i class="bi bi-lock-fill" aria-hidden="true"></i>
@@ -156,11 +152,11 @@ else
                                 }
                             </td>
                         </tr>
-                        @if (editingMatchId == match.MatchId && CanEditRow(match))
+                        @if (editingMatchId == match.MatchId && editingMatch is not null)
                         {
                             <tr class="row-editing">
                                 <td colspan="7">
-                                    <MatchResultEditor Match="match"
+                                    <MatchResultEditor Match="editingMatch"
                                                        ShowDateAndStadium="true"
                                                        OnSaved="HandleSaved"
                                                        OnCancel="CancelEdit" />
@@ -203,13 +199,14 @@ else
         set => filterPhase = string.IsNullOrEmpty(value) ? null : Enum.Parse<Phase>(value);
     }
 
-    private List<Match> matches = new();
+    private List<MatchListItemDto> matches = new();
     private IReadOnlyCollection<ProjectCopa.Stadium> stadiums = Array.Empty<ProjectCopa.Stadium>();
 
     private readonly List<string> errors = new();
     private string? successMessage;
 
     private int? editingMatchId;
+    private Match? editingMatch;
 
     private bool CanEditMatches =>
         Session.IsLoggedIn &&
@@ -238,26 +235,24 @@ else
         }
     }
 
-    private bool CanEditRow(Match match)
+    // Un partido es de grupos si tiene grupo; los de eliminacion no se congelan.
+    private bool CanEditRow(MatchListItemDto match)
     {
         if (!CanEditMatches)
         {
             return false;
         }
 
-        return match is not MatchGroup || !IsGroupStageLocked;
+        return match.GroupName is null || !IsGroupStageLocked;
     }
 
-    private static bool IsPlayed(Match match) =>
+    private static bool IsPlayed(MatchListItemDto match) =>
         match.WasSimulated || match.HomeGoals + match.AwayGoals > 0;
 
-    private static string StageLabel(Match match) =>
-        match switch
-        {
-            MatchGroup groupMatch => $"Grupo {groupMatch.Group?.Name}",
-            MatchElimination eliminationMatch => eliminationMatch.Phase.ToString(),
-            _ => ""
-        };
+    private static string StageLabel(MatchListItemDto match) =>
+        match.GroupName is not null
+            ? $"Grupo {match.GroupName}"
+            : match.Phase?.ToString() ?? "";
 
     private void ApplyFilters()
     {
@@ -268,39 +263,24 @@ else
 
         try
         {
-            IEnumerable<Match> result = MatchRepository.GetAll()
-                .Concat(EliminationRepository.GetAll());
-
-            if (filterFrom.HasValue)
+            MatchFilterDto filter = new MatchFilterDto
             {
-                DateTime fromDate = filterFrom.Value.Date;
-                result = result.Where(m => m.MatchDate.Date >= fromDate);
-            }
+                From = filterFrom,
+                To = filterTo,
+                StadiumId = filterStadiumId > 0 ? filterStadiumId : null,
+                GroupName = string.IsNullOrEmpty(filterGroup) ? null : filterGroup,
+                Phase = filterPhase
+            };
 
-            if (filterTo.HasValue)
-            {
-                DateTime toDateExclusive = filterTo.Value.Date.AddDays(1);
-                result = result.Where(m => m.MatchDate < toDateExclusive);
-            }
-
-            if (filterStadiumId > 0)
-                result = result.Where(m => m.Stadium != null && m.Stadium.Id == filterStadiumId);
-
-            if (!string.IsNullOrEmpty(filterGroup))
-                result = result.Where(m => m is MatchGroup mg && mg.Group != null && mg.Group.Name == filterGroup);
-
-            if (filterPhase.HasValue)
-                result = result.Where(m => m is MatchElimination me && me.Phase == filterPhase.Value);
-
-            matches = result.ToList();
+            matches = MatchQuery.Search(filter).ToList();
+        }
+        catch (MatchServicesException ex)
+        {
+            errors.Add(ex.Message);
         }
         catch (ArgumentException ex)
         {
             errors.Add(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            errors.Add("Error al filtrar: " + ex.Message);
         }
     }
 
@@ -330,21 +310,32 @@ else
         }
     }
 
-    private void StartEdit(Match match)
+    private void StartEdit(MatchListItemDto match)
     {
         errors.Clear();
         successMessage = null;
-        editingMatchId = match.MatchId;
+
+        try
+        {
+            // El editor opera sobre la entidad; la pagina la pide al servicio en vez de tocar repositorios.
+            editingMatch = MatchService.GetEntity(match.MatchId);
+            editingMatchId = match.MatchId;
+        }
+        catch (MatchServicesException ex)
+        {
+            errors.Add(ex.Message);
+        }
     }
 
     private void CancelEdit()
     {
         editingMatchId = null;
+        editingMatch = null;
     }
 
     private void HandleSaved(string message)
     {
-        editingMatchId = null;
+        CancelEdit();
         ApplyFilters();
         successMessage = message;
     }

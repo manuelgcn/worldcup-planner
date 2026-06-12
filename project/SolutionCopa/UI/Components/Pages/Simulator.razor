@@ -1,11 +1,15 @@
 @page "/simulator"
 @using ProjectCopa
-@using DataAccess.Interfaces
 @using Services.Interfaces
+@using Services.DTOs
+@using Services.Exceptions
+@using System.Security.Cryptography
+@using Microsoft.Extensions.Logging
 @inject ITournamentSimulationService TournamentSimulationService
-@inject ITournamentSettingsRepository SettingsRepository
+@inject ISimulationConfigurationService SimulationConfiguration
 @inject SessionState Session
 @inject NavigationManager Nav
+@inject ILogger<Simulator> Logger
 
 <PageTitle>Simulador de Torneo</PageTitle>
 
@@ -55,7 +59,7 @@
             <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
             Esta acción simula los 72 partidos de la fase de grupos y genera los cruces de fase 2 de una sola vez.
             Para hacerlo paso a paso, usá la página de <a href="/fixture">Fixture</a>.
-            Motor de simulación: <strong>@(settings?.SelectedSimulationEngine ?? "sin configurar")</strong>.
+            Motor de simulación: <strong>@(config?.SelectedSimulationEngine ?? "sin configurar")</strong>.
         </div>
 
         <div class="sim-grid">
@@ -70,7 +74,7 @@
                     <p class="sim-help">Reproducible: la misma semilla siempre produce el mismo torneo.</p>
                     <label for="seedInput">Semilla</label>
                     <input id="seedInput" class="form-control" type="number" @bind="seed" placeholder="0" />
-                    <button class="btn btn-primary" disabled="@isBusy" @onclick="SimulateWithSeedAsync">
+                    <button class="btn btn-primary" disabled="@isBusy" @onclick="SimulateWithSeed">
                         <i class="bi @(isBusy ? "bi-arrow-repeat spin" : "bi-play-fill")" aria-hidden="true"></i>
                         Simular con semilla
                     </button>
@@ -86,7 +90,7 @@
                 </div>
                 <div class="sim-card-body">
                     <p class="sim-help">Usa una semilla al azar. El resultado queda igualmente registrado en el log.</p>
-                    <button class="btn btn-secondary" disabled="@isBusy" @onclick="SimulateRandomAsync">
+                    <button class="btn btn-secondary" disabled="@isBusy" @onclick="SimulateRandom">
                         <i class="bi @(isBusy ? "bi-arrow-repeat spin" : "bi-shuffle")" aria-hidden="true"></i>
                         Simular aleatorio
                     </button>
@@ -97,11 +101,14 @@
 </div>
 
 @code {
+    private const string UnexpectedErrorMessage =
+        "Ocurrió un error inesperado al simular el torneo. Revisá el estado del torneo e intentá nuevamente.";
+
     private int seed;
     private bool isBusy;
     private readonly List<string> errors = new();
     private string? successMessage;
-    private TournamentSettings? settings;
+    private SimulationConfigurationDto? config;
 
     // Según la letra, la simulación es tarea del Editor (el Admin también puede).
     private bool CanSimulate =>
@@ -110,33 +117,41 @@
 
     protected override void OnInitialized()
     {
-        settings = SettingsRepository.GetAll().FirstOrDefault();
+        config = SimulationConfiguration.GetConfiguration();
+        seed = config?.SimulationSeed ?? 0;
     }
 
-    private async Task SimulateWithSeedAsync()
+    private void SimulateWithSeed()
     {
-        await RunSimulationAsync(seed, $"Torneo simulado correctamente con semilla {seed}.");
+        RunSimulation(seed, $"Torneo simulado correctamente con semilla {seed}.");
     }
 
-    private async Task SimulateRandomAsync()
+    private void SimulateRandom()
     {
-        int randomSeed = new Random().Next();
-        await RunSimulationAsync(randomSeed, $"Torneo simulado correctamente (semilla aleatoria {randomSeed}).");
+        // Semilla criptográficamente aleatoria sólo para "elegir" el sorteo; la simulación sigue
+        // recibiendo una semilla explícita y reproducible (no se usa Random sin semilla).
+        int randomSeed = RandomNumberGenerator.GetInt32(int.MaxValue);
+        RunSimulation(randomSeed, $"Torneo simulado correctamente (semilla aleatoria {randomSeed}).");
     }
 
-    private async Task RunSimulationAsync(int simulationSeed, string successText)
+    private void RunSimulation(int simulationSeed, string successText)
     {
         errors.Clear();
         successMessage = null;
         isBusy = true;
         try
         {
-            await Task.Run(() => TournamentSimulationService.SimulateGroupStageAndGenerateKnockout(simulationSeed));
+            TournamentSimulationService.SimulateGroupStageAndGenerateKnockout(simulationSeed);
             successMessage = successText;
+        }
+        catch (Exception ex) when (ex is MatchServicesException or SimulationEngineException)
+        {
+            errors.Add(ex.Message);
         }
         catch (Exception ex)
         {
-            errors.Add(ex.Message);
+            Logger.LogError(ex, "Unexpected error while simulating tournament with seed {Seed}.", simulationSeed);
+            errors.Add(UnexpectedErrorMessage);
         }
         finally
         {

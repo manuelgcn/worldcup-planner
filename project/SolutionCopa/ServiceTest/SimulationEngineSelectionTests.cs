@@ -96,9 +96,14 @@ public sealed class SimulationEngineSelectionTests
         KnockoutFixtureGenerator generator = new KnockoutFixtureGenerator(
             _registry,
             matchRepository,
+            new MockEliminationMatchRepository(),
+            new MockGroupRepository(),
+            new MockStadiumRepository(),
             _settingsRepository,
             _unitOfWork,
-            _auditLogService);
+            _auditLogService,
+            new MockNotificationService(),
+            new MockRankingService());
 
         generator.SimulateEliminationMatches(new[] { MatchId });
 
@@ -114,9 +119,14 @@ public sealed class SimulationEngineSelectionTests
         KnockoutFixtureGenerator generator = new KnockoutFixtureGenerator(
             _registry,
             matchRepository,
+            new MockEliminationMatchRepository(),
+            new MockGroupRepository(),
+            new MockStadiumRepository(),
             _settingsRepository,
             _unitOfWork,
-            _auditLogService);
+            _auditLogService,
+            new MockNotificationService(),
+            new MockRankingService());
 
         generator.SimulateEliminationMatches(new[] { MatchId });
 
@@ -138,7 +148,9 @@ public sealed class SimulationEngineSelectionTests
             _registry,
             _auditLogService,
             _settingsRepository,
-            new MockKnockoutFixtureGenerator());
+            new MockKnockoutFixtureGenerator(),
+            new MockNotificationService(),
+            new Moq.Mock<IRankingService>().Object);
     }
 
     private MatchService CreateMatchService()
@@ -153,7 +165,9 @@ public sealed class SimulationEngineSelectionTests
             _registry,
             _auditLogService,
             new Moq.Mock<IRankingService>().Object,
-            _unitOfWork);
+            new MockNotificationService(),
+            _unitOfWork,
+            new MockEliminationMatchRepository());
     }
 
     private static void SeedGroupWithMatches(MockGroupRepository groupRepository, MockMatchRepository matchRepository)

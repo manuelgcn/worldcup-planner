@@ -41,7 +41,7 @@ public class EliminationOrchestrator
             };
         }
 
-        List<MatchElimination> roundOf32 = builder.CreateRoundOf32(entries, stadiums, settings, crossingsSeed, stadiumProvider, makeDateProvider(roundStart));
+        List<MatchElimination> roundOf32 = builder.CreateRoundOf32(entries, stadiumList, settings, crossingsSeed, stadiumProvider, makeDateProvider(roundStart));
         foreach (MatchElimination m in roundOf32) _eliminationRepo.Add(m);
 
         _auditLog.Log(AuditActions.GenerateKnockout, $"RoundOf32 generated with seed {crossingsSeed}.", settings.Id);
@@ -59,7 +59,7 @@ public class EliminationOrchestrator
         for (int r = 0; r < rounds.Length; r++)
         {
             roundStart = roundStart.AddDays(daysBetween);
-            List<MatchElimination> nextMatches = builder.CreateNextRoundFromMatches(currentRound, rounds[r].phase, stadiums, settings, stadiumProvider, makeDateProvider(roundStart));
+            List<MatchElimination> nextMatches = builder.CreateNextRoundFromMatches(currentRound, rounds[r].phase, stadiumList, settings, stadiumProvider, makeDateProvider(roundStart));
             foreach (MatchElimination nm in nextMatches) _eliminationRepo.Add(nm);
             _auditLog.Log(AuditActions.GenerateKnockout, $"{rounds[r].phase} generated.", settings.Id);
             currentRound = nextMatches.Cast<Match>().ToList();

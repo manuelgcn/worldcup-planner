@@ -1,8 +1,9 @@
 
 @page "/edit-user"
 @using Services
+@using Services.Interfaces
 @inject SessionState Session
-@inject UserServices UserServices
+@inject IUserService UserServices
 @inject NavigationManager Nav
 
 <PageTitle>Editar Usuario</PageTitle>

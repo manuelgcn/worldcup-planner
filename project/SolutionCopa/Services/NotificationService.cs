@@ -16,13 +16,16 @@ public class NotificationService : INotificationService
 
     private readonly INotificationRepository notificationRepository;
     private readonly IUserRepository userRepository;
-    private readonly IAuditLogService? auditLogService;
+    private readonly IAuditLogService auditLogService;
 
     public NotificationService(
         INotificationRepository notificationRepository,
         IUserRepository userRepository,
-        IAuditLogService? auditLogService = null)
+        IAuditLogService auditLogService)
     {
+        ArgumentNullException.ThrowIfNull(notificationRepository);
+        ArgumentNullException.ThrowIfNull(userRepository);
+        ArgumentNullException.ThrowIfNull(auditLogService);
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.auditLogService = auditLogService;
@@ -83,7 +86,7 @@ public class NotificationService : INotificationService
             notificationRepository.Update(notification);
         }
 
-        auditLogService?.Log(
+        auditLogService.Log(
             AuditActions.NotificationReadAll,
             $"All notifications ({unread.Count}) marked as read by user {userId}.",
             affectedEntityType: nameof(Notification),
@@ -107,7 +110,7 @@ public class NotificationService : INotificationService
         notification.MarkAsRead();
         notificationRepository.Update(notification);
 
-        auditLogService?.Log(
+        auditLogService.Log(
             AuditActions.NotificationRead,
             $"Notification {notificationId} marked as read by user {userId}.",
             affectedEntityType: nameof(Notification),

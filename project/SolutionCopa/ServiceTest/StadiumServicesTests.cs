@@ -21,7 +21,7 @@ public class StadiumServicesTests
     {
         _repository = new MockStadiumRepository();
         _unitOfWork = new MockUnitOfWork();
-        _service = new StadiumServices(_repository, _unitOfWork);
+        _service = new StadiumServices(_repository, _unitOfWork, new MockAuditLogService());
     }
 
     
@@ -30,7 +30,7 @@ public class StadiumServicesTests
     {
         MockStadiumRepository repository = new MockStadiumRepository();
         MockUnitOfWork unitOfWork = new MockUnitOfWork();
-        StadiumServices localService = new StadiumServices(repository, unitOfWork);
+        StadiumServices localService = new StadiumServices(repository, unitOfWork, new MockAuditLogService());
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         localService.AddStadium(stadium);
@@ -45,6 +45,7 @@ public class StadiumServicesTests
         ServiceCollection services = new ServiceCollection();
         services.AddSingleton<IStadiumRepository, MockStadiumRepository>();
         services.AddSingleton<IUnitOfWork, MockUnitOfWork>();
+        services.AddSingleton<IAuditLogService, MockAuditLogService>();
         services.AddSingleton<StadiumServices>();
         services.AddSingleton<IStadiumService>(sp => sp.GetRequiredService<StadiumServices>());
 
@@ -179,7 +180,7 @@ public class StadiumServicesTests
     {
         MockStadiumRepository repository = new MockStadiumRepository();
         MockUnitOfWork unitOfWork = new MockUnitOfWork();
-        StadiumServices localService = new StadiumServices(repository, unitOfWork);
+        StadiumServices localService = new StadiumServices(repository, unitOfWork, new MockAuditLogService());
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         localService.AddStadium(stadium);
@@ -222,7 +223,7 @@ public class StadiumServicesTests
     {
         MockStadiumRepository repository = new MockStadiumRepository();
         MockUnitOfWork unitOfWork = new MockUnitOfWork();
-        StadiumServices localService = new StadiumServices(repository, unitOfWork);
+        StadiumServices localService = new StadiumServices(repository, unitOfWork, new MockAuditLogService());
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         localService.AddStadium(stadium);
@@ -248,7 +249,8 @@ public class StadiumServicesTests
         Stadium referenced = new Stadium("Centenario", "Montevideo", null, 60000) { Id = 7 };
         StadiumServices service = new StadiumServices(
             new DeleteFailingStadiumRepository(referenced),
-            new MockUnitOfWork());
+            new MockUnitOfWork(),
+            new MockAuditLogService());
 
         Assert.ThrowsException<StadiumServicesException>(() => service.RemoveById(7));
     }

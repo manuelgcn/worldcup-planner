@@ -30,10 +30,14 @@ public class KnockoutFixtureGeneratorTests
         KnockoutFixtureGenerator generator = new KnockoutFixtureGenerator(
             new SimulationEngineRegistry([simulationEngine]),
             matchRepository,
+            new MockEliminationMatchRepository(),
+            new MockGroupRepository(),
+            stadiumRepository,
             settingsRepository,
             unitOfWork,
-            auditLog: null,
-            stadiumRepository);
+            new MockAuditLogService(),
+            new MockNotificationService(),
+            new MockRankingService());
 
         // Act
         List<Match> result = generator.GeneratePhase2(qualifiedTeams);
@@ -66,12 +70,14 @@ public class KnockoutFixtureGeneratorTests
         KnockoutFixtureGenerator generator = new KnockoutFixtureGenerator(
             new SimulationEngineRegistry([simulationEngine]),
             matchRepository,
+            new MockEliminationMatchRepository(),
+            new MockGroupRepository(),
+            new MockStadiumRepository(),
             settingsRepository,
             new MockUnitOfWork(),
-            auditLog: null,
-            stadiumRepository: null,
-            notificationService: null,
-            rankingService: rankingServiceMock.Object);
+            new MockAuditLogService(),
+            new MockNotificationService(),
+            rankingServiceMock.Object);
 
         // Act: simular dos veces el mismo partido; el flag RankingApplied evita la doble aplicacion
         generator.SimulateEliminationMatches(new[] { 3001 });
@@ -100,12 +106,14 @@ public class KnockoutFixtureGeneratorTests
         KnockoutFixtureGenerator generator = new KnockoutFixtureGenerator(
             new SimulationEngineRegistry([simulationEngine]),
             matchRepository,
+            new MockEliminationMatchRepository(),
+            new MockGroupRepository(),
+            stadiumRepository,
             settingsRepository,
             new MockUnitOfWork(),
             AuditLogService.CreateInstance(new MockAuditLogRepository()),
-            stadiumRepository,
-            notificationService: null,
-            rankingService: rankingServiceMock.Object);
+            new MockNotificationService(),
+            rankingServiceMock.Object);
 
         // Act
         generator.OrchestrateAndSimulateEliminationPhase(
@@ -145,8 +153,8 @@ public class KnockoutFixtureGeneratorTests
             settingsRepository,
             new MockUnitOfWork(),
             AuditLogService.CreateInstance(new MockAuditLogRepository()),
-            notificationService: null,
-            rankingService: rankingServiceMock.Object);
+            new MockNotificationService(),
+            rankingServiceMock.Object);
 
         foreach (Match match in generator.GeneratePhase2(BuildQualifiedTeams()))
         {

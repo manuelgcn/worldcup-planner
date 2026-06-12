@@ -6,19 +6,46 @@ using Services.Interfaces;
 
 namespace Services;
 
-public sealed class TournamentSimulationService(
-    IGroupRepository groupRepository,
-    IMatchRepository matchRepository,
-    IEliminationMatchRepository eliminationMatchRepository,
-    IUnitOfWork unitOfWork,
-    ISimulationEngineRegistry simulationEngineRegistry,
-    IAuditLogService auditLogService,
-    ITournamentSettingsRepository tournamentSettingsRepository,
-    IKnockoutFixtureGenerator knockoutFixtureGenerator,
-    INotificationService? notificationService = null,
-    IRankingService? rankingService = null) : ITournamentSimulationService
+public sealed class TournamentSimulationService : ITournamentSimulationService
 {
+    private readonly IGroupRepository groupRepository;
+    private readonly IMatchRepository matchRepository;
+    private readonly IEliminationMatchRepository eliminationMatchRepository;
+    private readonly IUnitOfWork unitOfWork;
+    private readonly ISimulationEngineRegistry simulationEngineRegistry;
+    private readonly IAuditLogService auditLogService;
+    private readonly ITournamentSettingsRepository tournamentSettingsRepository;
+    private readonly IKnockoutFixtureGenerator knockoutFixtureGenerator;
+    private readonly INotificationService notificationService;
+    private readonly IRankingService rankingService;
+
     private const string FixtureNotGeneratedMessage = "El fixture aún no ha sido generado";
+
+    public TournamentSimulationService(
+        IGroupRepository groupRepository,
+        IMatchRepository matchRepository,
+        IEliminationMatchRepository eliminationMatchRepository,
+        IUnitOfWork unitOfWork,
+        ISimulationEngineRegistry simulationEngineRegistry,
+        IAuditLogService auditLogService,
+        ITournamentSettingsRepository tournamentSettingsRepository,
+        IKnockoutFixtureGenerator knockoutFixtureGenerator,
+        INotificationService notificationService,
+        IRankingService rankingService)
+    {
+        ArgumentNullException.ThrowIfNull(notificationService);
+        ArgumentNullException.ThrowIfNull(rankingService);
+        this.groupRepository = groupRepository;
+        this.matchRepository = matchRepository;
+        this.eliminationMatchRepository = eliminationMatchRepository;
+        this.unitOfWork = unitOfWork;
+        this.simulationEngineRegistry = simulationEngineRegistry;
+        this.auditLogService = auditLogService;
+        this.tournamentSettingsRepository = tournamentSettingsRepository;
+        this.knockoutFixtureGenerator = knockoutFixtureGenerator;
+        this.notificationService = notificationService;
+        this.rankingService = rankingService;
+    }
 
     public void SimulateGroupStage(int seed, string? performedByEmail)
     {
@@ -102,13 +129,13 @@ public sealed class TournamentSimulationService(
             engine.Simulate(match, seed);
             ApplyRankingUpdate(match);
             matchRepository.Update(match);
-            notificationService?.NotifyMatchSimulated(match);
+            notificationService.NotifyMatchSimulated(match);
         }
     }
 
     private void ApplyRankingUpdate(Match match)
     {
-        rankingService?.ApplyMatchResultOnce(match);
+        rankingService.ApplyMatchResultOnce(match);
     }
 
     private static QualifiedTeams ClassifyQualifiedTeams(List<Group> groups, List<Match> matches, TournamentSettings settings)

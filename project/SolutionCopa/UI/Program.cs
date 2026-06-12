@@ -33,8 +33,10 @@ builder.Services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 
 builder.Services.AddSingleton<UserServices>();
+builder.Services.AddSingleton<IUserService>(sp => sp.GetRequiredService<UserServices>());
 
 builder.Services.AddSingleton<TeamServices>();
+builder.Services.AddSingleton<ITeamService>(sp => sp.GetRequiredService<TeamServices>());
 builder.Services.AddSingleton<StadiumServices>();
 builder.Services.AddSingleton<IStadiumService>(sp => sp.GetRequiredService<StadiumServices>());
 builder.Services.AddSingleton<GroupServices>();
@@ -54,6 +56,9 @@ builder.Services.AddSingleton<IAuditLogService>(sp =>
 builder.Services.AddSingleton<IRankingService, RankingService>();
 builder.Services.AddSingleton<IMatchFactory, MatchFactory>();
 builder.Services.AddSingleton<IMatchService, MatchService>();
+builder.Services.AddSingleton<IMatchQueryService, MatchQueryService>();
+builder.Services.AddSingleton<ITournamentDashboardService, TournamentDashboardService>();
+builder.Services.AddSingleton<ISimulationConfigurationService, SimulationConfigurationService>();
 
 
 builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>

@@ -14,6 +14,7 @@ public interface IMatchRepository
     List<Match> GetByStadium(int stadiumId);
     List<Match> GetByPhase(Phase phase);
     List<Match> GetByDateRange(DateTime from, DateTime to);
+    List<Match> Search(MatchQueryCriteria criteria);
     List<Match> GetAll();
     int NextIncidentId();
     void Clear();

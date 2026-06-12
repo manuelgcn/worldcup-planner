@@ -6,8 +6,12 @@ using Services.Interfaces;
 
 namespace Services;
 
-public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork, IAuditLogService? auditLogService = null) : ITeamService
+public class TeamServices : ITeamService
 {
+    private readonly ITeamRepository teamRepository;
+    private readonly IUnitOfWork unitOfWork;
+    private readonly IAuditLogService auditLogService;
+
     private const int FixtureTeamCount = 48;
     private const int AfcQuota = 8;
     private const int CafQuota = 9;
@@ -31,6 +35,14 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
             { Confederation.CONMEBOL, ConmebolQuota },
             { Confederation.CONCACAF, ConcacafQuota }
         };
+
+    public TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork, IAuditLogService auditLogService)
+    {
+        ArgumentNullException.ThrowIfNull(auditLogService);
+        this.teamRepository = teamRepository;
+        this.unitOfWork = unitOfWork;
+        this.auditLogService = auditLogService;
+    }
 
     public void FillToFortyEight(int? completionSeed, string? performedByEmail)
     {
@@ -60,7 +72,7 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
 
                 teamRepository.Add(fictitious);
 
-                auditLogService?.LogPerformedBy(
+                auditLogService.LogPerformedBy(
                     AuditActions.CreateTeam,
                     $"Generated fictitious team '{fictitious.Name}' with ranking {fictitious.FifaRanking}.",
                     performedByEmail,
@@ -99,7 +111,7 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
 
         teamRepository.Add(team);
 
-        auditLogService?.Log(
+        auditLogService.Log(
             AuditActions.CreateTeam,
             $"Team '{team.Name}' added with ranking {team.FifaRanking}.",
             nameof(Team),
@@ -130,7 +142,7 @@ public class TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork
 
         teamRepository.Delete(team);
 
-        auditLogService?.Log(
+        auditLogService.Log(
             AuditActions.DeleteTeam,
             $"Team '{team.Name}' removed.",
             nameof(Team),

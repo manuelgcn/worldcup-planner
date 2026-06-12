@@ -17,7 +17,7 @@ public sealed class JourneyServicesTests
     {
         _repo = new MockJourneyRepository();
         _uow = new MockUnitOfWork();
-        _service = new JourneyServices(_repo, _uow);
+        _service = new JourneyServices(_repo, _uow, new MockAuditLogService());
     }
 
     [TestMethod]

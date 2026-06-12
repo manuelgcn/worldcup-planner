@@ -219,7 +219,9 @@ public class KnockoutFixtureGeneratorExtensionTests
             _stadiumRepository,
             _settingsRepository,
             _unitOfWork,
-            _auditService);
+            _auditService,
+            new MockNotificationService(),
+            new MockRankingService());
     }
 
     private void SeedStadiums()

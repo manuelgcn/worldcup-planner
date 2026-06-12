@@ -7,12 +7,13 @@ using Services.Interfaces;
 
 namespace Services;
 
-public class FlagAssignmentService(
-    ITeamRepository teamRepository,
-    IUnitOfWork unitOfWork,
-    string flagsDirectoryPath,
-    IAuditLogService? auditLogService = null) : IFlagAssignmentService
+public class FlagAssignmentService : IFlagAssignmentService
 {
+    private readonly ITeamRepository teamRepository;
+    private readonly IUnitOfWork unitOfWork;
+    private readonly string flagsDirectoryPath;
+    private readonly IAuditLogService auditLogService;
+
     private const string FlagFileExtension = ".png";
     private const string AuditDetailsTemplate = "Assigned {0} team flags ({1} already had one, {2} without mapping).";
 
@@ -69,6 +70,19 @@ public class FlagAssignmentService(
             ["uzbekistan"] = "UZ"
         };
 
+    public FlagAssignmentService(
+        ITeamRepository teamRepository,
+        IUnitOfWork unitOfWork,
+        string flagsDirectoryPath,
+        IAuditLogService auditLogService)
+    {
+        ArgumentNullException.ThrowIfNull(auditLogService);
+        this.teamRepository = teamRepository;
+        this.unitOfWork = unitOfWork;
+        this.flagsDirectoryPath = flagsDirectoryPath;
+        this.auditLogService = auditLogService;
+    }
+
     public static IReadOnlyCollection<string> KnownIsoCodes =>
         IsoCodesByNormalizedName.Values.Distinct().ToList();
 
@@ -109,7 +123,7 @@ public class FlagAssignmentService(
             unitOfWork.Commit();
         }
 
-        auditLogService?.LogPerformedBy(
+        auditLogService.LogPerformedBy(
             AuditActions.AssignTeamFlags,
             string.Format(AuditDetailsTemplate, assignedCount, skippedExistingCount, unmappedTeamNames.Count),
             performedByEmail,

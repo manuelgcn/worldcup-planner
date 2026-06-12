@@ -66,7 +66,7 @@ public sealed class TournamentSimulationServiceTests
             auditLogService,
             _tournamentSettingsRepository,
             _knockoutFixtureGenerator,
-            notificationService: null,
+            notificationService: new MockNotificationService(),
             rankingService: _rankingServiceMock.Object);
     }
 
@@ -139,7 +139,9 @@ public sealed class TournamentSimulationServiceTests
             new SimulationEngineRegistry([_matchSimulationEngine]),
             auditLogService,
             emptySettingsRepository,
-            emptyKnockoutFixtureGenerator);
+            emptyKnockoutFixtureGenerator,
+            new MockNotificationService(),
+            _rankingServiceMock.Object);
 
         MatchServicesException exception = Assert.ThrowsException<MatchServicesException>(
             () => service.SimulateGroupStageAndGenerateKnockout(Seed));
