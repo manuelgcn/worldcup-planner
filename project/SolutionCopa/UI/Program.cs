@@ -51,6 +51,9 @@ builder.Services.AddSingleton<ISimulationEngineRegistry, SimulationEngineRegistr
 builder.Services.AddSingleton<IAuditLogService>(sp =>
     AuditLogService.CreateInstance(sp.GetRequiredService<IAuditLogRepository>()));
 
+builder.Services.AddSingleton<IMatchFactory, MatchFactory>();
+builder.Services.AddSingleton<IMatchService, MatchService>();
+
 
 builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
     new KnockoutFixtureGenerator(
