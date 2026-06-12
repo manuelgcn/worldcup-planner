@@ -12,26 +12,6 @@ public static class EloRankingCalculator
 
     public static int Compute(int rankingActual, int rankingOpponent, EloResult result, MatchPhase phase)
     {
-        double expected = 1.0 / (1.0 + Math.Pow(10.0, (rankingOpponent - rankingActual) / DenominatorForExpectation));
-
-        double score = result switch
-        {
-            EloResult.Win => 1.0,
-            EloResult.Draw => 0.5,
-            EloResult.Loss => 0.0,
-            _ => 0.5
-        };
-
-        double phaseMultiplier = phase == MatchPhase.Knockout ? 1.5 : 1.0;
-
-        double delta = K * (score - expected) * phaseMultiplier;
-
-        double newRatingDouble = rankingActual + delta;
-
-        int newRating = (int)Math.Round(newRatingDouble, MidpointRounding.AwayFromZero);
-
-        newRating = Math.Clamp(newRating, MinRanking, MaxRanking);
-
-        return newRating;
+        return 0;
     }
 }
