@@ -66,7 +66,8 @@ builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
         sp.GetRequiredService<ITournamentSettingsRepository>(),
         sp.GetRequiredService<IUnitOfWork>(),
         sp.GetRequiredService<IAuditLogService>(),
-        sp.GetRequiredService<INotificationService>()));
+        sp.GetRequiredService<INotificationService>(),
+        sp.GetRequiredService<IRankingService>()));
 
 builder.Services.AddSingleton<IKnockoutFixtureGenerator>(sp =>
     sp.GetRequiredService<KnockoutFixtureGenerator>());
