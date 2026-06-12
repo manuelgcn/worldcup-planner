@@ -268,6 +268,24 @@ public class UserTests
         );
     }
 
+    
+    [TestMethod]
+    public void CanCreateUserWhoIsExactly18YearsOld()
+    {
+        DateTime exactly18YearsOld = DateTime.Today.AddYears(-18);
+
+        User user = new User(
+            1,
+            "Juan",
+            "Perez",
+            "juan@mail.com",
+            "Pass123@",
+            exactly18YearsOld
+        );
+
+        Assert.AreEqual(exactly18YearsOld, user.dateOfBirth);
+    }
+
 
     
 }
