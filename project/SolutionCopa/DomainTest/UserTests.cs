@@ -250,6 +250,24 @@ public class UserTests
         );
     }
 
+    
+    [TestMethod]
+    public void CannotCreateUserYoungerThan18()
+    {
+        DateTime underageDate = DateTime.Today.AddYears(-17);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@mail.com",
+                "Pass123@",
+                underageDate
+            )
+        );
+    }
+
 
     
 }
