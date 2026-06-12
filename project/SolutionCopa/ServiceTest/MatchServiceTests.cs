@@ -878,4 +878,38 @@ public sealed class MatchServiceTest
             r => r.ApplyMatchResult(It.IsAny<ProjectCopa.Match>(), MatchPhase.GroupStage),
             Times.Once);
     }
+
+    [TestMethod]
+    public void PublishResult_CalledTwice_AppliesRankingOnlyOnce()
+    {
+        // Arrange
+        CreateMatchRequestDto request = MatchServiceTestContext.NewGroupMatchRequest(11);
+        _context.Service.CreateMatch(request);
+
+        // Act: republicar el mismo partido no debe recalcular el Elo
+        _context.Service.PublishResult(11);
+        _context.Service.PublishResult(11);
+
+        // Assert
+        _context.RankingServiceMock.Verify(
+            r => r.ApplyMatchResult(It.IsAny<ProjectCopa.Match>(), It.IsAny<MatchPhase>()),
+            Times.Once);
+    }
+
+    [TestMethod]
+    public void SimulateMatch_ThenPublishResult_AppliesRankingOnlyOnce()
+    {
+        // Arrange
+        CreateMatchRequestDto request = MatchServiceTestContext.NewGroupMatchRequest(12);
+        _context.Service.CreateMatch(request);
+
+        // Act: simular ya aplica el ranking; publicar despues no debe duplicarlo
+        _context.Service.SimulateMatch(12);
+        _context.Service.PublishResult(12);
+
+        // Assert
+        _context.RankingServiceMock.Verify(
+            r => r.ApplyMatchResult(It.IsAny<ProjectCopa.Match>(), It.IsAny<MatchPhase>()),
+            Times.Once);
+    }
 }
