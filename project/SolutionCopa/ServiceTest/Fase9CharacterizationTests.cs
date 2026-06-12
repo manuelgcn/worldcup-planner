@@ -134,21 +134,19 @@ public sealed class Fase9MatchServiceResultFlowCharacterizationTests
         _context.Service.CreateMatch(MatchServiceTestContext.NewGroupMatchRequest(MatchId));
     }
 
-    // (b) SimulateMatch hoy NO notifica a periodistas: MatchService no colabora con
-    // INotificationService, por lo que un periodista registrado no recibe ninguna
-    // notificacion cuando se simula un partido a traves del servicio.
+    // (b) Comportamiento invertido en Fase 9: SimulateMatch ahora SI notifica a periodistas.
+    // MatchService pasa a colaborar con INotificationService (NotifyMatchSimulated), por lo
+    // que un periodista registrado recibe la notificacion al simular un partido por el servicio.
+    // Antes este test verificaba lo contrario (la UI/flujos agregados eran los unicos que avisaban).
 
     [TestMethod]
-    public void SimulateMatch_DoesNotNotifyJournalists()
+    public void SimulateMatch_NotifiesJournalists()
     {
-        MockNotificationRepository notificationRepository = new MockNotificationRepository();
-        MockUserRepository userRepository = new MockUserRepository();
-        userRepository.Add(BuildJournalist(JournalistId: 1, "ana@mail.com"));
-        _ = new NotificationService(notificationRepository, userRepository);
+        _context.UserRepository.Add(BuildJournalist(JournalistId: 1, "ana@mail.com"));
 
         _context.Service.SimulateMatch(MatchId);
 
-        Assert.AreEqual(0, notificationRepository.GetAll().Count);
+        Assert.AreEqual(1, _context.NotificationRepository.GetAll().Count);
     }
 
     [TestMethod]

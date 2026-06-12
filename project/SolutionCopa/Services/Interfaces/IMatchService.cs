@@ -12,6 +12,7 @@ public interface IMatchService
     List<MatchDto> GetByJourney(int journeyNumber);
     List<MatchDto> GetByDateRange(DateTime from, DateTime to);
     void SetGoals(int matchId, int homeGoals, int awayGoals);
+    MatchDto RegisterResult(int matchId, int homeGoals, int awayGoals, string? performedByEmail);
     void AddGoal(int matchId, bool isHomeTeam);
     void RemoveGoal(int matchId, bool isHomeTeam);
     void PublishResult(int matchId);

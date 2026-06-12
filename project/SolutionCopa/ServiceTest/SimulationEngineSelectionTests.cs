@@ -153,6 +153,7 @@ public sealed class SimulationEngineSelectionTests
             _registry,
             _auditLogService,
             new Moq.Mock<IRankingService>().Object,
+            new MockNotificationService(),
             _unitOfWork);
     }
 

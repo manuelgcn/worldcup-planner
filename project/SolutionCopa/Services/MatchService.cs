@@ -13,10 +13,16 @@ public class MatchService(
     ISimulationEngineRegistry simulationEngineRegistry,
     IAuditLogService auditLogService,
     IRankingService rankingService,
+    INotificationService notificationService,
     IUnitOfWork unitOfWork,
     IEliminationMatchRepository? eliminationMatchRepository = null)
     : IMatchService
 {
+    // INotificationService es colaborador obligatorio: el servicio es el unico responsable
+    // de avisar a periodistas, por eso se valida fail-fast en lugar de aceptarlo nulo.
+    private readonly INotificationService notificationService =
+        notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+
     private const int DefaultTournamentSettingsId = 1;
     private const string MatchIdAlreadyExistsMessage = "Match ID already exists";
     private const string GroupNameRequiredMessage = "Group name is required";
@@ -27,6 +33,7 @@ public class MatchService(
     private const string GroupMatchFrozenByKnockoutMessage = "Group-stage matches cannot be edited once the knockout phase is generated.";
     private const string IncidentNotFoundMessage = "Incident not found";
     private const string IncidentTeamNotInMatchMessage = "Incident team must be one of the two teams playing the match";
+    private const string ResultRegisteredDetailTemplate = "MatchId={0} result registered: {1}-{2}.";
 
     public MatchDto CreateMatch(CreateMatchRequestDto request)
     {
@@ -148,6 +155,7 @@ public class MatchService(
             matchId);
 
         ApplyRankingUpdate(match);
+        notificationService.NotifyMatchSimulated(match);
 
         matchRepository.Update(match);
         unitOfWork.Commit();
@@ -295,6 +303,38 @@ public class MatchService(
             matchId);
         matchRepository.Update(match);
         unitOfWork.Commit();
+    }
+
+    // Controlador GRASP del caso de uso "registrar resultado": carga el partido, valida que
+    // sea editable, registra los goles, audita con el actor, aplica el ranking una sola vez,
+    // notifica a periodistas y persiste. La UI solo captura datos y delega aca.
+    public MatchDto RegisterResult(int matchId, int homeGoals, int awayGoals, string? performedByEmail)
+    {
+        Match match = GetMatchOrThrow(matchId);
+        EnsureGroupMatchIsEditable(match);
+
+        int previousHomeGoals = match.HomeGoals;
+        int previousAwayGoals = match.AwayGoals;
+
+        match.SetGoals(homeGoals, awayGoals);
+        LogResultRegistered(matchId, homeGoals, awayGoals, performedByEmail);
+        ApplyRankingUpdate(match);
+        notificationService.NotifyResultLoaded(match, previousHomeGoals, previousAwayGoals);
+
+        matchRepository.Update(match);
+        unitOfWork.Commit();
+
+        return MapToDto(match);
+    }
+
+    private void LogResultRegistered(int matchId, int homeGoals, int awayGoals, string? performedByEmail)
+    {
+        auditLogService.LogPerformedBy(
+            action: AuditActions.UpdateMatch,
+            details: string.Format(ResultRegisteredDetailTemplate, matchId, homeGoals, awayGoals),
+            performedByEmail: performedByEmail,
+            affectedEntityType: nameof(Match),
+            affectedEntityId: matchId);
     }
 
     private void ApplyRankingUpdate(Match match)
