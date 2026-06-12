@@ -20,7 +20,6 @@
 @inject ITeamRepository TeamRepository
 @inject ITeamService TeamServices
 @inject IStadiumService StadiumService
-@inject StadiumServices StadiumServicesImpl
 @inject IExportService ExportService
 @inject SessionState Session
 @inject NavigationManager Nav
@@ -597,7 +596,7 @@
     private async Task HandleSeedStadiumsAsync()
     {
         await RunAdminActionAsync(
-            () => StadiumServicesImpl.SeedDefaultStadiums(Session.CurrentUser?.email),
+            () => StadiumService.SeedDefaultStadiums(Session.CurrentUser?.email),
             "Estadios demo cargados.");
     }
 
