@@ -6,6 +6,7 @@
 @inject SessionState Session
 @inject INotificationService NotificationService
 @inject ITournamentDashboardService DashboardService
+@inject ILogger<Home> Logger
 
 <PageTitle>Inicio</PageTitle>
 
@@ -54,6 +55,11 @@
     </div>
 }
 
+@if (!string.IsNullOrWhiteSpace(loadError))
+{
+    <div class="alert alert-error mt-4" role="alert">@loadError</div>
+}
+
 <section class="stats-grid">
     <article class="m26-card stat-card">
         <p class="stat-value">@teamCount / 48</p>
@@ -74,6 +80,9 @@
 </section>
 
 @code {
+    private const string DashboardLoadErrorMessage =
+        "No se pudo cargar el resumen del torneo. Intentá nuevamente más tarde.";
+
     private int unreadCount;
     private int teamCount;
     private int stadiumCount;
@@ -82,6 +91,7 @@
     private bool isFixtureGenerated;
     private bool isKnockoutGenerated;
     private string? championName;
+    private string? loadError;
 
     private sealed record CtaLink(string Label, string Href, string Icon);
 
@@ -156,6 +166,8 @@
 
     private void LoadTournamentStats()
     {
+        loadError = null;
+
         try
         {
             TournamentDashboardDto overview = DashboardService.GetOverview();
@@ -167,9 +179,10 @@
             isKnockoutGenerated = overview.IsKnockoutGenerated;
             championName = overview.ChampionName;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // La home no debe romperse si la base aún no está disponible: se muestran ceros.
+            Logger.LogError(ex, "Unexpected error while loading the tournament dashboard.");
+            loadError = DashboardLoadErrorMessage;
         }
     }
 

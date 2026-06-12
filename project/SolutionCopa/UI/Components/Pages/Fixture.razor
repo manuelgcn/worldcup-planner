@@ -24,6 +24,7 @@
 @inject SessionState Session
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject ILogger<Fixture> Logger
 
 <PageTitle>Fixture y Cruces</PageTitle>
 
@@ -350,6 +351,9 @@
 </div>
 
 @code {
+    private const string StandingsLoadErrorMessage =
+        "No se pudo cargar la tabla de posiciones del grupo. Intentá nuevamente.";
+
     private TournamentSettings? settings;
     private List<Group> groups = new();
     private List<MatchGroup> groupMatches = new();
@@ -466,8 +470,13 @@
         {
             return StandingsService.GetStandings(groupName);
         }
-        catch (GroupServicesException)
+        catch (GroupServicesException ex)
         {
+            Logger.LogError(ex, "Unexpected error while loading standings for group {GroupName}.", groupName);
+            if (!errors.Contains(StandingsLoadErrorMessage))
+            {
+                errors.Add(StandingsLoadErrorMessage);
+            }
             return new List<GroupStandingDto>();
         }
     }
