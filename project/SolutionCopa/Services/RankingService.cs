@@ -43,6 +43,11 @@ public class RankingService : IRankingService
         match.HomeTeam.UpdateFifaRanking(newHomeRank);
         match.AwayTeam.UpdateFifaRanking(newAwayRank);
 
+        // Los equipos llegan detached (lecturas con AsNoTracking): sin este Update
+        // explicito el nuevo ranking solo vive en memoria y nunca llega a la base.
+        _teamRepository.Update(match.HomeTeam);
+        _teamRepository.Update(match.AwayTeam);
+
         _auditLogService.Log(
             AuditActions.RankingUpdated,
             $"Ranking updated for {match.HomeTeam.Name}: {homeRank} -> {newHomeRank}.",
