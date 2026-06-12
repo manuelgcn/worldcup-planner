@@ -13,6 +13,7 @@ public class User
     private const string PasswordMissingDigitMessage = "La contrasena debe contener al menos un numero";
     private const string PasswordMissingSpecialCharMessage = "La contrasena debe contener al menos un caracter especial";
     private const string FutureDateOfBirthMessage = "La fecha de nacimiento no puede ser futura";
+    private const string UnderageUserMessage = "El usuario debe tener al menos 18 anos";
     public int idUser { get; set; }
 
     public string name { get; set; }
@@ -70,11 +71,21 @@ public class User
     }
 
     
+   
     private void ValidateDateOfBirth(DateTime dateOfBirth)
     {
         if (dateOfBirth.Date > DateTime.Today)
             throw new ArgumentException(FutureDateOfBirthMessage);
+
+        int age = DateTime.Today.Year - dateOfBirth.Year;
+
+        if (dateOfBirth.Date > DateTime.Today.AddYears(-age))
+            age--;
+
+        if (age < 18)
+            throw new ArgumentException(UnderageUserMessage);
     }
+
 
     
     private string EncryptPassword(string password)
