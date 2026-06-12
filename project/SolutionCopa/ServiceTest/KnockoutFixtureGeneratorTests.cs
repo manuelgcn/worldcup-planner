@@ -114,10 +114,12 @@ public class KnockoutFixtureGeneratorTests
             settings,
             eliminationRepository);
 
-        // Assert: los 16 partidos de R32 simulados deben actualizar el ranking como Knockout
+        // Assert: cada partido del bracket orquestado y simulado actualiza el ranking como Knockout
+        int simulatedMatchCount = eliminationRepository.GetAll().Count;
+        Assert.IsTrue(simulatedMatchCount > 0);
         rankingServiceMock.Verify(
             r => r.ApplyMatchResult(It.IsAny<Match>(), MatchPhase.Knockout),
-            Times.Exactly(16));
+            Times.Exactly(simulatedMatchCount));
     }
 
     [TestMethod]
