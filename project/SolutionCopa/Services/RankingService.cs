@@ -45,6 +45,9 @@ public class RankingService : IRankingService
 
         // Los equipos llegan detached (lecturas con AsNoTracking): sin este Update
         // explicito el nuevo ranking solo vive en memoria y nunca llega a la base.
+        // Limitacion conocida: cada repositorio usa un contexto efimero con autosave,
+        // por lo que el ranking de los equipos y el resultado del partido se persisten
+        // en SaveChanges separados (no es una operacion atomica).
         _teamRepository.Update(match.HomeTeam);
         _teamRepository.Update(match.AwayTeam);
 
