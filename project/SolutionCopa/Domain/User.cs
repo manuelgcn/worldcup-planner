@@ -75,6 +75,11 @@ public class User
         return Convert.ToBase64String(bytes);
     }
 
+    public bool PasswordMatches(string plainTextPassword)
+    {
+        throw new NotImplementedException();
+    }
+
     public void AddRole(UserRoles role)
     {
         if (!Roles.Any(r => r.Role == role))

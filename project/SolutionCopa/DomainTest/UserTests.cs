@@ -178,6 +178,22 @@ public class UserTests
         Assert.AreNotEqual(originalPassword, usuario.password);
     }
 
+    [TestMethod]
+    public void PasswordMatchesReturnsTrueForCorrectPassword()
+    {
+        User usuario = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        Assert.IsTrue(usuario.PasswordMatches("Pass123@"));
+    }
+
+    [TestMethod]
+    public void PasswordMatchesReturnsFalseForWrongPassword()
+    {
+        User usuario = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        Assert.IsFalse(usuario.PasswordMatches("Other123@"));
+    }
+
     
     [TestMethod]
     public void UserStartsWithoutRoles()

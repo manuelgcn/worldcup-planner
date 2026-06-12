@@ -63,6 +63,11 @@ public class UserServices
         );
     }
 
+    public User Authenticate(string email, string password)
+    {
+        throw new NotImplementedException();
+    }
+
     public User GetUserByEmail(string email)
     {
         User? user = _userRepository.GetByEmail(email);
