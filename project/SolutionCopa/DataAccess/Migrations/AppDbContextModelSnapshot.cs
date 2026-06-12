@@ -108,6 +108,9 @@ namespace DataAccess.Migrations
                         .HasMaxLength(13)
                         .HasColumnType("nvarchar(13)");
 
+                    b.Property<bool>("RankingApplied")
+                        .HasColumnType("bit");
+
                     b.Property<int?>("StadiumId")
                         .HasColumnType("int");
 
