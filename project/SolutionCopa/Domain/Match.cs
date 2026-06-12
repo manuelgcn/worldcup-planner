@@ -53,11 +53,19 @@ public abstract class Match
     public Stadium? Stadium { get; private set; }
     public bool WasSimulated { get; private set; }
 
+    // Evita aplicar el Elo dos veces sobre el mismo partido (p. ej. simular y luego publicar).
+    public bool RankingApplied { get; private set; }
+
     public IReadOnlyCollection<MatchIncident> Incidents => _incidents.AsReadOnly();
 
     public void MarkAsSimulated()
     {
         WasSimulated = true;
+    }
+
+    public void MarkRankingApplied()
+    {
+        RankingApplied = true;
     }
 
     protected Match()

@@ -1,7 +1,9 @@
 using ProjectCopa;
 using DataAccess.Repositories;
+using Moq;
 using Services;
 using Services.Exceptions;
+using Services.Interfaces;
 using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest;
@@ -34,6 +36,7 @@ public sealed class TournamentSimulationServiceTests
     private MockAuditLogRepository _auditLogRepository = null!;
     private MockTournamentSettingsRepository _tournamentSettingsRepository = null!;
     private MockUnitOfWork _unitOfWork = null!;
+    private Mock<IRankingService> _rankingServiceMock = null!;
     private TournamentSimulationService _service = null!;
 
     [TestInitialize]
@@ -47,6 +50,7 @@ public sealed class TournamentSimulationServiceTests
         _auditLogRepository = new MockAuditLogRepository();
         _tournamentSettingsRepository = new MockTournamentSettingsRepository();
         _unitOfWork = new MockUnitOfWork();
+        _rankingServiceMock = new Mock<IRankingService>();
 
         SeedGroupsAndMatches();
         SeedSettings();
@@ -61,7 +65,20 @@ public sealed class TournamentSimulationServiceTests
             new SimulationEngineRegistry([_matchSimulationEngine]),
             auditLogService,
             _tournamentSettingsRepository,
-            _knockoutFixtureGenerator);
+            _knockoutFixtureGenerator,
+            notificationService: null,
+            rankingService: _rankingServiceMock.Object);
+    }
+
+    [TestMethod]
+    public void SimulateGroupStage_AppliesGroupStageRankingPerSimulatedMatch()
+    {
+        _service.SimulateGroupStage(Seed, AdminEmail);
+
+        // Cada uno de los 72 partidos de grupos simulados debe actualizar el ranking como GroupStage
+        _rankingServiceMock.Verify(
+            r => r.ApplyMatchResult(It.IsAny<ProjectCopa.Match>(), MatchPhase.GroupStage),
+            Times.Exactly(GroupCount * MatchesPerGroup));
     }
 
     [TestMethod]

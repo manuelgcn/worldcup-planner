@@ -15,7 +15,8 @@ public sealed class TournamentSimulationService(
     IAuditLogService auditLogService,
     ITournamentSettingsRepository tournamentSettingsRepository,
     IKnockoutFixtureGenerator knockoutFixtureGenerator,
-    INotificationService? notificationService = null) : ITournamentSimulationService
+    INotificationService? notificationService = null,
+    IRankingService? rankingService = null) : ITournamentSimulationService
 {
     private const string FixtureNotGeneratedMessage = "El fixture aún no ha sido generado";
 
@@ -99,9 +100,15 @@ public sealed class TournamentSimulationService(
         foreach (Match match in matches)
         {
             engine.Simulate(match, seed);
+            ApplyRankingUpdate(match);
             matchRepository.Update(match);
             notificationService?.NotifyMatchSimulated(match);
         }
+    }
+
+    private void ApplyRankingUpdate(Match match)
+    {
+        rankingService?.ApplyMatchResultOnce(match);
     }
 
     private static QualifiedTeams ClassifyQualifiedTeams(List<Group> groups, List<Match> matches, TournamentSettings settings)

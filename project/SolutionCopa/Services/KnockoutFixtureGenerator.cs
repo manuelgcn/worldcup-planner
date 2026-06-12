@@ -30,6 +30,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private readonly IAuditLogService? _auditLog;
     private readonly IStadiumRepository? _stadiumRepository;
     private readonly INotificationService? _notificationService;
+    private readonly IRankingService? _rankingService;
 
     public KnockoutFixtureGenerator(
         ISimulationEngineRegistry simulationEngineRegistry,
@@ -37,7 +38,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         ITournamentSettingsRepository settingsRepository,
         IUnitOfWork unitOfWork,
         IAuditLogService? auditLog = null,
-        INotificationService? notificationService = null)
+        INotificationService? notificationService = null,
+        IRankingService? rankingService = null)
         : this(
             simulationEngineRegistry,
             matchRepository,
@@ -45,7 +47,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             unitOfWork,
             auditLog,
             stadiumRepository: null,
-            notificationService: notificationService)
+            notificationService: notificationService,
+            rankingService: rankingService)
     {
     }
 
@@ -56,7 +59,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         IUnitOfWork unitOfWork,
         IAuditLogService? auditLog,
         IStadiumRepository? stadiumRepository,
-        INotificationService? notificationService = null)
+        INotificationService? notificationService = null,
+        IRankingService? rankingService = null)
     {
         _simulationEngineRegistry = simulationEngineRegistry ?? throw new ArgumentNullException(nameof(simulationEngineRegistry));
         _matchRepository = matchRepository ?? throw new ArgumentNullException(nameof(matchRepository));
@@ -65,6 +69,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         _auditLog = auditLog;
         _stadiumRepository = stadiumRepository;
         _notificationService = notificationService;
+        _rankingService = rankingService;
         _eliminationRepository = null;
         _groupRepository = null;
     }
@@ -78,7 +83,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         ITournamentSettingsRepository settingsRepository,
         IUnitOfWork unitOfWork,
         IAuditLogService auditLog,
-        INotificationService? notificationService = null)
+        INotificationService? notificationService = null,
+        IRankingService? rankingService = null)
     {
         _simulationEngineRegistry = simulationEngineRegistry ?? throw new ArgumentNullException(nameof(simulationEngineRegistry));
         _matchRepository = matchRepository ?? throw new ArgumentNullException(nameof(matchRepository));
@@ -89,6 +95,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _auditLog = auditLog ?? throw new ArgumentNullException(nameof(auditLog));
         _notificationService = notificationService;
+        _rankingService = rankingService;
     }
 
     public List<Match> GeneratePhase2(QualifiedTeams qualifiedTeams)
@@ -226,6 +233,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
             int seed = baseSeed + matchId;
             engine.Simulate(match, seed);
+            ApplyRankingUpdate(match);
 
             _matchRepository.Update(match);
             NotifyJournalistsAboutSimulatedResult(match);
@@ -272,6 +280,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             {
                 int seed = settings.SimulationSeed + match.MatchId;
                 engine.Simulate(match, seed);
+                ApplyRankingUpdate(match);
                 eliminationRepo.Update(match);
                 NotifyJournalistsAboutSimulatedResult(match);
                 _auditLog?.Log(AuditActions.SimulationExecuted, BuildSimulationAuditDetails(match, seed, engine.Name), settings.Id, "Match", match.MatchId);
@@ -507,9 +516,15 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         {
             int seed = settings.SimulationSeed + match.MatchId;
             engine.Simulate(match, seed);
+            ApplyRankingUpdate(match);
             elimRepo.Update(match);
             NotifyJournalistsAboutSimulatedResult(match);
         }
+    }
+
+    private void ApplyRankingUpdate(Match match)
+    {
+        _rankingService?.ApplyMatchResultOnce(match);
     }
 
     private IMatchSimulationEngine ResolveSelectedEngine(TournamentSettings settings)

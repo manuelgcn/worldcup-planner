@@ -1,3 +1,4 @@
+using DataAccess.Interfaces;
 using ProjectCopa;
 using Services.Interfaces;
 
@@ -6,10 +7,12 @@ namespace Services;
 public class RankingService : IRankingService
 {
     private readonly IAuditLogService _auditLogService;
+    private readonly ITeamRepository _teamRepository;
 
-    public RankingService(IAuditLogService auditLogService)
+    public RankingService(IAuditLogService auditLogService, ITeamRepository teamRepository)
     {
         _auditLogService = auditLogService;
+        _teamRepository = teamRepository;
     }
 
     public void ApplyMatchResult(Match match, MatchPhase phase)
@@ -39,6 +42,14 @@ public class RankingService : IRankingService
 
         match.HomeTeam.UpdateFifaRanking(newHomeRank);
         match.AwayTeam.UpdateFifaRanking(newAwayRank);
+
+        // Los equipos llegan detached (lecturas con AsNoTracking): sin este Update
+        // explicito el nuevo ranking solo vive en memoria y nunca llega a la base.
+        // Limitacion conocida: cada repositorio usa un contexto efimero con autosave,
+        // por lo que el ranking de los equipos y el resultado del partido se persisten
+        // en SaveChanges separados (no es una operacion atomica).
+        _teamRepository.Update(match.HomeTeam);
+        _teamRepository.Update(match.AwayTeam);
 
         _auditLogService.Log(
             AuditActions.RankingUpdated,

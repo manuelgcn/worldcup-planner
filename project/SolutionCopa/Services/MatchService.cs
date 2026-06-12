@@ -299,8 +299,7 @@ public class MatchService(
 
     private void ApplyRankingUpdate(Match match)
     {
-        MatchPhase phase = match is MatchGroup ? MatchPhase.GroupStage : MatchPhase.Knockout;
-        rankingService.ApplyMatchResult(match, phase);
+        rankingService.ApplyMatchResultOnce(match);
     }
 
     private void LogAuditAction(string action, string details, int affectedEntityId, int? tournamentSettingsId = null)
