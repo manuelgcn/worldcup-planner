@@ -125,6 +125,9 @@ public class MatchService(
             AuditActions.PublishMatchResult,
             $"MatchId={matchId} published.",
             matchId);
+
+        ApplyRankingUpdate(match);
+
         matchRepository.Update(match);
         unitOfWork.Commit();
     }
@@ -140,6 +143,9 @@ public class MatchService(
             AuditActions.SimulateMatch,
             $"MatchId={matchId} simulated with seed {tournamentSettings.SimulationSeed}.",
             matchId);
+
+        ApplyRankingUpdate(match);
+
         matchRepository.Update(match);
         unitOfWork.Commit();
     }
@@ -185,6 +191,12 @@ public class MatchService(
             matchId);
         matchRepository.Update(match);
         unitOfWork.Commit();
+    }
+
+    private void ApplyRankingUpdate(Match match)
+    {
+        MatchPhase phase = match is MatchGroup ? MatchPhase.GroupStage : MatchPhase.Knockout;
+        rankingService.ApplyMatchResult(match, phase);
     }
 
     private void LogAuditAction(string action, string details, int affectedEntityId, int? tournamentSettingsId = null)
