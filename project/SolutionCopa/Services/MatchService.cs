@@ -269,7 +269,7 @@ public class MatchService(
 
     public Match GetEntity(int matchId)
     {
-        throw new NotImplementedException();
+        return GetMatchOrThrow(matchId);
     }
 
     public List<MatchDto> GetByGroup(string groupName)

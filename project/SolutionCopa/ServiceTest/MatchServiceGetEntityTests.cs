@@ -26,7 +26,7 @@ public sealed class MatchServiceGetEntityTests
         Assert.AreEqual(1, match.MatchId);
         Assert.AreEqual(10, match.HomeTeam!.Id);
         Assert.AreEqual(20, match.AwayTeam!.Id);
-        Assert.AreEqual(30, match.Stadium!.Id);
+        Assert.AreEqual("Main Stadium", match.Stadium!.Name);
     }
 
     [TestMethod]
