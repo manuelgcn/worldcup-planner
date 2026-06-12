@@ -1,4 +1,3 @@
-
 using DataAccess.Interfaces;
 using ProjectCopa;
 using Services.Exceptions;
@@ -9,6 +8,7 @@ namespace Services;
 public class TeamServices : ITeamService
 {
     private readonly ITeamRepository teamRepository;
+    private readonly IGroupRepository groupRepository;
     private readonly IUnitOfWork unitOfWork;
     private readonly IAuditLogService auditLogService;
 
@@ -19,8 +19,10 @@ public class TeamServices : ITeamService
     private const int UefaQuota = 16;
     private const int ConmebolQuota = 7;
     private const int ConcacafQuota = 7;
+
     private const string TeamNotFoundMessage = "Team was not found.";
     private const string CannotDeleteTeamMessage = "Cannot delete team because it does not exist.";
+    private const string TeamInUseMessage = "Cannot delete team because it is already assigned to a group.";
     private const string DuplicateTeamNameMessage = "Team name must be unique in the system.";
     private const string QuotaExceededMessage = "{0} team quota exceeded.";
     private const string FixtureRequires48TeamsMessage = "Fixture ordering requires exactly 48 teams.";
@@ -36,10 +38,19 @@ public class TeamServices : ITeamService
             { Confederation.CONCACAF, ConcacafQuota }
         };
 
-    public TeamServices(ITeamRepository teamRepository, IUnitOfWork unitOfWork, IAuditLogService auditLogService)
+    public TeamServices(
+        ITeamRepository teamRepository,
+        IGroupRepository groupRepository,
+        IUnitOfWork unitOfWork,
+        IAuditLogService auditLogService)
     {
+        ArgumentNullException.ThrowIfNull(teamRepository);
+        ArgumentNullException.ThrowIfNull(groupRepository);
+        ArgumentNullException.ThrowIfNull(unitOfWork);
         ArgumentNullException.ThrowIfNull(auditLogService);
+
         this.teamRepository = teamRepository;
+        this.groupRepository = groupRepository;
         this.unitOfWork = unitOfWork;
         this.auditLogService = auditLogService;
     }
@@ -139,6 +150,15 @@ public class TeamServices : ITeamService
 
         Team team = teamRepository.GetByName(name)
             ?? throw new TeamServicesException(CannotDeleteTeamMessage);
+
+        bool teamBelongsToAGroup = groupRepository
+            .GetAll()
+            .Any(group => group.Teams.Any(t => t.Id == team.Id));
+
+        if (teamBelongsToAGroup)
+        {
+            throw new TeamServicesException(TeamInUseMessage);
+        }
 
         teamRepository.Delete(team);
 

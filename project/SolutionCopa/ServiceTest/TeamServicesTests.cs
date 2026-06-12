@@ -9,6 +9,7 @@ namespace ServiceTest;
 public sealed class TeamServicesTests
 {
     private MockTeamRepository _repo = null!;
+    private MockGroupRepository _groupRepo = null!;
     private MockUnitOfWork _uow = null!;
     private TeamServices _service = null!;
 
@@ -16,8 +17,9 @@ public sealed class TeamServicesTests
     public void Setup()
     {
         _repo = new MockTeamRepository();
+        _groupRepo = new MockGroupRepository();
         _uow = new MockUnitOfWork();
-        _service = new TeamServices(_repo, _uow, new MockAuditLogService());
+        _service = new TeamServices(_repo, _groupRepo, _uow, new MockAuditLogService());
     }
 
     [TestMethod]
@@ -46,8 +48,15 @@ public sealed class TeamServicesTests
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
         MockTeamRepository teamRepository = new MockTeamRepository();
+        MockGroupRepository groupRepository = new MockGroupRepository();
         MockUnitOfWork unitOfWork = new MockUnitOfWork();
-        TeamServices auditedService = new TeamServices(teamRepository, unitOfWork, AuditLogService.CreateInstance(repository));
+
+        TeamServices auditedService = new TeamServices(
+            teamRepository,
+            groupRepository,
+            unitOfWork,
+            AuditLogService.CreateInstance(repository));
+
         Team team = new Team(1, "Uruguay", 2000, false, Confederation.CONMEBOL);
 
         auditedService.AddTeam(team);
@@ -62,8 +71,15 @@ public sealed class TeamServicesTests
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
         MockTeamRepository teamRepository = new MockTeamRepository();
+        MockGroupRepository groupRepository = new MockGroupRepository();
         MockUnitOfWork unitOfWork = new MockUnitOfWork();
-        TeamServices auditedService = new TeamServices(teamRepository, unitOfWork, AuditLogService.CreateInstance(repository));
+
+        TeamServices auditedService = new TeamServices(
+            teamRepository,
+            groupRepository,
+            unitOfWork,
+            AuditLogService.CreateInstance(repository));
+
         Team team = new Team(1, "Uruguay", 2000, false, Confederation.CONMEBOL);
 
         auditedService.AddTeam(team);
@@ -303,8 +319,10 @@ public sealed class TeamServicesTests
         List<int> firstRankings = _service.GetTeams().Select(team => team.FifaRanking).OrderBy(rank => rank).ToList();
 
         MockTeamRepository repo2 = new MockTeamRepository();
+        MockGroupRepository groupRepo2 = new MockGroupRepository();
         MockUnitOfWork uow2 = new MockUnitOfWork();
-        TeamServices service2 = new TeamServices(repo2, uow2, new MockAuditLogService());
+        TeamServices service2 = new TeamServices(repo2, groupRepo2, uow2, new MockAuditLogService());
+
         service2.FillToFortyEight(completionSeed: 42, performedByEmail: null);
         List<int> secondRankings = service2.GetTeams().Select(team => team.FifaRanking).OrderBy(rank => rank).ToList();
 
@@ -316,8 +334,14 @@ public sealed class TeamServicesTests
     {
         MockAuditLogRepository auditRepo = new MockAuditLogRepository();
         MockTeamRepository teamRepo = new MockTeamRepository();
+        MockGroupRepository groupRepository = new MockGroupRepository();
         MockUnitOfWork uow = new MockUnitOfWork();
-        TeamServices auditedService = new TeamServices(teamRepo, uow, AuditLogService.CreateInstance(auditRepo));
+
+        TeamServices auditedService = new TeamServices(
+            teamRepo,
+            groupRepository,
+            uow,
+            AuditLogService.CreateInstance(auditRepo));
 
         auditedService.FillToFortyEight(completionSeed: 7, performedByEmail: "admin@copa.com");
 
