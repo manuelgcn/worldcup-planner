@@ -51,6 +51,7 @@ builder.Services.AddSingleton<ISimulationEngineRegistry, SimulationEngineRegistr
 builder.Services.AddSingleton<IAuditLogService>(sp =>
     AuditLogService.CreateInstance(sp.GetRequiredService<IAuditLogRepository>()));
 
+builder.Services.AddSingleton<IRankingService, RankingService>();
 builder.Services.AddSingleton<IMatchFactory, MatchFactory>();
 builder.Services.AddSingleton<IMatchService, MatchService>();
 
