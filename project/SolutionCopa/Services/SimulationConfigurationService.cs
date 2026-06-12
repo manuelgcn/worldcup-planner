@@ -12,6 +12,16 @@ public class SimulationConfigurationService(ITournamentSettingsRepository settin
 {
     public SimulationConfigurationDto? GetConfiguration()
     {
-        throw new NotImplementedException();
+        TournamentSettings? settings = settingsRepository.GetAll().FirstOrDefault();
+        if (settings is null)
+        {
+            return null;
+        }
+
+        return new SimulationConfigurationDto
+        {
+            SelectedSimulationEngine = settings.SelectedSimulationEngine,
+            SimulationSeed = settings.SimulationSeed
+        };
     }
 }
