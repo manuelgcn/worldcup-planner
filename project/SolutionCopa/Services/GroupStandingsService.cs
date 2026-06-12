@@ -46,7 +46,10 @@ public sealed class GroupStandingsService : IGroupStandingsService
 
     public List<GroupStandingDto> GetStandingsForAllGroups()
     {
-        throw new NotImplementedException();
+        return _groupRepository.GetAll()
+            .OrderBy(group => group.Name)
+            .SelectMany(group => GetStandings(group.Name))
+            .ToList();
     }
 
     public bool IsGroupStageComplete()
