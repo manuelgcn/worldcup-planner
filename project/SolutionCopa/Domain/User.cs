@@ -77,7 +77,7 @@ public class User
 
     public bool PasswordMatches(string plainTextPassword)
     {
-        throw new NotImplementedException();
+        return password == EncryptPassword(plainTextPassword);
     }
 
     public void AddRole(UserRoles role)
