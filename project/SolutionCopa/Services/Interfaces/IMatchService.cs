@@ -1,3 +1,4 @@
+using ProjectCopa;
 using Services.DTOs;
 
 namespace Services.Interfaces;
@@ -8,6 +9,9 @@ public interface IMatchService
     MatchDto UpdateMatch(int matchId, UpdateMatchRequestDto request);
     void DeleteMatch(int matchId);
     MatchDto GetById(int matchId);
+    // Devuelve la entidad con su grafo (equipos/estadio) para alimentar el editor de
+    // resultados en la UI sin que la pagina inyecte repositorios.
+    Match GetEntity(int matchId);
     List<MatchDto> GetByGroup(string groupName);
     List<MatchDto> GetByJourney(int journeyNumber);
     List<MatchDto> GetByDateRange(DateTime from, DateTime to);

@@ -267,6 +267,11 @@ public class MatchService(
         return MapToDto(GetMatchOrThrow(matchId));
     }
 
+    public Match GetEntity(int matchId)
+    {
+        throw new NotImplementedException();
+    }
+
     public List<MatchDto> GetByGroup(string groupName)
     {
         if (string.IsNullOrWhiteSpace(groupName))
