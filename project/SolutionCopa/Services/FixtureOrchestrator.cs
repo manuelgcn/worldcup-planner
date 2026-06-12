@@ -136,7 +136,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
 
     private static IReadOnlyCollection<Group> BuildGroups(GenerationPlan plan)
     {
-        FixtureService fixtureService = new FixtureService(plan.Teams, plan.Stadiums, plan.EffectiveSeed, auditLogService: null);
+        FixtureService fixtureService = new FixtureService(plan.Teams, plan.Stadiums, plan.EffectiveSeed);
         return fixtureService.CreateFixture();
     }
 
