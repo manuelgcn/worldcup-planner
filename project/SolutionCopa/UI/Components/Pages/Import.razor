@@ -13,7 +13,7 @@
 {
     <section class="m26-card auth-card">
         <h1 class="m26-page-title mb-2">Importar equipos</h1>
-        <p class="mb-3">No estás logueado.</p>
+        <p class="mb-3">No estas logueado.</p>
         <button class="btn btn-primary" @onclick="@(() => Nav.NavigateTo("/login"))">Ir a Login</button>
     </section>
 }
@@ -21,7 +21,7 @@ else if (!CanImport)
 {
     <div class="alert alert-error" role="alert">
         <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
-        No tenés permisos para importar.
+        No tenes permisos para importar.
     </div>
 }
 else
@@ -30,9 +30,9 @@ else
 
     <article class="m26-card pane">
         <p>
-            Subí un CSV con encabezados <code>Nombre, Confederación, RankingFIFA</code>.
-            La importación se aborta ante el primer error (nombre vacío o &gt;60, confederación
-            desconocida, ranking fuera de 300–2500, duplicado).
+            Subi un CSV con encabezados <code>Nombre, Confederacion, RankingFIFA</code>.
+            La importacion se aborta ante el primer error (nombre vacio o >60, confederacion
+            desconocida, ranking fuera de 300-2500, duplicado).
         </p>
 
         <InputFile OnChange="OnFileSelected" accept=".csv" class="form-control mb-3" />
@@ -42,6 +42,14 @@ else
             <div class="alert alert-success">
                 <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
                 <strong>@result.ImportedCount equipo(s) importado(s).</strong>
+
+                @if (!string.IsNullOrWhiteSpace(result.WarningMessage))
+                {
+                    <div class="mt-2">
+                        <strong>Advertencia:</strong> @result.WarningMessage
+                    </div>
+                }
+
                 @if (result.ImportedTeams.Any())
                 {
                     <ul class="mb-0 mt-2">
@@ -68,7 +76,6 @@ else
     private ImportResult? result;
     private string? error;
 
-    // Según la letra, la importación es tarea del Editor (el Admin también puede).
     private bool CanImport =>
         Session.CurrentUser?.HasRole(UserRoles.Admin) == true ||
         Session.CurrentUser?.HasRole(UserRoles.Editor) == true;
