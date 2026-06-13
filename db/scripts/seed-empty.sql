@@ -42,7 +42,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20260529163115_InitialCreate_Team', N'8.0.27');
+    VALUES (N'20260529163115_InitialCreate_Team', N'8.0.28');
 END;
 GO
 
@@ -108,7 +108,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20260604175903_AddUsersAndRoles', N'8.0.27');
+    VALUES (N'20260604175903_AddUsersAndRoles', N'8.0.28');
 END;
 GO
 
@@ -186,7 +186,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20260604201605_AddStadiumsSettingsAndAudit', N'8.0.27');
+    VALUES (N'20260604201605_AddStadiumsSettingsAndAudit', N'8.0.28');
 END;
 GO
 
@@ -352,7 +352,267 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20260605204001_AddFixtureAndMatches', N'8.0.27');
+    VALUES (N'20260605204001_AddFixtureAndMatches', N'8.0.28');
+END;
+GO
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260606210801_AddTeamFlagBase64'
+)
+BEGIN
+    ALTER TABLE [Teams] ADD [FlagBase64] nvarchar(max) NULL;
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260606210801_AddTeamFlagBase64'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260606210801_AddTeamFlagBase64', N'8.0.28');
+END;
+GO
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260606223107_AddMatchIncidents'
+)
+BEGIN
+    CREATE TABLE [MatchIncidents] (
+        [Id] int NOT NULL,
+        [Minute] int NOT NULL,
+        [TeamId] int NOT NULL,
+        [IncidentType] nvarchar(13) NOT NULL,
+        [MatchId] int NULL,
+        CONSTRAINT [PK_MatchIncidents] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_MatchIncidents_Matches_MatchId] FOREIGN KEY ([MatchId]) REFERENCES [Matches] ([MatchId]) ON DELETE CASCADE,
+        CONSTRAINT [FK_MatchIncidents_Teams_TeamId] FOREIGN KEY ([TeamId]) REFERENCES [Teams] ([Id]) ON DELETE NO ACTION
+    );
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260606223107_AddMatchIncidents'
+)
+BEGIN
+    CREATE INDEX [IX_MatchIncidents_MatchId] ON [MatchIncidents] ([MatchId]);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260606223107_AddMatchIncidents'
+)
+BEGIN
+    CREATE INDEX [IX_MatchIncidents_TeamId] ON [MatchIncidents] ([TeamId]);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260606223107_AddMatchIncidents'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260606223107_AddMatchIncidents', N'8.0.28');
+END;
+GO
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260609183521_AddSelectedSimulationEngine'
+)
+BEGIN
+    ALTER TABLE [TournamentSettings] ADD [SelectedSimulationEngine] nvarchar(60) NOT NULL DEFAULT N'Probabilístico';
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260609183521_AddSelectedSimulationEngine'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260609183521_AddSelectedSimulationEngine', N'8.0.28');
+END;
+GO
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260610154413_AddNotifications'
+)
+BEGIN
+    CREATE TABLE [Notifications] (
+        [Id] int NOT NULL,
+        [UserId] int NOT NULL,
+        [Message] nvarchar(500) NOT NULL,
+        [CreatedAt] datetime2 NOT NULL,
+        [IsRead] bit NOT NULL,
+        CONSTRAINT [PK_Notifications] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_Notifications_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([idUser]) ON DELETE CASCADE
+    );
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260610154413_AddNotifications'
+)
+BEGIN
+    CREATE INDEX [IX_Notifications_UserId] ON [Notifications] ([UserId]);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260610154413_AddNotifications'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260610154413_AddNotifications', N'8.0.28');
+END;
+GO
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260611134944_MakeNotificationIdIdentity'
+)
+BEGIN
+    DROP TABLE [Notifications];
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260611134944_MakeNotificationIdIdentity'
+)
+BEGIN
+    CREATE TABLE [Notifications] (
+        [Id] int NOT NULL IDENTITY,
+        [UserId] int NOT NULL,
+        [Message] nvarchar(500) NOT NULL,
+        [CreatedAt] datetime2 NOT NULL,
+        [IsRead] bit NOT NULL,
+        CONSTRAINT [PK_Notifications] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_Notifications_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([idUser]) ON DELETE CASCADE
+    );
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260611134944_MakeNotificationIdIdentity'
+)
+BEGIN
+    CREATE INDEX [IX_Notifications_UserId] ON [Notifications] ([UserId]);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260611134944_MakeNotificationIdIdentity'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260611134944_MakeNotificationIdIdentity', N'8.0.28');
+END;
+GO
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260611232454_MakeAuditLogsGlobalWithActor'
+)
+BEGIN
+    DECLARE @var0 sysname;
+    SELECT @var0 = [d].[name]
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[AuditLogs]') AND [c].[name] = N'TournamentSettingsId');
+    IF @var0 IS NOT NULL EXEC(N'ALTER TABLE [AuditLogs] DROP CONSTRAINT [' + @var0 + '];');
+    ALTER TABLE [AuditLogs] ALTER COLUMN [TournamentSettingsId] int NULL;
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260611232454_MakeAuditLogsGlobalWithActor'
+)
+BEGIN
+    ALTER TABLE [AuditLogs] ADD [PerformedByEmail] nvarchar(254) NULL;
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260611232454_MakeAuditLogsGlobalWithActor'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260611232454_MakeAuditLogsGlobalWithActor', N'8.0.28');
+END;
+GO
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260612121952_AddMatchRankingApplied'
+)
+BEGIN
+    ALTER TABLE [Matches] ADD [RankingApplied] bit NOT NULL DEFAULT CAST(0 AS bit);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260612121952_AddMatchRankingApplied'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260612121952_AddMatchRankingApplied', N'8.0.28');
 END;
 GO
 
