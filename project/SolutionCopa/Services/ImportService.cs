@@ -11,10 +11,13 @@ public sealed class ImportService : IImportService
     private const int MaxNameLength = 60;
     private const int MinRanking = 300;
     private const int MaxRanking = 2500;
+    private const int MaxTeams = 48;
+
     private const string InvalidTeamNameMessage = "Invalid team name.";
     private const string InvalidConfederationMessage = "Invalid confederation.";
     private const string InvalidRankingMessage = "Invalid ranking.";
     private const string DuplicateTeamMessage = "Duplicate team name.";
+    private const string MaxTeamsWarningMessage = "No se agregaron todos los equipos, max:48";
 
     private readonly ITeamRepository _teamRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -39,10 +42,21 @@ public sealed class ImportService : IImportService
         List<TeamImportDto> rows = _teamParser.Parse(fileStream);
         HashSet<string> importedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         List<Team> importedTeams = new List<Team>();
-        int nextTeamId = GetNextTeamId();
+
+        IReadOnlyCollection<Team> existingTeams = _teamRepository.GetAll();
+        int currentTeamCount = existingTeams.Count;
+        int nextTeamId = GetNextTeamId(existingTeams);
+
+        string? warningMessage = null;
 
         foreach (TeamImportDto row in rows)
         {
+            if (currentTeamCount >= MaxTeams)
+            {
+                warningMessage = MaxTeamsWarningMessage;
+                break;
+            }
+
             string name = row.Name.Trim();
             string confederationText = row.Confederation.Trim();
             string rankingText = row.Ranking.Trim();
@@ -50,23 +64,31 @@ public sealed class ImportService : IImportService
             ValidateName(name, row.RowNumber);
             Confederation confederation = ParseConfederation(confederationText, row.RowNumber);
             int ranking = ParseRanking(rankingText, row.RowNumber);
+
             if (IsDuplicate(name, importedNames))
+            {
                 ThrowDuplicateTeam(row.RowNumber);
+            }
 
             Team team = new Team(nextTeamId, name, ranking, false, confederation);
             _teamRepository.Add(team);
             importedTeams.Add(team);
             importedNames.Add(name);
+
             nextTeamId++;
+            currentTeamCount++;
         }
 
-        _unitOfWork.Commit();
-        return new ImportResult(importedTeams);
+        if (importedTeams.Count > 0)
+        {
+            _unitOfWork.Commit();
+        }
+
+        return new ImportResult(importedTeams, warningMessage);
     }
 
-    private int GetNextTeamId()
+    private static int GetNextTeamId(IReadOnlyCollection<Team> existingTeams)
     {
-        IReadOnlyCollection<Team> existingTeams = _teamRepository.GetAll();
         if (existingTeams.Count == 0)
         {
             return 1;
@@ -78,13 +100,17 @@ public sealed class ImportService : IImportService
     private static void ValidateName(string name, int rowNumber)
     {
         if (string.IsNullOrWhiteSpace(name) || name.Length > MaxNameLength)
+        {
             ThrowInvalidTeamName(rowNumber);
+        }
     }
 
     private static Confederation ParseConfederation(string confederationText, int rowNumber)
     {
         if (!Enum.TryParse(confederationText, ignoreCase: true, out Confederation confederation))
+        {
             ThrowInvalidConfederation(rowNumber);
+        }
 
         return confederation;
     }
@@ -92,7 +118,9 @@ public sealed class ImportService : IImportService
     private static int ParseRanking(string rankingText, int rowNumber)
     {
         if (!int.TryParse(rankingText, out int ranking) || IsInvalidRanking(ranking))
+        {
             ThrowInvalidRanking(rowNumber);
+        }
 
         return ranking;
     }
@@ -102,8 +130,10 @@ public sealed class ImportService : IImportService
         return ranking < MinRanking || ranking > MaxRanking;
     }
 
-    private bool IsDuplicate(string name, HashSet<string> importedNames) =>
-        importedNames.Contains(name) || _teamRepository.ExistsByName(name);
+    private bool IsDuplicate(string name, HashSet<string> importedNames)
+    {
+        return importedNames.Contains(name) || _teamRepository.ExistsByName(name);
+    }
 
     private static void ThrowInvalidTeamName(int rowNumber) =>
         throw new ImportServiceException($"{InvalidTeamNameMessage} Row: {rowNumber}.");
