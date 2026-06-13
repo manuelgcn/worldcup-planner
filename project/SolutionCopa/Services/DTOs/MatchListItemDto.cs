@@ -17,4 +17,5 @@ public sealed class MatchListItemDto
     public string? GroupName { get; set; }
     public Phase? Phase { get; set; }
     public bool WasSimulated { get; set; }
+    public bool HasResult { get; set; }
 }
