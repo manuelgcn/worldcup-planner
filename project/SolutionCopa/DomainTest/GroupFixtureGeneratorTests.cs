@@ -172,6 +172,36 @@ public class GroupFixtureGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateMatches_WithFiveStadiums_GeneratesValidFullFixture()
+    {
+        const int FiveStadiums = 5;
+        List<Group> groups = CreateGroups(TotalGroups);
+        List<Stadium> stadiums = CreateStadiums(FiveStadiums);
+        GroupFixtureGenerator generator = new GroupFixtureGenerator();
+
+        List<Match> matches = generator.GenerateMatches(groups, stadiums, DefaultStartDate);
+
+        Assert.AreEqual(ExpectedTotalMatches, matches.Count);
+
+        IEnumerable<IGrouping<string, Match>> dailyUsage = matches.GroupBy(match => match.Stadium!.Name + match.MatchDate.Date);
+        foreach (IGrouping<string, Match> usage in dailyUsage)
+        {
+            Assert.IsTrue(usage.Count() <= MaxMatchesPerStadiumPerDay);
+        }
+
+        foreach (Group group in groups)
+        {
+            List<MatchGroup> jornadaThreeMatches = matches.OfType<MatchGroup>()
+                .Where(match => match.Group!.Name == group.Name && match.Journey!.Number == SimultaneousJornadaNumber)
+                .ToList();
+
+            Assert.AreEqual(ExpectedSimultaneousMatchesPerGroup, jornadaThreeMatches.Count);
+            Assert.AreEqual(jornadaThreeMatches[0].MatchDate, jornadaThreeMatches[1].MatchDate);
+            Assert.AreNotEqual(jornadaThreeMatches[0].Stadium!.Name, jornadaThreeMatches[1].Stadium!.Name);
+        }
+    }
+
+    [TestMethod]
     public void GenerateMatches_RespectsMaxMatchesPerStadiumPerDay()
     {
         List<Group> groups = CreateGroups(TotalGroups);
