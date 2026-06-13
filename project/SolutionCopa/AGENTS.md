@@ -48,7 +48,8 @@ Referencia: las fases son las de `PLAN_OBLIGATORIO_2.md`.
 - ✅ **Fase 5 (notificaciones)**: notificaciones persistidas para periodistas, lectura individual/masiva y UI.
 - ✅ **Fase 6 (exportación CSV/XLSX)**: `IExporter` + `IExportService`, CsvHelper/ClosedXML, exportación de fixture/auditoría por rango, autorización Admin/Periodista y auditoría.
 - ✅ **Fase 7 (auditoría global)**: `AuditLog` desacoplado del torneo (`TournamentSettingsId` nullable como contexto opcional), actor estructurado `PerformedByEmail`, filtros por fecha/acción/usuario ejecutados en SQL (`IAuditLogRepository.GetFiltered`), acciones `SIMULATION_EXECUTED` y `RANKING_UPDATED`, vista y exportación filtradas. Migración `20260611232454_MakeAuditLogsGlobalWithActor`.
-- ⬜ **Fases 8–12**: UI rol Periodista, refactor GRASP/Demeter/SOLID, skills de IA, datos de prueba + backups, documentación.
+- ✅ **Fase 10 (skills de IA)**: 2 skills nuevos (`efcore-migrations-helper`, `audit-logger-instrumentation`) + 1 propio (`generate-readme`) en `.github/skills/`; `README.md` regenerado con `generate-readme`; instrucciones de agente en este `AGENTS.md`.
+- ⬜ **Fases 8, 9, 11, 12**: UI rol Periodista, refactor GRASP/Demeter/SOLID, datos de prueba + backups, documentación.
 
 **Roles**: `UserRoles { Admin, Editor, Periodista }`.
 
@@ -115,7 +116,15 @@ dotnet test  project/SolutionCopa/SolutionCopa.sln
 
 ## 9. Skills de IA
 
-En `.github/skills/`: `add-educational-comments`, `create-readme`, `csharp-mstest`, `git-commit` (índice en `.github/skills/README.md`). La **Fase 10** pide 2 skills nuevos + 1 propio (`generate-readme`) y dejarlos documentados. Si tu entorno soporta skills, invocalas; si no, leé el `SKILL.md` y aplicá las reglas a mano.
+En `.github/skills/` (índice en `.github/skills/README.md`):
+
+- **Obligatorio 1**: `add-educational-comments`, `create-readme`, `csharp-mstest`, `git-commit`.
+- **Obligatorio 2 (Fase 10)** — 2 skills nuevos + 1 propio:
+  - `generate-readme` (**propio**): regenera `README.md` + estas instrucciones de agente desde el código vivo.
+  - `efcore-migrations-helper`: migraciones EF Core (SQL Edge + TPH) sin romper la cadena ni los datos sembrados.
+  - `audit-logger-instrumentation`: auditar casos de uso nuevos vía `AuditLogService`/`AuditActions` (ISO-8601 + actor).
+
+Si tu entorno soporta skills, invocalas; si no, leé el `SKILL.md` y aplicá las reglas a mano. El `README.md` actual fue generado con `generate-readme`.
 
 ## 10. Lo que un agente NO debe hacer
 
@@ -137,5 +146,5 @@ En `.github/skills/`: `add-educational-comments`, `create-readme`, `csharp-mstes
 
 ---
 
-**Última actualización**: 2026-06-11.
+**Última actualización**: 2026-06-13.
 **Mantener este archivo vivo**: cuando una sección quede desactualizada, corregirla en el mismo commit que introduce el cambio. Existe una copia en `project/SolutionCopa/AGENTS.md` que debe quedar **sincronizada** con esta.
