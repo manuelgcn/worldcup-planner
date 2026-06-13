@@ -179,6 +179,29 @@ public class ImportServiceTests
     }
 
     [TestMethod]
+    public void ImportTeamsWhenTotalWouldExceed48ImportsOnlyUntil48AndReturnsWarning()
+    {
+        // Arrange
+        for (int i = 1; i <= 47; i++)
+        {
+            _teamRepository.Add(new Team(i, $"Team{i}", 1000 + i, false, Confederation.UEFA));
+        }
+
+        MemoryStream stream = CreateImportStream();
+        List<TeamImportDto> rows = BuildValidRows();
+        SetupParserRows(stream, rows);
+
+        // Act
+        ImportResult result = _service.ImportTeams(stream);
+
+        // Assert
+        Assert.AreEqual(48, _teamRepository.GetAll().Count);
+        Assert.AreEqual(1, result.ImportedCount);
+        Assert.AreEqual("Argentina", result.ImportedTeams.First().Name);
+        Assert.AreEqual("No se agregaron todos los equipos, max:48", result.WarningMessage);
+    }
+
+    [TestMethod]
     public void ImportTeamsPropagatesUnitOfWorkFailure()
     {
         // Arrange
