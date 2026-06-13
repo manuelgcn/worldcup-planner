@@ -5,7 +5,6 @@
 @using Services.DTOs
 @using Services.Exceptions
 @using Services.Interfaces
-@using DataAccess.Interfaces
 @using Microsoft.JSInterop
 @using UI.Components.Fixture
 @inject IFixtureOrchestrator FixtureOrchestrator
@@ -13,11 +12,7 @@
 @inject ITournamentSimulationService SimulationService
 @inject IGroupStandingsService StandingsService
 @inject IKnockoutFixtureGenerator KnockoutGenerator
-@inject IGroupRepository GroupRepository
-@inject IMatchRepository MatchRepository
-@inject IEliminationMatchRepository EliminationRepository
-@inject ITournamentSettingsRepository SettingsRepository
-@inject ITeamRepository TeamRepository
+@inject IFixtureViewService FixtureViewService
 @inject ITeamService TeamServices
 @inject IStadiumService StadiumService
 @inject IExportService ExportService
@@ -444,19 +439,17 @@
     {
         try
         {
-            settings = SettingsRepository.GetAll().FirstOrDefault();
+            FixtureSnapshotDto snapshot = FixtureViewService.GetSnapshot();
+            settings = snapshot.Settings;
             selectedEngine ??= settings?.SelectedSimulationEngine;
-            teamCount = TeamRepository.GetAll().Count;
+            teamCount = snapshot.TeamCount;
             stadiumCount = StadiumService.GetAllStadiums().Count;
-            groups = GroupRepository.GetAll().OrderBy(group => group.Name).ToList();
-            groupMatches = MatchRepository.GetAll().OfType<MatchGroup>().ToList();
-            eliminationMatches = EliminationRepository.GetAll().OfType<MatchElimination>().ToList();
+            groups = snapshot.Groups.ToList();
+            groupMatches = snapshot.GroupMatches.ToList();
+            eliminationMatches = snapshot.EliminationMatches.ToList();
             pendingGroupMatches = StandingsService.PendingGroupStageMatchCount();
-            List<DateTime> matchDates = groupMatches.Select(match => match.MatchDate)
-                .Concat(eliminationMatches.Select(match => match.MatchDate))
-                .ToList();
-            exportFromDate ??= matchDates.Count > 0 ? matchDates.Min().Date : settings?.StartDate.Date ?? DateTime.UtcNow.Date;
-            exportToDate ??= matchDates.Count > 0 ? matchDates.Max().Date : exportFromDate;
+            exportFromDate ??= snapshot.EarliestMatchDate?.Date ?? settings?.StartDate.Date ?? DateTime.UtcNow.Date;
+            exportToDate ??= snapshot.LatestMatchDate?.Date ?? exportFromDate;
         }
         catch (Exception ex)
         {

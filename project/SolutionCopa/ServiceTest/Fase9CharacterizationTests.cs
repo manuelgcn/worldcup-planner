@@ -249,29 +249,29 @@ public sealed class Fase9GroupStandingsCharacterizationTests
         _service = new GroupStandingsService(_matchRepository, _groupRepository, _settingsRepository);
     }
 
-    // (e) Bug conocido: la heuristica "partido jugado" es
-    // (WasSimulated || HomeGoals + AwayGoals > 0). Un resultado MANUAL 0-0
-    // (que no fue simulado) queda tratado como NO jugado: no suma partido jugado,
-    // ni puntos de empate, y mantiene la fase de grupos como incompleta.
+    // (e) Bug corregido (WP5): un resultado MANUAL 0-0 ahora cuenta como jugado.
+    // La fuente de verdad es Match.HasResult (se marca al cargar goles o simular), no la
+    // heuristica de goles. Estos tests, antes etiquetados como bug conocido, ahora afirman
+    // el comportamiento correcto.
 
     [TestMethod]
-    public void ManualZeroZero_IsCurrentlyTreatedAsNotPlayed_KnownBug()
+    public void ManualZeroZero_IsTreatedAsPlayed()
     {
         AddManualMatch(matchId: 1, home: _teamAlpha, away: _teamBravo, homeGoals: 0, awayGoals: 0);
 
         List<GroupStandingDto> standings = _service.GetStandings(GroupName);
 
-        Assert.IsTrue(standings.All(standing => standing.GamesPlayed == 0));
-        Assert.IsTrue(standings.All(standing => standing.Points == 0));
+        Assert.IsTrue(standings.All(standing => standing.GamesPlayed == 1));
+        Assert.IsTrue(standings.All(standing => standing.Points == 1));
     }
 
     [TestMethod]
-    public void ManualZeroZero_DoesNotCompleteGroupStage_KnownBug()
+    public void ManualZeroZero_CompletesGroupStage()
     {
         AddManualMatch(matchId: 1, home: _teamAlpha, away: _teamBravo, homeGoals: 0, awayGoals: 0);
 
-        Assert.IsFalse(_service.IsGroupStageComplete());
-        Assert.AreEqual(1, _service.PendingGroupStageMatchCount());
+        Assert.IsTrue(_service.IsGroupStageComplete());
+        Assert.AreEqual(0, _service.PendingGroupStageMatchCount());
     }
 
     private void AddManualMatch(int matchId, Team home, Team away, int homeGoals, int awayGoals)

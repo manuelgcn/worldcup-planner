@@ -94,6 +94,9 @@ namespace DataAccess.Migrations
                     b.Property<int?>("AwayTeamId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("HasResult")
+                        .HasColumnType("bit");
+
                     b.Property<int>("HomeGoals")
                         .HasColumnType("int");
 

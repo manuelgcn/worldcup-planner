@@ -105,8 +105,7 @@
             .ThenBy(match => match.MatchDate)
             .GroupBy(match => match.Journey?.Number ?? 0);
 
-    private static bool IsPlayed(MatchGroup match) =>
-        match.WasSimulated || match.HomeGoals + match.AwayGoals > 0;
+    private static bool IsPlayed(MatchGroup match) => match.HasResult;
 
     private Task HandleBack() => OnBack.InvokeAsync();
 

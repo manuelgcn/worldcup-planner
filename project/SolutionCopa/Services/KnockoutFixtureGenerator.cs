@@ -10,7 +10,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 {
     private const int RequiredGroupCount = 12;
     private const int RequiredGroupStageMatchCount = 72;
-    private const int MinimumGoalsForPlayedMatch = 1;
     private const int FirstNewMatchIdSeed = 3000;
     private const int DaysFromStartToFirstKnockoutRound = 60;
     private const string TournamentSettingsRequiredMessage = "Tournament settings are required to generate phase 2.";
@@ -590,7 +589,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     private static bool IsMatchPlayed(Match match)
     {
-        return match.WasSimulated || match.HomeGoals + match.AwayGoals >= MinimumGoalsForPlayedMatch;
+        return match.HasResult;
     }
 
     private IEliminationMatchRepository RequireEliminationRepository()

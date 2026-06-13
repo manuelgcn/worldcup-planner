@@ -246,8 +246,7 @@ else
         return match.GroupName is null || !IsGroupStageLocked;
     }
 
-    private static bool IsPlayed(MatchListItemDto match) =>
-        match.WasSimulated || match.HomeGoals + match.AwayGoals > 0;
+    private static bool IsPlayed(MatchListItemDto match) => match.HasResult;
 
     private static string StageLabel(MatchListItemDto match) =>
         match.GroupName is not null

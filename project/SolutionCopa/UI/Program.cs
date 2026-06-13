@@ -59,6 +59,7 @@ builder.Services.AddSingleton<IMatchService, MatchService>();
 builder.Services.AddSingleton<IMatchQueryService, MatchQueryService>();
 builder.Services.AddSingleton<ITournamentDashboardService, TournamentDashboardService>();
 builder.Services.AddSingleton<ISimulationConfigurationService, SimulationConfigurationService>();
+builder.Services.AddSingleton<IFixtureViewService, FixtureViewService>();
 
 
 builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>

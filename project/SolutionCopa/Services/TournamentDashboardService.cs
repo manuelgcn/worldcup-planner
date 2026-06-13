@@ -31,8 +31,7 @@ public class TournamentDashboardService(
         };
     }
 
-    private static bool IsPlayed(Match match) =>
-        match.WasSimulated || match.HomeGoals + match.AwayGoals > 0;
+    private static bool IsPlayed(Match match) => match.HasResult;
 
     private static string? FindChampionName(IEnumerable<Match> matches)
     {

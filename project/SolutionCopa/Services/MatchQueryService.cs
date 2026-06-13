@@ -59,7 +59,8 @@ public class MatchQueryService(IMatchRepository matchRepository) : IMatchQuerySe
             StadiumName = match.Stadium?.Name,
             GroupName = (match as MatchGroup)?.Group?.Name,
             Phase = (match as MatchElimination)?.Phase,
-            WasSimulated = match.WasSimulated
+            WasSimulated = match.WasSimulated,
+            HasResult = match.HasResult
         };
     }
 }

@@ -268,12 +268,14 @@ public class KnockoutFixtureGeneratorExtensionTests
         AddGroupStageMatches(homeGoals: 2, awayGoals: 1);
     }
 
+    // Sin resultado registrado: los partidos quedan sin goles ni simulacion, por lo que
+    // Match.HasResult es false y la fase de grupos sigue incompleta.
     private void SeedUnplayedGroupStageMatches()
     {
-        AddGroupStageMatches(homeGoals: 0, awayGoals: 0);
+        AddGroupStageMatches(homeGoals: null, awayGoals: null);
     }
 
-    private void AddGroupStageMatches(int homeGoals, int awayGoals)
+    private void AddGroupStageMatches(int? homeGoals, int? awayGoals)
     {
         Stadium stadium = _stadiumRepository.GetAll().First();
         int matchId = 1;
@@ -302,7 +304,10 @@ public class KnockoutFixtureGeneratorExtensionTests
                     group: group,
                     journey: journey);
                 match.SetMatchCode($"M{match.MatchId}");
-                match.SetGoals(homeGoals, awayGoals);
+                if (homeGoals.HasValue && awayGoals.HasValue)
+                {
+                    match.SetGoals(homeGoals.Value, awayGoals.Value);
+                }
                 _matchRepository.Add(match);
                 journeyIndex++;
             }

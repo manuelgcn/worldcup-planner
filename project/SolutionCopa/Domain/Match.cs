@@ -53,6 +53,11 @@ public abstract class Match
     public Stadium? Stadium { get; private set; }
     public bool WasSimulated { get; private set; }
 
+    // Estado explicito de "resultado registrado": queda en true cuando se cargan goles (manual)
+    // o se simula el partido. Es la unica fuente de verdad de "partido jugado": un 0-0 cargado
+    // a mano cuenta como jugado, cosa que la heuristica de goles no distinguia.
+    public bool HasResult { get; private set; }
+
     // Evita aplicar el Elo dos veces sobre el mismo partido (p. ej. simular y luego publicar).
     public bool RankingApplied { get; private set; }
 
@@ -61,6 +66,7 @@ public abstract class Match
     public void MarkAsSimulated()
     {
         WasSimulated = true;
+        HasResult = true;
     }
 
     public void MarkRankingApplied()
@@ -129,28 +135,33 @@ public abstract class Match
         EnsureNonNegativeGoals(homeGoals, awayGoals);
         HomeGoals = homeGoals;
         AwayGoals = awayGoals;
+        HasResult = true;
     }
 
     public void SetHomeGoals(int goals)
     {
         EnsureNonNegativeGoal(goals);
         HomeGoals = goals;
+        HasResult = true;
     }
 
     public void SetAwayGoals(int goals)
     {
         EnsureNonNegativeGoal(goals);
         AwayGoals = goals;
+        HasResult = true;
     }
 
     public void AddHomeGoal()
     {
         HomeGoals++;
+        HasResult = true;
     }
 
     public void AddAwayGoal()
     {
         AwayGoals++;
+        HasResult = true;
     }
 
     public void RemoveHomeGoal()
