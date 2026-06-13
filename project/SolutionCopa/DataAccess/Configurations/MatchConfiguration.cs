@@ -19,6 +19,7 @@ public class MatchConfiguration : IEntityTypeConfiguration<Match>
         builder.Property(m => m.HomeGoals).IsRequired();
         builder.Property(m => m.AwayGoals).IsRequired();
         builder.Property(m => m.WasSimulated).IsRequired();
+        builder.Property(m => m.HasResult).IsRequired();
         builder.Property(m => m.RankingApplied).IsRequired();
 
         // TPH: el tipo concreto se resuelve por el discriminador.

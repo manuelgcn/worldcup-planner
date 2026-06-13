@@ -10,7 +10,6 @@ public sealed class GroupStandingsService : IGroupStandingsService
 {
     private const int PointsForWin = 3;
     private const int PointsForDraw = 1;
-    private const int MinimumGoalsForPlayedMatch = 1;
     private const int DefaultTieBreakerSeed = 0;
     private const string GroupNotFoundMessage = "Group was not found.";
 
@@ -135,7 +134,7 @@ public sealed class GroupStandingsService : IGroupStandingsService
 
     private static bool IsMatchPlayed(Match match)
     {
-        return match.WasSimulated || match.HomeGoals + match.AwayGoals >= MinimumGoalsForPlayedMatch;
+        return match.HasResult;
     }
 
     private sealed class StandingAccumulator

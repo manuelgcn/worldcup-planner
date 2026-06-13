@@ -199,15 +199,15 @@ public class GroupStandingsServiceTests
     [TestMethod]
     public void IsGroupStageComplete_WhenAllMatchesHaveAtLeastOneGoal_ReturnsTrue()
     {
-        SeedFullGroupStage(allMatchesHaveGoals: true);
+        SeedFullGroupStage(allMatchesPlayed: true);
 
         Assert.IsTrue(_service.IsGroupStageComplete());
     }
 
     [TestMethod]
-    public void IsGroupStageComplete_WhenAnyMatchHasZeroGoals_ReturnsFalse()
+    public void IsGroupStageComplete_WhenAnyMatchHasNoRegisteredResult_ReturnsFalse()
     {
-        SeedFullGroupStage(allMatchesHaveGoals: false);
+        SeedFullGroupStage(allMatchesPlayed: false);
 
         Assert.IsFalse(_service.IsGroupStageComplete());
     }
@@ -215,15 +215,15 @@ public class GroupStandingsServiceTests
     [TestMethod]
     public void PendingGroupStageMatchCount_WhenAllPlayed_ReturnsZero()
     {
-        SeedFullGroupStage(allMatchesHaveGoals: true);
+        SeedFullGroupStage(allMatchesPlayed: true);
 
         Assert.AreEqual(0, _service.PendingGroupStageMatchCount());
     }
 
     [TestMethod]
-    public void PendingGroupStageMatchCount_CountsMatchesWithZeroTotalGoals()
+    public void PendingGroupStageMatchCount_CountsMatchesWithoutRegisteredResult()
     {
-        SeedFullGroupStage(allMatchesHaveGoals: false);
+        SeedFullGroupStage(allMatchesPlayed: false);
 
         Assert.AreEqual(1, _service.PendingGroupStageMatchCount());
     }
@@ -258,11 +258,32 @@ public class GroupStandingsServiceTests
         _matchRepository.Add(match);
     }
 
-    private void SeedFullGroupStage(bool allMatchesHaveGoals)
+    private void SeedFullGroupStage(bool allMatchesPlayed)
     {
         AddPlayedMatch(matchId: 1, home: _teamAlpha, away: _teamBravo, homeGoals: 1, awayGoals: 0);
         AddPlayedMatch(matchId: 2, home: _teamCharlie, away: _teamDelta, homeGoals: 2, awayGoals: 1);
-        AddPlayedMatch(matchId: 3, home: _teamAlpha, away: _teamCharlie, homeGoals: 0, awayGoals: allMatchesHaveGoals ? 2 : 0);
+        if (allMatchesPlayed)
+        {
+            AddPlayedMatch(matchId: 3, home: _teamAlpha, away: _teamCharlie, homeGoals: 0, awayGoals: 2);
+        }
+        else
+        {
+            AddPendingMatch(matchId: 3, home: _teamAlpha, away: _teamCharlie);
+        }
+    }
+
+    private void AddPendingMatch(int matchId, Team home, Team away)
+    {
+        Journey journey = Journey.CreateInstance(1);
+        MatchGroup match = MatchGroup.CreateInstance(
+            id: matchId,
+            matchDate: DefaultStartDate.AddDays(matchId),
+            homeTeam: home,
+            awayTeam: away,
+            stadium: _stadium,
+            group: _group,
+            journey: journey);
+        _matchRepository.Add(match);
     }
 
     private static TournamentSettings CreateDefaultSettings()
