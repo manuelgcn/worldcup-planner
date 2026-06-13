@@ -1,86 +1,74 @@
-# INSTALL — WorldCupPlanner 2026
+# INSTALL — WorldCupPlanner 2026 (Obligatorio 2)
 
-Guía de instalación y ejecución para el Obligatorio 2 de Diseño de Aplicaciones 1.
-Cubre el entorno mínimo para levantar la base de datos, compilar la solución y
-correr los tests. La capa de persistencia productiva usa **Azure SQL Edge** sobre
-Docker; los tests siguen usando el provider en memoria de EF Core (F.I.R.S.T.).
+Guía de instalación, ejecución y carga de datos de prueba. La persistencia
+productiva corre sobre **Azure SQL Edge** en Docker con **EF Core 8 (Code
+First)**; los tests unitarios usan el provider **EF Core In-Memory**
+(F.I.R.S.T.), por lo que no requieren la base levantada.
 
-> Fase 0 — *scaffolding*. Las migraciones EF Core, el `AppDbContext` y el
-> registro de DI definitivo se incorporan en la Fase 1 (rama
-> `feature/db-efcore`).
+Resumen de artefactos relevantes:
+
+| Artefacto | Ubicación |
+|---|---|
+| Solución | `project/SolutionCopa/SolutionCopa.sln` |
+| Proyecto de arranque (UI Blazor Server) | `project/SolutionCopa/UI/UI.csproj` |
+| Seeder de datos de prueba (consola) | `project/SolutionCopa/DataSeeder/DataSeeder.csproj` |
+| Connection string | `project/SolutionCopa/UI/appsettings.json` → `ConnectionStrings:Default` |
+| Compose de la base | `docker-compose.yml` (servicio `sqlserver`, contenedor `worldcup-sqledge`) |
+| Script de esquema (idempotente) | `db/scripts/seed-empty.sql` |
+| Script de esquema + datos | `db/scripts/seed-full.sql` |
+| Backup base vacía | `db/backups/seed-empty.bak` |
+| Backup base con datos de prueba | `db/backups/seed-full.bak` |
 
 ---
 
 ## 1. Prerrequisitos
 
-- **.NET 8 SDK** (probado con `8.0.420`). Verificá con `dotnet --version`.
-- **Docker** (Docker Desktop en Windows/macOS o Docker Engine en Linux) con
-  soporte para `docker compose`.
-- Herramienta CLI **`dotnet-ef`** versión `8.0.x` (necesaria a partir de la
-  Fase 1):
+- **.NET 8 SDK** (`dotnet --version` → `8.0.x`). La solución corre con .NET Core 8.
+- **Docker** con `docker compose` (Docker Desktop o Docker Engine).
+- Herramienta CLI **`dotnet-ef` 8.x** (solo si vas a generar/aplicar migraciones
+  manualmente):
 
   ```bash
   dotnet tool install --global dotnet-ef --version 8.0.*
-  # Si ya estaba instalada en otra versión:
-  dotnet tool update --global dotnet-ef --version 8.0.*
   ```
 
-- Opcional: cliente SQL (`sqlcmd`, Azure Data Studio, DBeaver, etc.) para
-  inspeccionar la base.
+- Opcional: cliente SQL (`sqlcmd`, Azure Data Studio, DBeaver) para inspeccionar
+  la base. `sqlcmd` ya viene dentro del contenedor en `/opt/mssql-tools/bin/sqlcmd`.
 
 ---
 
 ## 2. Levantar la base (Azure SQL Edge)
 
-El `docker-compose.yml` de la raíz define un único servicio `sqlserver` que
-corre **Azure SQL Edge** y publica el puerto `1433`.
-
-1. Copiá el archivo de ejemplo y, si querés, ajustá la contraseña:
+1. Copiá el archivo de entorno y, si querés, ajustá la contraseña (debe cumplir
+   la complejidad de SQL Server: ≥8 caracteres con mayúscula, minúscula, número
+   y símbolo). El default es `WorldCup2026!Dev`:
 
    ```bash
    cp .env.example .env
    ```
 
-   La contraseña debe cumplir la complejidad de SQL Server: mínimo 8
-   caracteres, con mayúscula, minúscula, número y carácter especial. El
-   default es `WorldCup2026!Dev`.
-
-2. Levantá el contenedor en segundo plano:
+2. Levantá el contenedor:
 
    ```bash
    docker compose up -d sqlserver
    ```
 
-3. Verificá que esté corriendo:
+3. Verificá que esté arriba:
 
    ```bash
    docker compose ps
-   docker logs worldcup-sqledge --tail 20
+   docker logs worldcup-sqledge --tail 20   # debe decir "Recovery is complete."
    ```
 
-   El log debe terminar con `Recovery is complete.` o equivalente.
-
-4. Para frenarlo (preservando los datos del volumen `mssql-data`):
-
-   ```bash
-   docker compose stop sqlserver
-   ```
-
-   Para borrarlo y empezar de cero (⚠ destruye datos):
-
-   ```bash
-   docker compose down -v
-   ```
-
-> `.env` **no** se commitea (está en `.gitignore`). El archivo versionado es
-> `.env.example`.
+`.env` no se commitea (está en `.gitignore`); el versionado es `.env.example`.
+Para frenar preservando datos: `docker compose stop sqlserver`. Para borrar todo
+(⚠ destruye el volumen): `docker compose down -v`.
 
 ---
 
 ## 3. Connection string
 
-La cadena de conexión productiva vive en
-`project/SolutionCopa/UI/appsettings.json`, sección `ConnectionStrings:Default`:
+Definida en `project/SolutionCopa/UI/appsettings.json`:
 
 ```json
 "ConnectionStrings": {
@@ -88,84 +76,160 @@ La cadena de conexión productiva vive en
 }
 ```
 
-Para sobrescribirla sin modificar el archivo (recomendado en producción y en
-CI), exportá la variable de entorno **`ConnectionStrings__Default`** (dos
-guiones bajos):
+Para sobrescribirla sin tocar el archivo, exportá la variable de entorno
+**`ConnectionStrings__Default`** (doble guion bajo):
 
 ```bash
 # bash / zsh
 export ConnectionStrings__Default="Server=...;Database=...;User Id=...;Password=...;TrustServerCertificate=True;"
-
 # PowerShell
 $env:ConnectionStrings__Default = "Server=...;Database=...;User Id=...;Password=...;TrustServerCertificate=True;"
 ```
 
-> La password del `appsettings.json` de dev coincide con la de `.env.example`
-> únicamente por comodidad local. **No** se debe usar ese password en
-> ambientes productivos.
+> El password de `appsettings.json` coincide con el de `.env.example` solo por
+> comodidad local; no usar ese valor en producción.
 
 ---
 
-## 4. Migraciones EF Core (pendiente de Fase 1)
+## 4. Crear el esquema
 
-Los comandos quedan documentados para que el equipo los tenga a mano cuando
-la Fase 1 introduzca `AppDbContext`. Hoy todavía no hay migraciones para
-aplicar.
+Hay tres caminos equivalentes; **elegí uno**.
+
+### Opción A — Migraciones EF Core (recomendado para desarrollo)
+
+La UI aplica `Database.Migrate()` al arrancar, así que con la base vacía y la
+connection string apuntando bien, basta con ejecutar la app (§6). Para aplicarlas
+a mano:
 
 ```bash
-# Crear la migración inicial (cuando AppDbContext exista)
-dotnet ef migrations add Initial \
-  --project project/SolutionCopa/DataAccess \
-  --startup-project project/SolutionCopa/UI
-
-# Aplicar/actualizar el esquema contra la base productiva
 dotnet ef database update \
   --project project/SolutionCopa/DataAccess \
   --startup-project project/SolutionCopa/UI
 ```
 
----
+### Opción B — Script de esquema idempotente
 
-## 5. Build, test y ejecución
-
-Todo se opera contra la solución `project/SolutionCopa/SolutionCopa.sln`.
+`db/scripts/seed-empty.sql` contiene todas las migraciones (idempotentes, con
+control en `__EFMigrationsHistory`). Crear la base y aplicarlo:
 
 ```bash
-# Restaurar dependencias
+docker exec worldcup-sqledge /opt/mssql-tools/bin/sqlcmd \
+  -S localhost -U sa -P 'WorldCup2026!Dev' -C \
+  -Q "IF DB_ID('WorldCupPlanner') IS NULL CREATE DATABASE [WorldCupPlanner];"
+
+docker cp db/scripts/seed-empty.sql worldcup-sqledge:/tmp/seed-empty.sql
+docker exec worldcup-sqledge /opt/mssql-tools/bin/sqlcmd \
+  -S localhost -U sa -P 'WorldCup2026!Dev' -C -d WorldCupPlanner -i /tmp/seed-empty.sql
+```
+
+### Opción C — Restaurar el backup vacío
+
+`db/backups/seed-empty.bak` es la base recién migrada, sin datos (ver §5.3 para
+la mecánica de restore; usar `seed-empty.bak` en lugar de `seed-full.bak`).
+
+---
+
+## 5. Cargar los datos de prueba
+
+La base de datos de demo incluye, según pide la letra:
+
+- **2 administradores, 2 editores, 2 periodistas.**
+- **5 estadios.**
+- **48 equipos**, de los cuales **46 tienen bandera** (PNG reales → base64).
+- **1 torneo** con `TournamentSettings`, **fase de grupos generada y simulada**
+  (72 partidos) con el motor *Probabilístico*.
+- **Entradas de auditoría** coherentes (alta de usuarios, generación de fixture,
+  simulación, recálculo de ranking Elo, notificaciones).
+
+Credenciales sembradas (todas cumplen la política de contraseñas):
+
+| Rol | Email | Password |
+|---|---|---|
+| Admin | `admin1@copa.com` | `Admin@123` |
+| Admin | `admin2@copa.com` | `Admin@456` |
+| Editor | `editor1@copa.com` | `Editor@123` |
+| Editor | `editor2@copa.com` | `Editor@456` |
+| Periodista | `periodista1@copa.com` | `Prensa@123` |
+| Periodista | `periodista2@copa.com` | `Prensa@456` |
+
+> Además, al arrancar la UI (§6) se crean, si no existen, tres usuarios de
+> conveniencia: `admin@copa.com` / `Admin@123`, `editor@copa.com` / `Editor@123`
+> y `periodista@copa.com` / `Periodista@123`.
+
+Elegí **uno** de los tres caminos siguientes.
+
+### 5.1 Opción A — Seeder reproducible (recomendado)
+
+Proyecto de consola externo al código productivo que reutiliza los Services
+reales (validación de dominio, generación de fixture y simulación verdaderas).
+Resetea el esquema (`EnsureDeleted` + `Migrate`) y vuelve a sembrar todo:
+
+```bash
+# Usa la connection string de desarrollo por defecto:
+dotnet run --project project/SolutionCopa/DataSeeder
+
+# O pasando una cadena explícita:
+dotnet run --project project/SolutionCopa/DataSeeder -- \
+  "Server=localhost,1433;Database=WorldCupPlanner;User Id=sa;Password=WorldCup2026!Dev;TrustServerCertificate=True;"
+```
+
+Al terminar imprime un resumen con los conteos sembrados. Es la fuente desde la
+que se regeneran `seed-full.sql` y `seed-full.bak`.
+
+### 5.2 Opción B — Script SQL con datos
+
+`db/scripts/seed-full.sql` crea la base `WorldCupPlanner` **desde cero** (incluye
+`CREATE DATABASE`, esquema, datos y las filas de `__EFMigrationsHistory`). Si la
+base ya existe, borrala primero:
+
+```bash
+docker cp db/scripts/seed-full.sql worldcup-sqledge:/tmp/seed-full.sql
+docker exec worldcup-sqledge /opt/mssql-tools/bin/sqlcmd \
+  -S localhost -U sa -P 'WorldCup2026!Dev' -C -i /tmp/seed-full.sql
+```
+
+### 5.3 Opción C — Restaurar el backup con datos
+
+```bash
+docker cp db/backups/seed-full.bak worldcup-sqledge:/var/opt/mssql/data/seed-full.bak
+docker exec worldcup-sqledge /opt/mssql-tools/bin/sqlcmd \
+  -S localhost -U sa -P 'WorldCup2026!Dev' -C -Q "
+    RESTORE DATABASE [WorldCupPlanner]
+    FROM DISK = N'/var/opt/mssql/data/seed-full.bak'
+    WITH REPLACE,
+      MOVE 'WorldCupPlanner'     TO '/var/opt/mssql/data/WorldCupPlanner.mdf',
+      MOVE 'WorldCupPlanner_log' TO '/var/opt/mssql/data/WorldCupPlanner_log.ldf';"
+```
+
+---
+
+## 6. Build, ejecución y tests
+
+```bash
+# Restaurar y compilar la solución
 dotnet restore project/SolutionCopa/SolutionCopa.sln
+dotnet build   project/SolutionCopa/SolutionCopa.sln
 
-# Compilar
-dotnet build project/SolutionCopa/SolutionCopa.sln
-
-# Correr todos los tests (Domain, Services, DataAccess)
-dotnet test project/SolutionCopa/SolutionCopa.sln
-
-# Levantar la UI Blazor Server (startup project)
+# Levantar la UI (aplica migraciones pendientes al iniciar)
 dotnet run --project project/SolutionCopa/UI/UI.csproj
+
+# Tests (usan EF Core In-Memory; no requieren Docker)
+dotnet test project/SolutionCopa/SolutionCopa.sln
 ```
 
-Filtros útiles:
-
-```bash
-dotnet test project/SolutionCopa/DomainTest/DomainTest.csproj
-dotnet test project/SolutionCopa/ServiceTest/ServiceTest.csproj
-dotnet test project/SolutionCopa/DataAccessTest/DataAccessTest.csproj
-```
+Una vez corriendo, navegá a la URL que imprime Kestrel (p. ej.
+`https://localhost:5001`) e ingresá con cualquiera de las credenciales de §5.
 
 ---
 
-## 6. Nota de diseño para Fase 1 (recordatorio)
+## 7. Notas de diseño
 
-En Fase 1, junto con la introducción de EF Core, hay dos cambios estructurales
-de DI que **todavía no están aplicados** y que el equipo debe tener presentes:
-
-- `AppDbContext` se registra con `AddDbContext<AppDbContext>(...)` y queda
-  **scoped por request**.
-- Los repositorios y `IUnitOfWork`, hoy `AddSingleton` en
-  `UI/Program.cs`, deben migrar a **`AddScoped`** para acompañar el ciclo de
-  vida del `DbContext` (que no es thread-safe).
-- `IUnitOfWork.Commit()` deja de ser un no-op y pasa a envolver
-  `SaveChangesAsync()` — **autosave por operación**, sin botón "guardar todo".
-
-Mientras tanto, el código productivo sigue usando los repositorios en memoria
-de la Fase 0 / Obligatorio 1.
+- **Autosave por operación**: cada repositorio crea un `AppDbContext` efímero vía
+  `IDbContextFactory<AppDbContext>` y persiste en el `Add/Update/Delete` (no hay
+  botón "guardar todo").
+- Las **migraciones** viven en `project/SolutionCopa/DataAccess/Migrations/`.
+- El seeder copia a su carpeta de salida el CSV oficial de equipos
+  (`teams-wc2026-48.csv`) y el directorio `flags-master/` con las banderas PNG.
+- Los scripts `team_initial.sql`, `users_roles.sql`, `stadiums_settings_audit.sql`
+  y `fixture_matches.sql` de `db/scripts/` son fragmentos históricos por
+  migración; para instalar usá `seed-empty.sql` / `seed-full.sql`.

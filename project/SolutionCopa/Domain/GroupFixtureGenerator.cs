@@ -42,7 +42,7 @@ public sealed class GroupFixtureGenerator
                 throw new MatchException("Each group must contain exactly 4 teams.");
 
             List<Team> teams = new List<Team>(group.Teams);
-            int groupsPerDay = (orderedStadiums.Count * MaxMatchesPerStadiumPerDay) / 2;
+            int groupsPerDay = GroupsPerDay(orderedStadiums.Count);
             int dayOffset = groupIndex / groupsPerDay;
 
             for (int jornada = 1; jornada <= TotalJornadas; jornada++)
@@ -66,14 +66,17 @@ public sealed class GroupFixtureGenerator
 
     private void ScheduleSimultaneous(Group group, List<Team> teams, List<(int home, int away)> pairs, DateTime day, List<Stadium> orderedStadiums, StadiumScheduleTracker tracker, List<Match> matches, ref int matchNumber)
     {
-        Stadium stadium1 = GetStadiumForMatch(matchNumber + 1, orderedStadiums);
-        Stadium stadium2 = GetStadiumForMatch(matchNumber + 2, orderedStadiums);
+        int preferredIndex1 = PreferredStadiumIndex(matchNumber + 1, orderedStadiums.Count);
+        int preferredIndex2 = PreferredStadiumIndex(matchNumber + 2, orderedStadiums.Count);
         bool scheduled = false;
 
+        // Ambos partidos de la ultima jornada deben jugarse el mismo dia y misma hora.
+        // Por eso buscamos un horario donde haya DOS estadios libres a la vez.
         foreach (TimeSpan time in AllowedTimes)
         {
             DateTime matchTime = day.Date + time;
-            if (tracker.CanSchedule(stadium1, matchTime) && tracker.CanSchedule(stadium2, matchTime))
+            if (TryFindAvailableStadium(preferredIndex1, matchTime, orderedStadiums, tracker, null, out Stadium stadium1)
+                && TryFindAvailableStadium(preferredIndex2, matchTime, orderedStadiums, tracker, stadium1, out Stadium stadium2))
             {
                 matches.Add(BuildAndReserve(matchNumber + 1, matchTime, group, teams, pairs[0], stadium1, SimultaneousJornadaNumber, tracker));
                 matches.Add(BuildAndReserve(matchNumber + 2, matchTime, group, teams, pairs[1], stadium2, SimultaneousJornadaNumber, tracker));
@@ -89,13 +92,13 @@ public sealed class GroupFixtureGenerator
     {
         foreach ((int home, int away) pair in pairs)
         {
-            Stadium assignedStadium = GetStadiumForMatch(matchNumber + 1, orderedStadiums);
+            int preferredIndex = PreferredStadiumIndex(matchNumber + 1, orderedStadiums.Count);
             bool scheduledMatch = false;
 
             foreach (TimeSpan time in AllowedTimes)
             {
                 DateTime matchTime = day.Date + time;
-                if (tracker.CanSchedule(assignedStadium, matchTime))
+                if (TryFindAvailableStadium(preferredIndex, matchTime, orderedStadiums, tracker, null, out Stadium assignedStadium))
                 {
                     matches.Add(BuildAndReserve(matchNumber + 1, matchTime, group, teams, pair, assignedStadium, jornada, tracker));
                     matchNumber++;
@@ -103,11 +106,42 @@ public sealed class GroupFixtureGenerator
                     break;
                 }
             }
-            if (!scheduledMatch) throw new MatchException($"No available timeslot for match in stadium {assignedStadium.Name}");
+            if (!scheduledMatch) throw new MatchException($"No available timeslot for Jornada {jornada} of group {group.Name}");
         }
     }
 
-    private Stadium GetStadiumForMatch(int mNum, List<Stadium> orderedStadiums) => orderedStadiums[(mNum - 1) % orderedStadiums.Count];
+    // Cantidad de grupos que arrancan el mismo dia. La jornada 3 (simultanea) es la
+    // restriccion mas dura: cada grupo necesita un PAR de estadios al mismo horario,
+    // por eso el tope es floor(estadios / 2) por cada horario disponible.
+    private static int GroupsPerDay(int stadiumCount) => (stadiumCount / 2) * AllowedTimes.Length;
+
+    // Indice del estadio preferido segun la rotacion circular por orden de nombre:
+    // Partido n -> Estadio[(n - 1) mod CantEstadios].
+    private static int PreferredStadiumIndex(int matchNumber, int stadiumCount) => (matchNumber - 1) % stadiumCount;
+
+    // Busca un estadio disponible empezando por el preferido (respeta la rotacion) y,
+    // si esta lleno, avanza circularmente al siguiente que tenga lugar en ese horario.
+    private static bool TryFindAvailableStadium(int preferredIndex, DateTime matchTime, List<Stadium> orderedStadiums, StadiumScheduleTracker tracker, Stadium? exclude, out Stadium chosen)
+    {
+        int count = orderedStadiums.Count;
+        for (int offset = 0; offset < count; offset++)
+        {
+            Stadium candidate = orderedStadiums[(preferredIndex + offset) % count];
+            if (exclude is not null && ReferenceEquals(candidate, exclude))
+            {
+                continue;
+            }
+
+            if (tracker.CanSchedule(candidate, matchTime))
+            {
+                chosen = candidate;
+                return true;
+            }
+        }
+
+        chosen = null!;
+        return false;
+    }
 
     private MatchGroup BuildAndReserve(int mNum, DateTime mTime, Group group, List<Team> teams, (int home, int away) pair, Stadium stadium, int jornada, StadiumScheduleTracker tracker)
     {
