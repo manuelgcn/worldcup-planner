@@ -228,6 +228,21 @@ public class GroupStandingsServiceTests
         Assert.AreEqual(1, _service.PendingGroupStageMatchCount());
     }
 
+    [TestMethod]
+    public void GetStandings_WithManualZeroZero_CountsMatchAsPlayedDraw()
+    {
+        AddPlayedMatch(matchId: 1, home: _teamAlpha, away: _teamBravo, homeGoals: 0, awayGoals: 0);
+
+        List<GroupStandingDto> standings = _service.GetStandings(GroupName);
+        GroupStandingDto alpha = standings.First(standing => standing.Team.Id == _teamAlpha.Id);
+        GroupStandingDto bravo = standings.First(standing => standing.Team.Id == _teamBravo.Id);
+
+        Assert.AreEqual(1, alpha.GamesPlayed);
+        Assert.AreEqual(1, alpha.Points);
+        Assert.AreEqual(1, bravo.GamesPlayed);
+        Assert.AreEqual(1, bravo.Points);
+    }
+
     private void AddPlayedMatch(int matchId, Team home, Team away, int homeGoals, int awayGoals)
     {
         Journey journey = Journey.CreateInstance(1);
