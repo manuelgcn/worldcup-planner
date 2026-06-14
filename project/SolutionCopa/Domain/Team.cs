@@ -114,6 +114,9 @@ public class Team
 
     private static byte[]? DecodeBase64OrNull(string value)
     {
+        // No es un error silenciado: null es el valor centinela de "base64 invalido".
+        // Solo se atrapa FormatException (entrada mal formada); ValidateFlag lo traduce
+        // luego a una ArgumentException con mensaje de negocio.
         try
         {
             return Convert.FromBase64String(value);

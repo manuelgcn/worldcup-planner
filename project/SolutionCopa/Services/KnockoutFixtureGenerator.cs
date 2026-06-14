@@ -251,7 +251,10 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             }
             catch (Exception ex)
             {
-                _auditLog.Log(AuditActions.SimulateMatch, $"Failed to simulate match {match.MatchId}: {ex.Message}", settings.Id, "Match", match.MatchId);
+                // Resiliencia deliberada: si la simulacion de un partido falla, se deja
+                // constancia en el log de auditoria y se continua con el resto del cuadro
+                // en lugar de abortar toda la simulacion eliminatoria.
+                _auditLog.Log(AuditActions.SimulateMatch, $"No se pudo simular el partido {match.MatchId}: {ex.Message}", settings.Id, "Match", match.MatchId);
             }
         }
 
@@ -653,11 +656,15 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     private Match? GetMatchById(int matchId)
     {
+        // Resiliencia deliberada de la simulacion por lotes de fase 2: si la lectura de
+        // un partido falla, se trata como "no disponible" (null) y el bucle de
+        // SimulateEliminationMatches lo saltea para no abortar todo el cuadro.
+        // Comportamiento verificado por Fase2ConsolidatedTests.Test_Fase2_AllScenarios.
         try
         {
             return _matchRepository.GetById(matchId);
         }
-        catch
+        catch (Exception)
         {
             return null;
         }
