@@ -365,4 +365,18 @@ public class UserTests
         );
     }
 
+    [TestMethod]
+    public void UserCannotHaveEmailWithDomainStartingWithDot()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@.com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
 }
