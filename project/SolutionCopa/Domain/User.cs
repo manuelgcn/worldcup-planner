@@ -1,3 +1,4 @@
+using System.Net.Mail;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 using System.Text;
@@ -51,8 +52,25 @@ public class User
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException(EmailRequiredMessage);
 
-        if (!email.Contains("@") || !email.Contains("."))
+        if (!IsValidEmail(email))
             throw new ArgumentException(EmailInvalidMessage);
+    }
+
+    private static bool IsValidEmail(string email)
+    {
+        if (!MailAddress.TryCreate(email, out MailAddress? address))
+            return false;
+
+        // MailAddress es permisivo: acepta cosas como "a@b" o display names.
+        // Exigimos que el texto sea exactamente la direccion y que el host tenga
+        // un dominio con punto interno (rechaza "a@b", "a@b." y "@.").
+        if (address.Address != email)
+            return false;
+
+        string host = address.Host;
+        int lastDot = host.LastIndexOf('.');
+
+        return lastDot > 0 && lastDot < host.Length - 1;
     }
 
     private void ValidatePassword(string password)
