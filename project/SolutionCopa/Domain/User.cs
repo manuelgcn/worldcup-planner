@@ -52,30 +52,64 @@ public class User
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException(EmailRequiredMessage);
 
-        if (email.Any(char.IsWhiteSpace))
+        if (HasWhitespace(email) || !HasExactlyOneAt(email))
             throw new ArgumentException(EmailInvalidMessage);
 
-        int atIndex = email.IndexOf('@');
-        int lastAtIndex = email.LastIndexOf('@');
+        string localPart = GetLocalPart(email);
+        string domainPart = GetDomainPart(email);
 
-        if (atIndex <= 0 || atIndex != lastAtIndex)
-            throw new ArgumentException(EmailInvalidMessage);
-
-        string localPart = email[..atIndex];
-        string domainPart = email[(atIndex + 1)..];
-
-        if (string.IsNullOrWhiteSpace(localPart) || string.IsNullOrWhiteSpace(domainPart))
-            throw new ArgumentException(EmailInvalidMessage);
-
-        if (!domainPart.Contains('.'))
-            throw new ArgumentException(EmailInvalidMessage);
-
-        if (domainPart.StartsWith('.') || domainPart.EndsWith('.'))
-            throw new ArgumentException(EmailInvalidMessage);
-
-        if (domainPart.Contains(".."))
+        if (IsInvalidLocalPart(localPart) || IsInvalidDomainPart(domainPart))
             throw new ArgumentException(EmailInvalidMessage);
     }
+
+    private static bool HasWhitespace(string email)
+    {
+        return email.Any(char.IsWhiteSpace);
+    }
+
+    private static bool HasExactlyOneAt(string email)
+    {
+        return email.Count(c => c == '@') == 1;
+    }
+
+    private static string GetLocalPart(string email)
+    {
+        int atIndex = email.IndexOf('@');
+        return email[..atIndex];
+    }
+
+    private static string GetDomainPart(string email)
+    {
+        int atIndex = email.IndexOf('@');
+        return email[(atIndex + 1)..];
+    }
+
+    private static bool IsInvalidLocalPart(string localPart)
+    {
+        return string.IsNullOrWhiteSpace(localPart)
+               || localPart.StartsWith('.')
+               || localPart.EndsWith('.')
+               || localPart.Contains("..");
+    }
+
+    private static bool IsInvalidDomainPart(string domainPart)
+    {
+        if (string.IsNullOrWhiteSpace(domainPart))
+            return true;
+
+        if (!domainPart.Contains('.'))
+            return true;
+
+        if (domainPart.StartsWith('.') || domainPart.EndsWith('.'))
+            return true;
+
+        if (domainPart.Contains(".."))
+            return true;
+
+        string[] labels = domainPart.Split('.');
+        return labels.Any(string.IsNullOrWhiteSpace);
+    }
+    
 
 
     private void ValidatePassword(string password)
