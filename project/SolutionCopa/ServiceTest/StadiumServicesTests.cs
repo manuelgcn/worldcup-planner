@@ -40,6 +40,15 @@ public class StadiumServicesTests
     }
 
     [TestMethod]
+    public void CannotAddDuplicateStadiumNameIgnoringCaseAndAccents()
+    {
+        _service.AddStadium(new Stadium("Estadio Azteca", "Ciudad de Mexico", null, 87000) { Id = 1 });
+
+        Assert.ThrowsException<StadiumServicesException>(
+            () => _service.AddStadium(new Stadium("ESTADIO AZTECA", "Otra Ciudad", null, 70000) { Id = 2 }));
+    }
+
+    [TestMethod]
     public void DI_RegistersStadiumServicesAsSameInstance()
     {
         ServiceCollection services = new ServiceCollection();

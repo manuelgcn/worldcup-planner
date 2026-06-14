@@ -58,14 +58,20 @@ public class TeamRepository : ITeamRepository
 
     public Team? GetByName(string name)
     {
+        // Comparacion insensible a mayusculas y tildes (CLAUDE.md §7). La tabla
+        // tiene a lo sumo 48 equipos, por lo que evaluar en memoria es seguro.
+        string target = TextNormalizer.Normalize(name);
         using AppDbContext context = _contextFactory.CreateDbContext();
-        return context.Teams.AsNoTracking().FirstOrDefault(t => t.Name == name);
+        return context.Teams.AsNoTracking().AsEnumerable()
+            .FirstOrDefault(t => TextNormalizer.Normalize(t.Name) == target);
     }
 
     public bool ExistsByName(string name)
     {
+        string target = TextNormalizer.Normalize(name);
         using AppDbContext context = _contextFactory.CreateDbContext();
-        return context.Teams.AsNoTracking().Any(t => t.Name == name);
+        return context.Teams.AsNoTracking().AsEnumerable()
+            .Any(t => TextNormalizer.Normalize(t.Name) == target);
     }
 
     public IReadOnlyCollection<Team> GetAll()

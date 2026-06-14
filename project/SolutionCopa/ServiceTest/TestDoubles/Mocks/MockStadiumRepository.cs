@@ -36,12 +36,14 @@ public sealed class MockStadiumRepository : IStadiumRepository
 
     public Stadium? GetByName(string name)
     {
-        return _stadiums.Values.FirstOrDefault(stadium => stadium.Name == name);
+        string target = TextNormalizer.Normalize(name);
+        return _stadiums.Values.FirstOrDefault(stadium => TextNormalizer.Normalize(stadium.Name) == target);
     }
 
     public bool ExistsByName(string name)
     {
-        return _stadiums.Values.Any(stadium => stadium.Name == name);
+        string target = TextNormalizer.Normalize(name);
+        return _stadiums.Values.Any(stadium => TextNormalizer.Normalize(stadium.Name) == target);
     }
 
     public IReadOnlyCollection<Stadium> GetAll()

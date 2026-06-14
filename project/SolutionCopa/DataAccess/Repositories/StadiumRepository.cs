@@ -57,14 +57,20 @@ public class StadiumRepository : IStadiumRepository
 
     public Stadium? GetByName(string name)
     {
+        // Comparacion insensible a mayusculas y tildes (CLAUDE.md §7); la tabla de
+        // estadios es chica, por lo que evaluar en memoria no tiene costo relevante.
+        string target = TextNormalizer.Normalize(name);
         using AppDbContext context = _contextFactory.CreateDbContext();
-        return context.Stadiums.AsNoTracking().FirstOrDefault(s => s.Name == name);
+        return context.Stadiums.AsNoTracking().AsEnumerable()
+            .FirstOrDefault(s => TextNormalizer.Normalize(s.Name) == target);
     }
 
     public bool ExistsByName(string name)
     {
+        string target = TextNormalizer.Normalize(name);
         using AppDbContext context = _contextFactory.CreateDbContext();
-        return context.Stadiums.AsNoTracking().Any(s => s.Name == name);
+        return context.Stadiums.AsNoTracking().AsEnumerable()
+            .Any(s => TextNormalizer.Normalize(s.Name) == target);
     }
 
     public IReadOnlyCollection<Stadium> GetAll()
