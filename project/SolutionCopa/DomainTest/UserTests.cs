@@ -304,6 +304,125 @@ public class UserTests
         );
     }
 
+    [TestMethod]
+    public void UserCannotHaveEmailWithoutLocalPart()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "@mail.com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
 
+    [TestMethod]
+    public void UserCannotHaveEmailWithSpaces()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan @mail.com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
+    
+    [TestMethod]
+    public void UserCannotHaveEmailWithMultipleAtSymbols()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@@mail.com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
+    
+    
+    [TestMethod]
+    public void UserCannotHaveEmailWithoutDotInDomain()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@mailcom",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
+
+    [TestMethod]
+    public void UserCannotHaveEmailWithDomainStartingWithDot()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@.com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
+    
+    [TestMethod]
+    public void UserCannotHaveEmailWithConsecutiveDotsInDomain()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@mail..com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
+    
+    [TestMethod]
+    public void UserCannotHaveEmailWithLocalPartEndingWithDot()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan.@mail.com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
+    
+    [TestMethod]
+    public void UserCannotHaveEmailWithLocalPartStartingWithDot()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                ".juan@mail.com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
     
 }

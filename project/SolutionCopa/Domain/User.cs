@@ -46,14 +46,71 @@ public class User
         this.dateOfBirth = dateOfBirth;
     }
 
+   
     private void ValidateEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException(EmailRequiredMessage);
 
-        if (!email.Contains("@") || !email.Contains("."))
+        if (HasWhitespace(email) || !HasExactlyOneAt(email))
+            throw new ArgumentException(EmailInvalidMessage);
+
+        string localPart = GetLocalPart(email);
+        string domainPart = GetDomainPart(email);
+
+        if (IsInvalidLocalPart(localPart) || IsInvalidDomainPart(domainPart))
             throw new ArgumentException(EmailInvalidMessage);
     }
+
+    private static bool HasWhitespace(string email)
+    {
+        return email.Any(char.IsWhiteSpace);
+    }
+
+    private static bool HasExactlyOneAt(string email)
+    {
+        return email.Count(c => c == '@') == 1;
+    }
+
+    private static string GetLocalPart(string email)
+    {
+        int atIndex = email.IndexOf('@');
+        return email[..atIndex];
+    }
+
+    private static string GetDomainPart(string email)
+    {
+        int atIndex = email.IndexOf('@');
+        return email[(atIndex + 1)..];
+    }
+
+    private static bool IsInvalidLocalPart(string localPart)
+    {
+        return string.IsNullOrWhiteSpace(localPart)
+               || localPart.StartsWith('.')
+               || localPart.EndsWith('.')
+               || localPart.Contains("..");
+    }
+
+    private static bool IsInvalidDomainPart(string domainPart)
+    {
+        if (string.IsNullOrWhiteSpace(domainPart))
+            return true;
+
+        if (!domainPart.Contains('.'))
+            return true;
+
+        if (domainPart.StartsWith('.') || domainPart.EndsWith('.'))
+            return true;
+
+        if (domainPart.Contains(".."))
+            return true;
+
+        string[] labels = domainPart.Split('.');
+        return labels.Any(string.IsNullOrWhiteSpace);
+    }
+    
+
 
     private void ValidatePassword(string password)
     {
