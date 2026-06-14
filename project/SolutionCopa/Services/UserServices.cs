@@ -1,4 +1,5 @@
 ﻿using ProjectCopa;
+using Services.DTOs;
 using Services.Exceptions;
 using Services.Interfaces;
 using DataAccess.Interfaces;
@@ -32,6 +33,24 @@ public class UserServices : IUserService
     public IReadOnlyCollection<User> GetAllUsers()
     {
         return _userRepository.GetAll();
+    }
+
+    public void RegisterUser(CreateUserRequestDto request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        // La construccion de la entidad de dominio (con sus invariantes) vive aca,
+        // no en la UI: la pantalla solo arma el request.
+        User user = new User(
+            request.Id,
+            request.Name,
+            request.Lastname,
+            request.Email,
+            request.Password,
+            request.DateOfBirth);
+        user.AddRole(request.InitialRole);
+
+        AddUser(user);
     }
 
     public void AddUser(User user)

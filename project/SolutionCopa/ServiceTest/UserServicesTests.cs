@@ -1,5 +1,6 @@
 using ProjectCopa;
 using Services;
+using Services.DTOs;
 using Services.Exceptions;
 using ServiceTest.TestDoubles.Mocks;
 
@@ -30,6 +31,66 @@ public class UserServicesTests
         User user = new User(id, name, lastname, email, password, dateOfBirth);
         user.AddRole(role);
         return user;
+    }
+
+    [TestMethod]
+    public void RegisterUser_BuildsDomainUserFromRequestAndPersistsIt()
+    {
+        service.RegisterUser(new CreateUserRequestDto
+        {
+            Id = 5,
+            Name = "Ana",
+            Lastname = "Lopez",
+            Email = "ana@mail.com",
+            Password = "Pass123@",
+            DateOfBirth = new DateTime(1992, 4, 10),
+            InitialRole = UserRoles.Editor
+        });
+
+        User stored = service.GetUserById(5);
+        Assert.AreEqual("ana@mail.com", stored.email);
+        Assert.IsTrue(stored.HasRole(UserRoles.Editor));
+    }
+
+    [TestMethod]
+    public void RegisterUser_WithInvalidEmail_ThrowsArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() => service.RegisterUser(new CreateUserRequestDto
+        {
+            Id = 6,
+            Name = "Ana",
+            Lastname = "Lopez",
+            Email = "correo-invalido",
+            Password = "Pass123@",
+            DateOfBirth = new DateTime(1992, 4, 10),
+            InitialRole = UserRoles.Editor
+        }));
+    }
+
+    [TestMethod]
+    public void RegisterUser_WithDuplicateEmail_ThrowsUserServicesException()
+    {
+        service.RegisterUser(new CreateUserRequestDto
+        {
+            Id = 7,
+            Name = "Ana",
+            Lastname = "Lopez",
+            Email = "ana@mail.com",
+            Password = "Pass123@",
+            DateOfBirth = new DateTime(1992, 4, 10),
+            InitialRole = UserRoles.Editor
+        });
+
+        Assert.ThrowsException<UserServicesException>(() => service.RegisterUser(new CreateUserRequestDto
+        {
+            Id = 8,
+            Name = "Otra",
+            Lastname = "Persona",
+            Email = "ana@mail.com",
+            Password = "Pass123@",
+            DateOfBirth = new DateTime(1990, 1, 1),
+            InitialRole = UserRoles.Editor
+        }));
     }
 
     [TestMethod]
