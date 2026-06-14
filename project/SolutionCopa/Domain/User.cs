@@ -52,6 +52,9 @@ public class User
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException(EmailRequiredMessage);
 
+        if (email.Any(char.IsWhiteSpace))
+            throw new ArgumentException(EmailInvalidMessage);
+
         int atIndex = email.IndexOf('@');
         int lastAtIndex = email.LastIndexOf('@');
 
