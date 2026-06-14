@@ -46,14 +46,28 @@ public class User
         this.dateOfBirth = dateOfBirth;
     }
 
+   
     private void ValidateEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException(EmailRequiredMessage);
 
-        if (!email.Contains("@") || !email.Contains("."))
+        int atIndex = email.IndexOf('@');
+        int lastAtIndex = email.LastIndexOf('@');
+
+        if (atIndex <= 0 || atIndex != lastAtIndex)
+            throw new ArgumentException(EmailInvalidMessage);
+
+        string localPart = email[..atIndex];
+        string domainPart = email[(atIndex + 1)..];
+
+        if (string.IsNullOrWhiteSpace(localPart) || string.IsNullOrWhiteSpace(domainPart))
+            throw new ArgumentException(EmailInvalidMessage);
+
+        if (!domainPart.Contains('.'))
             throw new ArgumentException(EmailInvalidMessage);
     }
+
 
     private void ValidatePassword(string password)
     {
