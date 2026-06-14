@@ -1,5 +1,6 @@
 using ProjectCopa;
 using Services;
+using Services.Exceptions;
 using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest;
@@ -95,13 +96,13 @@ public class UserServicesTests
         User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         service.AddUser(user);
 
-        Assert.ThrowsException<ArgumentException>(() => service.Authenticate("juan@mail.com", "Wrong123@"));
+        Assert.ThrowsException<UserServicesException>(() => service.Authenticate("juan@mail.com", "Wrong123@"));
     }
 
     [TestMethod]
     public void Authenticate_WithUnknownEmail_Throws()
     {
-        Assert.ThrowsException<ArgumentException>(() => service.Authenticate("nobody@mail.com", "Pass123@"));
+        Assert.ThrowsException<UserServicesException>(() => service.Authenticate("nobody@mail.com", "Pass123@"));
     }
 
     [TestMethod]
@@ -156,7 +157,7 @@ public class UserServicesTests
     [TestMethod]
     public void GetUserByEmailThrowsIfNotFound()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsException<UserServicesException>(() =>
             service.GetUserByEmail("noexiste@mail.com"));
     }
 
@@ -178,7 +179,7 @@ public class UserServicesTests
         User secondUser = BuildUser(2, "Ana", "Lopez", "juan@mail.com", "Pass123@", new DateTime(1995, 3, 10));
         service.AddUser(firstUser);
 
-        Assert.ThrowsException<ArgumentException>(() => service.AddUser(secondUser));
+        Assert.ThrowsException<UserServicesException>(() => service.AddUser(secondUser));
     }
 
     [TestMethod]
@@ -188,7 +189,7 @@ public class UserServicesTests
         User secondUser = BuildUser(1, "Ana", "Lopez", "ana@mail.com", "Pass123@", new DateTime(1995, 3, 10));
         service.AddUser(firstUser);
 
-        Assert.ThrowsException<ArgumentException>(() => service.AddUser(secondUser));
+        Assert.ThrowsException<UserServicesException>(() => service.AddUser(secondUser));
     }
 
     [TestMethod]
@@ -204,7 +205,7 @@ public class UserServicesTests
     [TestMethod]
     public void CannotRemoveNonExistingUser()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsException<UserServicesException>(() =>
             service.RemoveUser(99));
     }
 
@@ -226,7 +227,7 @@ public class UserServicesTests
     [TestMethod]
     public void CannotUpdateUserThatDoesNotExist()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsException<UserServicesException>(() =>
             service.UpdateUser(99, "Ana", "Lopez", "ana@mail.com"));
     }
 
@@ -239,7 +240,7 @@ public class UserServicesTests
         service.AddUser(user1);
         service.AddUser(user2);
 
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsException<UserServicesException>(() =>
             service.UpdateUser(2, "Ana", "Lopez", "juan@mail.com"));
     }
 
@@ -260,7 +261,7 @@ public class UserServicesTests
     [TestMethod]
     public void CannotAssignRoleToNonExistingUser()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsException<UserServicesException>(() =>
             service.AssignRole(99, UserRoles.Editor));
     }
 

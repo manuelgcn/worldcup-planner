@@ -91,7 +91,7 @@
             Session.Login(user);
             Nav.NavigateTo(HomeRouteFor(user));
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
             errors.Add(ex.Message);
         }
