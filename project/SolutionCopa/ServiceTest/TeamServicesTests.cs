@@ -100,6 +100,15 @@ public sealed class TeamServicesTests
     }
 
     [TestMethod]
+    public void CannotAddDuplicateTeamNameIgnoringCaseAndAccents()
+    {
+        _service.AddTeam(new Team(1, "Brasil", 2000, false, Confederation.CONMEBOL));
+
+        Assert.ThrowsException<TeamServicesException>(
+            () => _service.AddTeam(new Team(2, "BRASIL", 1800, false, Confederation.CONMEBOL)));
+    }
+
+    [TestMethod]
     public void CannotAddTeamWithEmptyName()
     {
         Assert.ThrowsException<ArgumentException>(() => new Team(1, "", 2000, false, Confederation.CONMEBOL));
@@ -327,6 +336,51 @@ public sealed class TeamServicesTests
         List<int> secondRankings = service2.GetTeams().Select(team => team.FifaRanking).OrderBy(rank => rank).ToList();
 
         CollectionAssert.AreEqual(firstRankings, secondRankings);
+    }
+
+    [TestMethod]
+    public void FillToFortyEight_GeneratesTeamsInFixedConfederationOrder()
+    {
+        // Blinda el orden de recorrido de confederaciones: no debe depender del orden
+        // de iteracion de un Dictionary (que el lenguaje no garantiza). Recorriendo por
+        // Id ascendente (orden de insercion) las confederaciones deben aparecer agrupadas
+        // en el orden fijo AFC, CAF, OFC, UEFA, CONMEBOL, CONCACAF.
+        _service.FillToFortyEight(completionSeed: 7, performedByEmail: null);
+
+        List<Confederation> orderById = _service.GetTeams()
+            .OrderBy(team => team.Id)
+            .Select(team => team.Confederation)
+            .ToList();
+
+        List<Confederation> expected = new List<Confederation>();
+        expected.AddRange(Enumerable.Repeat(Confederation.AFC, 8));
+        expected.AddRange(Enumerable.Repeat(Confederation.CAF, 9));
+        expected.AddRange(Enumerable.Repeat(Confederation.OFC, 1));
+        expected.AddRange(Enumerable.Repeat(Confederation.UEFA, 16));
+        expected.AddRange(Enumerable.Repeat(Confederation.CONMEBOL, 7));
+        expected.AddRange(Enumerable.Repeat(Confederation.CONCACAF, 7));
+
+        CollectionAssert.AreEqual(expected, orderById);
+    }
+
+    [TestMethod]
+    public void FillToFortyEight_SameSeedProducesSameNamesAndRankingsPerId()
+    {
+        _service.FillToFortyEight(completionSeed: 42, performedByEmail: null);
+        List<(int Id, string Name, int Ranking)> first = _service.GetTeams()
+            .OrderBy(team => team.Id)
+            .Select(team => (team.Id, team.Name, team.FifaRanking))
+            .ToList();
+
+        TeamServices service2 = new TeamServices(
+            new MockTeamRepository(), new MockGroupRepository(), new MockUnitOfWork(), new MockAuditLogService());
+        service2.FillToFortyEight(completionSeed: 42, performedByEmail: null);
+        List<(int Id, string Name, int Ranking)> second = service2.GetTeams()
+            .OrderBy(team => team.Id)
+            .Select(team => (team.Id, team.Name, team.FifaRanking))
+            .ToList();
+
+        CollectionAssert.AreEqual(first, second);
     }
 
     [TestMethod]

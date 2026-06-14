@@ -38,6 +38,20 @@ public class TeamServices : ITeamService
             { Confederation.CONCACAF, ConcacafQuota }
         };
 
+    // Orden fijo de recorrido de confederaciones. El orden de iteracion de un
+    // Dictionary no esta garantizado por el lenguaje; fijarlo asegura que, a igual
+    // semilla, los equipos ficticios y sus rankings sean reproducibles entre maquinas.
+    private static readonly IReadOnlyList<Confederation> ConfederationFillOrder =
+        new[]
+        {
+            Confederation.AFC,
+            Confederation.CAF,
+            Confederation.OFC,
+            Confederation.UEFA,
+            Confederation.CONMEBOL,
+            Confederation.CONCACAF
+        };
+
     public TeamServices(
         ITeamRepository teamRepository,
         IGroupRepository groupRepository,
@@ -67,7 +81,7 @@ public class TeamServices : ITeamService
         Random random = new Random(seed);
         int nextId = NextAvailableTeamId(existing);
 
-        foreach (Confederation confederation in QuotasByConfederation.Keys)
+        foreach (Confederation confederation in ConfederationFillOrder)
         {
             int quota = QuotasByConfederation[confederation];
             int existingForConfederation = teamRepository.CountByConfederation(confederation);
