@@ -69,6 +69,9 @@ public class User
 
         if (!domainPart.Contains('.'))
             throw new ArgumentException(EmailInvalidMessage);
+
+        if (domainPart.StartsWith('.') || domainPart.EndsWith('.'))
+            throw new ArgumentException(EmailInvalidMessage);
     }
 
 
