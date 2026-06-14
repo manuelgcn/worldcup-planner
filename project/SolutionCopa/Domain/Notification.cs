@@ -2,7 +2,7 @@ namespace ProjectCopa;
 
 public class Notification
 {
-    private const string EmptyMessageError = "Notification message is required.";
+    private const string EmptyMessageError = "El mensaje de la notificacion es obligatorio.";
 
     public int Id { get; set; }
     public int UserId { get; set; }

@@ -12,8 +12,8 @@ public sealed class ExportService(
     IExporter exporter,
     IAuditLogService auditLogService) : IExportService
 {
-    private const string InvalidDateRangeMessage = "'from' must be less than or equal to 'to'.";
-    private const string UnauthorizedMessage = "Only Admin and Periodista users can export data.";
+    private const string InvalidDateRangeMessage = "'from' debe ser menor o igual a 'to'.";
+    private const string UnauthorizedMessage = "Solo los usuarios Admin y Periodista pueden exportar datos.";
     private const string FixtureWorksheetName = "Fixture";
     private const string AuditLogWorksheetName = "AuditLog";
     private const string CsvContentType = "text/csv; charset=utf-8";
@@ -139,7 +139,7 @@ public sealed class ExportService(
         {
             ExportFormat.Csv => "csv",
             ExportFormat.Xlsx => "xlsx",
-            _ => throw new ExportServiceException("Unsupported export format.")
+            _ => throw new ExportServiceException("Formato de exportacion no soportado.")
         };
     }
 
@@ -149,7 +149,7 @@ public sealed class ExportService(
         {
             ExportFormat.Csv => CsvContentType,
             ExportFormat.Xlsx => XlsxContentType,
-            _ => throw new ExportServiceException("Unsupported export format.")
+            _ => throw new ExportServiceException("Formato de exportacion no soportado.")
         };
     }
 

@@ -135,6 +135,30 @@ public class UserTests
             new User(1, "Juan", "Perez", "mailinvalido", "Pass1234@", DateTime.Now));
     }
 
+    [DataTestMethod]
+    [DataRow("a@b.")]
+    [DataRow("@.")]
+    [DataRow("a@b")]
+    [DataRow("a@.com")]
+    [DataRow("nombre apellido@mail.com")]
+    [DataRow("juan@@mail.com")]
+    public void UserRejectsMalformedEmail(string email)
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(1, "Juan", "Perez", email, "Pass1234@", new DateTime(1990, 5, 15)));
+    }
+
+    [DataTestMethod]
+    [DataRow("juan@mail.com")]
+    [DataRow("juan.perez@sub.dominio.uy")]
+    [DataRow("user+tag@mail.co")]
+    public void UserAcceptsWellFormedEmail(string email)
+    {
+        User user = new User(1, "Juan", "Perez", email, "Pass1234@", new DateTime(1990, 5, 15));
+
+        Assert.AreEqual(email, user.email);
+    }
+
 
     [TestMethod]
     public void PasswordMustHaveAtLeast8Characters()

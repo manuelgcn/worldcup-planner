@@ -99,6 +99,35 @@ public class TeamRepositoryTests
     }
 
     [TestMethod]
+    public void ExistsByNameIsCaseInsensitive()
+    {
+        _repository.Add(CreateTeam(20, "Brasil", Confederation.CONMEBOL));
+
+        Assert.IsTrue(_repository.ExistsByName("brasil"));
+        Assert.IsTrue(_repository.ExistsByName("BRASIL"));
+    }
+
+    [TestMethod]
+    public void ExistsByNameIgnoresDiacritics()
+    {
+        _repository.Add(CreateTeam(21, "Türkiye", Confederation.UEFA));
+
+        Assert.IsTrue(_repository.ExistsByName("turkiye"));
+    }
+
+    [TestMethod]
+    public void GetByNameIsCaseInsensitive()
+    {
+        Team team = CreateTeam(22, "Brasil", Confederation.CONMEBOL);
+        _repository.Add(team);
+
+        Team? stored = _repository.GetByName("BRASIL");
+
+        Assert.IsNotNull(stored);
+        Assert.AreEqual("Brasil", stored!.Name);
+    }
+
+    [TestMethod]
     public void GetAllReturnsAllStoredTeams()
     {
         Team firstTeam = CreateTeam(7, "Team 1", Confederation.UEFA);

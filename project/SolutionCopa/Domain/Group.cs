@@ -2,7 +2,9 @@ namespace ProjectCopa;
 
 public class Group
 {
-    private const string GroupNameIsRequiredMessage = "Group name is required";
+    private const string GroupNameIsRequiredMessage = "El nombre del grupo es obligatorio";
+    private const string GroupFullMessage = "El grupo no puede tener mas de 4 equipos";
+    private const string TeamAlreadyInGroupMessage = "El equipo ya existe en el grupo";
 
     public string Name { get; private set; }
 
@@ -19,10 +21,10 @@ public class Group
     public void AddTeam(Team team)
     {
         if (teams.Count >= 4)
-            throw new ArgumentException("Group cannot have more than 4 teams");
+            throw new ArgumentException(GroupFullMessage);
 
         if (teams.Contains(team))
-            throw new ArgumentException("Team already exists in group");
+            throw new ArgumentException(TeamAlreadyInGroupMessage);
 
         teams.Add(team);
     }

@@ -82,7 +82,7 @@ public class StadiumScheduleTrackerTests
             tracker.Reserve(stadium, matchTime); // Intento de doble reserva en la misma hora
         });
 
-        Assert.AreEqual("Stadium already has a match at this time.", exception.Message);
+        Assert.AreEqual("El estadio ya tiene un partido a esa hora.", exception.Message);
     }
 
     [TestMethod]
@@ -107,7 +107,7 @@ public class StadiumScheduleTrackerTests
             tracker.Reserve(stadium, slot4); // Intento de reservar un 4to partido en el mismo día
         });
 
-        Assert.AreEqual("Stadium already has maximum matches for the day.", exception.Message);
+        Assert.AreEqual("El estadio ya alcanzo el maximo de partidos del dia.", exception.Message);
     }
 
     [TestMethod]

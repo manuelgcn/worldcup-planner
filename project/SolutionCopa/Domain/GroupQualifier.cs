@@ -15,7 +15,7 @@ public sealed class GroupQualifier
     private const int TopSecondsCount = 8;
     private const int WorstSecondsCount = 4;
     private const int BestThirdsCount = 8;
-    private const string InvalidGroupSizeMessage = "Each group must contain exactly 4 teams.";
+    private const string InvalidGroupSizeMessage = "Cada grupo debe contener exactamente 4 equipos.";
 
     public QualifiedTeams ClassifyTeams(List<Group> groups, List<Match> playedMatches, int seed)
     {

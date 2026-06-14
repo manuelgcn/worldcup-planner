@@ -11,8 +11,8 @@ public class JourneyServices : IJourneyService
     private readonly IUnitOfWork unitOfWork;
     private readonly IAuditLogService auditLogService;
 
-    private const string DuplicateJourneyNumberMessage = "Journey number must be unique in the system.";
-    private const string JourneyNotFoundMessage = "Journey was not found.";
+    private const string DuplicateJourneyNumberMessage = "El numero de jornada debe ser unico en el sistema.";
+    private const string JourneyNotFoundMessage = "No se encontro la jornada.";
 
     public JourneyServices(IJourneyRepository journeyRepository, IUnitOfWork unitOfWork, IAuditLogService auditLogService)
     {

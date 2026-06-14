@@ -1,4 +1,5 @@
 using ProjectCopa;
+using Services.DTOs;
 
 namespace Services.Interfaces;
 
@@ -6,6 +7,7 @@ public interface IUserService
 {
     IReadOnlyCollection<User> GetAllUsers();
     void AddUser(User user);
+    void RegisterUser(CreateUserRequestDto request);
     void RemoveRole(int userId, UserRoles role);
     User Authenticate(string email, string password);
     User GetUserByEmail(string email);

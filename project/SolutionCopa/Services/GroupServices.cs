@@ -11,8 +11,8 @@ public class GroupServices : IGroupService
     private readonly IUnitOfWork unitOfWork;
     private readonly IAuditLogService auditLogService;
 
-    private const string DuplicateGroupNameMessage = "Group name must be unique in the system.";
-    private const string GroupNotFoundMessage = "Group was not found.";
+    private const string DuplicateGroupNameMessage = "El nombre del grupo debe ser unico en el sistema.";
+    private const string GroupNotFoundMessage = "No se encontro el grupo.";
 
     public GroupServices(IGroupRepository groupRepository, IUnitOfWork unitOfWork, IAuditLogService auditLogService)
     {

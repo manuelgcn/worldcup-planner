@@ -100,6 +100,35 @@ public class StadiumRepositoryTests
     }
 
     [TestMethod]
+    public void ExistsByNameIsCaseInsensitive()
+    {
+        _repository.Add(CreateStadium(20, "Maracana", "Rio de Janeiro", 78000));
+
+        Assert.IsTrue(_repository.ExistsByName("maracana"));
+        Assert.IsTrue(_repository.ExistsByName("MARACANA"));
+    }
+
+    [TestMethod]
+    public void ExistsByNameIgnoresDiacritics()
+    {
+        _repository.Add(CreateStadium(21, "Estadio Azteca", "Ciudad de Mexico", 87000));
+
+        Assert.IsTrue(_repository.ExistsByName("estadio azteca"));
+    }
+
+    [TestMethod]
+    public void GetByNameIsCaseInsensitive()
+    {
+        Stadium stadium = CreateStadium(22, "Wembley", "London", 90000);
+        _repository.Add(stadium);
+
+        Stadium? stored = _repository.GetByName("WEMBLEY");
+
+        Assert.IsNotNull(stored);
+        Assert.AreEqual("Wembley", stored!.Name);
+    }
+
+    [TestMethod]
     public void GetAllReturnsAllStoredStadiums()
     {
         Stadium firstStadium = CreateStadium(7, "Stadium 1", "City 1", 30000);

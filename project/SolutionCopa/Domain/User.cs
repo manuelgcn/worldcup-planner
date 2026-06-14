@@ -109,8 +109,6 @@ public class User
         string[] labels = domainPart.Split('.');
         return labels.Any(string.IsNullOrWhiteSpace);
     }
-    
-
 
     private void ValidatePassword(string password)
     {

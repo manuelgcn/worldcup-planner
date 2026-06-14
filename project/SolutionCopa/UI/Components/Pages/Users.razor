@@ -1,6 +1,7 @@
 @page "/users"
 @using ProjectCopa
 @using Services
+@using Services.DTOs
 @using Services.Interfaces
 @inject IUserService UserServices
 @inject SessionState Session
@@ -220,10 +221,16 @@ else
 
         try
         {
-            var user = new User(0, name, lastname, email, password, dateOfBirth);
-            user.AddRole(initialRole);
-
-            UserServices.AddUser(user);
+            UserServices.RegisterUser(new CreateUserRequestDto
+            {
+                Id = 0,
+                Name = name,
+                Lastname = lastname,
+                Email = email,
+                Password = password,
+                DateOfBirth = dateOfBirth,
+                InitialRole = initialRole
+            });
 
             successMessage = "Usuario creado";
             ClearForm();

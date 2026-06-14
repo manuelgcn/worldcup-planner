@@ -55,6 +55,11 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
         unitOfWork.Commit();
     }
 
+    // Accion "todo en uno" deliberada y separada: simula la fase de grupos y genera
+    // los cruces de fase 2 en un solo paso. La usa unicamente la pagina Simulador
+    // (Simulator.razor), que avisa explicitamente al usuario. El flujo manual paso a
+    // paso (Fixture.razor) NO la usa: alli se simula la fase de grupos con
+    // SimulateGroupStage y la fase 2 se genera con un boton aparte.
     public void SimulateGroupStageAndGenerateKnockout(int seed)
     {
         TournamentSettings settings = ResolveTournamentSettings(seed);

@@ -6,9 +6,9 @@ namespace Services;
 // OCP: agregar un motor nuevo es solo registrarlo en DI; esta clase y sus consumidores no cambian.
 public sealed class SimulationEngineRegistry : ISimulationEngineRegistry
 {
-    private const string EnginesRequiredMessage = "At least one simulation engine must be registered.";
-    private const string EngineNameRequiredMessage = "Engine name is required to resolve a simulation engine.";
-    private const string DuplicateEngineNameMessageTemplate = "Duplicate simulation engine name: {0}.";
+    private const string EnginesRequiredMessage = "Debe registrarse al menos un motor de simulacion.";
+    private const string EngineNameRequiredMessage = "El nombre del motor es obligatorio para resolver un motor de simulacion.";
+    private const string DuplicateEngineNameMessageTemplate = "Nombre de motor de simulacion duplicado: {0}.";
     private const string UnknownEngineNameMessageTemplate = "Unknown simulation engine: {0}.";
 
     private readonly Dictionary<string, IMatchSimulationEngine> _enginesByName;

@@ -4,11 +4,11 @@ namespace ProjectCopa;
 
 public class MatchElimination : Match
 {
-    private const string RequiredMatchCodeMessage = "Match code is required.";
-    private const string InvalidPhaseMessage = "Phase is invalid.";
-    private const string NegativePenaltyGoalsMessage = "Penalty shootout goals cannot be negative.";
-    private const string DrawnPenaltyShootoutMessage = "Penalty shootout must produce a winner.";
-    private const string PenaltyShootoutOnDecidedMatchMessage = "Penalty shootout can only be recorded when regulation goals are tied.";
+    private const string RequiredMatchCodeMessage = "El codigo de partido es obligatorio.";
+    private const string InvalidPhaseMessage = "La fase es invalida.";
+    private const string NegativePenaltyGoalsMessage = "Los goles de la definicion por penales no pueden ser negativos.";
+    private const string DrawnPenaltyShootoutMessage = "La definicion por penales debe tener un ganador.";
+    private const string PenaltyShootoutOnDecidedMatchMessage = "La definicion por penales solo puede registrarse cuando los goles del tiempo reglamentario estan empatados.";
 
     public string MatchCode { get; private set; } = null!;
     public Phase Phase { get; private set; }

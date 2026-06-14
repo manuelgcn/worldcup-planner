@@ -1,4 +1,6 @@
 ﻿using ProjectCopa;
+using Services.DTOs;
+using Services.Exceptions;
 using Services.Interfaces;
 using DataAccess.Interfaces;
 
@@ -6,7 +8,16 @@ namespace Services;
 
 public class UserServices : IUserService
 {
+    // Id reservado para el administrador del sistema: no puede modificarse ni eliminarse.
+    private const int SystemAdminUserId = 1;
+
     private const string InvalidCredentialsMessage = "Credenciales invalidas";
+    private const string EmailAlreadyExistsMessage = "El email ya esta registrado";
+    private const string UserIdAlreadyAssignedMessage = "El id de usuario ya esta asignado";
+    private const string UserMustHaveOneRoleMessage = "El usuario debe tener al menos un rol";
+    private const string UserNotFoundMessage = "Usuario no encontrado";
+    private const string SystemAdminCannotBeModifiedMessage = "El usuario administrador del sistema no puede ser modificado";
+    private const string SystemAdminCannotBeDeletedMessage = "El usuario administrador del sistema no puede ser eliminado";
 
     private readonly IAuditLogService _auditLogService;
     private readonly IUserRepository _userRepository;
@@ -24,16 +35,34 @@ public class UserServices : IUserService
         return _userRepository.GetAll();
     }
 
+    public void RegisterUser(CreateUserRequestDto request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        // La construccion de la entidad de dominio (con sus invariantes) vive aca,
+        // no en la UI: la pantalla solo arma el request.
+        User user = new User(
+            request.Id,
+            request.Name,
+            request.Lastname,
+            request.Email,
+            request.Password,
+            request.DateOfBirth);
+        user.AddRole(request.InitialRole);
+
+        AddUser(user);
+    }
+
     public void AddUser(User user)
     {
         if (_userRepository.ExistsByEmail(user.email))
-            throw new ArgumentException("Email already exists");
+            throw new UserServicesException(EmailAlreadyExistsMessage);
 
         if (_userRepository.GetById(user.idUser) is not null)
-            throw new ArgumentException("User ID is already assigned");
+            throw new UserServicesException(UserIdAlreadyAssignedMessage);
 
         if (!user.Roles.Any())
-            throw new ArgumentException("User must have at least one role");
+            throw new UserServicesException(UserMustHaveOneRoleMessage);
 
         _userRepository.Add(user);
 
@@ -47,8 +76,8 @@ public class UserServices : IUserService
 
     public void RemoveRole(int userId, UserRoles role)
     {
-        if (userId == 1)
-            throw new ArgumentException("El usuario administrador del sistema no puede ser modificado");
+        if (userId == SystemAdminUserId)
+            throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
 
         User user = GetUserById(userId);
 
@@ -56,7 +85,7 @@ public class UserServices : IUserService
             return;
 
         if (user.Roles.Count == 1)
-            throw new ArgumentException("El usuario debe tener al menos un rol");
+            throw new UserServicesException(UserMustHaveOneRoleMessage);
 
         user.RemoveRoles(role);
 
@@ -76,7 +105,7 @@ public class UserServices : IUserService
         User? user = _userRepository.GetByEmail(email);
 
         if (user == null || !user.PasswordMatches(password))
-            throw new ArgumentException(InvalidCredentialsMessage);
+            throw new UserServicesException(InvalidCredentialsMessage);
 
         return user;
     }
@@ -86,7 +115,7 @@ public class UserServices : IUserService
         User? user = _userRepository.GetByEmail(email);
 
         if (user == null)
-            throw new ArgumentException("User not found");
+            throw new UserServicesException(UserNotFoundMessage);
 
         return user;
     }
@@ -96,15 +125,15 @@ public class UserServices : IUserService
         User? user = _userRepository.GetById(id);
 
         if (user == null)
-            throw new ArgumentException("User not found");
+            throw new UserServicesException(UserNotFoundMessage);
 
         return user;
     }
 
     public void RemoveUser(int id)
     {
-        if (id == 1)
-            throw new ArgumentException("El usuario administrador del sistema no puede ser eliminado");
+        if (id == SystemAdminUserId)
+            throw new UserServicesException(SystemAdminCannotBeDeletedMessage);
 
         User user = GetUserById(id);
 
@@ -120,13 +149,13 @@ public class UserServices : IUserService
 
     public void UpdateUser(int id, string name, string lastname, string email)
     {
-        if (id == 1)
-            throw new ArgumentException("El usuario administrador del sistema no puede ser modificado");
+        if (id == SystemAdminUserId)
+            throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
 
         User? userWithEmail = _userRepository.GetByEmail(email);
 
         if (userWithEmail is not null && userWithEmail.idUser != id)
-            throw new ArgumentException("Email already exists");
+            throw new UserServicesException(EmailAlreadyExistsMessage);
 
         User user = GetUserById(id);
 
@@ -160,8 +189,8 @@ public class UserServices : IUserService
     
     public void ToggleRole(int userId, UserRoles role)
     {
-        if (userId == 1)
-            throw new ArgumentException("El usuario administrador del sistema no puede ser modificado");
+        if (userId == SystemAdminUserId)
+            throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
 
         User user = GetUserById(userId);
 
@@ -170,7 +199,7 @@ public class UserServices : IUserService
         if (hasRole)
         {
             if (user.Roles.Count == 1)
-                throw new ArgumentException("El usuario debe tener al menos un rol");
+                throw new UserServicesException(UserMustHaveOneRoleMessage);
 
             user.RemoveRoles(role);
 

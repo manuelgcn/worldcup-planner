@@ -5,11 +5,12 @@ public class Team
     private const int MaxNameLength = 60;
     private const int MinFifaRanking = 300;
     private const int MaxFifaRanking = 2500;
-    private const string InvalidNameMessage = "Team name cannot be empty.";
-    private const string FifaRankingOutOfRangeMessage = "FIFA ranking must be between {0} and {1}.";
-    private const string InvalidFlagMessage = "Flag must be a valid base64 string.";
+    private const string InvalidNameMessage = "El nombre del equipo no puede estar vacio.";
+    private const string FifaRankingOutOfRangeMessage = "El ranking FIFA debe estar entre {0} y {1}.";
+    private const string InvalidFlagMessage = "La bandera debe ser una cadena base64 valida.";
     private const int MaxFlagBytes = 200 * 1024;
-    private const string FlagTooLargeMessage = "Flag must not exceed 200 KB once decoded.";
+    private const string FlagTooLargeMessage = "La bandera no debe superar los 200 KB una vez decodificada.";
+    private const string InvalidIdMessage = "El id del equipo debe ser mayor a cero.";
 
     public int Id { get; }
     public string Name { get; }
@@ -54,7 +55,7 @@ public class Team
     {
         if (id <= 0)
         {
-            throw new ArgumentException("Team id must be greater than zero.", nameof(id));
+            throw new ArgumentException(InvalidIdMessage, nameof(id));
         }
     }
 
@@ -113,6 +114,9 @@ public class Team
 
     private static byte[]? DecodeBase64OrNull(string value)
     {
+        // No es un error silenciado: null es el valor centinela de "base64 invalido".
+        // Solo se atrapa FormatException (entrada mal formada); ValidateFlag lo traduce
+        // luego a una ArgumentException con mensaje de negocio.
         try
         {
             return Convert.FromBase64String(value);

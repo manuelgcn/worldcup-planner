@@ -12,9 +12,9 @@ public class StadiumServices : IStadiumService
     private readonly IUnitOfWork unitOfWork;
     private readonly IAuditLogService auditLogService;
 
-    private const string DuplicateStadiumNameMessage = "Stadium name must be unique in the system.";
-    private const string StadiumNotFoundMessage = "Stadium was not found.";
-    private const string StadiumReferencedByMatchMessage = "Stadium cannot be deleted because it is referenced by one or more matches.";
+    private const string DuplicateStadiumNameMessage = "El nombre del estadio debe ser unico en el sistema.";
+    private const string StadiumNotFoundMessage = "No se encontro el estadio.";
+    private const string StadiumReferencedByMatchMessage = "No se puede eliminar el estadio porque esta referenciado por uno o mas partidos.";
     private const int MinimumStadiumsForFixture = 4;
 
     private static readonly (string Name, string City, int Capacity)[] DefaultStadiumSeeds =

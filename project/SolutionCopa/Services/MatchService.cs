@@ -19,16 +19,16 @@ public class MatchService : IMatchService
     private readonly IEliminationMatchRepository eliminationMatchRepository;
 
     private const int DefaultTournamentSettingsId = 1;
-    private const string MatchIdAlreadyExistsMessage = "Match ID already exists";
-    private const string GroupNameRequiredMessage = "Group name is required";
-    private const string FromMustBeLessOrEqualToMessage = "'from' must be less than or equal to 'to'";
-    private const string MatchNotFoundMessage = "Match not found";
-    private const string ValueRequiredMessage = "Value is required";
-    private const string TournamentSettingsNotFoundMessage = "Tournament settings not found";
-    private const string GroupMatchFrozenByKnockoutMessage = "Group-stage matches cannot be edited once the knockout phase is generated.";
-    private const string IncidentNotFoundMessage = "Incident not found";
-    private const string IncidentTeamNotInMatchMessage = "Incident team must be one of the two teams playing the match";
-    private const string ResultRegisteredDetailTemplate = "MatchId={0} result registered: {1}-{2}.";
+    private const string MatchIdAlreadyExistsMessage = "El id de partido ya existe";
+    private const string GroupNameRequiredMessage = "El nombre del grupo es obligatorio";
+    private const string FromMustBeLessOrEqualToMessage = "'from' debe ser menor o igual a 'to'";
+    private const string MatchNotFoundMessage = "Partido no encontrado";
+    private const string ValueRequiredMessage = "El valor es obligatorio";
+    private const string TournamentSettingsNotFoundMessage = "No se encontro la configuracion del torneo";
+    private const string GroupMatchFrozenByKnockoutMessage = "No se pueden editar los partidos de fase de grupos una vez generada la fase eliminatoria.";
+    private const string IncidentNotFoundMessage = "Incidencia no encontrada";
+    private const string IncidentTeamNotInMatchMessage = "El equipo de la incidencia debe ser uno de los dos que disputan el partido";
+    private const string ResultRegisteredDetailTemplate = "MatchId={0} resultado registrado: {1}-{2}.";
 
     public MatchService(
         IMatchRepository matchRepository,

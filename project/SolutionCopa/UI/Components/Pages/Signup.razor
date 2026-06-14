@@ -1,6 +1,7 @@
 @page "/signup"
 @using ProjectCopa
 @using Services
+@using Services.DTOs
 @using Services.Interfaces
 @inject IUserService UserServices
 @inject NavigationManager Nav
@@ -61,22 +62,20 @@
 
         try
         {
-           
-            User user = new User(
-                0,
-                name.Trim(),
-                lastname.Trim(),
-                email.Trim(),
-                password,
-                dateOfBirth
-            );
-
-            user.AddRole(UserRoles.Editor);
-            UserServices.AddUser(user);
+            UserServices.RegisterUser(new CreateUserRequestDto
+            {
+                Id = 0,
+                Name = name.Trim(),
+                Lastname = lastname.Trim(),
+                Email = email.Trim(),
+                Password = password,
+                DateOfBirth = dateOfBirth,
+                InitialRole = UserRoles.Editor
+            });
 
             Nav.NavigateTo("/login");
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
             error = ex.Message;
         }
