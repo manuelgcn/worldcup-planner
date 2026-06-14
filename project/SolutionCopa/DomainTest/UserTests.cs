@@ -349,4 +349,20 @@ public class UserTests
         );
     }
     
+    
+    [TestMethod]
+    public void UserCannotHaveEmailWithoutDotInDomain()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@mailcom",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
+
 }
