@@ -26,7 +26,7 @@ public sealed class GroupFixtureGenerator
         ArgumentNullException.ThrowIfNull(stadiums);
             
         if (stadiums.Count == 0) 
-            throw new MatchException("At least one stadium is required.");
+            throw new MatchException("Se requiere al menos un estadio.");
 
         List<Group> orderedGroups = new List<Group>(groups.OrderBy(g => g.Name));
         List<Stadium> orderedStadiums = new List<Stadium>(stadiums.OrderBy(s => s.Name));

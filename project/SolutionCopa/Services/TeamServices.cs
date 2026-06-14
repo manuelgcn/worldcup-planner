@@ -20,12 +20,12 @@ public class TeamServices : ITeamService
     private const int ConmebolQuota = 7;
     private const int ConcacafQuota = 7;
 
-    private const string TeamNotFoundMessage = "Team was not found.";
-    private const string CannotDeleteTeamMessage = "Cannot delete team because it does not exist.";
-    private const string TeamInUseMessage = "Cannot delete team because it is already assigned to a group.";
-    private const string DuplicateTeamNameMessage = "Team name must be unique in the system.";
-    private const string QuotaExceededMessage = "{0} team quota exceeded.";
-    private const string FixtureRequires48TeamsMessage = "Fixture ordering requires exactly 48 teams.";
+    private const string TeamNotFoundMessage = "No se encontro el equipo.";
+    private const string CannotDeleteTeamMessage = "No se puede eliminar el equipo porque no existe.";
+    private const string TeamInUseMessage = "No se puede eliminar el equipo porque ya esta asignado a un grupo.";
+    private const string DuplicateTeamNameMessage = "El nombre del equipo debe ser unico en el sistema.";
+    private const string QuotaExceededMessage = "Se supero el cupo de equipos de {0}.";
+    private const string FixtureRequires48TeamsMessage = "El ordenamiento del fixture requiere exactamente 48 equipos.";
 
     private static readonly IReadOnlyDictionary<Confederation, int> QuotasByConfederation =
         new Dictionary<Confederation, int>

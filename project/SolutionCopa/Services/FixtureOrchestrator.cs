@@ -10,12 +10,12 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     private const int RequiredTeamCount = 48;
     private const int MinimumStadiumCount = 4;
     private const int GroupStageJourneyCount = 3;
-    private const string FixtureAlreadyGeneratedMessage = "Fixture is already generated. Use RegenerateGroupStage instead.";
-    private const string FixtureNotGeneratedMessage = "Fixture has not been generated yet.";
-    private const string KnockoutAlreadyGeneratedMessage = "Cannot regenerate fixture: knockout phase already exists.";
-    private const string MissingSettingsMessage = "Tournament settings are not configured.";
-    private const string MissingTeamsMessage = "Fixture requires exactly 48 teams.";
-    private const string MissingStadiumsMessage = "Fixture requires at least 4 stadiums.";
+    private const string FixtureAlreadyGeneratedMessage = "El fixture ya fue generado. Use RegenerateGroupStage en su lugar.";
+    private const string FixtureNotGeneratedMessage = "El fixture aun no fue generado.";
+    private const string KnockoutAlreadyGeneratedMessage = "No se puede regenerar el fixture: la fase eliminatoria ya existe.";
+    private const string MissingSettingsMessage = "La configuracion del torneo no esta definida.";
+    private const string MissingTeamsMessage = "El fixture requiere exactamente 48 equipos.";
+    private const string MissingStadiumsMessage = "El fixture requiere al menos 4 estadios.";
     private const string ClearFixtureDetails = "Previous fixture cleared before regeneration.";
     private const string DeleteFixtureDetails = "Fixture deleted: groups, journeys, group matches and knockout removed.";
 

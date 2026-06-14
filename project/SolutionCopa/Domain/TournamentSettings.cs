@@ -13,9 +13,9 @@ public class TournamentSettings
     private const int DefaultSeed = 0;
     private const int MaxAllowedMatchesPerDay = 3;
     private const string DefaultSimulationEngine = "Probabilístico";
-    private const string InvalidMaxMatchesPerDayMessage = "MaxMatchesPerDay must be between 1 and 3 inclusive.";
-    private const string InvalidDaysBetweenJourneysMessage = "DaysBetweenJourneys must be greater than or equal to 1.";
-    private const string InvalidSimulationEngineMessage = "SelectedSimulationEngine cannot be null or whitespace.";
+    private const string InvalidMaxMatchesPerDayMessage = "MaxMatchesPerDay debe estar entre 1 y 3 inclusive.";
+    private const string InvalidDaysBetweenJourneysMessage = "DaysBetweenJourneys debe ser mayor o igual a 1.";
+    private const string InvalidSimulationEngineMessage = "SelectedSimulationEngine no puede ser nulo ni estar vacio.";
 
     public int Id { get; }
     public DateTime StartDate { get; }

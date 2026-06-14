@@ -11,7 +11,7 @@ namespace Services;
 
 public sealed class Exporter : IExporter
 {
-    private const string UnsupportedFormatMessage = "Unsupported export format.";
+    private const string UnsupportedFormatMessage = "Formato de exportacion no soportado.";
 
     public byte[] Export<T>(IEnumerable<T> rows, ExportFormat format, string worksheetName)
     {

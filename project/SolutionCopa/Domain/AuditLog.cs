@@ -44,7 +44,7 @@ public sealed class AuditLog
     {
         if (string.IsNullOrWhiteSpace(action))
         {
-            throw new AuditLogException("Action is required for an AuditLog.");
+            throw new AuditLogException("La accion es obligatoria para un registro de auditoria.");
         }
     }
 

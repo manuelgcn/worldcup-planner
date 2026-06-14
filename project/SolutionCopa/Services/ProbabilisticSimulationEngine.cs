@@ -20,8 +20,8 @@ public sealed class ProbabilisticSimulationEngine : IMatchSimulationEngine
     private const double PenaltyRankingWeightFactor = 0.00015;
     private const double MinimumPenaltyConversionChance = 0.40;
     private const double MaximumPenaltyConversionChance = 0.95;
-    private const string HomeTeamRequiredMessage = "Home team is required for simulation.";
-    private const string AwayTeamRequiredMessage = "Away team is required for simulation.";
+    private const string HomeTeamRequiredMessage = "El equipo local es obligatorio para la simulacion.";
+    private const string AwayTeamRequiredMessage = "El equipo visitante es obligatorio para la simulacion.";
 
     public string Name => EngineName;
 

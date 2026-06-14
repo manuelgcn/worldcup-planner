@@ -6,8 +6,8 @@ namespace Services;
 
 public class NotificationService : INotificationService
 {
-    private const string NotificationNotFoundMessage = "Notification was not found.";
-    private const string NotificationOwnershipMessage = "Notification does not belong to the user.";
+    private const string NotificationNotFoundMessage = "No se encontro la notificacion.";
+    private const string NotificationOwnershipMessage = "La notificacion no pertenece al usuario.";
     private const string ResultLoadedMessageTemplate = "Se cargo resultado del partido {0}: {1} {2}-{3} {4}.";
     private const string MatchSimulatedMessageTemplate = "Se simulo resultado del partido {0}: {1} {2}-{3} {4}.";
     private const string DefaultHomeTeamName = "Equipo local";

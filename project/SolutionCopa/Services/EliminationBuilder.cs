@@ -71,8 +71,8 @@ public class EliminationBuilder
         {
             Match sourceHome = previousRoundMatches[i];
             Match sourceAway = previousRoundMatches[i + 1];
-            Team home = sourceHome.HomeTeam ?? sourceHome.AwayTeam ?? throw new ArgumentException("Source match must have a team");
-            Team away = sourceAway.HomeTeam ?? sourceAway.AwayTeam ?? throw new ArgumentException("Source match must have a team");
+            Team home = sourceHome.HomeTeam ?? sourceHome.AwayTeam ?? throw new ArgumentException("El partido de origen debe tener un equipo");
+            Team away = sourceAway.HomeTeam ?? sourceAway.AwayTeam ?? throw new ArgumentException("El partido de origen debe tener un equipo");
             Stadium stadium = stadiumProvider(i / 2);
             DateTime date = dateProvider(i / 2);
             string matchCode = $"{nextPhase}-{_nextMatchId}";

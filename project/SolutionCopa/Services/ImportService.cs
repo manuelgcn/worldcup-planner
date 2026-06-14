@@ -13,10 +13,10 @@ public sealed class ImportService : IImportService
     private const int MaxRanking = 2500;
     private const int MaxTeams = 48;
 
-    private const string InvalidTeamNameMessage = "Invalid team name.";
-    private const string InvalidConfederationMessage = "Invalid confederation.";
-    private const string InvalidRankingMessage = "Invalid ranking.";
-    private const string DuplicateTeamMessage = "Duplicate team name.";
+    private const string InvalidTeamNameMessage = "Nombre de equipo invalido.";
+    private const string InvalidConfederationMessage = "Confederacion invalida.";
+    private const string InvalidRankingMessage = "Ranking invalido.";
+    private const string DuplicateTeamMessage = "Nombre de equipo duplicado.";
     private const string MaxTeamsWarningMessage = "No se agregaron todos los equipos, max:48";
 
     private readonly ITeamRepository _teamRepository;

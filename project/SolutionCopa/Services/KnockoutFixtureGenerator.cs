@@ -12,13 +12,13 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private const int RequiredGroupStageMatchCount = 72;
     private const int FirstNewMatchIdSeed = 3000;
     private const int DaysFromStartToFirstKnockoutRound = 60;
-    private const string TournamentSettingsRequiredMessage = "Tournament settings are required to generate phase 2.";
-    private const string StadiumsRequiredMessage = "At least one stadium is required to generate phase 2.";
-    private const string GroupsRequiredMessage = "All 12 groups must exist before generating the knockout bracket.";
-    private const string GroupStageIncompleteMessage = "Group stage is not complete — every match must have at least one goal scored.";
-    private const string BracketAlreadyGeneratedMessage = "Knockout bracket is already generated.";
-    private const string BracketNotGeneratedMessage = "Knockout bracket has not been generated yet.";
-    private const string MissingGroupForTeamMessagePrefix = "No group was found for team ";
+    private const string TournamentSettingsRequiredMessage = "La configuracion del torneo es obligatoria para generar la fase 2.";
+    private const string StadiumsRequiredMessage = "Se requiere al menos un estadio para generar la fase 2.";
+    private const string GroupsRequiredMessage = "Deben existir los 12 grupos antes de generar el cuadro eliminatorio.";
+    private const string GroupStageIncompleteMessage = "La fase de grupos no esta completa: cada partido debe tener al menos un gol registrado.";
+    private const string BracketAlreadyGeneratedMessage = "El cuadro eliminatorio ya fue generado.";
+    private const string BracketNotGeneratedMessage = "El cuadro eliminatorio aun no fue generado.";
+    private const string MissingGroupForTeamMessagePrefix = "No se encontro grupo para el equipo ";
 
     private readonly ISimulationEngineRegistry _simulationEngineRegistry;
     private readonly IMatchRepository _matchRepository;
@@ -181,7 +181,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         TournamentSettings? settings = _settingsRepository.GetAll().FirstOrDefault();
         if (settings == null)
         {
-            throw new KnockoutGeneratorException("Tournament settings are required to simulate matches.");
+            throw new KnockoutGeneratorException("La configuracion del torneo es obligatoria para simular partidos.");
         }
 
         int baseSeed = settings.SimulationSeed;
@@ -623,7 +623,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             Phase.SemiFinal => Phase.QuarterFinals,
             Phase.Final => Phase.SemiFinal,
             Phase.ThirdPlace => Phase.SemiFinal,
-            _ => throw new ArgumentOutOfRangeException(nameof(phase), phase, "No previous phase defined."),
+            _ => throw new ArgumentOutOfRangeException(nameof(phase), phase, "No hay una fase previa definida."),
         };
     }
 

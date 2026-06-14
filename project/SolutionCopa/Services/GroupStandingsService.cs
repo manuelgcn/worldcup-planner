@@ -11,7 +11,7 @@ public sealed class GroupStandingsService : IGroupStandingsService
     private const int PointsForWin = 3;
     private const int PointsForDraw = 1;
     private const int DefaultTieBreakerSeed = 0;
-    private const string GroupNotFoundMessage = "Group was not found.";
+    private const string GroupNotFoundMessage = "No se encontro el grupo.";
 
     private readonly IMatchRepository _matchRepository;
     private readonly IGroupRepository _groupRepository;

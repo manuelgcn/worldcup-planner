@@ -7,17 +7,17 @@ public abstract class Match
 {
     private static readonly DateTime DefaultTournamentStartDate = new DateTime(2022, 11, 21);
     private const int InitialGoals = 0;
-    private const string InvalidMatchDateMessage = "Match date cannot be earlier than the tournament start date.";
-    private const string SameTeamsMessage = "Home team and away team must be different.";
-    private const string RequiredStadiumMessage = "Stadium is required.";
-    private const string RequiredChampionshipConfigurationMessage = "Championship configuration is required.";
-    private const string RequiredHomeSourceMatchMessage = "Home match (source) is required.";
-    private const string RequiredAwaySourceMatchMessage = "Away match (source) is required.";
-    private const string SameSourceMatchesMessage = "Home and away source matches must be different.";
-    private const string GoalsCannotBeNegativeMessage = "Goals cannot be negative.";
-    private const string CannotRemoveGoalWhenZeroMessage = "Cannot remove a goal when the current count is zero.";
-    private const string IncidentTeamNotInMatchMessage = "Incident team must be one of the two teams playing the match.";
-    private const string IncidentNotInMatchMessage = "Incident does not belong to this match.";
+    private const string InvalidMatchDateMessage = "La fecha del partido no puede ser anterior a la fecha de inicio del torneo.";
+    private const string SameTeamsMessage = "El equipo local y el visitante deben ser distintos.";
+    private const string RequiredStadiumMessage = "El estadio es obligatorio.";
+    private const string RequiredChampionshipConfigurationMessage = "La configuracion del campeonato es obligatoria.";
+    private const string RequiredHomeSourceMatchMessage = "El partido de origen local es obligatorio.";
+    private const string RequiredAwaySourceMatchMessage = "El partido de origen visitante es obligatorio.";
+    private const string SameSourceMatchesMessage = "Los partidos de origen local y visitante deben ser distintos.";
+    private const string GoalsCannotBeNegativeMessage = "Los goles no pueden ser negativos.";
+    private const string CannotRemoveGoalWhenZeroMessage = "No se puede quitar un gol cuando el marcador esta en cero.";
+    private const string IncidentTeamNotInMatchMessage = "El equipo de la incidencia debe ser uno de los dos que disputan el partido.";
+    private const string IncidentNotInMatchMessage = "La incidencia no pertenece a este partido.";
 
     public int MatchId { get; private set; }
     public DateTime MatchDate { get; private set; }

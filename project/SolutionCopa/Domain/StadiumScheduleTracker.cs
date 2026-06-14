@@ -5,8 +5,8 @@ namespace ProjectCopa;
 public sealed class StadiumScheduleTracker
 {
     private const int MaxMatchesPerStadiumPerDay = 3;
-    private const string StadiumAlreadyOccupiedMessage = "Stadium already has a match at this time.";
-    private const string StadiumMaxMatchesExceededMessage = "Stadium already has maximum matches for the day.";
+    private const string StadiumAlreadyOccupiedMessage = "El estadio ya tiene un partido a esa hora.";
+    private const string StadiumMaxMatchesExceededMessage = "El estadio ya alcanzo el maximo de partidos del dia.";
 
     private readonly Dictionary<StadiumDateKey, DailySchedule> _bookings = new Dictionary<StadiumDateKey, DailySchedule>();
 

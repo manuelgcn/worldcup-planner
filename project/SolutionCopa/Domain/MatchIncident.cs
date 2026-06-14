@@ -6,8 +6,8 @@ namespace ProjectCopa;
 // de esta clase base, sin tocar Match ni los tipos existentes.
 public abstract class MatchIncident
 {
-    private const string RequiredTeamMessage = "Incident team is required.";
-    private const string NegativeMinuteMessage = "Incident minute cannot be negative.";
+    private const string RequiredTeamMessage = "El equipo de la incidencia es obligatorio.";
+    private const string NegativeMinuteMessage = "El minuto de la incidencia no puede ser negativo.";
 
     public int Id { get; private set; }
     public int Minute { get; private set; }

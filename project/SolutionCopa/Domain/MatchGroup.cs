@@ -4,8 +4,9 @@ namespace ProjectCopa;
 
 public class MatchGroup : Match
 {
-    private const string RequiredGroupMessage = "Group is required.";
-    private const string RequiredJourneyMessage = "Journey is required.";
+    private const string RequiredGroupMessage = "El grupo es obligatorio.";
+    private const string RequiredJourneyMessage = "La jornada es obligatoria.";
+    private const string MatchCodeRequiredMessage = "El codigo de partido es obligatorio.";
 
     public Group? Group { get; private set; }
     public Journey? Journey { get; private set; }
@@ -15,7 +16,7 @@ public class MatchGroup : Match
     {
         if (string.IsNullOrWhiteSpace(matchCode))
         {
-            throw new MatchException("Match code is required.");
+            throw new MatchException(MatchCodeRequiredMessage);
         }
 
         MatchCode = matchCode;
