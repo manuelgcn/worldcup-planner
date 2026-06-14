@@ -149,3 +149,12 @@ Thumbs.db
 *.suo
 *.userosscache
 
+# Documentacion de entrega (va por Gestion, NO al repo)
+*.pdf
+*.docx
+Documentacion_Entrega2/
+Documentacion_Entrega2.zip
+PLAN_*.md
+PROMPT_*.md
+PROMPTS_*.md
+

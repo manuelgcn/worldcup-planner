@@ -17,6 +17,7 @@ main[b-d0jsncqpy4] {
 }
 
 .top-row[b-d0jsncqpy4] {
+    position: relative;
     background: var(--m26-white);
     border-bottom: 1px solid var(--m26-line);
     justify-content: space-between;
@@ -24,6 +25,17 @@ main[b-d0jsncqpy4] {
     display: flex;
     align-items: center;
     gap: .8rem;
+}
+
+/* Subtle mundialista accent under the header */
+.top-row[b-d0jsncqpy4]::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: var(--m26-gradient);
 }
 
 .top-link[b-d0jsncqpy4] {
@@ -163,6 +175,18 @@ main[b-d0jsncqpy4] {
     color: var(--m26-gold);
 }
 
+.nav-section[b-f272njtjyx] {
+    padding: .9rem 1.25rem .3rem;
+    margin-top: .4rem;
+    font-family: "Bebas Neue", Oswald, sans-serif;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-size: .82rem;
+    color: var(--m26-gold);
+    opacity: .9;
+    border-top: 1px solid rgba(255, 255, 255, .12);
+}
+
 .nav-item[b-f272njtjyx] {
     font-size: .95rem;
     padding-bottom: .45rem;
@@ -224,6 +248,54 @@ main[b-d0jsncqpy4] {
         height: calc(100vh - 4rem);
         overflow-y: auto;
     }
+}
+/* _content/UI/Components/Pages/Admins.razor.rz.scp.css */
+.role-chip[b-1hd0mp0dlo] {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    background: rgba(0, 40, 104, .1);
+    color: var(--m26-blue);
+    border: 1px solid rgba(0, 40, 104, .2);
+    border-radius: 999px;
+    padding: .15rem .55rem;
+    margin: .1rem;
+    font-size: .78rem;
+    font-weight: 600;
+}
+
+.role-remove[b-1hd0mp0dlo] {
+    border: none;
+    background: transparent;
+    color: var(--m26-red);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    font-size: .7rem;
+}
+
+.role-remove:hover[b-1hd0mp0dlo] {
+    color: #8A0019;
+}
+
+.role-actions[b-1hd0mp0dlo] {
+    display: flex;
+    gap: .4rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.role-actions .form-select[b-1hd0mp0dlo] {
+    max-width: 9rem;
+}
+/* _content/UI/Components/Pages/AuditLog.razor.rz.scp.css */
+.filter-action[b-rmy33dkdzn] {
+    max-width: 280px;
+}
+
+.filter-date[b-rmy33dkdzn] {
+    max-width: 200px;
 }
 /* _content/UI/Components/Pages/EditUser.razor.rz.scp.css */
 .auth-wrap[b-x5jmr4aay5] {
@@ -779,6 +851,39 @@ main[b-d0jsncqpy4] {
     text-decoration: underline;
     padding: .2rem .4rem;
 }
+
+.btn-danger[b-ix6k40m07m] {
+    background: var(--m26-red, #E4002B);
+    color: white;
+    border-color: var(--m26-red, #E4002B);
+}
+
+.btn-danger:hover:not(:disabled)[b-ix6k40m07m] {
+    background: #c20025;
+}
+
+/* Danger zone: full tournament reset (delete fixture + knockout) */
+.danger-zone[b-ix6k40m07m] {
+    border-color: rgba(228, 0, 43, .3);
+    background: rgba(228, 0, 43, .04);
+}
+
+.danger-zone h4[b-ix6k40m07m] {
+    color: var(--m26-red, #E4002B);
+}
+
+.confirm-panel[b-ix6k40m07m] {
+    border: 1px solid rgba(228, 0, 43, .35);
+    background: rgba(228, 0, 43, .06);
+    border-radius: 6px;
+    padding: .8rem 1rem;
+}
+
+.confirm-text[b-ix6k40m07m] {
+    margin: 0 0 .6rem;
+    font-size: .9rem;
+    color: #5b1a17;
+}
 /* _content/UI/Components/Pages/Home.razor.rz.scp.css */
 .home-hero[b-p1lhur2spq] {
     position: relative;
@@ -1001,6 +1106,58 @@ main[b-d0jsncqpy4] {
 
 .auth-body[b-rj9xjys4yx] {
     padding: 1.1rem;
+}
+/* _content/UI/Components/Pages/Simulator.razor.rz.scp.css */
+.simulator-page[b-fe6sn6745x] {
+    max-width: 900px;
+}
+
+.auth-card[b-fe6sn6745x] {
+    max-width: 480px;
+    padding: 1.25rem;
+}
+
+.auth-card p[b-fe6sn6745x] {
+    margin-bottom: 1rem;
+}
+
+.sim-grid[b-fe6sn6745x] {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    margin-top: 1rem;
+}
+
+.sim-card-title[b-fe6sn6745x] {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--m26-white);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.sim-card-body[b-fe6sn6745x] {
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .65rem;
+    align-items: flex-start;
+}
+
+.sim-card-body label[b-fe6sn6745x] {
+    font-weight: 600;
+    font-size: .9rem;
+}
+
+.sim-card-body .form-control[b-fe6sn6745x] {
+    max-width: 12rem;
+}
+
+.sim-help[b-fe6sn6745x] {
+    margin: 0;
+    color: #576174;
+    font-size: .9rem;
 }
 /* _content/UI/Components/Pages/Stadium.razor.rz.scp.css */
 .admin-grid[b-r81ecr5hwf] {

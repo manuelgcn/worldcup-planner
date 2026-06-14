@@ -619,3 +619,37 @@ GO
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260613213813_AddMatchHasResult'
+)
+BEGIN
+    ALTER TABLE [Matches] ADD [HasResult] bit NOT NULL DEFAULT CAST(0 AS bit);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260613213813_AddMatchHasResult'
+)
+BEGIN
+    UPDATE [Matches] SET [HasResult] = 1 WHERE [WasSimulated] = 1 OR ([HomeGoals] + [AwayGoals]) > 0;
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260613213813_AddMatchHasResult'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260613213813_AddMatchHasResult', N'8.0.28');
+END;
+GO
+
+COMMIT;
+GO
+
