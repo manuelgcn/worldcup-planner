@@ -304,6 +304,20 @@ public class UserTests
         );
     }
 
+    [TestMethod]
+    public void UserCannotHaveEmailWithoutLocalPart()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "@mail.com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
 
     
 }
