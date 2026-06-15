@@ -21,7 +21,7 @@ public class MatchService : IMatchService
     private const int DefaultTournamentSettingsId = 1;
     private const string MatchIdAlreadyExistsMessage = "El id de partido ya existe";
     private const string GroupNameRequiredMessage = "El nombre del grupo es obligatorio";
-    private const string FromMustBeLessOrEqualToMessage = "'from' debe ser menor o igual a 'to'";
+    private const string FromMustBeLessOrEqualToMessage = "'desde' debe ser menor o igual que 'hasta'";
     private const string MatchNotFoundMessage = "Partido no encontrado";
     private const string ValueRequiredMessage = "El valor es obligatorio";
     private const string TournamentSettingsNotFoundMessage = "No se encontro la configuracion del torneo";

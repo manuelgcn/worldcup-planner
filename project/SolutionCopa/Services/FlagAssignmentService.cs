@@ -15,7 +15,7 @@ public class FlagAssignmentService : IFlagAssignmentService
     private readonly IAuditLogService auditLogService;
 
     private const string FlagFileExtension = ".png";
-    private const string AuditDetailsTemplate = "Assigned {0} team flags ({1} already had one, {2} without mapping).";
+    private const string AuditDetailsTemplate = "Se asignaron {0} banderas de equipos ({1} ya tenian una, {2} sin mapeo).";
 
     private static readonly IReadOnlyDictionary<string, string> IsoCodesByNormalizedName =
         new Dictionary<string, string>

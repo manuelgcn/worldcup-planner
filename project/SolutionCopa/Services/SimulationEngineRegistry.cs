@@ -9,7 +9,7 @@ public sealed class SimulationEngineRegistry : ISimulationEngineRegistry
     private const string EnginesRequiredMessage = "Debe registrarse al menos un motor de simulacion.";
     private const string EngineNameRequiredMessage = "El nombre del motor es obligatorio para resolver un motor de simulacion.";
     private const string DuplicateEngineNameMessageTemplate = "Nombre de motor de simulacion duplicado: {0}.";
-    private const string UnknownEngineNameMessageTemplate = "Unknown simulation engine: {0}.";
+    private const string UnknownEngineNameMessageTemplate = "Motor de simulacion desconocido: {0}.";
 
     private readonly Dictionary<string, IMatchSimulationEngine> _enginesByName;
     private readonly List<string> _engineNames;

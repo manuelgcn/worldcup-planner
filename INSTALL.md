@@ -5,6 +5,11 @@ productiva corre sobre **Azure SQL Edge** en Docker con **EF Core 8 (Code
 First)**; los tests unitarios usan el provider **EF Core In-Memory**
 (F.I.R.S.T.), por lo que no requieren la base levantada.
 
+> Para evaluar una Release formal de GitHub, descargar el asset
+> `WorldCupPlanner-<tag>-win-x64.zip`, extraerlo completo y ejecutar
+> `start.ps1`. Ese script levanta y espera Azure SQL Edge antes de iniciar la
+> app self-contained. No ejecutar `UI.exe` con la base detenida.
+
 Resumen de artefactos relevantes:
 
 | Artefacto | Ubicación |
