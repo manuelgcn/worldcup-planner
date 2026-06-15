@@ -70,7 +70,8 @@
                 Email = email.Trim(),
                 Password = password,
                 DateOfBirth = dateOfBirth,
-                InitialRole = UserRoles.Editor
+                // El registro publico crea cuentas Periodista; el servicio lo fuerza de todos modos.
+                InitialRole = UserRoles.Periodista
             });
 
             Nav.NavigateTo("/login");

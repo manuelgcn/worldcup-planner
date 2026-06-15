@@ -49,7 +49,29 @@ public class UserServicesTests
 
         User stored = service.GetUserById(5);
         Assert.AreEqual("ana@mail.com", stored.email);
-        Assert.IsTrue(stored.HasRole(UserRoles.Editor));
+        // El registro publico siempre crea Periodista, sin importar el rol del request.
+        Assert.IsTrue(stored.HasRole(UserRoles.Periodista));
+    }
+
+    [TestMethod]
+    public void RegisterUser_IgnoresRequestedPrivilegedRole_AndForcesPeriodista()
+    {
+        service.RegisterUser(new CreateUserRequestDto
+        {
+            Id = 9,
+            Name = "Eva",
+            Lastname = "Diaz",
+            Email = "eva@mail.com",
+            Password = "Pass123@",
+            DateOfBirth = new DateTime(1992, 4, 10),
+            InitialRole = UserRoles.Admin
+        });
+
+        User stored = service.GetUserById(9);
+        Assert.IsTrue(stored.HasRole(UserRoles.Periodista));
+        Assert.IsFalse(stored.HasRole(UserRoles.Admin));
+        Assert.IsFalse(stored.HasRole(UserRoles.Editor));
+        Assert.AreEqual(1, stored.Roles.Count);
     }
 
     [TestMethod]

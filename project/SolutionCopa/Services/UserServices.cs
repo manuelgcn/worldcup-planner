@@ -11,6 +11,11 @@ public class UserServices : IUserService
     // Id reservado para el administrador del sistema: no puede modificarse ni eliminarse.
     private const int SystemAdminUserId = 1;
 
+    // El registro publico es anonimo: nunca debe poder auto-asignarse un rol
+    // privilegiado. El servidor ignora el rol del request y fuerza Periodista.
+    // Editor/Admin solo se conceden por el camino administrativo (AssignRole).
+    private const UserRoles PublicRegistrationRole = UserRoles.Periodista;
+
     private const string InvalidCredentialsMessage = "Credenciales invalidas";
     private const string EmailAlreadyExistsMessage = "El email ya esta registrado";
     private const string UserIdAlreadyAssignedMessage = "El id de usuario ya esta asignado";
@@ -48,7 +53,8 @@ public class UserServices : IUserService
             request.Email,
             request.Password,
             request.DateOfBirth);
-        user.AddRole(request.InitialRole);
+        // No se confia en request.InitialRole: el registro publico siempre es Periodista.
+        user.AddRole(PublicRegistrationRole);
 
         AddUser(user);
     }
