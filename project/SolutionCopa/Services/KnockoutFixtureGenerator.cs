@@ -84,7 +84,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             throw new KnockoutGeneratorException(StadiumsRequiredMessage);
         }
 
-        List<(Team Team, string Group)> qualifiedWithGroups = FlattenQualifiedTeams(qualifiedTeams);
+        // Se valida que cada equipo tenga grupo conocido (mismo invariante que el flujo anterior).
+        FlattenQualifiedTeams(qualifiedTeams);
 
         EliminationBuilder builder = new EliminationBuilder();
         int maxPerDay = settings.MaxMatchesPerDay;
@@ -93,8 +94,9 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         Func<int, Stadium> stadiumProvider = matchIndex => stadiums[matchIndex % stadiums.Count];
         Func<int, DateTime> dateProvider = matchIndex => roundStart.AddDays(matchIndex / maxPerDay);
 
+        // H2: se pasa QualifiedTeams (no la lista aplanada) para respetar las categorias A1..B8.
         List<MatchElimination> roundOf32 = builder.CreateRoundOf32(
-            qualifiedWithGroups,
+            qualifiedTeams,
             stadiums,
             settings,
             settings.CrossingsSeed,
@@ -404,6 +406,10 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         int nextId = NextMatchId(elimRepo);
         DateTime nextDate = KnockoutPhaseDate(settings, nextPhase);
         List<MatchElimination> created = new();
+
+        // El emparejamiento por adyacencia depende del orden: se ordena por MatchId para que el
+        // bracket sea determinista (C1..C8 = ganadores Ai vs Bi, segun el orden intercalado del R32).
+        previousRound = previousRound.OrderBy(match => match.MatchId).ToList();
 
         for (int i = 0; i < previousRound.Count; i += 2)
         {
