@@ -1,40 +1,55 @@
-# WorldCupPlanner 2026 — Build de Entrega 1
+# WorldCupPlanner 2026 - Release de Entrega 2
 
-Build self-contained para Windows x64. **No requiere instalar .NET 8** — todo
-está incluido.
+Paquete ejecutable para Windows x64. La aplicacion es self-contained: no
+requiere instalar .NET 8. La persistencia usa Azure SQL Edge, por lo que
+**Docker Desktop debe estar instalado e iniciado**. El primer arranque necesita
+acceso a Internet si la imagen `mcr.microsoft.com/azure-sql-edge:latest` aun no
+esta descargada.
 
-## Cómo correrlo
+## Inicio recomendado
 
-1. Entrar a la carpeta `win-x64/`.
-2. Doble click en `UI.exe` (o desde cmd: `UI.exe`).
-3. Abrir el browser en la URL que muestra la consola (por defecto
-   `http://localhost:5000`).
+1. Extraer el ZIP completo.
+2. Abrir PowerShell en la carpeta extraida.
+3. Ejecutar:
 
-## Credenciales seed
+   ```powershell
+   Set-ExecutionPolicy -Scope Process Bypass
+   .\start.ps1
+   ```
 
-| Rol    | Email             | Password   |
-|--------|-------------------|------------|
-| Admin  | admin@copa.com    | Admin@123  |
-| Editor | editor@copa.com   | Editor@123 |
+4. Abrir `http://localhost:5000`.
 
-## Configuración
+`start.ps1` valida Docker, levanta Azure SQL Edge, espera que acepte conexiones
+y ejecuta `win-x64/UI.exe`. En el primer arranque, la aplicacion crea la base,
+aplica todas las migraciones y crea usuarios basicos.
 
-Las semillas (FixtureSeed, CrossingsSeed, SimulationSeed, CompletionSeed) y
-parámetros del torneo se leen de `win-x64/appsettings.json`, sección
-`TournamentSettings`. Cambiar valores y reiniciar para verlo aplicado.
+## Credenciales del primer arranque
 
-## Versión
+| Rol | Email | Password |
+|---|---|---|
+| Admin | `admin@copa.com` | `Admin@123` |
+| Editor | `editor@copa.com` | `Editor@123` |
+| Periodista | `periodista@copa.com` | `Periodista@123` |
 
-- Tag: `v1.0.1-entrega1`
-- Build: self-contained `win-x64`, .NET 8.0
+Para una demo con datos completos, restaurar `db/backups/seed-full.bak` o
+ejecutar `db/scripts/seed-full.sql` siguiendo el `INSTALL.md` incluido.
 
-### Cambios respecto a `v1.0.0-entrega1`
+## Inicio manual
 
-- `fix(fixture)`: la generación de fixture ahora respeta los cupos de
-  confederación por grupo (máx. 1 no-UEFA, máx. 2 UEFA) usando Fisher-Yates
-  determinístico sobre `FixtureSeed`.
-- `fix(matches)`: los filtros de la página de partidos funcionan de forma
-  independiente, "Hasta" incluye el mismo día y la lista incluye los partidos
-  de eliminación.
-- `feat(bracket)`: en `/fixture`, los partidos de eliminación que se definen
-  por penales muestran el resultado de la tanda y el equipo que pasó.
+```powershell
+docker compose up -d sqlserver
+.\win-x64\UI.exe --urls http://localhost:5000
+```
+
+No ejecutar `UI.exe` antes de que SQL Edge este listo: la aplicacion aplica
+migraciones al arrancar y terminara con error si no puede conectarse.
+
+## Contenido del asset formal
+
+- `win-x64/`: aplicacion self-contained.
+- `start.ps1`: inicio verificado de base + aplicacion.
+- `INSTALL.md`: instalacion manual, restauracion y datos de prueba.
+- `docker-compose.yml` y `.env`: configuracion reproducible de SQL Edge.
+- `db/scripts/`: scripts de esquema y datos.
+- `db/backups/`: backups vacio y con datos de prueba.
+- Archivo `.sha256`: integridad del ZIP publicado en GitHub Releases.

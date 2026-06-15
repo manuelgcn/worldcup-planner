@@ -12,7 +12,7 @@ public sealed class ExportService(
     IExporter exporter,
     IAuditLogService auditLogService) : IExportService
 {
-    private const string InvalidDateRangeMessage = "'from' debe ser menor o igual a 'to'.";
+    private const string InvalidDateRangeMessage = "'desde' debe ser menor o igual que 'hasta'.";
     private const string UnauthorizedMessage = "Solo los usuarios Admin y Periodista pueden exportar datos.";
     private const string FixtureWorksheetName = "Fixture";
     private const string AuditLogWorksheetName = "AuditLog";

@@ -61,6 +61,12 @@ public abstract class Match
     // Evita aplicar el Elo dos veces sobre el mismo partido (p. ej. simular y luego publicar).
     public bool RankingApplied { get; private set; }
 
+    // Delta de Elo que este partido aplico sobre cada equipo. Se guarda para poder revertirlo
+    // exactamente cuando se edita el resultado (H7): sin el delta no se puede invertir el Elo,
+    // que depende de los rankings al momento de aplicarlo.
+    public int AppliedHomeRankingDelta { get; private set; }
+    public int AppliedAwayRankingDelta { get; private set; }
+
     public IReadOnlyCollection<MatchIncident> Incidents => _incidents.AsReadOnly();
 
     public void MarkAsSimulated()
@@ -72,6 +78,19 @@ public abstract class Match
     public void MarkRankingApplied()
     {
         RankingApplied = true;
+    }
+
+    public void SetAppliedRankingDeltas(int homeDelta, int awayDelta)
+    {
+        AppliedHomeRankingDelta = homeDelta;
+        AppliedAwayRankingDelta = awayDelta;
+    }
+
+    public void ClearRankingApplication()
+    {
+        RankingApplied = false;
+        AppliedHomeRankingDelta = 0;
+        AppliedAwayRankingDelta = 0;
     }
 
     protected Match()

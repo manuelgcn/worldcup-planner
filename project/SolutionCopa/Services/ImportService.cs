@@ -41,7 +41,7 @@ public sealed class ImportService : IImportService
 
         List<TeamImportDto> rows = _teamParser.Parse(fileStream);
         HashSet<string> importedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        List<Team> importedTeams = new List<Team>();
+        List<Team> teamsToImport = new List<Team>();
 
         IReadOnlyCollection<Team> existingTeams = _teamRepository.GetAll();
         int currentTeamCount = existingTeams.Count;
@@ -49,6 +49,10 @@ public sealed class ImportService : IImportService
 
         string? warningMessage = null;
 
+        // H4: primero se validan y construyen TODAS las filas; recien despues se persiste. Asi una
+        // fila invalida hace abortar el import completo sin dejar escrituras parciales (atomicidad
+        // del caso comun, sin depender de una transaccion real). El tope de 48 no es un error: corta
+        // el import y devuelve una advertencia con lo que si entraba.
         foreach (TeamImportDto row in rows)
         {
             if (currentTeamCount >= MaxTeams)
@@ -70,21 +74,24 @@ public sealed class ImportService : IImportService
                 ThrowDuplicateTeam(row.RowNumber);
             }
 
-            Team team = new Team(nextTeamId, name, ranking, false, confederation);
-            _teamRepository.Add(team);
-            importedTeams.Add(team);
+            teamsToImport.Add(new Team(nextTeamId, name, ranking, false, confederation));
             importedNames.Add(name);
 
             nextTeamId++;
             currentTeamCount++;
         }
 
-        if (importedTeams.Count > 0)
+        foreach (Team team in teamsToImport)
+        {
+            _teamRepository.Add(team);
+        }
+
+        if (teamsToImport.Count > 0)
         {
             _unitOfWork.Commit();
         }
 
-        return new ImportResult(importedTeams, warningMessage);
+        return new ImportResult(teamsToImport, warningMessage);
     }
 
     private static int GetNextTeamId(IReadOnlyCollection<Team> existingTeams)

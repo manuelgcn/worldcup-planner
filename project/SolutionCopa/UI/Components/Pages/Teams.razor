@@ -224,7 +224,7 @@ else
 
             Team team = new Team(nextId, nombre, rankingFifa, false, confederation, flagBase64);
 
-            TeamServices.AddTeam(team);
+            TeamServices.AddTeam(team, Session.CurrentUser?.email);
             successMessage = "Equipo creado correctamente";
             ClearForm();
             LoadTeams();
@@ -298,7 +298,7 @@ else
 
         try
         {
-            TeamServices.RemoveTeam(nombreEquipo);
+            TeamServices.RemoveTeam(nombreEquipo, Session.CurrentUser?.email);
             successMessage = "Equipo eliminado correctamente";
             LoadTeams();
         }

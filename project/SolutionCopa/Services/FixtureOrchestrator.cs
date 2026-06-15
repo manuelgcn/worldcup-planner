@@ -16,8 +16,8 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     private const string MissingSettingsMessage = "La configuracion del torneo no esta definida.";
     private const string MissingTeamsMessage = "El fixture requiere exactamente 48 equipos.";
     private const string MissingStadiumsMessage = "El fixture requiere al menos 4 estadios.";
-    private const string ClearFixtureDetails = "Previous fixture cleared before regeneration.";
-    private const string DeleteFixtureDetails = "Fixture deleted: groups, journeys, group matches and knockout removed.";
+    private const string ClearFixtureDetails = "Fixture anterior limpiado antes de la regeneracion.";
+    private const string DeleteFixtureDetails = "Fixture eliminado: se removieron grupos, jornadas, partidos de grupo y fase eliminatoria.";
 
     private readonly ITeamRepository _teamRepository;
     private readonly IStadiumRepository _stadiumRepository;
@@ -165,7 +165,9 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         List<Match> matches = matchGenerator.GenerateMatches(
             groups.ToList(),
             stadiums.ToList(),
-            settings.StartDate);
+            settings.StartDate,
+            settings.DaysBetweenJourneys,
+            settings.MaxMatchesPerDay);
 
         foreach (Match match in matches)
         {

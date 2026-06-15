@@ -229,6 +229,22 @@ public class GroupStandingsServiceTests
     }
 
     [TestMethod]
+    public void GetStandings_ExactTie_UsesTheSharedDomainTieBreakerLikeTheQualifier()
+    {
+        // H8: con empate exacto (sin partidos), la tabla debe desempatar con el MISMO algoritmo
+        // por-equipo que GroupQualifier (helper de dominio compartido), no con un Random por fila.
+        List<int> expectedOrder = _group.Teams
+            .OrderByDescending(team => GroupTieBreaker.Compute(DefaultSeed, groupIndex: 0, teamId: team.Id))
+            .ThenBy(team => team.Id)
+            .Select(team => team.Id)
+            .ToList();
+
+        List<int> actualOrder = _service.GetStandings(GroupName).Select(standing => standing.Team.Id).ToList();
+
+        CollectionAssert.AreEqual(expectedOrder, actualOrder);
+    }
+
+    [TestMethod]
     public void GetStandings_WithManualZeroZero_CountsMatchAsPlayedDraw()
     {
         AddPlayedMatch(matchId: 1, home: _teamAlpha, away: _teamBravo, homeGoals: 0, awayGoals: 0);

@@ -21,7 +21,7 @@ public class MatchService : IMatchService
     private const int DefaultTournamentSettingsId = 1;
     private const string MatchIdAlreadyExistsMessage = "El id de partido ya existe";
     private const string GroupNameRequiredMessage = "El nombre del grupo es obligatorio";
-    private const string FromMustBeLessOrEqualToMessage = "'from' debe ser menor o igual a 'to'";
+    private const string FromMustBeLessOrEqualToMessage = "'desde' debe ser menor o igual que 'hasta'";
     private const string MatchNotFoundMessage = "Partido no encontrado";
     private const string ValueRequiredMessage = "El valor es obligatorio";
     private const string TournamentSettingsNotFoundMessage = "No se encontro la configuracion del torneo";
@@ -342,7 +342,9 @@ public class MatchService : IMatchService
 
         match.SetGoals(homeGoals, awayGoals);
         LogResultRegistered(matchId, homeGoals, awayGoals, performedByEmail);
-        ApplyRankingUpdate(match);
+        // Editar un resultado ya registrado debe recalcular el Elo (revertir el anterior y aplicar
+        // el nuevo), no quedar bloqueado por el flag de "aplicado una vez" (H7).
+        rankingService.ReapplyMatchResult(match);
         notificationService.NotifyResultLoaded(match, previousHomeGoals, previousAwayGoals);
 
         matchRepository.Update(match);

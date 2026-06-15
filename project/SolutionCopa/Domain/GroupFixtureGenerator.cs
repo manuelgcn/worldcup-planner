@@ -6,8 +6,13 @@ public sealed class GroupFixtureGenerator
 {
     private const int TeamsPerGroup = 4;
     private const int TotalJornadas = 3;
-    private const int DaysBetweenJornadas = 3;
-    private const int MaxMatchesPerStadiumPerDay = 3;
+    private const int DefaultDaysBetweenJornadas = 3;
+    private const int DefaultMaxMatchesPerDay = 3;
+    private const int FirstMatchHour = 14;
+    private const int HoursBetweenMatches = 4;
+    // Tope fisico de partidos/dia por estadio: desde las 14:00 con 4h de separacion solo entran
+    // 14:00, 18:00 y 22:00 antes de medianoche (CLAUDE.md §7).
+    private const int MaxMatchesPerDayUpperBound = 3;
     private const int SimultaneousJornadaNumber = 3;
     private const string MatchCodePrefix = "M";
     private const int TeamAIndex = 0;
@@ -15,18 +20,26 @@ public sealed class GroupFixtureGenerator
     private const int TeamCIndex = 2;
     private const int TeamDIndex = 3;
 
-    private static readonly TimeSpan[] AllowedTimes =
-    [
-        new TimeSpan(14, 0, 0), new TimeSpan(18, 0, 0), new TimeSpan(22, 0, 0)
-    ];
+    // Configurables por TournamentSettings (H9). Se fijan al inicio de GenerateMatches y caen al
+    // default cuando no se proveen, preservando el comportamiento previo.
+    private int _daysBetweenJornadas = DefaultDaysBetweenJornadas;
+    private TimeSpan[] _allowedTimes = BuildAllowedTimes(DefaultMaxMatchesPerDay);
 
-    public List<Match> GenerateMatches(List<Group> groups, List<Stadium> stadiums, DateTime startDate)
+    public List<Match> GenerateMatches(
+        List<Group> groups,
+        List<Stadium> stadiums,
+        DateTime startDate,
+        int? daysBetweenJourneys = null,
+        int? maxMatchesPerDay = null)
     {
         ArgumentNullException.ThrowIfNull(groups);
         ArgumentNullException.ThrowIfNull(stadiums);
-            
-        if (stadiums.Count == 0) 
+
+        if (stadiums.Count == 0)
             throw new MatchException("Se requiere al menos un estadio.");
+
+        _daysBetweenJornadas = daysBetweenJourneys ?? DefaultDaysBetweenJornadas;
+        _allowedTimes = BuildAllowedTimes(maxMatchesPerDay ?? DefaultMaxMatchesPerDay);
 
         List<Group> orderedGroups = new List<Group>(groups.OrderBy(g => g.Name));
         List<Stadium> orderedStadiums = new List<Stadium>(stadiums.OrderBy(s => s.Name));
@@ -47,7 +60,7 @@ public sealed class GroupFixtureGenerator
 
             for (int jornada = 1; jornada <= TotalJornadas; jornada++)
             {
-                DateTime day = startDate.AddDays(dayOffset + ((jornada - 1) * DaysBetweenJornadas));
+                DateTime day = startDate.AddDays(dayOffset + ((jornada - 1) * _daysBetweenJornadas));
                 List<(int home, int away)> pairs = GetPairsForJornada(jornada);
 
                 if (jornada == SimultaneousJornadaNumber)
@@ -72,7 +85,7 @@ public sealed class GroupFixtureGenerator
 
         // Ambos partidos de la ultima jornada deben jugarse el mismo dia y misma hora.
         // Por eso buscamos un horario donde haya DOS estadios libres a la vez.
-        foreach (TimeSpan time in AllowedTimes)
+        foreach (TimeSpan time in _allowedTimes)
         {
             DateTime matchTime = day.Date + time;
             if (TryFindAvailableStadium(preferredIndex1, matchTime, orderedStadiums, tracker, null, out Stadium stadium1)
@@ -95,7 +108,7 @@ public sealed class GroupFixtureGenerator
             int preferredIndex = PreferredStadiumIndex(matchNumber + 1, orderedStadiums.Count);
             bool scheduledMatch = false;
 
-            foreach (TimeSpan time in AllowedTimes)
+            foreach (TimeSpan time in _allowedTimes)
             {
                 DateTime matchTime = day.Date + time;
                 if (TryFindAvailableStadium(preferredIndex, matchTime, orderedStadiums, tracker, null, out Stadium assignedStadium))
@@ -113,7 +126,17 @@ public sealed class GroupFixtureGenerator
     // Cantidad de grupos que arrancan el mismo dia. La jornada 3 (simultanea) es la
     // restriccion mas dura: cada grupo necesita un PAR de estadios al mismo horario,
     // por eso el tope es floor(estadios / 2) por cada horario disponible.
-    private static int GroupsPerDay(int stadiumCount) => (stadiumCount / 2) * AllowedTimes.Length;
+    private int GroupsPerDay(int stadiumCount) => (stadiumCount / 2) * _allowedTimes.Length;
+
+    // Horarios permitidos: arrancan a las 14:00 y se separan 4h (CLAUDE.md §7); la cantidad la fija
+    // MaxMatchesPerDay, acotada a los que entran en un dia (max 3: 14:00, 18:00, 22:00).
+    private static TimeSpan[] BuildAllowedTimes(int maxMatchesPerDay)
+    {
+        int slots = Math.Clamp(maxMatchesPerDay, 1, MaxMatchesPerDayUpperBound);
+        return Enumerable.Range(0, slots)
+            .Select(slot => new TimeSpan(FirstMatchHour + (slot * HoursBetweenMatches), 0, 0))
+            .ToArray();
+    }
 
     // Indice del estadio preferido segun la rotacion circular por orden de nombre:
     // Partido n -> Estadio[(n - 1) mod CantEstadios].

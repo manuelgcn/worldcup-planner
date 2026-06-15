@@ -88,6 +88,12 @@ namespace DataAccess.Migrations
                     b.Property<int>("MatchId")
                         .HasColumnType("int");
 
+                    b.Property<int>("AppliedAwayRankingDelta")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AppliedHomeRankingDelta")
+                        .HasColumnType("int");
+
                     b.Property<int>("AwayGoals")
                         .HasColumnType("int");
 

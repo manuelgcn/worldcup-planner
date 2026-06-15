@@ -266,7 +266,7 @@ else
 
         try
         {
-            UserServices.UpdateUser(editingUserId!.Value, name, lastname, email);
+            UserServices.UpdateUser(editingUserId!.Value, name, lastname, email, Session.CurrentUser?.email);
             successMessage = "Usuario actualizado";
             editingUserId = null;
             ClearForm();
@@ -285,7 +285,7 @@ else
 
         try
         {
-            UserServices.RemoveUser(id);
+            UserServices.RemoveUser(id, Session.CurrentUser?.email);
             successMessage = "Usuario eliminado";
             LoadUsers();
         }
@@ -304,12 +304,12 @@ else
         {
             if (user.HasRole(role))
             {
-                UserServices.RemoveRole(user.idUser, role);
+                UserServices.RemoveRole(user.idUser, role, Session.CurrentUser?.email);
                 successMessage = $"Rol {role} removido";
             }
             else
             {
-                UserServices.AssignRole(user.idUser, role);
+                UserServices.AssignRole(user.idUser, role, Session.CurrentUser?.email);
                 successMessage = $"Rol {role} asignado";
             }
 

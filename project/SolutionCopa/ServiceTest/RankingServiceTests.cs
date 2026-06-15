@@ -58,6 +58,75 @@ public class RankingServiceTests
     }
 
     [TestMethod]
+    public void RevertMatchResult_UndoesTheAppliedDeltaAndClearsFlag()
+    {
+        // H7: revertir un resultado ya aplicado devuelve a ambos equipos a su ranking previo.
+        Team homeTeam = new Team(1, "Home", 1500, false, Confederation.CONMEBOL);
+        Team awayTeam = new Team(2, "Away", 1200, false, Confederation.CONMEBOL);
+        MatchGroup match = BuildGroupMatch(homeTeam, awayTeam);
+        match.SetGoals(2, 0);
+
+        _rankingService.ApplyMatchResult(match, MatchPhase.GroupStage);
+        match.MarkRankingApplied();
+
+        _rankingService.RevertMatchResult(match);
+
+        Assert.AreEqual(1500, homeTeam.FifaRanking);
+        Assert.AreEqual(1200, awayTeam.FifaRanking);
+        Assert.IsFalse(match.RankingApplied);
+    }
+
+    [TestMethod]
+    public void ReapplyMatchResult_AfterEditingResult_MatchesAFreshSingleApply()
+    {
+        // H7: editar un resultado ya publicado debe dejar el ranking como si el nuevo marcador
+        // hubiera sido el unico aplicado (revertir el delta anterior y aplicar el nuevo).
+        Team editedHome = new Team(1, "Home", 1500, false, Confederation.CONMEBOL);
+        Team editedAway = new Team(2, "Away", 1200, false, Confederation.CONMEBOL);
+        MatchGroup edited = BuildGroupMatch(editedHome, editedAway);
+
+        edited.SetGoals(2, 0);
+        _rankingService.ReapplyMatchResult(edited);   // primera carga (local gana)
+        edited.SetGoals(0, 2);
+        _rankingService.ReapplyMatchResult(edited);   // edicion (visitante gana)
+
+        Team freshHome = new Team(1, "Home", 1500, false, Confederation.CONMEBOL);
+        Team freshAway = new Team(2, "Away", 1200, false, Confederation.CONMEBOL);
+        MatchGroup fresh = BuildGroupMatch(freshHome, freshAway);
+        fresh.SetGoals(0, 2);
+        _rankingService.ApplyMatchResultOnce(fresh);
+
+        Assert.AreEqual(freshHome.FifaRanking, editedHome.FifaRanking);
+        Assert.AreEqual(freshAway.FifaRanking, editedAway.FifaRanking);
+    }
+
+    [TestMethod]
+    public void ReapplyMatchResult_SameResultTwice_IsIdempotent()
+    {
+        // Re-aplicar el mismo marcador no debe acumular efecto Elo.
+        Team home = new Team(1, "Home", 1500, false, Confederation.CONMEBOL);
+        Team away = new Team(2, "Away", 1200, false, Confederation.CONMEBOL);
+        MatchGroup match = BuildGroupMatch(home, away);
+        match.SetGoals(2, 0);
+
+        _rankingService.ReapplyMatchResult(match);
+        int homeAfterFirst = home.FifaRanking;
+        int awayAfterFirst = away.FifaRanking;
+        _rankingService.ReapplyMatchResult(match);
+
+        Assert.AreEqual(homeAfterFirst, home.FifaRanking);
+        Assert.AreEqual(awayAfterFirst, away.FifaRanking);
+    }
+
+    private static MatchGroup BuildGroupMatch(Team homeTeam, Team awayTeam)
+    {
+        Stadium stadium = new Stadium("Test Stadium", "City", null, 30000);
+        Group group = new Group("A");
+        Journey journey = Journey.CreateInstance(1);
+        return MatchGroup.CreateInstance(10, DateTime.Now, homeTeam, awayTeam, stadium, group, journey);
+    }
+
+    [TestMethod]
     public void ApplyMatchResult_HomeWins_PersistsBothTeamsWithUpdatedRanking()
     {
         // Arrange

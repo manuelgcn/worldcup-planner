@@ -1,0 +1,90 @@
+name: Publish formal release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version usada para validar y nombrar el asset
+        required: true
+        default: v2.0.0-entrega2
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  SOLUTION_PATH: 'project/SolutionCopa/SolutionCopa.sln'
+  RELEASE_VERSION: ${{ github.event_name == 'push' && github.ref_name || inputs.version }}
+
+jobs:
+  release:
+    name: Validate, package and publish
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout tagged commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag points to main HEAD
+        if: github.event_name == 'push'
+        shell: pwsh
+        run: |
+          git fetch origin main
+          $tagSha = git rev-parse HEAD
+          $mainSha = git rev-parse origin/main
+          if ($tagSha -ne $mainSha) {
+            throw "The release tag must point to main HEAD. Tag: $tagSha; main: $mainSha"
+          }
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+      - name: Build solution in Release
+        run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+
+      - name: Run all tests in Release
+        run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --no-build --logger "console;verbosity=minimal"
+
+      - name: Build release asset
+        shell: pwsh
+        run: ./scripts/build-release.ps1 -Version "${{ env.RELEASE_VERSION }}"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WorldCupPlanner-${{ env.RELEASE_VERSION }}-win-x64
+          path: |
+            artifacts/*.zip
+            artifacts/*.sha256
+          if-no-files-found: error
+
+      - name: Create formal GitHub Release
+        if: github.event_name == 'push'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $asset = "artifacts/WorldCupPlanner-${{ env.RELEASE_VERSION }}-win-x64.zip"
+          gh release view "${{ env.RELEASE_VERSION }}" *> $null
+
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload "${{ env.RELEASE_VERSION }}" $asset "$asset.sha256" --clobber
+          }
+          else {
+            gh release create "${{ env.RELEASE_VERSION }}" `
+              $asset `
+              "$asset.sha256" `
+              --verify-tag `
+              --title "WorldCupPlanner 2026 - ${{ env.RELEASE_VERSION }}" `
+              --generate-notes
+          }

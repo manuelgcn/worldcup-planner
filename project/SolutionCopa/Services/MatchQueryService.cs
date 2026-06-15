@@ -12,7 +12,7 @@ namespace Services;
 // en memoria). Mapea cada partido a una proyeccion plana lista para la UI.
 public class MatchQueryService(IMatchRepository matchRepository) : IMatchQueryService
 {
-    private const string FromMustBeLessOrEqualToMessage = "'from' must be less than or equal to 'to'";
+    private const string FromMustBeLessOrEqualToMessage = "'desde' debe ser menor o igual que 'hasta'";
 
     public IReadOnlyCollection<MatchListItemDto> Search(MatchFilterDto filter)
     {

@@ -143,9 +143,9 @@ public sealed class GroupQualifier
 
     private static int GetTieBreaker(int seed, int groupIndex, int teamId)
     {
-        int mixedSeed = unchecked((seed * 397) ^ (groupIndex * 31) ^ teamId);
-        Random random = new Random(mixedSeed);
-        return random.Next();
+        // Desempate compartido con la tabla visible (GroupStandingsService) para que clasificacion
+        // y tabla ordenen identico ante empate exacto (H8).
+        return GroupTieBreaker.Compute(seed, groupIndex, teamId);
     }
 
     private sealed class TeamStanding

@@ -49,7 +49,29 @@ public class UserServicesTests
 
         User stored = service.GetUserById(5);
         Assert.AreEqual("ana@mail.com", stored.email);
-        Assert.IsTrue(stored.HasRole(UserRoles.Editor));
+        // El registro publico siempre crea Periodista, sin importar el rol del request.
+        Assert.IsTrue(stored.HasRole(UserRoles.Periodista));
+    }
+
+    [TestMethod]
+    public void RegisterUser_IgnoresRequestedPrivilegedRole_AndForcesPeriodista()
+    {
+        service.RegisterUser(new CreateUserRequestDto
+        {
+            Id = 9,
+            Name = "Eva",
+            Lastname = "Diaz",
+            Email = "eva@mail.com",
+            Password = "Pass123@",
+            DateOfBirth = new DateTime(1992, 4, 10),
+            InitialRole = UserRoles.Admin
+        });
+
+        User stored = service.GetUserById(9);
+        Assert.IsTrue(stored.HasRole(UserRoles.Periodista));
+        Assert.IsFalse(stored.HasRole(UserRoles.Admin));
+        Assert.IsFalse(stored.HasRole(UserRoles.Editor));
+        Assert.AreEqual(1, stored.Roles.Count);
     }
 
     [TestMethod]
@@ -138,6 +160,73 @@ public class UserServicesTests
         auditedService.UpdateUser(2, "Juan Carlos", "Perez", "juan.c@mail.com");
 
         Assert.IsTrue(auditRepo.GetAll().Any(log => log.Action == "UPDATE_USER"));
+    }
+
+    [TestMethod]
+    public void AddUser_RecordsPerformingActor()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        UserServices auditedService = new UserServices(
+            new MockUserRepository(),
+            AuditLogService.CreateInstance(auditRepo));
+
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        auditedService.AddUser(user, performedByEmail: "admin@copa.com");
+
+        AuditLog log = auditRepo.GetAll().Single(l => l.Action == "CREATE_USER");
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void UpdateUser_RecordsPerformingActor()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        UserServices auditedService = new UserServices(
+            new MockUserRepository(),
+            AuditLogService.CreateInstance(auditRepo));
+
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        auditedService.AddUser(user);
+
+        auditedService.UpdateUser(2, "Juan Carlos", "Perez", "juan.c@mail.com", performedByEmail: "admin@copa.com");
+
+        AuditLog log = auditRepo.GetAll().Single(l => l.Action == "UPDATE_USER");
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void RemoveUser_RecordsPerformingActor()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        UserServices auditedService = new UserServices(
+            new MockUserRepository(),
+            AuditLogService.CreateInstance(auditRepo));
+
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        auditedService.AddUser(user);
+
+        auditedService.RemoveUser(2, performedByEmail: "admin@copa.com");
+
+        AuditLog log = auditRepo.GetAll().Single(l => l.Action == "DELETE_USER");
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void AssignRole_RecordsPerformingActor()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        UserServices auditedService = new UserServices(
+            new MockUserRepository(),
+            AuditLogService.CreateInstance(auditRepo));
+
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        auditedService.AddUser(user);
+
+        auditedService.AssignRole(2, UserRoles.Admin, performedByEmail: "admin@copa.com");
+
+        AuditLog log = auditRepo.GetAll().Single(l => l.Action == "ASSIGN_USER_ROLE");
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
     }
 
     [TestMethod]

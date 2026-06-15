@@ -145,7 +145,7 @@ else
                 capacity
             );
 
-            StadiumServices.AddStadium(stadium);
+            StadiumServices.AddStadium(stadium, Session.CurrentUser?.email);
             successMessage = "Estadio creado correctamente";
             ClearForm();
             LoadStadiums();
@@ -167,7 +167,7 @@ else
 
         try
         {
-            StadiumServices.RemoveById(id);
+            StadiumServices.RemoveById(id, Session.CurrentUser?.email);
             successMessage = "Estadio eliminado correctamente";
             LoadStadiums();
         }
