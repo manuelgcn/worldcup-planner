@@ -332,7 +332,7 @@
 
 ::deep .bracket-compact-column {
     flex: 1 1 0;
-    min-width: 64px;
+    min-width: 120px;
     display: flex;
     flex-direction: column;
 }
@@ -360,9 +360,9 @@
 ::deep .bracket-mini {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     gap: .1rem;
-    padding: .25rem .2rem;
+    padding: .25rem .3rem;
     border: 1px solid rgba(0, 0, 0, .12);
     border-radius: 5px;
     background: white;
@@ -389,138 +389,56 @@
     font-weight: bold;
     color: rgba(0, 0, 0, .5);
     letter-spacing: .04em;
-}
-
-::deep .bracket-mini-team {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 3px;
-    padding: .1rem;
-}
-
-/* La bandera trae margin-right por defecto (para listas); acá va centrada. */
-::deep .bracket-mini-team .team-flag {
-    margin-right: 0;
-}
-
-::deep .bracket-mini-team.winner {
-    box-shadow: 0 0 0 2px #2e7d32;
-}
-
-::deep .bracket-mini-team.loser {
-    opacity: .4;
-}
-
-/* --- Vista 2: detalle por fase con resultados --- */
-::deep .bracket-detail {
-    display: flex;
-    flex-direction: column;
-    gap: 1.1rem;
-}
-
-::deep .bracket-detail-phase h6 {
-    margin: 0 0 .5rem;
-    font-family: "Bebas Neue", Oswald, sans-serif;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    font-size: 1rem;
-    color: var(--m26-blue, #002868);
-    border-bottom: 2px solid rgba(0, 40, 104, .25);
-    padding-bottom: .25rem;
-}
-
-::deep .bracket-detail-cells {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-    gap: .6rem;
-}
-
-::deep .bracket-cell {
-    border: 1px solid rgba(0, 0, 0, .12);
-    border-radius: 6px;
-    padding: .5rem .6rem;
-    background: white;
-    font-size: .85rem;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
-}
-
-::deep .bracket-cell.played {
-    border-left: 4px solid #4caf50;
-}
-
-::deep .bracket-cell.pending {
-    border-left: 4px solid rgba(0, 0, 0, .15);
-    color: rgba(0, 0, 0, .55);
-}
-
-::deep .bracket-cell.placeholder {
     text-align: center;
-    font-style: italic;
-    background: rgba(0, 0, 0, .02);
 }
 
-::deep .bracket-cell-code {
-    font-size: .7rem;
-    font-weight: bold;
-    color: rgba(0, 0, 0, .55);
-    margin-bottom: .3rem;
-    letter-spacing: .04em;
-}
-
-::deep .bracket-cell-team {
+/* Cada llave: una fila por equipo = bandera + marcador, bien compacto. */
+::deep .bracket-mini-row {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: .2rem 0;
+    justify-content: space-between;
+    gap: .25rem;
+    width: 100%;
+    border-radius: 3px;
+    padding: .05rem .15rem;
 }
 
-::deep .bracket-cell-team .team-name {
-    flex: 1;
+/* La bandera trae margin-right por defecto (para listas); acá no hace falta. */
+::deep .bracket-mini-row .team-flag {
+    margin-right: 0;
+    flex: 0 0 auto;
+}
+
+::deep .bracket-mini-name {
+    flex: 1 1 auto;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-size: .72rem;
+    color: rgba(0, 0, 0, .8);
 }
 
-::deep .bracket-cell-team .team-score {
-    min-width: 1.5rem;
-    text-align: right;
+::deep .bracket-mini-score {
+    font-size: .72rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+    color: rgba(0, 0, 0, .75);
+    min-width: 1ch;
+    text-align: right;
 }
 
-::deep .bracket-cell-team.winner {
-    font-weight: bold;
+::deep .bracket-mini-row.winner {
+    background: rgba(46, 125, 50, .12);
+    font-weight: 700;
+}
+
+::deep .bracket-mini-row.winner .bracket-mini-score {
     color: #2e7d32;
 }
 
-::deep .bracket-cell-team.loser {
-    color: rgba(0, 0, 0, .5);
-}
-
-::deep .bracket-cell-stadium {
-    margin-top: .3rem;
-    font-size: .7rem;
-    color: rgba(0, 0, 0, .55);
-    font-style: italic;
-}
-
-::deep .bracket-cell-team .penalty-score {
-    margin-left: .25rem;
-    font-size: .75rem;
-    font-weight: 600;
-    color: #b26a00;
-}
-
-::deep .bracket-cell-penalties {
-    margin-top: .3rem;
-    font-size: .72rem;
-    font-weight: 600;
-    color: #b26a00;
-    background: rgba(255, 193, 7, .12);
-    padding: .15rem .35rem;
-    border-radius: 3px;
-    text-align: center;
+::deep .bracket-mini-row.loser {
+    opacity: .45;
 }
 
 /* Buttons */
