@@ -56,6 +56,15 @@ dotnet run --project project/SolutionCopa/UI/UI.csproj
 
 Abrir el browser en la URL que muestra la consola.
 
+### Correr desde la Release formal
+
+Para evaluar la entrega sin compilar, descargar el asset
+`WorldCupPlanner-<tag>-win-x64.zip` de la **Release** de GitHub (tag
+`v2.0.0-entrega2`), extraerlo completo y, con Docker Desktop iniciado, ejecutar
+`start.ps1`: levanta y espera Azure SQL Edge antes de iniciar la app
+self-contained. La integridad del zip se verifica con el `.sha256` adjunto. No
+ejecutar `UI.exe` con la base detenida (detalle en `INSTALL.md`).
+
 ### Credenciales seed
 
 | Rol        | Email                 | Password       |
