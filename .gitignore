@@ -159,3 +159,7 @@ PLAN_*.md
 PROMPT_*.md
 PROMPTS_*.md
 
+# Guias de demo locales (no van al repo)
+PASOS_DEMO.md
+PROBAR_RELEASE.md
+
