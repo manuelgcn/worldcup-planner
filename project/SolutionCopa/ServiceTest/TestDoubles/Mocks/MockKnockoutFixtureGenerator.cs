@@ -11,9 +11,18 @@ public sealed class MockKnockoutFixtureGenerator : IKnockoutFixtureGenerator
     public int GenerateBracketCalls { get; private set; }
     public int SimulateNextRoundCalls { get; private set; }
     public int SimulateUntilFinalCalls { get; private set; }
+    public int AdvanceToNextRoundCalls { get; private set; }
     public bool BracketGenerated { get; set; }
+    public bool CanAdvance { get; set; }
 
     public bool IsBracketGenerated() => BracketGenerated;
+
+    public bool CanAdvanceToNextRound() => CanAdvance;
+
+    public void AdvanceToNextRound(string? performedByEmail)
+    {
+        AdvanceToNextRoundCalls++;
+    }
 
     public void GenerateBracket(int? crossingsSeedOverride, string? performedByEmail)
     {

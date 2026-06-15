@@ -18,6 +18,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private const string GroupStageIncompleteMessage = "La fase de grupos no esta completa: cada partido debe tener al menos un gol registrado.";
     private const string BracketAlreadyGeneratedMessage = "El cuadro eliminatorio ya fue generado.";
     private const string BracketNotGeneratedMessage = "El cuadro eliminatorio aun no fue generado.";
+    private const string BracketAlreadyCompleteMessage = "El cuadro eliminatorio ya llego a la final: no hay mas fases para avanzar.";
     private const string MissingGroupForTeamMessagePrefix = "No se encontro grupo para el equipo ";
 
     private readonly ISimulationEngineRegistry _simulationEngineRegistry;
@@ -173,6 +174,145 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         }
 
         TryCreateAndSimulateFinalAndThirdPlace(all, settings, elimRepo, performedByEmail);
+    }
+
+    // Fases que pueden originar un avance manual hacia su fase siguiente, de la mas
+    // avanzada a la mas temprana. La SemiFinal se trata aparte porque deriva en dos
+    // partidos (Final + Tercer puesto), no en una unica ronda.
+    private static readonly Phase[] AdvanceableSourcePhases =
+        { Phase.QuarterFinals, Phase.RoundOf16, Phase.RoundOf32 };
+
+    public bool CanAdvanceToNextRound()
+    {
+        if (!IsBracketGenerated())
+        {
+            return false;
+        }
+
+        List<MatchElimination> all = LoadAllEliminationMatches(_eliminationRepository);
+        if (all.Count == 0 || all.Any(match => match.Phase == Phase.Final))
+        {
+            return false;
+        }
+
+        List<MatchElimination> semiFinals = all.Where(match => match.Phase == Phase.SemiFinal).ToList();
+        if (semiFinals.Count > 0)
+        {
+            return semiFinals.All(IsMatchPlayed);
+        }
+
+        foreach (Phase phase in AdvanceableSourcePhases)
+        {
+            List<MatchElimination> phaseMatches = all.Where(match => match.Phase == phase).ToList();
+            if (phaseMatches.Count == 0)
+            {
+                continue;
+            }
+
+            return phaseMatches.All(IsMatchPlayed);
+        }
+
+        return false;
+    }
+
+    public void AdvanceToNextRound(string? performedByEmail)
+    {
+        IEliminationMatchRepository elimRepo = RequireEliminationRepository();
+        EnsureBracketGenerated();
+        TournamentSettings settings = LoadSettingsOrThrow();
+        List<MatchElimination> all = LoadAllEliminationMatches(elimRepo);
+
+        if (all.Any(match => match.Phase == Phase.Final))
+        {
+            throw new MatchServicesException(BracketAlreadyCompleteMessage);
+        }
+
+        // La SemiFinal completa habilita crear la Final y el Tercer puesto, ambos pendientes.
+        List<MatchElimination> semiFinals = all.Where(match => match.Phase == Phase.SemiFinal).ToList();
+        if (semiFinals.Count > 0)
+        {
+            EnsurePhaseFullyPlayed(semiFinals, Phase.SemiFinal);
+
+            // Se agrega la Final ANTES de crear el Tercer puesto: ambos derivan su MatchId de
+            // NextMatchId(elimRepo), por lo que persistir la Final primero evita que compartan id.
+            List<MatchElimination> finalMatches = CreateRoundFromWinners(semiFinals, Phase.Final, settings, elimRepo);
+            foreach (MatchElimination match in finalMatches)
+            {
+                elimRepo.Add(match);
+            }
+
+            List<MatchElimination> thirdPlaceMatches = CreateRoundFromLosers(semiFinals, Phase.ThirdPlace, settings, elimRepo);
+            foreach (MatchElimination match in thirdPlaceMatches)
+            {
+                elimRepo.Add(match);
+            }
+
+            CommitAndAuditAdvance(Phase.Final, performedByEmail);
+            return;
+        }
+
+        // Caso general R32→R16, R16→Cuartos, Cuartos→Semis: se toma la fase mas avanzada
+        // existente, se exige que este completa y se crea la siguiente dejandola pendiente.
+        foreach (Phase phase in AdvanceableSourcePhases)
+        {
+            List<MatchElimination> phaseMatches = all.Where(match => match.Phase == phase).ToList();
+            if (phaseMatches.Count == 0)
+            {
+                continue;
+            }
+
+            EnsurePhaseFullyPlayed(phaseMatches, phase);
+            Phase next = NextPhase(phase);
+            List<MatchElimination> created = CreateRoundFromWinners(phaseMatches, next, settings, elimRepo);
+            PersistAndAuditAdvance(created, elimRepo, next, performedByEmail);
+            return;
+        }
+
+        throw new MatchServicesException(BracketNotGeneratedMessage);
+    }
+
+    private void PersistAndAuditAdvance(
+        List<MatchElimination> created,
+        IEliminationMatchRepository elimRepo,
+        Phase createdPhase,
+        string? performedByEmail)
+    {
+        foreach (MatchElimination match in created)
+        {
+            elimRepo.Add(match);
+        }
+
+        CommitAndAuditAdvance(createdPhase, performedByEmail);
+    }
+
+    private void CommitAndAuditAdvance(Phase createdPhase, string? performedByEmail)
+    {
+        _unitOfWork.Commit();
+        _auditLog.LogPerformedBy(
+            AuditActions.AdvanceRound,
+            $"Advanced bracket to phase {createdPhase} (pending manual results).",
+            performedByEmail,
+            nameof(KnockoutFixtureGenerator));
+    }
+
+    private static void EnsurePhaseFullyPlayed(List<MatchElimination> matches, Phase phase)
+    {
+        if (matches.Any(match => !IsMatchPlayed(match)))
+        {
+            throw new MatchServicesException(
+                $"No se puede avanzar de fase: {phase} tiene partidos sin resultado cargado.");
+        }
+    }
+
+    private static Phase NextPhase(Phase phase)
+    {
+        return phase switch
+        {
+            Phase.RoundOf32 => Phase.RoundOf16,
+            Phase.RoundOf16 => Phase.QuarterFinals,
+            Phase.QuarterFinals => Phase.SemiFinal,
+            _ => throw new ArgumentOutOfRangeException(nameof(phase), phase, "No hay una fase siguiente definida."),
+        };
     }
 
     public void SimulateUntilFinal(string? performedByEmail)

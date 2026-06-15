@@ -237,7 +237,8 @@
                         }
                         else
                         {
-                            <text>Simulá ronda por ronda o de un saque hasta el final.</text>
+                            <text>Simulá ronda por ronda, de un saque hasta el final, o avanzá de fase
+                            sin simular para cargar los resultados a mano en <a href="/matches">/matches</a>.</text>
                         }
                     </p>
                     @if (CanManageFixture)
@@ -252,6 +253,12 @@
                                     disabled="@(IsBracketFullySimulated || isBusy)"
                                     @onclick="HandleSimulateUntilFinalAsync">
                                 Simular hasta el final
+                            </button>
+                            <button class="btn btn-outline-primary"
+                                    disabled="@(!CanAdvancePhase || isBusy)"
+                                    @onclick="HandleAdvancePhaseAsync"
+                                    title="@AdvancePhaseTooltip()">
+                                Avanzar de fase (sin simular)
                             </button>
                         </div>
                     }
@@ -389,6 +396,9 @@
 
     private bool CanGenerateKnockout =>
         IsFixtureGenerated && IsGroupStageComplete && !IsKnockoutGenerated;
+
+    // La regla de "se puede avanzar" vive en el servicio (no en la UI): solo se delega.
+    private bool CanAdvancePhase => KnockoutGenerator.CanAdvanceToNextRound();
 
     private bool IsBracketFullySimulated
     {
@@ -560,6 +570,13 @@
             "Bracket simulado hasta el final.");
     }
 
+    private async Task HandleAdvancePhaseAsync()
+    {
+        await RunAdminActionAsync(
+            () => KnockoutGenerator.AdvanceToNextRound(Session.CurrentUser?.email),
+            "Fase avanzada. Cargá los resultados de la nueva ronda en /matches.");
+    }
+
     private async Task HandleFillTeamsAsync()
     {
         int completionSeed = settings?.CompletionSeed ?? 0;
@@ -631,6 +648,13 @@
     {
         if (IsKnockoutGenerated) return "No se puede regenerar: ya hay cruces de fase 2.";
         return "Borra los partidos de grupos y vuelve a generar el fixture.";
+    }
+
+    private string AdvancePhaseTooltip()
+    {
+        if (IsBracketFullySimulated) return "El cuadro ya llegó a la final.";
+        if (!CanAdvancePhase) return "Cargá los resultados de todos los partidos de la ronda actual antes de avanzar.";
+        return "Crea la siguiente ronda con los ganadores y la deja pendiente para cargar resultados a mano.";
     }
 
     private string GenerateKnockoutTooltip()

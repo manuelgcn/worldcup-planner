@@ -260,6 +260,156 @@ public class KnockoutFixtureGeneratorExtensionTests
         Assert.AreEqual(all.Max(m => m.MatchDate), final, "La Final debe ser el partido mas tardio.");
     }
 
+    [TestMethod]
+    public void CanAdvanceToNextRound_WhenBracketNotGenerated_ReturnsFalse()
+    {
+        SeedPlayedGroupStageMatches();
+
+        Assert.IsFalse(_generator.CanAdvanceToNextRound());
+    }
+
+    [TestMethod]
+    public void CanAdvanceToNextRound_WhenR32StillPending_ReturnsFalse()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+
+        Assert.IsFalse(_generator.CanAdvanceToNextRound());
+    }
+
+    [TestMethod]
+    public void CanAdvanceToNextRound_WhenR32FullyPlayed_ReturnsTrue()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.RoundOf32);
+
+        Assert.IsTrue(_generator.CanAdvanceToNextRound());
+    }
+
+    [TestMethod]
+    public void AdvanceToNextRound_WhenBracketNotGenerated_Throws()
+    {
+        SeedPlayedGroupStageMatches();
+
+        Assert.ThrowsException<MatchServicesException>(
+            () => _generator.AdvanceToNextRound(performedByEmail: AdminEmail));
+    }
+
+    [TestMethod]
+    public void AdvanceToNextRound_WhenCurrentRoundIncomplete_Throws()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+
+        Assert.ThrowsException<MatchServicesException>(
+            () => _generator.AdvanceToNextRound(performedByEmail: AdminEmail));
+    }
+
+    [TestMethod]
+    public void AdvanceToNextRound_AfterR32PlayedManually_CreatesEightR16Matches()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.RoundOf32);
+
+        _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+
+        List<MatchElimination> r16 = _eliminationRepository.GetAll()
+            .OfType<MatchElimination>()
+            .Where(match => match.Phase == Phase.RoundOf16)
+            .ToList();
+        Assert.AreEqual(ExpectedR16Matches, r16.Count);
+    }
+
+    [TestMethod]
+    public void AdvanceToNextRound_LeavesNextRoundPendingWithoutSimulating()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.RoundOf32);
+        int simulateCallsBeforeAdvance = _simulationEngine.SimulateCalls;
+
+        _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+
+        List<MatchElimination> r16 = _eliminationRepository.GetAll()
+            .OfType<MatchElimination>()
+            .Where(match => match.Phase == Phase.RoundOf16)
+            .ToList();
+        Assert.IsTrue(r16.All(match => !match.HasResult), "El R16 generado debe quedar pendiente.");
+        Assert.AreEqual(simulateCallsBeforeAdvance, _simulationEngine.SimulateCalls,
+            "Avanzar de fase no debe invocar el motor de simulacion.");
+    }
+
+    [TestMethod]
+    public void AdvanceToNextRound_AuditsAdvanceRoundAction()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.RoundOf32);
+
+        _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+
+        Assert.IsTrue(_auditRepository.GetAll().Any(log => log.Action == AuditActions.AdvanceRound));
+    }
+
+    [TestMethod]
+    public void AdvanceToNextRound_FromSemiFinals_CreatesPendingFinalAndThirdPlace()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.RoundOf32);
+        _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.RoundOf16);
+        _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.QuarterFinals);
+        _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.SemiFinal);
+
+        _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+
+        List<MatchElimination> all = _eliminationRepository.GetAll().OfType<MatchElimination>().ToList();
+        Assert.AreEqual(ExpectedFinalMatches, all.Count(match => match.Phase == Phase.Final));
+        Assert.AreEqual(ExpectedThirdPlaceMatches, all.Count(match => match.Phase == Phase.ThirdPlace));
+        Assert.IsTrue(
+            all.Where(match => match.Phase == Phase.Final || match.Phase == Phase.ThirdPlace).All(match => !match.HasResult),
+            "La final y el tercer puesto deben quedar pendientes.");
+    }
+
+    [TestMethod]
+    public void AdvanceToNextRound_WhenFinalAlreadyExists_Throws()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.RoundOf32);
+        _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.RoundOf16);
+        _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.QuarterFinals);
+        _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.SemiFinal);
+        _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+
+        Assert.ThrowsException<MatchServicesException>(
+            () => _generator.AdvanceToNextRound(performedByEmail: AdminEmail));
+    }
+
+    // Carga resultados a mano (no simulados) en todos los partidos de una fase,
+    // con un marcador no empatado para que GetWinner() devuelva un ganador claro.
+    private void PlayPhaseManually(Phase phase)
+    {
+        List<MatchElimination> phaseMatches = _eliminationRepository.GetAll()
+            .OfType<MatchElimination>()
+            .Where(match => match.Phase == phase)
+            .ToList();
+
+        foreach (MatchElimination match in phaseMatches)
+        {
+            match.SetGoals(2, 1);
+            _eliminationRepository.Update(match);
+        }
+    }
+
     private static List<string> BuildBracketPairingSignatures(int persistedCrossingsSeed, int? crossingsSeedOverride)
     {
         MockGroupRepository groupRepository = new MockGroupRepository();
