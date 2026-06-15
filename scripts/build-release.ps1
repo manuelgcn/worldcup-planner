@@ -47,6 +47,7 @@ if ($LASTEXITCODE -ne 0) {
 Copy-Item -LiteralPath (Join-Path $repoRoot 'release-build/README.md') -Destination (Join-Path $stagingRoot 'README.md')
 Copy-Item -LiteralPath (Join-Path $repoRoot 'INSTALL.md') -Destination (Join-Path $stagingRoot 'INSTALL.md')
 Copy-Item -LiteralPath (Join-Path $repoRoot 'release-build/start.ps1') -Destination (Join-Path $stagingRoot 'start.ps1')
+Copy-Item -LiteralPath (Join-Path $repoRoot 'release-build/seed.ps1') -Destination (Join-Path $stagingRoot 'seed.ps1')
 Copy-Item -LiteralPath (Join-Path $repoRoot 'docker-compose.yml') -Destination (Join-Path $stagingRoot 'docker-compose.yml')
 Copy-Item -LiteralPath (Join-Path $repoRoot '.env.example') -Destination (Join-Path $stagingRoot '.env')
 Copy-Item -LiteralPath (Join-Path $repoRoot 'db') -Destination (Join-Path $stagingRoot 'db') -Recurse
@@ -57,6 +58,7 @@ $requiredFiles = @(
     'README.md',
     'INSTALL.md',
     'start.ps1',
+    'seed.ps1',
     'docker-compose.yml',
     '.env',
     'db/scripts/seed-empty.sql',

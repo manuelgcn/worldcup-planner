@@ -31,8 +31,20 @@ aplica todas las migraciones y crea usuarios basicos.
 | Editor | `editor@copa.com` | `Editor@123` |
 | Periodista | `periodista@copa.com` | `Periodista@123` |
 
-Para una demo con datos completos, restaurar `db/backups/seed-full.bak` o
-ejecutar `db/scripts/seed-full.sql` siguiendo el `INSTALL.md` incluido.
+## Cargar datos de demo
+
+Con la app ya corriendo (`start.ps1` dejo el contenedor levantado), en otra
+ventana de PowerShell:
+
+```powershell
+.\seed.ps1          # carga la demo completa (login: admin1@copa.com / Admin@123)
+.\seed.ps1 empty    # reinicia la base a vacia (solo esquema)
+```
+
+`seed.ps1` restaura `db/backups/seed-full.bak` (o `seed-empty.bak`) en un solo
+paso. El RESTORE requiere que no haya conexiones activas: si falla, deten la app
+con Ctrl+C, corre `seed.ps1` y volve a iniciar. Alternativa manual con
+`sqlcmd`/`seed-full.sql` documentada en `INSTALL.md`.
 
 ## Inicio manual
 
