@@ -3,5 +3,6 @@ namespace ProjectCopa;
 public enum UserRoles
 {
     Admin,
-    Editor
+    Editor,
+    Periodista
 }

@@ -1,6 +1,7 @@
+using DataAccess.Repositories;
+using DataAccessTest.TestDoubles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProjectCopa;
-using DataAccess.Repositories;
 
 namespace DataAccessTest;
 
@@ -10,30 +11,27 @@ public class MatchRepositoryGetByIdEdgeTests
     [TestMethod]
     public void GetById_ReturnsNull_WhenNotFound()
     {
-        MatchRepository repo = new MatchRepository();
-        Match? result = repo.GetById(12345);
-        Assert.IsNull(result);
+        MatchRepository repo = new MatchRepository(new InMemoryDbContextFactory());
+
+        Assert.IsNull(repo.GetById(12345));
     }
 
     [TestMethod]
     public void GetById_ReturnsCorrectMatch_WhenMultipleExist()
     {
-        MatchRepository repo = new MatchRepository();
-        Team team1 = new Team(1, "A", 1000, false, Confederation.UEFA);
-        Team team2 = new Team(2, "B", 1000, false, Confederation.UEFA);
-        Stadium stadium = new Stadium("S", "C", null, 30000);
-        MatchGroup m1 = MatchGroup.CreateInstance(10, DateTime.UtcNow, team1, team2, stadium, new Group("A"), Journey.CreateInstance(1));
-        MatchGroup m2 = MatchGroup.CreateInstance(20, DateTime.UtcNow, team2, team1, stadium, new Group("B"), Journey.CreateInstance(1));
+        InMemoryDbContextFactory factory = new InMemoryDbContextFactory();
+        MatchRepository repo = new MatchRepository(factory);
+        Group group = new Group("A");
+        Journey journey = Journey.CreateInstance(1);
+        Stadium stadium = EfFixtureData.MakeStadium(1, "S");
+        Team first = EfFixtureData.MakeTeam(1, "A");
+        Team second = EfFixtureData.MakeTeam(2, "B");
+        EfFixtureData.Seed(factory, group, journey, stadium, first, second);
 
-        repo.Add(m1);
-        repo.Add(m2);
+        repo.Add(EfFixtureData.MakeGroupMatch(10, new DateTime(2026, 6, 1), first, second, stadium, group, journey));
+        repo.Add(EfFixtureData.MakeGroupMatch(20, new DateTime(2026, 6, 2), second, first, stadium, group, journey));
 
-        Match? r1 = repo.GetById(10);
-        Match? r2 = repo.GetById(20);
-
-        Assert.IsNotNull(r1);
-        Assert.AreEqual(10, r1!.MatchId);
-        Assert.IsNotNull(r2);
-        Assert.AreEqual(20, r2!.MatchId);
+        Assert.AreEqual(10, repo.GetById(10)!.MatchId);
+        Assert.AreEqual(20, repo.GetById(20)!.MatchId);
     }
 }

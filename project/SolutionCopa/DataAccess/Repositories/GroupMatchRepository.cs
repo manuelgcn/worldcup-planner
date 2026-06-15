@@ -1,45 +1,57 @@
 using DataAccess.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using ProjectCopa;
 
 namespace DataAccess.Repositories;
 
+// Vista tipada de los partidos de grupo sobre la tabla TPH "Matches" (OfType<MatchGroup>).
+// Solo se usa en DataAccessTest; se migra a EF para no dejar almacenamiento List<T> en DataAccess.
 public class GroupMatchRepository : IGroupMatchRepository
 {
-    private readonly List<Match> _storage = new();
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public Match? GetById(int id) => _storage.FirstOrDefault(m => m.MatchId == id);
+    public GroupMatchRepository(IDbContextFactory<AppDbContext> contextFactory)
+    {
+        _contextFactory = contextFactory;
+    }
+
+    public Match? GetById(int id)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return MatchEf.WithGraph(context.Matches)
+            .OfType<MatchGroup>()
+            .Cast<Match>()
+            .FirstOrDefault(match => match.MatchId == id);
+    }
 
     public IReadOnlyCollection<Match> GetByGroup(string groupName)
     {
-        return _storage
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return MatchEf.WithGraph(context.Matches)
             .OfType<MatchGroup>()
-            .Where(mg => mg.Group != null && mg.Group.Name == groupName)
+            .Where(match => match.Group != null && match.Group.Name == groupName)
             .Cast<Match>()
             .ToList();
     }
 
-    public IReadOnlyCollection<Match> GetAll() => _storage.AsReadOnly();
-
-    public void Add(Match match)
+    public IReadOnlyCollection<Match> GetAll()
     {
-        if (!_storage.Any(m => m.MatchId == match.MatchId))
-            _storage.Add(match);
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return MatchEf.WithGraph(context.Matches)
+            .OfType<MatchGroup>()
+            .Cast<Match>()
+            .ToList();
     }
 
-    public void Update(Match match)
-    {
-        Match? existing = GetById(match.MatchId);
-        if (existing != null)
-        {
-            _storage.Remove(existing);
-            _storage.Add(match);
-        }
-    }
+    public void Add(Match match) => MatchEf.Add(_contextFactory, match);
 
-    public void Delete(Match match)
-    {
-        _storage.RemoveAll(m => m.MatchId == match.MatchId);
-    }
+    public void Update(Match match) => MatchEf.Update(_contextFactory, match);
 
-    public bool ExistsById(int id) => _storage.Any(m => m.MatchId == id);
+    public void Delete(Match match) => MatchEf.Delete(_contextFactory, match.MatchId);
+
+    public bool ExistsById(int id)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Matches.AsNoTracking().OfType<MatchGroup>().Any(match => match.MatchId == id);
+    }
 }

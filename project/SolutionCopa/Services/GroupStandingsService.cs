@@ -10,9 +10,8 @@ public sealed class GroupStandingsService : IGroupStandingsService
 {
     private const int PointsForWin = 3;
     private const int PointsForDraw = 1;
-    private const int MinimumGoalsForPlayedMatch = 1;
     private const int DefaultTieBreakerSeed = 0;
-    private const string GroupNotFoundMessage = "Group was not found.";
+    private const string GroupNotFoundMessage = "No se encontro el grupo.";
 
     private readonly IMatchRepository _matchRepository;
     private readonly IGroupRepository _groupRepository;
@@ -37,10 +36,18 @@ public sealed class GroupStandingsService : IGroupStandingsService
         AccumulateGroupMatches(group, accumulators);
 
         IReadOnlyCollection<StandingAccumulator> rows = accumulators.Values.ToList();
-        Dictionary<int, int> tieBreakers = BuildTieBreakerMap(rows, ResolveTieBreakerSeed());
+        Dictionary<int, int> tieBreakers = BuildTieBreakerMap(rows, ResolveTieBreakerSeed(), ResolveGroupIndex(group.Name));
 
         return OrderStandings(rows, tieBreakers)
             .Select(accumulator => accumulator.ToDto())
+            .ToList();
+    }
+
+    public List<GroupStandingDto> GetStandingsForAllGroups()
+    {
+        return _groupRepository.GetAll()
+            .OrderBy(group => group.Name)
+            .SelectMany(group => GetStandings(group.Name))
             .ToList();
     }
 
@@ -102,10 +109,21 @@ public sealed class GroupStandingsService : IGroupStandingsService
         return settings?.CrossingsSeed ?? DefaultTieBreakerSeed;
     }
 
-    private static Dictionary<int, int> BuildTieBreakerMap(IReadOnlyCollection<StandingAccumulator> rows, int seed)
+    // Indice del grupo en el orden alfabetico ordinal de todos los grupos, replicando el groupIndex
+    // que usa GroupQualifier; es parte de la semilla por-equipo del desempate compartido (H8).
+    private int ResolveGroupIndex(string groupName)
     {
-        Random random = new Random(seed);
-        return rows.ToDictionary(row => row.Team.Id, _ => random.Next());
+        List<string> orderedNames = _groupRepository.GetAll()
+            .Select(group => group.Name)
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToList();
+        return orderedNames.IndexOf(groupName);
+    }
+
+    private static Dictionary<int, int> BuildTieBreakerMap(IReadOnlyCollection<StandingAccumulator> rows, int seed, int groupIndex)
+    {
+        // Desempate por-equipo compartido con GroupQualifier (H8), no un Random por fila.
+        return rows.ToDictionary(row => row.Team.Id, row => GroupTieBreaker.Compute(seed, groupIndex, row.Team.Id));
     }
 
     private static IEnumerable<StandingAccumulator> OrderStandings(
@@ -127,7 +145,7 @@ public sealed class GroupStandingsService : IGroupStandingsService
 
     private static bool IsMatchPlayed(Match match)
     {
-        return match.WasSimulated || match.HomeGoals + match.AwayGoals >= MinimumGoalsForPlayedMatch;
+        return match.HasResult;
     }
 
     private sealed class StandingAccumulator

@@ -99,6 +99,18 @@ h1:focus {
     background: rgba(255, 215, 0, .15);
 }
 
+.btn-danger {
+    color: var(--m26-white);
+    background: var(--m26-red);
+    border: none;
+}
+
+.btn-danger:hover,
+.btn-danger:focus-visible {
+    color: var(--m26-white);
+    background: #C20025;
+}
+
 .btn-sm {
     border-radius: 8px;
 }
@@ -197,6 +209,8 @@ h1:focus {
 
 .alert {
     border-radius: 12px;
+    border: 1px solid transparent;
+    border-left-width: 4px;
 }
 
 .alert i {
@@ -205,6 +219,35 @@ h1:focus {
 
 .alert ul {
     margin: .5rem 0 0 1.25rem;
+}
+
+.alert-success {
+    background: #E8F5E9;
+    border-color: var(--m26-green);
+    color: #1B3E1C;
+}
+
+.alert-error {
+    background: #FDECEA;
+    border-color: var(--m26-red);
+    color: #5B1A17;
+}
+
+.alert-info {
+    background: rgba(0, 40, 104, .06);
+    border-color: var(--m26-blue);
+    color: #14233F;
+}
+
+.spin {
+    display: inline-block;
+    animation: m26-spin .8s linear infinite;
+}
+
+@keyframes m26-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .m26-empty {
@@ -247,4 +290,175 @@ h1:focus {
 
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
+}
+
+/* Badge del motor de simulacion junto al titulo del fixture */
+.engine-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: 0.75rem;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    background: #e7f1ff;
+    color: #0a58ca;
+    font-size: 0.95rem;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+/* Stat card con texto en lugar de numero */
+.stat-value-text {
+    font-size: 1.35rem;
+    line-height: 2.4rem;
+}
+
+.status-advanced {
+    margin-top: 0.5rem;
+}
+
+.status-advanced summary {
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* Navegacion por chips de grupos en el fixture */
+.group-chips {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0.5rem 0;
+    background: var(--bs-body-bg, #fff);
+}
+
+.group-chip {
+    min-width: 2.2rem;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid #adb5bd;
+    border-radius: 999px;
+    background: transparent;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.group-chip:hover {
+    background: #e9ecef;
+}
+
+.group-chip.active {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+
+/* Badge de estado de partido */
+.match-status {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.match-status.pending {
+    background: #fff3cd;
+    color: #664d03;
+}
+
+.match-status.played {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+/* Editor de resultado compartido */
+.match-result-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    background: #f8f9fa;
+}
+
+.match-result-editor .editor-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.match-result-editor .editor-row .form-label {
+    margin-bottom: 0;
+    font-weight: 600;
+}
+
+.match-result-editor .editor-score .editor-team {
+    font-weight: 600;
+    min-width: 8rem;
+}
+
+.match-result-editor .goal-input,
+.match-result-editor .card-input {
+    width: 5rem;
+    display: inline-block;
+}
+
+.match-result-editor .editor-incidents summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.match-result-editor .incidents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+}
+
+.match-result-editor .editor-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.group-detail-locked {
+    color: #664d03;
+    background: #fff3cd;
+    border-radius: 0.4rem;
+    padding: 0.4rem 0.7rem;
+    display: inline-block;
+}
+
+/* Banderas de equipos */
+.team-flag {
+    width: 24px;
+    height: 16px;
+    object-fit: cover;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+    vertical-align: text-bottom;
+    margin-right: 0.35rem;
+    flex-shrink: 0;
+}
+
+.team-flag-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e9ecef;
+    color: #6c757d;
+    font-size: 0.65rem;
+    box-shadow: none;
+    border: 1px dashed #adb5bd;
+}
+
+.team-flag-lg {
+    width: 48px;
+    height: 32px;
+    font-size: 1rem;
 }

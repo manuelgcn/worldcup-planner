@@ -1,10 +1,12 @@
 @page "/signup"
 @using ProjectCopa
 @using Services
-@inject UserServices UserServices
+@using Services.DTOs
+@using Services.Interfaces
+@inject IUserService UserServices
 @inject NavigationManager Nav
 
-<PageTitle>Register</PageTitle>
+<PageTitle>Crear cuenta</PageTitle>
 
 <section class="auth-wrap">
     <div class="m26-card auth-card">
@@ -14,7 +16,7 @@
         <div class="auth-body">
             @if (!string.IsNullOrWhiteSpace(error))
             {
-                <div class="alert alert-danger" role="alert">
+                <div class="alert alert-error" role="alert">
                     <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
                     @error
                 </div>
@@ -60,27 +62,24 @@
 
         try
         {
-            User user = new User(
-                id: GenerateUserId(),
-                name: name,
-                lastname: lastname,
-                email: email,
-                password: password,
-                dateOfBirth: dateOfBirth
-            );
-            user.AddRole(UserRoles.Editor);
+            UserServices.RegisterUser(new CreateUserRequestDto
+            {
+                Id = 0,
+                Name = name.Trim(),
+                Lastname = lastname.Trim(),
+                Email = email.Trim(),
+                Password = password,
+                DateOfBirth = dateOfBirth,
+                // El registro publico crea cuentas Periodista; el servicio lo fuerza de todos modos.
+                InitialRole = UserRoles.Periodista
+            });
 
-            UserServices.AddUser(user);
             Nav.NavigateTo("/login");
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
             error = ex.Message;
         }
     }
-
-    private int GenerateUserId()
-    {
-        return UserServices.GetAllUsers().Count + 1;
-    }
+    
 }

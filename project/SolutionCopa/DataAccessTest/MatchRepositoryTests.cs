@@ -1,4 +1,5 @@
 using DataAccess.Repositories;
+using DataAccessTest.TestDoubles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProjectCopa;
 
@@ -7,162 +8,208 @@ namespace DataAccessTest;
 [TestClass]
 public class MatchRepositoryTests
 {
+    private InMemoryDbContextFactory _factory = null!;
     private MatchRepository _repository = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        _repository = new MatchRepository();
+        _factory = new InMemoryDbContextFactory();
+        _repository = new MatchRepository(_factory);
     }
 
     [TestMethod]
     public void AddStoresMatchGroupAndExistsByIdReturnsTrue()
     {
-        MatchGroup matchGroup = CreateGroupMatch(matchId: 1, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 1));
+        AddIsolatedGroupMatch(matchId: 1, groupName: "A", date: Date(1));
 
-        _repository.Add(matchGroup);
-
-        bool exists = _repository.ExistsById(matchId: 1);
-        Assert.IsTrue(exists);
+        Assert.IsTrue(_repository.ExistsById(1));
     }
 
     [TestMethod]
     public void AddStoresMatchEliminationAndGetByIdReturnsSameType()
     {
-        MatchElimination matchElimination = CreateEliminationMatch(matchId: 10, date: new DateTime(2026, 6, 5));
+        AddBracket(eliminationId: 201, homeGoalsSource: 2, awayGoalsSource: 0);
 
-        _repository.Add(matchElimination);
+        Match? stored = _repository.GetById(201);
 
-        Match? storedMatch = _repository.GetById(matchId: 10);
-        Assert.IsNotNull(storedMatch);
-        Assert.IsInstanceOfType<MatchElimination>(storedMatch);
+        Assert.IsNotNull(stored);
+        Assert.IsInstanceOfType<MatchElimination>(stored);
     }
 
     [TestMethod]
     public void GetByIdReturnsNullWhenMatchDoesNotExist()
     {
-        Match? storedMatch = _repository.GetById(matchId: 999);
-
-        Assert.IsNull(storedMatch);
+        Assert.IsNull(_repository.GetById(999));
     }
 
     [TestMethod]
-    public void UpdateReplacesExistingMatchWithSameId()
+    public void UpdatePersistsEditedResult()
     {
-        MatchGroup originalMatch = CreateGroupMatch(matchId: 3, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 2));
-        MatchGroup updatedMatch = CreateGroupMatch(matchId: 3, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 10));
-        _repository.Add(originalMatch);
+        AddIsolatedGroupMatch(matchId: 3, groupName: "A", date: Date(2));
+        Match stored = _repository.GetById(3)!;          // detached (AsNoTracking)
+        stored.SetGoals(2, 1);
 
-        _repository.Update(updatedMatch);
+        _repository.Update(stored);
 
-        Match? storedMatch = _repository.GetById(matchId: 3);
-        Assert.IsNotNull(storedMatch);
-        Assert.AreEqual(expected: new DateTime(2026, 6, 10), actual: storedMatch.MatchDate);
+        Match reloaded = _repository.GetById(3)!;
+        Assert.AreEqual(2, reloaded.HomeGoals);
+        Assert.AreEqual(1, reloaded.AwayGoals);
+    }
+
+    [TestMethod]
+    public void UpdatePersistsEliminationPenaltyResult()
+    {
+        AddBracket(eliminationId: 201, homeGoalsSource: 1, awayGoalsSource: 1);
+        MatchElimination stored = (MatchElimination)_repository.GetById(201)!;
+        stored.SetGoals(1, 1);
+        stored.SetPenaltyShootoutResult(5, 4);
+
+        _repository.Update(stored);
+
+        MatchElimination reloaded = (MatchElimination)_repository.GetById(201)!;
+        Assert.IsTrue(reloaded.WonByPenalties);
+        Assert.AreEqual(5, reloaded.HomePenaltyGoals);
+        Assert.AreEqual(4, reloaded.AwayPenaltyGoals);
+    }
+
+    [TestMethod]
+    public void UpdatePersistsStadiumChange()
+    {
+        Stadium first = EfFixtureData.MakeStadium(1, "First");
+        Stadium second = EfFixtureData.MakeStadium(2, "Second");
+        Team home = EfFixtureData.MakeTeam(11, "Home");
+        Team away = EfFixtureData.MakeTeam(12, "Away");
+        Group group = new Group("A");
+        Journey journey = Journey.CreateInstance(1);
+        EfFixtureData.Seed(_factory, first, second, home, away, group, journey);
+        _repository.Add(EfFixtureData.MakeGroupMatch(5, Date(1), home, away, first, group, journey));
+
+        Match stored = _repository.GetById(5)!;
+        stored.ChangeStadium(second);
+        _repository.Update(stored);
+
+        Assert.AreEqual(1, _repository.GetByStadium(2).Count);
+        Assert.AreEqual(0, _repository.GetByStadium(1).Count);
     }
 
     [TestMethod]
     public void UpdateAddsMatchWhenIdDoesNotExist()
     {
-        MatchGroup match = CreateGroupMatch(matchId: 4, groupName: "B", journeyNumber: 2, date: new DateTime(2026, 6, 11));
+        Team home = EfFixtureData.MakeTeam(41, "Home");
+        Team away = EfFixtureData.MakeTeam(42, "Away");
+        Stadium stadium = EfFixtureData.MakeStadium(43, "Stadium");
+        Group group = new Group("B");
+        Journey journey = Journey.CreateInstance(2);
+        EfFixtureData.Seed(_factory, home, away, stadium, group, journey);
 
-        _repository.Update(match);
+        _repository.Update(EfFixtureData.MakeGroupMatch(4, Date(11), home, away, stadium, group, journey));
 
-        bool exists = _repository.ExistsById(matchId: 4);
-        Assert.IsTrue(exists);
+        Assert.IsTrue(_repository.ExistsById(4));
     }
 
     [TestMethod]
     public void DeleteRemovesStoredMatch()
     {
-        MatchGroup match = CreateGroupMatch(matchId: 5, groupName: "C", journeyNumber: 1, date: new DateTime(2026, 6, 3));
-        _repository.Add(match);
+        AddIsolatedGroupMatch(matchId: 5, groupName: "C", date: Date(3));
 
-        _repository.Delete(match);
+        _repository.Delete(_repository.GetById(5)!);
 
-        Match? storedMatch = _repository.GetById(matchId: 5);
-        Assert.IsNull(storedMatch);
+        Assert.IsNull(_repository.GetById(5));
     }
 
     [TestMethod]
     public void DeleteDoesNothingWhenMatchIsNotPresent()
     {
-        MatchGroup existingMatch = CreateGroupMatch(matchId: 6, groupName: "C", journeyNumber: 1, date: new DateTime(2026, 6, 4));
-        MatchGroup nonStoredMatch = CreateGroupMatch(matchId: 99, groupName: "C", journeyNumber: 2, date: new DateTime(2026, 6, 20));
-        _repository.Add(existingMatch);
+        AddIsolatedGroupMatch(matchId: 6, groupName: "C", date: Date(4));
+        Match notStored = EfFixtureData.MakeGroupMatch(
+            99, Date(20), EfFixtureData.MakeTeam(9901, "x"), EfFixtureData.MakeTeam(9902, "y"),
+            EfFixtureData.MakeStadium(9903, "z"), new Group("C"), Journey.CreateInstance(2));
 
-        _repository.Delete(nonStoredMatch);
+        _repository.Delete(notStored);
 
-        Match? storedMatch = _repository.GetById(matchId: 6);
-        Assert.IsNotNull(storedMatch);
+        Assert.IsNotNull(_repository.GetById(6));
     }
 
     [TestMethod]
-    public void GetByGroupReturnsOnlyMatchGroupFromRequestedGroup()
+    public void GetByGroupReturnsOnlyMatchesFromRequestedGroup()
     {
-        MatchGroup groupAMatch = CreateGroupMatch(matchId: 7, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 5));
-        MatchGroup groupBMatch = CreateGroupMatch(matchId: 8, groupName: "B", journeyNumber: 1, date: new DateTime(2026, 6, 5));
-        MatchElimination eliminationMatch = CreateEliminationMatch(matchId: 11, date: new DateTime(2026, 6, 6));
-        _repository.Add(groupAMatch);
-        _repository.Add(groupBMatch);
-        _repository.Add(eliminationMatch);
+        Group groupA = new Group("A");
+        Group groupB = new Group("B");
+        Journey journey = Journey.CreateInstance(1);
+        Stadium stadium = EfFixtureData.MakeStadium(1, "St1");
+        Team[] teams = FourTeams(1);
+        EfFixtureData.Seed(_factory, groupA, groupB, journey, stadium, teams[0], teams[1], teams[2], teams[3]);
 
-        List<Match> result = _repository.GetByGroup(groupName: "A");
+        _repository.Add(EfFixtureData.MakeGroupMatch(7, Date(5), teams[0], teams[1], stadium, groupA, journey));
+        _repository.Add(EfFixtureData.MakeGroupMatch(8, Date(5), teams[2], teams[3], stadium, groupB, journey));
 
-        Assert.AreEqual(expected: 1, actual: result.Count);
-        Assert.AreEqual(expected: 7, actual: result[0].MatchId);
+        List<Match> result = _repository.GetByGroup("A");
+
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(7, result[0].MatchId);
     }
 
     [TestMethod]
-    public void GetByGroupReturnsEmptyListWhenNoGroupMatches()
+    public void GetByJourneyReturnsOnlyMatchesFromRequestedJourney()
     {
-        MatchElimination eliminationMatch = CreateEliminationMatch(matchId: 12, date: new DateTime(2026, 6, 7));
-        _repository.Add(eliminationMatch);
+        Group group = new Group("A");
+        Journey journeyOne = Journey.CreateInstance(1);
+        Journey journeyTwo = Journey.CreateInstance(2);
+        Stadium stadium = EfFixtureData.MakeStadium(1, "St1");
+        Team[] teams = FourTeams(1);
+        EfFixtureData.Seed(_factory, group, journeyOne, journeyTwo, stadium, teams[0], teams[1], teams[2], teams[3]);
 
-        List<Match> result = _repository.GetByGroup(groupName: "Z");
+        _repository.Add(EfFixtureData.MakeGroupMatch(13, Date(8), teams[0], teams[1], stadium, group, journeyOne));
+        _repository.Add(EfFixtureData.MakeGroupMatch(14, Date(9), teams[2], teams[3], stadium, group, journeyTwo));
 
-        Assert.AreEqual(expected: 0, actual: result.Count);
+        List<Match> result = _repository.GetByJourney(2);
+
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(14, result[0].MatchId);
     }
 
     [TestMethod]
-    public void GetByJourneyReturnsOnlyMatchGroupFromRequestedJourney()
+    public void GetByStadiumReturnsOnlyMatchesAtThatStadium()
     {
-        MatchGroup journeyOne = CreateGroupMatch(matchId: 13, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 8));
-        MatchGroup journeyTwo = CreateGroupMatch(matchId: 14, groupName: "A", journeyNumber: 2, date: new DateTime(2026, 6, 9));
-        MatchElimination eliminationMatch = CreateEliminationMatch(matchId: 15, date: new DateTime(2026, 6, 9));
-        _repository.Add(journeyOne);
-        _repository.Add(journeyTwo);
-        _repository.Add(eliminationMatch);
+        Group group = new Group("A");
+        Journey journey = Journey.CreateInstance(1);
+        Stadium centenario = EfFixtureData.MakeStadium(1, "Centenario");
+        Stadium maracana = EfFixtureData.MakeStadium(2, "Maracana");
+        Team[] teams = FourTeams(1);
+        EfFixtureData.Seed(_factory, group, journey, centenario, maracana, teams[0], teams[1], teams[2], teams[3]);
 
-        List<Match> result = _repository.GetByJourney(journeyNumber: 2);
+        _repository.Add(EfFixtureData.MakeGroupMatch(1, Date(1), teams[0], teams[1], centenario, group, journey));
+        _repository.Add(EfFixtureData.MakeGroupMatch(2, Date(2), teams[2], teams[3], maracana, group, journey));
 
-        Assert.AreEqual(expected: 1, actual: result.Count);
-        Assert.AreEqual(expected: 14, actual: result[0].MatchId);
+        List<Match> atCentenario = _repository.GetByStadium(1);
+
+        Assert.AreEqual(1, atCentenario.Count);
+        Assert.AreEqual(1, atCentenario[0].MatchId);
     }
 
     [TestMethod]
-    public void GetByJourneyReturnsEmptyListWhenNoJourneyMatches()
+    public void GetByPhaseReturnsOnlyEliminationMatchesOfThatPhase()
     {
-        MatchElimination eliminationMatch = CreateEliminationMatch(matchId: 16, date: new DateTime(2026, 6, 10));
-        _repository.Add(eliminationMatch);
+        AddBracket(eliminationId: 10, homeGoalsSource: 2, awayGoalsSource: 0, phase: Phase.RoundOf16, sourceIdBase: 100, groupHomeName: "X", groupAwayName: "Y");
+        AddBracket(eliminationId: 11, homeGoalsSource: 2, awayGoalsSource: 0, phase: Phase.QuarterFinals, sourceIdBase: 300, groupHomeName: "P", groupAwayName: "Q");
 
-        List<Match> result = _repository.GetByJourney(journeyNumber: 3);
+        List<Match> result = _repository.GetByPhase(Phase.RoundOf16);
 
-        Assert.AreEqual(expected: 0, actual: result.Count);
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(10, result[0].MatchId);
     }
 
     [TestMethod]
     public void GetByDateRangeReturnsMatchesInsideInclusiveRange()
     {
-        MatchGroup boundaryStart = CreateGroupMatch(matchId: 17, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 10));
-        MatchElimination boundaryEnd = CreateEliminationMatch(matchId: 18, date: new DateTime(2026, 6, 20));
-        MatchGroup outOfRange = CreateGroupMatch(matchId: 19, groupName: "A", journeyNumber: 2, date: new DateTime(2026, 6, 25));
-        _repository.Add(boundaryStart);
-        _repository.Add(boundaryEnd);
-        _repository.Add(outOfRange);
+        AddIsolatedGroupMatch(matchId: 17, groupName: "A", date: Date(10));
+        AddIsolatedGroupMatch(matchId: 18, groupName: "B", date: Date(20));
+        AddIsolatedGroupMatch(matchId: 19, groupName: "C", date: Date(25));
 
-        List<Match> result = _repository.GetByDateRange(from: new DateTime(2026, 6, 10), to: new DateTime(2026, 6, 20));
+        List<Match> result = _repository.GetByDateRange(Date(10), Date(20));
 
-        Assert.AreEqual(expected: 2, actual: result.Count);
+        Assert.AreEqual(2, result.Count);
         Assert.IsTrue(result.Any(match => match.MatchId == 17));
         Assert.IsTrue(result.Any(match => match.MatchId == 18));
     }
@@ -170,67 +217,52 @@ public class MatchRepositoryTests
     [TestMethod]
     public void GetByDateRangeReturnsEmptyListWhenNothingMatches()
     {
-        MatchGroup match = CreateGroupMatch(matchId: 20, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 7, 1));
-        _repository.Add(match);
+        AddIsolatedGroupMatch(matchId: 20, groupName: "A", date: new DateTime(2026, 7, 1));
 
-        List<Match> result = _repository.GetByDateRange(from: new DateTime(2026, 6, 1), to: new DateTime(2026, 6, 30));
+        List<Match> result = _repository.GetByDateRange(Date(1), Date(30));
 
-        Assert.AreEqual(expected: 0, actual: result.Count);
-    }
-
-    [TestMethod]
-    public void GetByStadiumReturnsOnlyMatchesAtThatStadium()
-    {
-        Stadium s1 = new Stadium("Centenario", "Montevideo", null, 60000) { Id = 1 };
-        Stadium s2 = new Stadium("Maracana", "Rio", null, 78000) { Id = 2 };
-
-        Match m1 = CreateGroupMatchWithStadium(matchId: 1, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 1), stadium: s1);
-        Match m2 = CreateGroupMatchWithStadium(matchId: 2, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 2), stadium: s2);
-        _repository.Add(m1);
-        _repository.Add(m2);
-
-        List<Match> matchesAtS1 = _repository.GetByStadium(stadiumId: 1);
-
-        Assert.AreEqual(1, matchesAtS1.Count);
-        Assert.AreSame(m1, matchesAtS1[0]);
-    }
-
-    [TestMethod]
-    public void GetByPhaseReturnsOnlyEliminationMatchesOfThatPhase()
-    {
-        Match roundOf16 = CreateEliminationMatchWithPhase(matchId: 10, date: new DateTime(2026, 7, 1), phase: Phase.RoundOf16);
-        Match quarter = CreateEliminationMatchWithPhase(matchId: 11, date: new DateTime(2026, 7, 8), phase: Phase.QuarterFinals);
-        _repository.Add(roundOf16);
-        _repository.Add(quarter);
-
-        List<Match> result = _repository.GetByPhase(Phase.RoundOf16);
-
-        Assert.AreEqual(1, result.Count);
-        Assert.AreSame(roundOf16, result[0]);
+        Assert.AreEqual(0, result.Count);
     }
 
     [TestMethod]
     public void GetAllReturnsAllStoredMatches()
     {
-        Match m1 = CreateGroupMatch(matchId: 1, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 1));
-        Match m2 = CreateGroupMatch(matchId: 2, groupName: "B", journeyNumber: 1, date: new DateTime(2026, 6, 2));
-        _repository.Add(m1);
-        _repository.Add(m2);
+        AddIsolatedGroupMatch(matchId: 1, groupName: "A", date: Date(1));
+        AddIsolatedGroupMatch(matchId: 2, groupName: "B", date: Date(2));
 
-        List<Match> all = _repository.GetAll();
-
-        Assert.AreEqual(2, all.Count);
+        Assert.AreEqual(2, _repository.GetAll().Count);
     }
 
     [TestMethod]
-    public void ClearRemovesAllStoredMatches()
+    public void AddTwoMatchesSharingRelatedDoesNotDuplicateRows()
     {
-        _repository.Add(CreateGroupMatch(matchId: 1, groupName: "A", journeyNumber: 1, date: new DateTime(2026, 6, 1)));
-        _repository.Add(CreateEliminationMatch(matchId: 10, date: new DateTime(2026, 7, 1)));
+        // Trampa (a): equipos y estadio ya existen y se comparten entre dos partidos.
+        Group group = new Group("A");
+        Journey journey = Journey.CreateInstance(1);
+        Stadium stadium = EfFixtureData.MakeStadium(1, "Shared");
+        Team home = EfFixtureData.MakeTeam(1, "Home");
+        Team away = EfFixtureData.MakeTeam(2, "Away");
+        EfFixtureData.Seed(_factory, group, journey, stadium, home, away);
+
+        _repository.Add(EfFixtureData.MakeGroupMatch(1, Date(1), home, away, stadium, group, journey));
+        _repository.Add(EfFixtureData.MakeGroupMatch(2, Date(4), away, home, stadium, group, journey));
+
+        Assert.AreEqual(2, EfFixtureData.Count<Match>(_factory));
+        Assert.AreEqual(2, EfFixtureData.Count<Team>(_factory));      // sin equipos duplicados
+        Assert.AreEqual(1, EfFixtureData.Count<Stadium>(_factory));   // sin estadios duplicados
+    }
+
+    [TestMethod]
+    public void ClearRemovesAllStoredMatchesIncludingBracket()
+    {
+        // Trampa (c): el bracket tiene autorreferencias (MatchHome/MatchAway); Clear no debe explotar.
+        AddIsolatedGroupMatch(matchId: 1, groupName: "A", date: Date(1));
+        AddBracket(eliminationId: 201, homeGoalsSource: 2, awayGoalsSource: 0, sourceIdBase: 500);
 
         _repository.Clear();
 
         Assert.AreEqual(0, _repository.GetAll().Count);
+        Assert.AreEqual(0, EfFixtureData.Count<Match>(_factory));
     }
 
     [TestMethod]
@@ -241,64 +273,104 @@ public class MatchRepositoryTests
         Assert.AreEqual(0, _repository.GetAll().Count);
     }
 
-    private static MatchGroup CreateGroupMatch(int matchId, string groupName, int journeyNumber, DateTime date)
+    [TestMethod]
+    public void GetAllResolvesBracketChainAcrossMatches()
     {
-        Team homeTeam = new Team(matchId + 1, name: $"Team-{matchId}-H", fifaRanking: 1000 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
-        Team awayTeam = new Team(matchId + 2, name: $"Team-{matchId}-A", fifaRanking: 900 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
-        Stadium stadium = new Stadium(name: $"Stadium-{matchId}", city: "Test City", description: null, capacity: 50000);
-        Group group = new Group(name: groupName);
-        Journey journey = Journey.CreateInstance(number: journeyNumber);
+        // El partido de eliminacion referencia a sus fuentes; con identity resolution
+        // MatchHome/MatchAway apuntan a las MISMAS instancias cargadas en el resultado,
+        // por lo que GetWinner() resuelve a traves de la cadena.
+        AddBracket(eliminationId: 201, homeGoalsSource: 3, awayGoalsSource: 1);
 
-        return MatchGroup.CreateInstance(matchId, date, homeTeam, awayTeam, stadium, group, journey);
+        MatchElimination elimination = _repository.GetAll().OfType<MatchElimination>().Single();
+
+        Assert.IsNotNull(elimination.MatchHome);
+        Team? sourceWinner = elimination.MatchHome!.GetWinner();
+        Assert.IsNotNull(sourceWinner);
+        Assert.AreEqual(elimination.HomeTeam!.Id, sourceWinner!.Id);   // el local salio del ganador de MatchHome
     }
 
-    private static MatchGroup CreateGroupMatchWithStadium(int matchId, string groupName, int journeyNumber, DateTime date, Stadium stadium)
+    [TestMethod]
+    public void AddEliminationToleratesSourceGraphsWithDuplicateKeyedInstances()
     {
-        Team homeTeam = new Team(matchId + 1, name: $"Team-{matchId}-H", fifaRanking: 1000 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
-        Team awayTeam = new Team(matchId + 2, name: $"Team-{matchId}-A", fifaRanking: 900 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
-        Group group = new Group(name: groupName);
-        Journey journey = Journey.CreateInstance(number: journeyNumber);
+        // Reproduce el caso real: el estadio/equipos del partido de eliminacion y los que viven DENTRO
+        // de sus fuentes son instancias DISTINTAS con la misma PK (vienen de lecturas separadas:
+        // StadiumRepository vs elimRepo.GetAll). El attach no-traversal no debe romper con
+        // "another instance with the same key is already tracked".
+        Team a = EfFixtureData.MakeTeam(1, "A");
+        Team b = EfFixtureData.MakeTeam(2, "B");
+        Team c = EfFixtureData.MakeTeam(3, "C");
+        Team d = EfFixtureData.MakeTeam(4, "D");
+        Stadium stadiumInSources = EfFixtureData.MakeStadium(9, "Shared");
+        Group groupX = new Group("X");
+        Group groupY = new Group("Y");
+        Journey journey = Journey.CreateInstance(1);
+        MatchGroup sourceHome = EfFixtureData.MakeGroupMatch(110, Date(1), a, b, stadiumInSources, groupX, journey);
+        sourceHome.SetGoals(2, 0);
+        MatchGroup sourceAway = EfFixtureData.MakeGroupMatch(111, Date(1), c, d, stadiumInSources, groupY, journey);
+        sourceAway.SetGoals(0, 2);
+        EfFixtureData.Seed(_factory, a, b, c, d, stadiumInSources, groupX, groupY, journey, sourceHome, sourceAway);
 
-        return MatchGroup.CreateInstance(matchId, date, homeTeam, awayTeam, stadium, group, journey);
+        // Instancias NUEVAS con las mismas PKs, como si vinieran de otra lectura/contexto.
+        Stadium stadiumFromAnotherRead = EfFixtureData.MakeStadium(9, "Shared");
+        Team homeFromAnotherRead = EfFixtureData.MakeTeam(1, "A");
+        Team awayFromAnotherRead = EfFixtureData.MakeTeam(4, "D");
+
+        _repository.Add(EfFixtureData.MakeEliminationMatch(
+            201, Date(15), homeFromAnotherRead, awayFromAnotherRead, stadiumFromAnotherRead, Phase.RoundOf16, sourceHome, sourceAway));
+
+        Assert.IsTrue(_repository.ExistsById(201));
+        Assert.AreEqual(1, EfFixtureData.Count<Stadium>(_factory));   // el estadio no se duplico
+        Assert.AreEqual(4, EfFixtureData.Count<Team>(_factory));      // los equipos no se duplicaron
     }
 
-    private static MatchElimination CreateEliminationMatch(int matchId, DateTime date)
-    {
-        MatchGroup sourceHome = CreateGroupMatch(matchId: matchId + 100, groupName: "X", journeyNumber: 1, date: date.AddDays(-1));
-        MatchGroup sourceAway = CreateGroupMatch(matchId: matchId + 200, groupName: "Y", journeyNumber: 1, date: date.AddDays(-1));
-        Team homeTeam = new Team(matchId + 1, name: $"Elim-Team-{matchId}-H", fifaRanking: 1200 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
-        Team awayTeam = new Team(matchId + 2, name: $"Elim-Team-{matchId}-A", fifaRanking: 1100 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
-        Stadium stadium = new Stadium(name: $"Elim-Stadium-{matchId}", city: "Test City", description: null, capacity: 60000);
+    private static DateTime Date(int day) => new DateTime(2026, 6, day);
 
-        return MatchElimination.Create(
-            id: matchId,
-            matchDate: date,
-            homeTeam: homeTeam,
-            awayTeam: awayTeam,
-            stadium: stadium,
-            phase: Phase.RoundOf16,
-            matchCode: $"E{matchId}",
-            matchHome: sourceHome,
-            matchAway: sourceAway);
+    private static Team[] FourTeams(int baseId) =>
+    [
+        EfFixtureData.MakeTeam(baseId, $"T{baseId}"),
+        EfFixtureData.MakeTeam(baseId + 1, $"T{baseId + 1}"),
+        EfFixtureData.MakeTeam(baseId + 2, $"T{baseId + 2}"),
+        EfFixtureData.MakeTeam(baseId + 3, $"T{baseId + 3}"),
+    ];
+
+    // Siembra prerrequisitos propios (equipos/estadio/grupo/jornada) y agrega un partido de grupo aislado.
+    // Todas las claves se derivan de matchId para que varios partidos coexistan sin choques de PK al sembrar.
+    private void AddIsolatedGroupMatch(int matchId, string groupName, DateTime date)
+    {
+        Team home = EfFixtureData.MakeTeam(matchId * 100 + 1, $"H{matchId}");
+        Team away = EfFixtureData.MakeTeam(matchId * 100 + 2, $"A{matchId}");
+        Stadium stadium = EfFixtureData.MakeStadium(matchId * 100 + 3, $"St{matchId}");
+        Group group = new Group(groupName);
+        Journey journey = Journey.CreateInstance(matchId);
+        EfFixtureData.Seed(_factory, home, away, stadium, group, journey);
+        _repository.Add(EfFixtureData.MakeGroupMatch(matchId, date, home, away, stadium, group, journey));
     }
 
-    private static MatchElimination CreateEliminationMatchWithPhase(int matchId, DateTime date, Phase phase)
+    // Siembra dos partidos de grupo (con resultado) como fuentes y agrega un partido de eliminacion
+    // cuyo local es el ganador de MatchHome. Los ids de las fuentes se derivan de sourceIdBase para
+    // poder armar varios brackets en un mismo test sin colisiones de PK.
+    private void AddBracket(int eliminationId, int homeGoalsSource, int awayGoalsSource, Phase phase = Phase.RoundOf16,
+        int sourceIdBase = 100, string groupHomeName = "X", string groupAwayName = "Y")
     {
-        MatchGroup sourceHome = CreateGroupMatch(matchId: matchId + 100, groupName: "X", journeyNumber: 1, date: date.AddDays(-1));
-        MatchGroup sourceAway = CreateGroupMatch(matchId: matchId + 200, groupName: "Y", journeyNumber: 1, date: date.AddDays(-1));
-        Team homeTeam = new Team(matchId + 1, name: $"Elim-Team-{matchId}-H", fifaRanking: 1200 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
-        Team awayTeam = new Team(matchId + 2, name: $"Elim-Team-{matchId}-A", fifaRanking: 1100 + matchId, isFictitious: true, confederation: Confederation.CONMEBOL);
-        Stadium stadium = new Stadium(name: $"Elim-Stadium-{matchId}", city: "Test City", description: null, capacity: 60000);
+        Team a = EfFixtureData.MakeTeam(sourceIdBase + 1, $"A{sourceIdBase}");
+        Team b = EfFixtureData.MakeTeam(sourceIdBase + 2, $"B{sourceIdBase}");
+        Team c = EfFixtureData.MakeTeam(sourceIdBase + 3, $"C{sourceIdBase}");
+        Team d = EfFixtureData.MakeTeam(sourceIdBase + 4, $"D{sourceIdBase}");
+        Stadium stadium = EfFixtureData.MakeStadium(sourceIdBase + 5, $"St{sourceIdBase}");
+        Group groupX = new Group(groupHomeName);
+        Group groupY = new Group(groupAwayName);
+        Journey journey = Journey.CreateInstance(sourceIdBase);     // numero unico por bracket
 
-        return MatchElimination.Create(
-            id: matchId,
-            matchDate: date,
-            homeTeam: homeTeam,
-            awayTeam: awayTeam,
-            stadium: stadium,
-            phase: phase,
-            matchCode: $"E{matchId}",
-            matchHome: sourceHome,
-            matchAway: sourceAway);
+        MatchGroup sourceHome = EfFixtureData.MakeGroupMatch(sourceIdBase + 10, Date(1), a, b, stadium, groupX, journey);
+        sourceHome.SetGoals(homeGoalsSource, awayGoalsSource);
+        MatchGroup sourceAway = EfFixtureData.MakeGroupMatch(sourceIdBase + 11, Date(1), c, d, stadium, groupY, journey);
+        sourceAway.SetGoals(0, 2);
+
+        EfFixtureData.Seed(_factory, a, b, c, d, stadium, groupX, groupY, journey, sourceHome, sourceAway);
+
+        Team eliminationHome = sourceHome.GetWinner() ?? a;
+        Team eliminationAway = sourceAway.GetWinner() ?? d;
+        _repository.Add(EfFixtureData.MakeEliminationMatch(
+            eliminationId, Date(15), eliminationHome, eliminationAway, stadium, phase, sourceHome, sourceAway));
     }
 }

@@ -1,59 +1,66 @@
+using DataAccess.Repositories;
+using DataAccessTest.TestDoubles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProjectCopa;
-using DataAccess.Repositories;
 
 namespace DataAccessTest;
 
 [TestClass]
 public class EliminationMatchRepositoryTests
 {
+    private InMemoryDbContextFactory _factory = null!;
+    private EliminationMatchRepository _repository = null!;
+
+    [TestInitialize]
+    public void Setup()
+    {
+        _factory = new InMemoryDbContextFactory();
+        _repository = new EliminationMatchRepository(_factory);
+    }
+
     [TestMethod]
     public void AddAndGetByPhase()
     {
-        EliminationMatchRepository repo = new EliminationMatchRepository();
+        _repository.Add(SeedSourcesAndBuildElimination(20, Phase.RoundOf16, sourceIdBase: 100, "X", "Y"));
 
-        MatchElimination elim = CreateEliminationMatch(20);
-
-        repo.Add(elim);
-
-        Match? fetched = repo.GetById(20);
-        Assert.IsNotNull(fetched);
-
-        IReadOnlyCollection<Match> byPhase = repo.GetByPhase(Phase.RoundOf16);
-        Assert.IsTrue(byPhase.Count > 0);
+        Assert.IsNotNull(_repository.GetById(20));
+        Assert.IsTrue(_repository.GetByPhase(Phase.RoundOf16).Count > 0);
     }
 
     [TestMethod]
     public void ClearRemovesAllStoredEliminationMatches()
     {
-        EliminationMatchRepository repo = new EliminationMatchRepository();
-        repo.Add(CreateEliminationMatch(20));
-        repo.Add(CreateEliminationMatch(21));
+        _repository.Add(SeedSourcesAndBuildElimination(20, Phase.RoundOf16, sourceIdBase: 100, "X", "Y"));
+        _repository.Add(SeedSourcesAndBuildElimination(21, Phase.RoundOf16, sourceIdBase: 300, "P", "Q"));
 
-        repo.Clear();
+        _repository.Clear();
 
-        Assert.AreEqual(0, repo.GetAll().Count);
+        Assert.AreEqual(0, _repository.GetAll().Count);
     }
 
     [TestMethod]
     public void ClearOnEmptyRepositoryDoesNotThrow()
     {
-        EliminationMatchRepository repo = new EliminationMatchRepository();
+        _repository.Clear();
 
-        repo.Clear();
-
-        Assert.AreEqual(0, repo.GetAll().Count);
+        Assert.AreEqual(0, _repository.GetAll().Count);
     }
 
-    private static MatchElimination CreateEliminationMatch(int id)
+    // Siembra dos partidos de grupo (fuentes) y devuelve un partido de eliminacion listo para Add.
+    private MatchElimination SeedSourcesAndBuildElimination(int eliminationId, Phase phase, int sourceIdBase, string groupHome, string groupAway)
     {
-        Team team1 = new Team(1, "TeamA", 1200, false, Confederation.UEFA);
-        Team team2 = new Team(2, "TeamB", 1100, false, Confederation.UEFA);
-        Stadium stadium = new Stadium("S1", "City", null, 30000);
+        Team a = EfFixtureData.MakeTeam(sourceIdBase + 1, $"A{sourceIdBase}");
+        Team b = EfFixtureData.MakeTeam(sourceIdBase + 2, $"B{sourceIdBase}");
+        Team c = EfFixtureData.MakeTeam(sourceIdBase + 3, $"C{sourceIdBase}");
+        Team d = EfFixtureData.MakeTeam(sourceIdBase + 4, $"D{sourceIdBase}");
+        Stadium stadium = EfFixtureData.MakeStadium(sourceIdBase + 5, $"St{sourceIdBase}");
+        Group groupX = new Group(groupHome);
+        Group groupY = new Group(groupAway);
+        Journey journey = Journey.CreateInstance(sourceIdBase);
+        MatchGroup sourceHome = EfFixtureData.MakeGroupMatch(sourceIdBase + 10, new DateTime(2026, 6, 1), a, b, stadium, groupX, journey);
+        MatchGroup sourceAway = EfFixtureData.MakeGroupMatch(sourceIdBase + 11, new DateTime(2026, 6, 1), c, d, stadium, groupY, journey);
+        EfFixtureData.Seed(_factory, a, b, c, d, stadium, groupX, groupY, journey, sourceHome, sourceAway);
 
-        MatchGroup source1 = MatchGroup.CreateInstance(id + 100, DateTime.Now.AddDays(-1), team1, team2, stadium, new Group("A"), Journey.CreateInstance(1));
-        MatchGroup source2 = MatchGroup.CreateInstance(id + 200, DateTime.Now.AddDays(-1), team2, team1, stadium, new Group("B"), Journey.CreateInstance(1));
-
-        return MatchElimination.Create(id, DateTime.Now.AddDays(1), team1, team2, stadium, Phase.RoundOf16, $"R16-{id}", source1, source2);
+        return EfFixtureData.MakeEliminationMatch(eliminationId, new DateTime(2026, 6, 15), a, d, stadium, phase, sourceHome, sourceAway);
     }
 }

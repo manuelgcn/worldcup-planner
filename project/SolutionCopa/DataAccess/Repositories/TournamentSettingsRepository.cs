@@ -1,42 +1,62 @@
 using DataAccess.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using ProjectCopa;
 
 namespace DataAccess.Repositories;
 
+// Repositorio de TournamentSettings sobre EF Core (mismo patron que TeamRepository).
+// La entidad es inmutable (propiedades get-only): SetValues escribe los backing fields.
 public class TournamentSettingsRepository : ITournamentSettingsRepository
 {
-    private readonly List<TournamentSettings> _settings = new List<TournamentSettings>();
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
+
+    public TournamentSettingsRepository(IDbContextFactory<AppDbContext> contextFactory)
+    {
+        _contextFactory = contextFactory;
+    }
 
     public void Add(TournamentSettings settings)
     {
-        _settings.Add(settings);
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        context.TournamentSettings.Add(settings);
+        context.SaveChanges();
     }
 
     public void Update(TournamentSettings settings)
     {
-        int index = _settings.FindIndex(existingSettings => existingSettings.Id == settings.Id);
-
-        if (index >= 0)
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        TournamentSettings? existing = context.TournamentSettings.FirstOrDefault(s => s.Id == settings.Id);
+        if (existing is null)
         {
-            _settings[index] = settings;
-            return;
+            context.TournamentSettings.Add(settings);                  // conserva la semantica actual: si no existe, agrega
         }
-
-        _settings.Add(settings);
+        else
+        {
+            context.Entry(existing).CurrentValues.SetValues(settings); // copia valores por nombre de propiedad (backing fields)
+        }
+        context.SaveChanges();
     }
 
     public void Delete(TournamentSettings settings)
     {
-        _settings.RemoveAll(existingSettings => existingSettings.Id == settings.Id);
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        TournamentSettings? existing = context.TournamentSettings.FirstOrDefault(s => s.Id == settings.Id);
+        if (existing is not null)
+        {
+            context.TournamentSettings.Remove(existing);
+            context.SaveChanges();
+        }
     }
 
     public TournamentSettings? GetById(int tournamentSettingsId)
     {
-        return _settings.FirstOrDefault(settings => settings.Id == tournamentSettingsId);
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.TournamentSettings.AsNoTracking().FirstOrDefault(s => s.Id == tournamentSettingsId);
     }
 
     public IReadOnlyCollection<TournamentSettings> GetAll()
     {
-        return _settings.AsReadOnly();
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.TournamentSettings.AsNoTracking().ToList();
     }
 }

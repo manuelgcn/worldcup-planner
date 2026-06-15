@@ -1,130 +1,240 @@
-﻿
-using ProjectCopa;
+﻿using ProjectCopa;
+using Services.DTOs;
+using Services.Exceptions;
 using Services.Interfaces;
+using DataAccess.Interfaces;
 
 namespace Services;
 
-public class UserServices
+public class UserServices : IUserService
 {
-    private readonly IAuditLogService? _auditLogService;
-    private readonly List<User> users = new List<User>();
+    // Id reservado para el administrador del sistema: no puede modificarse ni eliminarse.
+    private const int SystemAdminUserId = 1;
 
-    public IReadOnlyCollection<User> GetAllUsers()
-    {
-        return users.AsReadOnly();
-    }
+    // El registro publico es anonimo: nunca debe poder auto-asignarse un rol
+    // privilegiado. El servidor ignora el rol del request y fuerza Periodista.
+    // Editor/Admin solo se conceden por el camino administrativo (AssignRole).
+    private const UserRoles PublicRegistrationRole = UserRoles.Periodista;
 
-    public UserServices(IAuditLogService? auditLogService = null)
+    private const string InvalidCredentialsMessage = "Credenciales invalidas";
+    private const string EmailAlreadyExistsMessage = "El email ya esta registrado";
+    private const string UserIdAlreadyAssignedMessage = "El id de usuario ya esta asignado";
+    private const string UserMustHaveOneRoleMessage = "El usuario debe tener al menos un rol";
+    private const string UserNotFoundMessage = "Usuario no encontrado";
+    private const string SystemAdminCannotBeModifiedMessage = "El usuario administrador del sistema no puede ser modificado";
+    private const string SystemAdminCannotBeDeletedMessage = "El usuario administrador del sistema no puede ser eliminado";
+
+    private readonly IAuditLogService _auditLogService;
+    private readonly IUserRepository _userRepository;
+
+    public UserServices(IUserRepository userRepository, IAuditLogService auditLogService)
     {
+        ArgumentNullException.ThrowIfNull(userRepository);
+        ArgumentNullException.ThrowIfNull(auditLogService);
+        _userRepository = userRepository;
         _auditLogService = auditLogService;
     }
 
-    public void AddUser(User user)
+    public IReadOnlyCollection<User> GetAllUsers()
     {
-        if (users.Any(u => u.email == user.email))
-            throw new ArgumentException("Email already exists");
-        if (users.Any(u => u.idUser == user.idUser))
-            throw new ArgumentException("User ID is already assigned");
+        return _userRepository.GetAll();
+    }
+
+    public void RegisterUser(CreateUserRequestDto request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        // La construccion de la entidad de dominio (con sus invariantes) vive aca,
+        // no en la UI: la pantalla solo arma el request.
+        User user = new User(
+            request.Id,
+            request.Name,
+            request.Lastname,
+            request.Email,
+            request.Password,
+            request.DateOfBirth);
+        // No se confia en request.InitialRole: el registro publico siempre es Periodista.
+        user.AddRole(PublicRegistrationRole);
+
+        AddUser(user);
+    }
+
+    public void AddUser(User user, string? performedByEmail = null)
+    {
+        if (_userRepository.ExistsByEmail(user.email))
+            throw new UserServicesException(EmailAlreadyExistsMessage);
+
+        if (_userRepository.GetById(user.idUser) is not null)
+            throw new UserServicesException(UserIdAlreadyAssignedMessage);
+
         if (!user.Roles.Any())
-            throw new ArgumentException("User must have at least one role");
+            throw new UserServicesException(UserMustHaveOneRoleMessage);
 
+        _userRepository.Add(user);
 
-        users.Add(user);
-        _auditLogService?.Log(
+        _auditLogService.LogPerformedBy(
             AuditActions.CreateUser,
             $"UserId={user.idUser} created with email={user.email}.",
+            performedByEmail,
             nameof(User),
-            user.idUser);
+            user.idUser
+        );
     }
-    
-    
-    
-    public void RemoveRole(int userId, UserRoles role)
+
+    public void RemoveRole(int userId, UserRoles role, string? performedByEmail = null)
     {
+        if (userId == SystemAdminUserId)
+            throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
+
         User user = GetUserById(userId);
 
-        if (!user.Roles.Contains(role))
+        if (!user.Roles.Any(r => r.Role == role))
             return;
 
         if (user.Roles.Count == 1)
-            throw new ArgumentException("User must have at least one role");
+            throw new UserServicesException(UserMustHaveOneRoleMessage);
 
         user.RemoveRoles(role);
 
-        _auditLogService?.Log(
+        _userRepository.Update(user);
+
+        _auditLogService.LogPerformedBy(
             AuditActions.RemoveUserRoles,
             $"Role={role} removed from UserId={user.idUser}.",
+            performedByEmail,
             nameof(User),
             user.idUser
         );
     }
 
 
-    
-    
+    public User Authenticate(string email, string password)
+    {
+        User? user = _userRepository.GetByEmail(email);
+
+        if (user == null || !user.PasswordMatches(password))
+            throw new UserServicesException(InvalidCredentialsMessage);
+
+        return user;
+    }
 
     public User GetUserByEmail(string email)
     {
-        User user = users.FirstOrDefault(u => u.email == email);
+        User? user = _userRepository.GetByEmail(email);
 
         if (user == null)
-            throw new ArgumentException("User not found");
+            throw new UserServicesException(UserNotFoundMessage);
 
         return user;
     }
 
-    
     public User GetUserById(int id)
     {
-        User user = users.FirstOrDefault(u => u.idUser == id);
+        User? user = _userRepository.GetById(id);
 
         if (user == null)
-            throw new ArgumentException("User not found");
+            throw new UserServicesException(UserNotFoundMessage);
 
         return user;
     }
 
-    
-    public void RemoveUser(int id)
+    public void RemoveUser(int id, string? performedByEmail = null)
     {
+        if (id == SystemAdminUserId)
+            throw new UserServicesException(SystemAdminCannotBeDeletedMessage);
+
         User user = GetUserById(id);
-        users.Remove(user);
-        _auditLogService?.Log(
+
+        _userRepository.Remove(user);
+
+        _auditLogService.LogPerformedBy(
             AuditActions.DeleteUser,
             $"UserId={user.idUser} deleted.",
+            performedByEmail,
             nameof(User),
-            user.idUser);
+            user.idUser
+        );
     }
 
-    public void UpdateUser(int id, string name, string lastname, string email)
+    public void UpdateUser(int id, string name, string lastname, string email, string? performedByEmail = null)
     {
+        if (id == SystemAdminUserId)
+            throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
 
-        if (id == 1)
-        {
-            throw new ArgumentException("El usuario administrador del sistema no puede ser modificado");
-        }
+        User? userWithEmail = _userRepository.GetByEmail(email);
+
+        if (userWithEmail is not null && userWithEmail.idUser != id)
+            throw new UserServicesException(EmailAlreadyExistsMessage);
 
         User user = GetUserById(id);
 
-        if (users.Any(u => u.email == email && u.idUser != id))
-            throw new ArgumentException("Email already exists");
-
         user.UpdatePersonalData(name, lastname, email);
-        _auditLogService?.Log(
+
+        _userRepository.Update(user);
+
+        _auditLogService.LogPerformedBy(
             AuditActions.UpdateUser,
             $"UserId={user.idUser} updated.",
+            performedByEmail,
             nameof(User),
-            user.idUser);
+            user.idUser
+        );
     }
 
-    public void AssignRole(int userId, UserRoles role)
+    public void AssignRole(int userId, UserRoles role, string? performedByEmail = null)
     {
         User user = GetUserById(userId);
+
         user.AddRole(role);
-        _auditLogService?.Log(
+
+        _userRepository.Update(user);
+
+        _auditLogService.LogPerformedBy(
             AuditActions.AssignUserRole,
             $"Role={role} assigned to UserId={user.idUser}.",
+            performedByEmail,
             nameof(User),
-            user.idUser);
+            user.idUser
+        );
+    }
+
+    public void ToggleRole(int userId, UserRoles role, string? performedByEmail = null)
+    {
+        if (userId == SystemAdminUserId)
+            throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
+
+        User user = GetUserById(userId);
+
+        bool hasRole = user.Roles.Any(r => r.Role == role);
+
+        if (hasRole)
+        {
+            if (user.Roles.Count == 1)
+                throw new UserServicesException(UserMustHaveOneRoleMessage);
+
+            user.RemoveRoles(role);
+
+            _auditLogService.LogPerformedBy(
+                AuditActions.RemoveUserRoles,
+                $"Role={role} removed from UserId={user.idUser}.",
+                performedByEmail,
+                nameof(User),
+                user.idUser
+            );
+        }
+        else
+        {
+            user.AddRole(role);
+
+            _auditLogService.LogPerformedBy(
+                AuditActions.AssignUserRole,
+                $"Role={role} assigned to UserId={user.idUser}.",
+                performedByEmail,
+                nameof(User),
+                user.idUser
+            );
+        }
+
+        _userRepository.Update(user);
     }
 }

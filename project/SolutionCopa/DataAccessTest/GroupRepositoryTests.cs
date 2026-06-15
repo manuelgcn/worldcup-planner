@@ -1,4 +1,5 @@
 using DataAccess.Repositories;
+using DataAccessTest.TestDoubles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProjectCopa;
 
@@ -7,121 +8,88 @@ namespace DataAccessTest;
 [TestClass]
 public class GroupRepositoryTests
 {
+    private InMemoryDbContextFactory _factory = null!;
     private GroupRepository _repository = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        _repository = new GroupRepository();
+        _factory = new InMemoryDbContextFactory();
+        _repository = new GroupRepository(_factory);
     }
 
     [TestMethod]
     public void AddStoresGroupAndGetByNameReturnsIt()
     {
-        Group group = CreateGroup("A");
+        _repository.Add(new Group("A"));
 
-        _repository.Add(group);
+        Group? stored = _repository.GetByName("A");
 
-        Group? storedGroup = _repository.GetByName("A");
-        Assert.AreSame(group, storedGroup);
+        Assert.IsNotNull(stored);
+        Assert.AreEqual("A", stored!.Name);
     }
 
     [TestMethod]
-    public void UpdateReplacesExistingGroupWithSameName()
+    public void AddPersistsGroupRetrievableFromNewContext()
     {
-        Group originalGroup = CreateGroup("A");
-        Group updatedGroup = CreateGroup("A");
-        _repository.Add(originalGroup);
+        _repository.Add(new Group("B"));                // autosave por operacion
 
-        _repository.Update(updatedGroup);
+        Group? stored = _repository.GetByName("B");     // contexto nuevo
 
-        Group? storedGroup = _repository.GetByName("A");
-        Assert.IsNotNull(storedGroup);
-        Assert.AreSame(updatedGroup, storedGroup);
+        Assert.IsNotNull(stored);
+        Assert.AreEqual("B", stored!.Name);
     }
 
     [TestMethod]
     public void UpdateAddsGroupWhenNameDoesNotExist()
     {
-        Group group = CreateGroup("C");
+        _repository.Update(new Group("C"));
 
-        _repository.Update(group);
-
-        Assert.AreSame(group, _repository.GetByName("C"));
+        Assert.IsTrue(_repository.ExistsByName("C"));
     }
 
     [TestMethod]
     public void DeleteRemovesStoredGroup()
     {
-        Group group = CreateGroup("D");
-        _repository.Add(group);
+        _repository.Add(new Group("D"));
 
-        _repository.Delete(group);
+        _repository.Delete(new Group("D"));
 
         Assert.IsNull(_repository.GetByName("D"));
     }
 
     [TestMethod]
-    public void GetByNameReturnsStoredGroup()
-    {
-        Group group = CreateGroup("E");
-        _repository.Add(group);
-
-        Group? storedGroup = _repository.GetByName("E");
-
-        Assert.AreSame(group, storedGroup);
-    }
-
-    [TestMethod]
     public void ExistsByNameReturnsTrueWhenGroupIsStored()
     {
-        Group group = CreateGroup("F");
-        _repository.Add(group);
+        _repository.Add(new Group("F"));
 
-        bool exists = _repository.ExistsByName("F");
-
-        Assert.IsTrue(exists);
+        Assert.IsTrue(_repository.ExistsByName("F"));
     }
 
     [TestMethod]
     public void ExistsByNameReturnsFalseWhenGroupIsNotStored()
     {
-        bool exists = _repository.ExistsByName("Z");
-
-        Assert.IsFalse(exists);
+        Assert.IsFalse(_repository.ExistsByName("Z"));
     }
 
     [TestMethod]
     public void GetAllReturnsAllStoredGroups()
     {
-        Group firstGroup = CreateGroup("G");
-        Group secondGroup = CreateGroup("H");
-        _repository.Add(firstGroup);
-        _repository.Add(secondGroup);
+        _repository.Add(new Group("G"));
+        _repository.Add(new Group("H"));
 
         IReadOnlyCollection<Group> groups = _repository.GetAll();
 
         Assert.AreEqual(2, groups.Count);
-        Assert.IsTrue(groups.Contains(firstGroup));
-        Assert.IsTrue(groups.Contains(secondGroup));
-    }
-
-    [TestMethod]
-    public void AddStoresGroupAndGetByNameReturnsIt_NameOnly()
-    {
-        Group group = new Group("A");
-
-        _repository.Add(group);
-
-        Group? stored = _repository.GetByName("A");
-        Assert.AreSame(group, stored);
+        Assert.IsTrue(groups.Any(group => group.Name == "G"));
+        Assert.IsTrue(groups.Any(group => group.Name == "H"));
     }
 
     [TestMethod]
     public void ClearRemovesAllStoredGroups()
     {
-        _repository.Add(CreateGroup("A"));
-        _repository.Add(CreateGroup("B"));
+        _repository.Add(new Group("A"));
+        _repository.Add(new Group("B"));
 
         _repository.Clear();
 
@@ -136,8 +104,55 @@ public class GroupRepositoryTests
         Assert.AreEqual(0, _repository.GetAll().Count);
     }
 
-    private static Group CreateGroup(string name)
+    [TestMethod]
+    public void AddPersistsGroupWithItsFourTeamsAndGetByNameReturnsThem()
     {
-        return new Group(name);
+        Team[] teams = SeedFourTeams(baseId: 10);
+        Group group = EfFixtureData.MakeGroup("A", teams);
+
+        _repository.Add(group);                         // los equipos ya existen: se attachean, no se duplican
+
+        Group? stored = _repository.GetByName("A");
+        Assert.IsNotNull(stored);
+        Assert.AreEqual(4, stored!.Teams.Count);
+        Assert.IsTrue(stored.Teams.Any(team => team.Id == 10));
+        Assert.IsTrue(stored.Teams.Any(team => team.Id == 13));
+    }
+
+    [TestMethod]
+    public void AddGroupWithExistingTeamsDoesNotDuplicateTeamRows()
+    {
+        Team[] teams = SeedFourTeams(baseId: 20);
+
+        _repository.Add(EfFixtureData.MakeGroup("A", teams));
+
+        Assert.AreEqual(4, EfFixtureData.Count<Team>(_factory));   // sin filas de equipo duplicadas
+        Assert.AreEqual(1, EfFixtureData.Count<Group>(_factory));
+    }
+
+    [TestMethod]
+    public void ClearReleasesTeamsInsteadOfDeletingThem()
+    {
+        Team[] teams = SeedFourTeams(baseId: 30);
+        _repository.Add(EfFixtureData.MakeGroup("A", teams));
+
+        _repository.Clear();
+
+        Assert.AreEqual(0, EfFixtureData.Count<Group>(_factory));
+        Assert.AreEqual(4, EfFixtureData.Count<Team>(_factory));   // SetNull: los equipos sobreviven al borrado del grupo
+    }
+
+    // Persiste 4 equipos sueltos (sin grupo) en la BD compartida y devuelve esas instancias.
+    private Team[] SeedFourTeams(int baseId)
+    {
+        Team[] teams =
+        [
+            EfFixtureData.MakeTeam(baseId, $"Team-{baseId}"),
+            EfFixtureData.MakeTeam(baseId + 1, $"Team-{baseId + 1}"),
+            EfFixtureData.MakeTeam(baseId + 2, $"Team-{baseId + 2}"),
+            EfFixtureData.MakeTeam(baseId + 3, $"Team-{baseId + 3}"),
+        ];
+        EfFixtureData.Seed(_factory, teams);
+        return teams;
     }
 }

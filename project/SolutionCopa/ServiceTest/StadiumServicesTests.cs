@@ -1,5 +1,6 @@
 using ProjectCopa;
 using DataAccess.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Services;
 using ServiceTest.TestDoubles.Mocks;
@@ -20,7 +21,7 @@ public class StadiumServicesTests
     {
         _repository = new MockStadiumRepository();
         _unitOfWork = new MockUnitOfWork();
-        _service = new StadiumServices(_repository, _unitOfWork);
+        _service = new StadiumServices(_repository, _unitOfWork, new MockAuditLogService());
     }
 
     
@@ -29,7 +30,7 @@ public class StadiumServicesTests
     {
         MockStadiumRepository repository = new MockStadiumRepository();
         MockUnitOfWork unitOfWork = new MockUnitOfWork();
-        StadiumServices localService = new StadiumServices(repository, unitOfWork);
+        StadiumServices localService = new StadiumServices(repository, unitOfWork, new MockAuditLogService());
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         localService.AddStadium(stadium);
@@ -39,11 +40,21 @@ public class StadiumServicesTests
     }
 
     [TestMethod]
+    public void CannotAddDuplicateStadiumNameIgnoringCaseAndAccents()
+    {
+        _service.AddStadium(new Stadium("Estadio Azteca", "Ciudad de Mexico", null, 87000) { Id = 1 });
+
+        Assert.ThrowsException<StadiumServicesException>(
+            () => _service.AddStadium(new Stadium("ESTADIO AZTECA", "Otra Ciudad", null, 70000) { Id = 2 }));
+    }
+
+    [TestMethod]
     public void DI_RegistersStadiumServicesAsSameInstance()
     {
         ServiceCollection services = new ServiceCollection();
         services.AddSingleton<IStadiumRepository, MockStadiumRepository>();
         services.AddSingleton<IUnitOfWork, MockUnitOfWork>();
+        services.AddSingleton<IAuditLogService, MockAuditLogService>();
         services.AddSingleton<StadiumServices>();
         services.AddSingleton<IStadiumService>(sp => sp.GetRequiredService<StadiumServices>());
 
@@ -124,6 +135,32 @@ public class StadiumServicesTests
 
     
     [TestMethod]
+    public void AddStadium_WhenIdNotProvided_AssignsSequentialIds()
+    {
+        // La UI crea estadios sin Id (default 0). Como la clave es ValueGeneratedNever,
+        // dos estadios con Id 0 violarian la PK; AddStadium debe asignar Id = max+1.
+        _service.AddStadium(new Stadium("Centenario", "Montevideo", null, 60000));
+        _service.AddStadium(new Stadium("Maracana", "Rio", null, 78000));
+
+        List<Stadium> all = _service.GetAllStadiums().ToList();
+        Assert.AreEqual(2, all.Count);
+        List<int> ids = all.Select(stadium => stadium.Id).ToList();
+        Assert.AreEqual(2, ids.Distinct().Count());
+        Assert.IsFalse(ids.Contains(0));
+    }
+
+    [TestMethod]
+    public void AddStadium_AssignsIdAfterTheMaximumExistingId()
+    {
+        _service.AddStadium(new Stadium("Wembley", "London", null, 90000) { Id = 5 });
+
+        _service.AddStadium(new Stadium("Centenario", "Montevideo", null, 60000));
+
+        Stadium added = _service.GetByName("Centenario");
+        Assert.AreEqual(6, added.Id);
+    }
+
+    [TestMethod]
     public void CanGetStadiumByName()
     {
         Stadium stadium = new Stadium(
@@ -178,7 +215,7 @@ public class StadiumServicesTests
     {
         MockStadiumRepository repository = new MockStadiumRepository();
         MockUnitOfWork unitOfWork = new MockUnitOfWork();
-        StadiumServices localService = new StadiumServices(repository, unitOfWork);
+        StadiumServices localService = new StadiumServices(repository, unitOfWork, new MockAuditLogService());
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         localService.AddStadium(stadium);
@@ -221,7 +258,7 @@ public class StadiumServicesTests
     {
         MockStadiumRepository repository = new MockStadiumRepository();
         MockUnitOfWork unitOfWork = new MockUnitOfWork();
-        StadiumServices localService = new StadiumServices(repository, unitOfWork);
+        StadiumServices localService = new StadiumServices(repository, unitOfWork, new MockAuditLogService());
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         localService.AddStadium(stadium);
@@ -239,12 +276,78 @@ public class StadiumServicesTests
             _service.UpdateById(-1, "Ciudad", null, 30000));
     }
 
+    [TestMethod]
+    public void RemoveById_WhenStadiumReferencedByMatch_ThrowsStadiumServicesException()
+    {
+        // En SQL real el FK Restrict hace fallar el SaveChanges con DbUpdateException; el servicio
+        // debe traducirla a StadiumServicesException (InMemory no aplica FKs, por eso usamos un stub).
+        Stadium referenced = new Stadium("Centenario", "Montevideo", null, 60000) { Id = 7 };
+        StadiumServices service = new StadiumServices(
+            new DeleteFailingStadiumRepository(referenced),
+            new MockUnitOfWork(),
+            new MockAuditLogService());
+
+        Assert.ThrowsException<StadiumServicesException>(() => service.RemoveById(7));
+    }
+
+    [TestMethod]
+    public void AddStadium_RecordsPerformingActor()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        StadiumServices auditedService = CreateAuditedService(auditRepo);
+
+        auditedService.AddStadium(new Stadium("Centenario", "Montevideo", null, 60000), performedByEmail: "admin@copa.com");
+
+        AuditLog log = auditRepo.GetAll().Single(l => l.Action == "CREATE_STADIUM");
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void UpdateById_RecordsPerformingActor()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        StadiumServices auditedService = CreateAuditedService(auditRepo);
+        auditedService.AddStadium(new Stadium("Centenario", "Montevideo", null, 60000));
+        int stadiumId = auditedService.GetByName("Centenario").Id;
+
+        auditedService.UpdateById(stadiumId, "Montevideo Nuevo", null, 65000, performedByEmail: "admin@copa.com");
+
+        AuditLog log = auditRepo.GetAll().Single(l => l.Action == "UPDATE_STADIUM");
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void RemoveById_RecordsPerformingActor()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        StadiumServices auditedService = CreateAuditedService(auditRepo);
+        auditedService.AddStadium(new Stadium("Centenario", "Montevideo", null, 60000));
+        int stadiumId = auditedService.GetByName("Centenario").Id;
+
+        auditedService.RemoveById(stadiumId, performedByEmail: "admin@copa.com");
+
+        AuditLog log = auditRepo.GetAll().Single(l => l.Action == "DELETE_STADIUM");
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
+    }
+
     private static StadiumServices CreateAuditedService(MockAuditLogRepository repository)
     {
         return new StadiumServices(
             new MockStadiumRepository(),
             new MockUnitOfWork(),
-            AuditLogService.CreateInstance(repository, 1));
+            AuditLogService.CreateInstance(repository));
+    }
+
+    // Repositorio que simula el rechazo del FK (estadio referenciado por un partido) al borrar.
+    private sealed class DeleteFailingStadiumRepository(Stadium stadium) : IStadiumRepository
+    {
+        public void Add(Stadium toAdd) { }
+        public void Update(Stadium toUpdate) { }
+        public void Delete(Stadium toDelete) => throw new DbUpdateException("FK violation: stadium referenced by a match.");
+        public Stadium? GetById(int stadiumId) => stadiumId == stadium.Id ? stadium : null;
+        public Stadium? GetByName(string name) => stadium.Name == name ? stadium : null;
+        public bool ExistsByName(string name) => stadium.Name == name;
+        public IReadOnlyCollection<Stadium> GetAll() => new[] { stadium };
     }
 
     [TestMethod]
@@ -295,7 +398,7 @@ public class StadiumServicesTests
         StadiumServices auditedService = new StadiumServices(
             new MockStadiumRepository(),
             new MockUnitOfWork(),
-            AuditLogService.CreateInstance(auditRepo, 1));
+            AuditLogService.CreateInstance(auditRepo));
 
         auditedService.SeedDefaultStadiums(performedByEmail: "admin@copa.com");
 

@@ -1,4 +1,5 @@
 using DataAccess.Repositories;
+using DataAccessTest.TestDoubles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProjectCopa;
 
@@ -12,7 +13,8 @@ public class TournamentSettingsRepositoryTests
     [TestInitialize]
     public void Setup()
     {
-        _repository = new TournamentSettingsRepository();
+        // Contextos efimeros sobre una BD InMemory aislada por test (mismo patron que TeamRepositoryTests).
+        _repository = new TournamentSettingsRepository(new InMemoryDbContextFactory());
     }
 
     [TestMethod]
@@ -23,7 +25,8 @@ public class TournamentSettingsRepositoryTests
         _repository.Add(settings);
 
         TournamentSettings? storedSettings = _repository.GetById(1);
-        Assert.AreSame(settings, storedSettings);
+        Assert.IsNotNull(storedSettings);
+        AssertSameValues(settings, storedSettings!);
     }
 
     [TestMethod]
@@ -37,7 +40,9 @@ public class TournamentSettingsRepositoryTests
 
         TournamentSettings? storedSettings = _repository.GetById(2);
         Assert.IsNotNull(storedSettings);
-        Assert.AreSame(updatedSettings, storedSettings);
+        Assert.AreEqual(2, storedSettings!.MaxMatchesPerDay);
+        Assert.AreEqual(1, storedSettings.DaysBetweenJourneys);
+        AssertSameValues(updatedSettings, storedSettings);
     }
 
     [TestMethod]
@@ -48,7 +53,8 @@ public class TournamentSettingsRepositoryTests
         _repository.Update(settings);
 
         TournamentSettings? storedSettings = _repository.GetById(3);
-        Assert.AreSame(settings, storedSettings);
+        Assert.IsNotNull(storedSettings);
+        AssertSameValues(settings, storedSettings!);
     }
 
     [TestMethod]
@@ -74,7 +80,7 @@ public class TournamentSettingsRepositoryTests
 
         TournamentSettings? storedSettings = _repository.GetById(5);
         Assert.IsNotNull(storedSettings);
-        Assert.AreSame(existingSettings, storedSettings);
+        AssertSameValues(existingSettings, storedSettings!);
     }
 
     [TestMethod]
@@ -96,12 +102,12 @@ public class TournamentSettingsRepositoryTests
         IReadOnlyCollection<TournamentSettings> allSettings = _repository.GetAll();
 
         Assert.AreEqual(expected: 2, actual: allSettings.Count);
-        Assert.IsTrue(allSettings.Contains(firstSettings));
-        Assert.IsTrue(allSettings.Contains(secondSettings));
+        Assert.IsTrue(allSettings.Any(s => s.Id == 6));
+        Assert.IsTrue(allSettings.Any(s => s.Id == 7));
     }
 
     [TestMethod]
-    public void GetAllReturnsReadOnlyCollectionAndLocalCopyChangesDoNotAffectRepository()
+    public void GetAllReturnsLocalCopyAndChangesDoNotAffectRepository()
     {
         TournamentSettings settings = CreateSettings(id: 8);
         _repository.Add(settings);
@@ -110,6 +116,53 @@ public class TournamentSettingsRepositoryTests
         localCopy.Clear();
 
         Assert.AreEqual(expected: 1, actual: _repository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void AddPersistsSettingsRetrievableFromNewContext()
+    {
+        TournamentSettings settings = CreateSettings(
+            id: 12,
+            startDate: new DateTime(2026, 7, 2),
+            maxMatchesPerDay: 2,
+            daysBetweenJourneys: 4,
+            fixtureSeed: 11,
+            crossingsSeed: 22,
+            simulationSeed: 33,
+            completionSeed: 44);
+
+        _repository.Add(settings);                              // SaveChanges interno (autosave por operacion)
+
+        TournamentSettings? stored = _repository.GetById(12);   // contexto nuevo: el dato viene de la "BD"
+        Assert.IsNotNull(stored);
+        AssertSameValues(settings, stored!);
+    }
+
+    [TestMethod]
+    public void AddPersistsSelectedSimulationEngineRetrievableFromNewContext()
+    {
+        TournamentSettings settings = CreateSettings(id: 13);
+        settings.SelectSimulationEngine("Aleatorio Puro");
+
+        _repository.Add(settings);
+
+        TournamentSettings? stored = _repository.GetById(13);
+        Assert.IsNotNull(stored);
+        Assert.AreEqual("Aleatorio Puro", stored!.SelectedSimulationEngine);
+    }
+
+    [TestMethod]
+    public void UpdatePersistsSelectedSimulationEngineChange()
+    {
+        TournamentSettings settings = CreateSettings(id: 14);
+        _repository.Add(settings);
+
+        settings.SelectSimulationEngine("Aleatorio Puro");
+        _repository.Update(settings);
+
+        TournamentSettings? stored = _repository.GetById(14);
+        Assert.IsNotNull(stored);
+        Assert.AreEqual("Aleatorio Puro", stored!.SelectedSimulationEngine);
     }
 
     private static TournamentSettings CreateSettings(
@@ -131,5 +184,18 @@ public class TournamentSettingsRepositoryTests
             crossingsSeed,
             simulationSeed,
             completionSeed);
+    }
+
+    private static void AssertSameValues(TournamentSettings expected, TournamentSettings actual)
+    {
+        Assert.AreEqual(expected.Id, actual.Id);
+        Assert.AreEqual(expected.StartDate, actual.StartDate);
+        Assert.AreEqual(expected.MaxMatchesPerDay, actual.MaxMatchesPerDay);
+        Assert.AreEqual(expected.DaysBetweenJourneys, actual.DaysBetweenJourneys);
+        Assert.AreEqual(expected.FixtureSeed, actual.FixtureSeed);
+        Assert.AreEqual(expected.CrossingsSeed, actual.CrossingsSeed);
+        Assert.AreEqual(expected.SimulationSeed, actual.SimulationSeed);
+        Assert.AreEqual(expected.CompletionSeed, actual.CompletionSeed);
+        Assert.AreEqual(expected.SelectedSimulationEngine, actual.SelectedSimulationEngine);
     }
 }

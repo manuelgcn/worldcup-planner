@@ -21,7 +21,7 @@
 }
 else if (!IsAdmin)
 {
-    <div class="alert alert-danger" role="alert">
+    <div class="alert alert-error" role="alert">
         <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
         No tenés permisos para administrar estadios.
     </div>
@@ -30,27 +30,7 @@ else
 {
     <h1 class="m26-page-title">Estadios</h1>
 
-    if (errors.Any())
-    {
-        <div class="alert alert-danger" role="alert">
-            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
-            Se encontraron errores:
-            <ul>
-                @foreach (string error in errors)
-                {
-                    <li>@error</li>
-                }
-            </ul>
-        </div>
-    }
-
-    if (!string.IsNullOrWhiteSpace(successMessage))
-    {
-        <div class="alert alert-success" role="alert">
-            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-            @successMessage
-        </div>
-    }
+    <FeedbackAlerts Errors="errors" SuccessMessage="@successMessage" />
 
     <section class="admin-grid">
         <article class="m26-card pane">
@@ -136,7 +116,7 @@ else
     private IReadOnlyCollection<ProjectCopa.Stadium> stadiums = Array.Empty<ProjectCopa.Stadium>();
 
     private bool IsAdmin =>
-        Session.CurrentUser!.Roles.Contains(UserRoles.Admin);
+        Session.CurrentUser!.HasRole(UserRoles.Admin);
 
     protected override void OnInitialized()
     {
@@ -165,7 +145,7 @@ else
                 capacity
             );
 
-            StadiumServices.AddStadium(stadium);
+            StadiumServices.AddStadium(stadium, Session.CurrentUser?.email);
             successMessage = "Estadio creado correctamente";
             ClearForm();
             LoadStadiums();
@@ -187,7 +167,7 @@ else
 
         try
         {
-            StadiumServices.RemoveById(id);
+            StadiumServices.RemoveById(id, Session.CurrentUser?.email);
             successMessage = "Estadio eliminado correctamente";
             LoadStadiums();
         }

@@ -1,3 +1,4 @@
+using System.Linq;
 using ProjectCopa.Exceptions;
 
 namespace ProjectCopa;
@@ -6,21 +7,24 @@ public abstract class Match
 {
     private static readonly DateTime DefaultTournamentStartDate = new DateTime(2022, 11, 21);
     private const int InitialGoals = 0;
-    private const string InvalidMatchDateMessage = "Match date cannot be earlier than the tournament start date.";
-    private const string SameTeamsMessage = "Home team and away team must be different.";
-    private const string RequiredStadiumMessage = "Stadium is required.";
-    private const string RequiredChampionshipConfigurationMessage = "Championship configuration is required.";
-    private const string RequiredHomeSourceMatchMessage = "Home match (source) is required.";
-    private const string RequiredAwaySourceMatchMessage = "Away match (source) is required.";
-    private const string SameSourceMatchesMessage = "Home and away source matches must be different.";
-    private const string GoalsCannotBeNegativeMessage = "Goals cannot be negative.";
-    private const string CannotRemoveGoalWhenZeroMessage = "Cannot remove a goal when the current count is zero.";
+    private const string InvalidMatchDateMessage = "La fecha del partido no puede ser anterior a la fecha de inicio del torneo.";
+    private const string SameTeamsMessage = "El equipo local y el visitante deben ser distintos.";
+    private const string RequiredStadiumMessage = "El estadio es obligatorio.";
+    private const string RequiredChampionshipConfigurationMessage = "La configuracion del campeonato es obligatoria.";
+    private const string RequiredHomeSourceMatchMessage = "El partido de origen local es obligatorio.";
+    private const string RequiredAwaySourceMatchMessage = "El partido de origen visitante es obligatorio.";
+    private const string SameSourceMatchesMessage = "Los partidos de origen local y visitante deben ser distintos.";
+    private const string GoalsCannotBeNegativeMessage = "Los goles no pueden ser negativos.";
+    private const string CannotRemoveGoalWhenZeroMessage = "No se puede quitar un gol cuando el marcador esta en cero.";
+    private const string IncidentTeamNotInMatchMessage = "El equipo de la incidencia debe ser uno de los dos que disputan el partido.";
+    private const string IncidentNotInMatchMessage = "La incidencia no pertenece a este partido.";
 
     public int MatchId { get; private set; }
     public DateTime MatchDate { get; private set; }
 
     private Team? _homeTeam;
     private Team? _awayTeam;
+    private readonly List<MatchIncident> _incidents = new();
 
     public Team? HomeTeam
     {
@@ -49,9 +53,44 @@ public abstract class Match
     public Stadium? Stadium { get; private set; }
     public bool WasSimulated { get; private set; }
 
+    // Estado explicito de "resultado registrado": queda en true cuando se cargan goles (manual)
+    // o se simula el partido. Es la unica fuente de verdad de "partido jugado": un 0-0 cargado
+    // a mano cuenta como jugado, cosa que la heuristica de goles no distinguia.
+    public bool HasResult { get; private set; }
+
+    // Evita aplicar el Elo dos veces sobre el mismo partido (p. ej. simular y luego publicar).
+    public bool RankingApplied { get; private set; }
+
+    // Delta de Elo que este partido aplico sobre cada equipo. Se guarda para poder revertirlo
+    // exactamente cuando se edita el resultado (H7): sin el delta no se puede invertir el Elo,
+    // que depende de los rankings al momento de aplicarlo.
+    public int AppliedHomeRankingDelta { get; private set; }
+    public int AppliedAwayRankingDelta { get; private set; }
+
+    public IReadOnlyCollection<MatchIncident> Incidents => _incidents.AsReadOnly();
+
     public void MarkAsSimulated()
     {
         WasSimulated = true;
+        HasResult = true;
+    }
+
+    public void MarkRankingApplied()
+    {
+        RankingApplied = true;
+    }
+
+    public void SetAppliedRankingDeltas(int homeDelta, int awayDelta)
+    {
+        AppliedHomeRankingDelta = homeDelta;
+        AppliedAwayRankingDelta = awayDelta;
+    }
+
+    public void ClearRankingApplication()
+    {
+        RankingApplied = false;
+        AppliedHomeRankingDelta = 0;
+        AppliedAwayRankingDelta = 0;
     }
 
     protected Match()
@@ -115,28 +154,33 @@ public abstract class Match
         EnsureNonNegativeGoals(homeGoals, awayGoals);
         HomeGoals = homeGoals;
         AwayGoals = awayGoals;
+        HasResult = true;
     }
 
     public void SetHomeGoals(int goals)
     {
         EnsureNonNegativeGoal(goals);
         HomeGoals = goals;
+        HasResult = true;
     }
 
     public void SetAwayGoals(int goals)
     {
         EnsureNonNegativeGoal(goals);
         AwayGoals = goals;
+        HasResult = true;
     }
 
     public void AddHomeGoal()
     {
         HomeGoals++;
+        HasResult = true;
     }
 
     public void AddAwayGoal()
     {
         AwayGoals++;
+        HasResult = true;
     }
 
     public void RemoveHomeGoal()
@@ -189,6 +233,53 @@ public abstract class Match
         }
 
         return null;
+    }
+
+    public void AddIncident(MatchIncident incident)
+    {
+        ArgumentNullException.ThrowIfNull(incident);
+        EnsureIncidentTeamBelongsToMatch(incident.Team);
+
+        _incidents.Add(incident);
+    }
+
+    public void RemoveIncident(MatchIncident incident)
+    {
+        ArgumentNullException.ThrowIfNull(incident);
+        EnsureIncidentBelongsToMatch(incident);
+
+        _incidents.Remove(incident);
+    }
+
+    private void EnsureIncidentBelongsToMatch(MatchIncident incident)
+    {
+        if (!_incidents.Contains(incident))
+        {
+            throw new MatchException(IncidentNotInMatchMessage);
+        }
+    }
+
+    public int CountYellowCards(Team team)
+    {
+        return CountIncidents<YellowCardIncident>(team);
+    }
+
+    public int CountRedCards(Team team)
+    {
+        return CountIncidents<RedCardIncident>(team);
+    }
+
+    private int CountIncidents<TIncident>(Team team) where TIncident : MatchIncident
+    {
+        return _incidents.Count(incident => incident is TIncident && ReferenceEquals(incident.Team, team));
+    }
+
+    private void EnsureIncidentTeamBelongsToMatch(Team team)
+    {
+        if (!ReferenceEquals(team, _homeTeam) && !ReferenceEquals(team, _awayTeam))
+        {
+            throw new MatchException(IncidentTeamNotInMatchMessage);
+        }
     }
 
     private static void EnsureValidMatchDate(DateTime matchDate, DateTime minAllowedDate)

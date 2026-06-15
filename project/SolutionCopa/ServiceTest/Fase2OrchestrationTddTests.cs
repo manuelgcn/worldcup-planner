@@ -28,16 +28,26 @@ public class Fase2OrchestrationTddTests
 
         TournamentSettings settings = new TournamentSettings(1, new DateTime(2026,6,1), 3, 3, fixtureSeed:0, crossingsSeed:777, simulationSeed:99, completionSeed:0);
 
-        EliminationMatchRepository eliminationRepo = new EliminationMatchRepository();
+        MockEliminationMatchRepository eliminationRepo = new MockEliminationMatchRepository();
         MockMatchRepository matchRepo = new MockMatchRepository();
-        TournamentSettingsRepository settingsRepo = new TournamentSettingsRepository();
+        MockTournamentSettingsRepository settingsRepo = new MockTournamentSettingsRepository();
         settingsRepo.Add(settings);
         MockMatchSimulationEngine simulation = new ServiceTest.TestDoubles.Mocks.MockMatchSimulationEngine();
         MockUnitOfWork uow = new ServiceTest.TestDoubles.Mocks.MockUnitOfWork();
         MockAuditLogRepository auditRepo = new MockAuditLogRepository();
-        AuditLogService auditService = AuditLogService.CreateInstance(auditRepo, defaultTournamentSettingsId: settings.Id);
+        AuditLogService auditService = AuditLogService.CreateInstance(auditRepo);
 
-        Fase2 fase2 = new Fase2(simulation, matchRepo, settingsRepo, uow, auditService);
+        Fase2 fase2 = new Fase2(
+            new SimulationEngineRegistry([simulation]),
+            matchRepo,
+            eliminationRepo,
+            new MockGroupRepository(),
+            new MockStadiumRepository(),
+            settingsRepo,
+            uow,
+            auditService,
+            new MockNotificationService(),
+            new MockRankingService());
 
         // Act
         fase2.OrchestrateAndSimulateEliminationPhase(teamsWithGroup, stadiums, settings, eliminationRepo);

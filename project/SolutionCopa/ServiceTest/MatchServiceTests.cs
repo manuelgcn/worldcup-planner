@@ -1,3 +1,5 @@
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using ProjectCopa;
 using DomainTest.TestDoubles;
 using Services.DTOs;
@@ -290,6 +292,22 @@ public sealed class MatchServiceTest
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual(1, result.MatchId);
+    }
+
+    [TestMethod]
+    public void UpdateMatch_WithDateChange_AppliesChange()
+    {
+        // Arrange
+        CreateMatchRequestDto createRequest = BuildGroupMatchRequest(matchId: 1);
+        _context.Service.CreateMatch(createRequest);
+        DateTime newDate = new DateTime(2026, 6, 22, 18, 0, 0);
+        UpdateMatchRequestDto updateRequest = new UpdateMatchRequestDto { MatchDate = newDate };
+
+        // Act
+        MatchDto result = _context.Service.UpdateMatch(matchId: 1, request: updateRequest);
+
+        // Assert
+        Assert.AreEqual(newDate, result.MatchDate);
     }
 
     [TestMethod]
@@ -843,5 +861,55 @@ public sealed class MatchServiceTest
             homeTeam: homeTeam,
             awayTeam: awayTeam,
             stadium: stadium);
+    }
+
+    [TestMethod]
+    public void PublishResult_ShouldCallRankingService()
+    {
+        // Arrange
+        CreateMatchRequestDto request = MatchServiceTestContext.NewGroupMatchRequest(10);
+        _context.Service.CreateMatch(request);
+
+        // Act
+        _context.Service.PublishResult(10);
+
+        // Assert
+        _context.RankingServiceMock.Verify(
+            r => r.ApplyMatchResult(It.IsAny<ProjectCopa.Match>(), MatchPhase.GroupStage),
+            Times.Once);
+    }
+
+    [TestMethod]
+    public void PublishResult_CalledTwice_AppliesRankingOnlyOnce()
+    {
+        // Arrange
+        CreateMatchRequestDto request = MatchServiceTestContext.NewGroupMatchRequest(11);
+        _context.Service.CreateMatch(request);
+
+        // Act: republicar el mismo partido no debe recalcular el Elo
+        _context.Service.PublishResult(11);
+        _context.Service.PublishResult(11);
+
+        // Assert
+        _context.RankingServiceMock.Verify(
+            r => r.ApplyMatchResult(It.IsAny<ProjectCopa.Match>(), It.IsAny<MatchPhase>()),
+            Times.Once);
+    }
+
+    [TestMethod]
+    public void SimulateMatch_ThenPublishResult_AppliesRankingOnlyOnce()
+    {
+        // Arrange
+        CreateMatchRequestDto request = MatchServiceTestContext.NewGroupMatchRequest(12);
+        _context.Service.CreateMatch(request);
+
+        // Act: simular ya aplica el ranking; publicar despues no debe duplicarlo
+        _context.Service.SimulateMatch(12);
+        _context.Service.PublishResult(12);
+
+        // Assert
+        _context.RankingServiceMock.Verify(
+            r => r.ApplyMatchResult(It.IsAny<ProjectCopa.Match>(), It.IsAny<MatchPhase>()),
+            Times.Once);
     }
 }

@@ -458,4 +458,42 @@ public class MatchTests
 
         Assert.ThrowsException<MatchException>(() => _match.ChangeDate(invalidDate));
     }
+
+    [TestMethod]
+    public void MatchHasNoResultByDefault()
+    {
+        _match = CreateMatchWithData();
+
+        Assert.IsFalse(_match.HasResult);
+    }
+
+    [TestMethod]
+    public void SetGoalsMarksMatchAsHavingResultEvenForZeroZero()
+    {
+        _match = CreateMatchWithData();
+
+        _match.SetGoals(0, 0);
+
+        Assert.IsTrue(_match.HasResult);
+    }
+
+    [TestMethod]
+    public void SetGoalsWithGoalsMarksMatchAsHavingResult()
+    {
+        _match = CreateMatchWithData();
+
+        _match.SetGoals(2, 1);
+
+        Assert.IsTrue(_match.HasResult);
+    }
+
+    [TestMethod]
+    public void MarkAsSimulatedMarksMatchAsHavingResult()
+    {
+        _match = CreateMatchWithData();
+
+        _match.MarkAsSimulated();
+
+        Assert.IsTrue(_match.HasResult);
+    }
 }

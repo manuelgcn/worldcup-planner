@@ -10,13 +10,14 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     private const int RequiredTeamCount = 48;
     private const int MinimumStadiumCount = 4;
     private const int GroupStageJourneyCount = 3;
-    private const string FixtureAlreadyGeneratedMessage = "Fixture is already generated. Use RegenerateGroupStage instead.";
-    private const string FixtureNotGeneratedMessage = "Fixture has not been generated yet.";
-    private const string KnockoutAlreadyGeneratedMessage = "Cannot regenerate fixture: knockout phase already exists.";
-    private const string MissingSettingsMessage = "Tournament settings are not configured.";
-    private const string MissingTeamsMessage = "Fixture requires exactly 48 teams.";
-    private const string MissingStadiumsMessage = "Fixture requires at least 4 stadiums.";
-    private const string ClearFixtureDetails = "Previous fixture cleared before regeneration.";
+    private const string FixtureAlreadyGeneratedMessage = "El fixture ya fue generado. Use RegenerateGroupStage en su lugar.";
+    private const string FixtureNotGeneratedMessage = "El fixture aun no fue generado.";
+    private const string KnockoutAlreadyGeneratedMessage = "No se puede regenerar el fixture: la fase eliminatoria ya existe.";
+    private const string MissingSettingsMessage = "La configuracion del torneo no esta definida.";
+    private const string MissingTeamsMessage = "El fixture requiere exactamente 48 equipos.";
+    private const string MissingStadiumsMessage = "El fixture requiere al menos 4 estadios.";
+    private const string ClearFixtureDetails = "Fixture anterior limpiado antes de la regeneracion.";
+    private const string DeleteFixtureDetails = "Fixture eliminado: se removieron grupos, jornadas, partidos de grupo y fase eliminatoria.";
 
     private readonly ITeamRepository _teamRepository;
     private readonly IStadiumRepository _stadiumRepository;
@@ -27,6 +28,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     private readonly IEliminationMatchRepository _eliminationRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditLogService _auditLogService;
+    private readonly ISimulationEngineRegistry _simulationEngineRegistry;
 
     public FixtureOrchestrator(
         ITeamRepository teamRepository,
@@ -37,7 +39,8 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         IMatchRepository matchRepository,
         IEliminationMatchRepository eliminationRepository,
         IUnitOfWork unitOfWork,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        ISimulationEngineRegistry simulationEngineRegistry)
     {
         _teamRepository = teamRepository;
         _stadiumRepository = stadiumRepository;
@@ -48,6 +51,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         _eliminationRepository = eliminationRepository;
         _unitOfWork = unitOfWork;
         _auditLogService = auditLogService;
+        _simulationEngineRegistry = simulationEngineRegistry;
     }
 
     public bool IsFixtureGenerated()
@@ -60,28 +64,56 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         return _eliminationRepository.GetAll().Count > 0;
     }
 
-    public void GenerateGroupStage(int? fixtureSeedOverride, string? performedByEmail)
+    public void GenerateGroupStage(int? fixtureSeedOverride, string? selectedEngineName, string? performedByEmail)
     {
         EnsureFixtureNotYetGenerated();
         GenerationPlan plan = PrepareGenerationPlan(fixtureSeedOverride);
+        ApplySimulationEngineSelection(plan.Settings, selectedEngineName);
 
         ExecuteAndCommit(plan);
 
-        AuditGenerated(plan.EffectiveSeed, performedByEmail);
+        AuditGenerated(plan.EffectiveSeed, plan.Settings.SelectedSimulationEngine, performedByEmail);
     }
 
-    public void RegenerateGroupStage(int? fixtureSeedOverride, string? performedByEmail)
+    public void RegenerateGroupStage(int? fixtureSeedOverride, string? selectedEngineName, string? performedByEmail)
     {
         EnsureFixtureGenerated();
         EnsureKnockoutNotYetGenerated();
         GenerationPlan plan = PrepareGenerationPlan(fixtureSeedOverride);
+        ApplySimulationEngineSelection(plan.Settings, selectedEngineName);
 
         ClearGroupStageStorage();
         AuditCleared(performedByEmail);
 
         ExecuteAndCommit(plan);
 
-        AuditRegenerated(plan.EffectiveSeed, performedByEmail);
+        AuditRegenerated(plan.EffectiveSeed, plan.Settings.SelectedSimulationEngine, performedByEmail);
+    }
+
+    // Valida el motor contra el registry (fail-fast antes de tocar el storage), lo persiste en
+    // TournamentSettings y deja el Update dentro del mismo Commit que la generacion del fixture.
+    // Con null se mantiene el motor ya persistido.
+    private void ApplySimulationEngineSelection(TournamentSettings settings, string? selectedEngineName)
+    {
+        if (selectedEngineName == null)
+        {
+            return;
+        }
+
+        IMatchSimulationEngine engine = _simulationEngineRegistry.Resolve(selectedEngineName);
+        settings.SelectSimulationEngine(engine.Name);
+        _settingsRepository.Update(settings);
+    }
+
+    public void DeleteGroupStage(string? performedByEmail)
+    {
+        // Borrado total del torneo: se elimina la fase 2 (knockout) ANTES que los partidos de grupo
+        // porque las eliminatorias referencian a los partidos de grupo como fuente (FK Matches->Matches).
+        _eliminationRepository.Clear();
+        ClearGroupStageStorage();
+        _unitOfWork.Commit();
+
+        AuditDeleted(performedByEmail);
     }
 
     private GenerationPlan PrepareGenerationPlan(int? fixtureSeedOverride)
@@ -104,7 +136,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
 
     private static IReadOnlyCollection<Group> BuildGroups(GenerationPlan plan)
     {
-        FixtureService fixtureService = new FixtureService(plan.Teams, plan.Stadiums, plan.EffectiveSeed, auditLogService: null);
+        FixtureService fixtureService = new FixtureService(plan.Teams, plan.Stadiums, plan.EffectiveSeed);
         return fixtureService.CreateFixture();
     }
 
@@ -133,7 +165,9 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         List<Match> matches = matchGenerator.GenerateMatches(
             groups.ToList(),
             stadiums.ToList(),
-            settings.StartDate);
+            settings.StartDate,
+            settings.DaysBetweenJourneys,
+            settings.MaxMatchesPerDay);
 
         foreach (Match match in matches)
         {
@@ -202,11 +236,11 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         return stadiums;
     }
 
-    private void AuditGenerated(int seed, string? performedByEmail)
+    private void AuditGenerated(int seed, string engineName, string? performedByEmail)
     {
         _auditLogService.LogPerformedBy(
             AuditActions.GenerateFixture,
-            $"Fixture generated with seed {seed}.",
+            $"Fixture generated with seed {seed} and simulation engine {engineName}.",
             performedByEmail,
             nameof(FixtureOrchestrator));
     }
@@ -220,11 +254,20 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
             nameof(FixtureOrchestrator));
     }
 
-    private void AuditRegenerated(int seed, string? performedByEmail)
+    private void AuditRegenerated(int seed, string engineName, string? performedByEmail)
     {
         _auditLogService.LogPerformedBy(
             AuditActions.RegenerateFixture,
-            $"Fixture regenerated with seed {seed}.",
+            $"Fixture regenerated with seed {seed} and simulation engine {engineName}.",
+            performedByEmail,
+            nameof(FixtureOrchestrator));
+    }
+
+    private void AuditDeleted(string? performedByEmail)
+    {
+        _auditLogService.LogPerformedBy(
+            AuditActions.DeleteFixture,
+            DeleteFixtureDetails,
             performedByEmail,
             nameof(FixtureOrchestrator));
     }

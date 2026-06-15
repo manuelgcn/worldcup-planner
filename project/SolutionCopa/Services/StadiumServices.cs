@@ -1,14 +1,20 @@
 using DataAccess.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using ProjectCopa;
 using Services.Exceptions;
 using Services.Interfaces;
 
 namespace Services;
 
-public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork unitOfWork, IAuditLogService? auditLogService = null) : IStadiumService
+public class StadiumServices : IStadiumService
 {
-    private const string DuplicateStadiumNameMessage = "Stadium name must be unique in the system.";
-    private const string StadiumNotFoundMessage = "Stadium was not found.";
+    private readonly IStadiumRepository stadiumRepository;
+    private readonly IUnitOfWork unitOfWork;
+    private readonly IAuditLogService auditLogService;
+
+    private const string DuplicateStadiumNameMessage = "El nombre del estadio debe ser unico en el sistema.";
+    private const string StadiumNotFoundMessage = "No se encontro el estadio.";
+    private const string StadiumReferencedByMatchMessage = "No se puede eliminar el estadio porque esta referenciado por uno o mas partidos.";
     private const int MinimumStadiumsForFixture = 4;
 
     private static readonly (string Name, string City, int Capacity)[] DefaultStadiumSeeds =
@@ -22,6 +28,14 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
         ("Hard Rock Stadium", "Miami Gardens", 65000),
         ("Estadio BBVA", "Monterrey", 51000)
     };
+
+    public StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork unitOfWork, IAuditLogService auditLogService)
+    {
+        ArgumentNullException.ThrowIfNull(auditLogService);
+        this.stadiumRepository = stadiumRepository;
+        this.unitOfWork = unitOfWork;
+        this.auditLogService = auditLogService;
+    }
 
     public IReadOnlyCollection<Stadium> GetAllStadiums()
     {
@@ -54,7 +68,7 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
 
             Stadium stadium = new Stadium(name, city, null, capacity) { Id = nextId };
             stadiumRepository.Add(stadium);
-            auditLogService?.LogPerformedBy(
+            auditLogService.LogPerformedBy(
                 AuditActions.CreateStadium,
                 $"Generated default stadium '{stadium.Name}' in {stadium.City}.",
                 performedByEmail,
@@ -67,7 +81,7 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
         unitOfWork.Commit();
     }
 
-    public void AddStadium(Stadium stadium)
+    public void AddStadium(Stadium stadium, string? performedByEmail = null)
     {
         ArgumentNullException.ThrowIfNull(stadium);
 
@@ -76,15 +90,31 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
             throw new StadiumServicesException(DuplicateStadiumNameMessage);
         }
 
+        // La clave es ValueGeneratedNever: la UI crea estadios con Id 0, por lo que
+        // dos altas consecutivas chocarian en la PK. Asignamos Id = max+1 (igual que el
+        // seed por defecto y ImportService) cuando no llega un Id explicito.
+        if (stadium.Id <= 0)
+        {
+            stadium.Id = NextStadiumId();
+        }
+
         stadiumRepository.Add(stadium);
-        
-        auditLogService?.Log(
+
+        auditLogService.LogPerformedBy(
             AuditActions.CreateStadium,
             $"Stadium '{stadium.Name}' created in {stadium.City}.",
-            nameof(Stadium));
+            performedByEmail,
+            nameof(Stadium),
+            stadium.Id);
         unitOfWork.Commit();
     }
     
+    private int NextStadiumId()
+    {
+        IReadOnlyCollection<Stadium> existing = stadiumRepository.GetAll();
+        return existing.Count == 0 ? 1 : existing.Max(stadium => stadium.Id) + 1;
+    }
+
     public Stadium GetById(int id)
     {
         return stadiumRepository.GetById(id)
@@ -99,26 +129,37 @@ public class StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork u
                ?? throw new StadiumServicesException(StadiumNotFoundMessage);
     }
     
-    public void RemoveById(int id)
+    public void RemoveById(int id, string? performedByEmail = null)
     {
         Stadium stadium = GetById(id);
-        stadiumRepository.Delete(stadium);
-        auditLogService?.Log(
+        try
+        {
+            stadiumRepository.Delete(stadium);                          // FK Restrict: SaveChanges falla si un partido lo referencia
+        }
+        catch (DbUpdateException)
+        {
+            throw new StadiumServicesException(StadiumReferencedByMatchMessage);
+        }
+        auditLogService.LogPerformedBy(
             AuditActions.DeleteStadium,
             $"Stadium '{stadium.Name}' removed.",
-            nameof(Stadium));
+            performedByEmail,
+            nameof(Stadium),
+            stadium.Id);
         unitOfWork.Commit();
     }
-    
-    public void UpdateById(int id, string city, string? description, int capacity)
+
+    public void UpdateById(int id, string city, string? description, int capacity, string? performedByEmail = null)
     {
         Stadium stadium = GetById(id);
         stadium.Update(city, description, capacity);
         stadiumRepository.Update(stadium);
-        auditLogService?.Log(
+        auditLogService.LogPerformedBy(
             AuditActions.UpdateStadium,
             $"Stadium '{stadium.Name}' updated.",
-            nameof(Stadium));
+            performedByEmail,
+            nameof(Stadium),
+            stadium.Id);
         unitOfWork.Commit();
     }
     

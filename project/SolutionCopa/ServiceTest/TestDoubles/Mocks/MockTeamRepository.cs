@@ -36,12 +36,14 @@ public sealed class MockTeamRepository : ITeamRepository
 
     public Team? GetByName(string name)
     {
-        return _teams.Values.FirstOrDefault(team => team.Name == name);
+        string target = TextNormalizer.Normalize(name);
+        return _teams.Values.FirstOrDefault(team => TextNormalizer.Normalize(team.Name) == target);
     }
 
     public bool ExistsByName(string name)
     {
-        return _teams.Values.Any(team => team.Name == name);
+        string target = TextNormalizer.Normalize(name);
+        return _teams.Values.Any(team => TextNormalizer.Normalize(team.Name) == target);
     }
 
     public IReadOnlyCollection<Team> GetAll()

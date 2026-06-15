@@ -122,9 +122,29 @@ public class ImportServiceTests
         List<TeamImportDto> rows = BuildDuplicateRows();
         SetupParserRows(stream, rows);
 
-        // Assert
+        // Assert: import atomico (H4): si una fila falla, no se persiste NINGUNA, ni siquiera
+        // la primera valida que la precede.
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
-        Assert.AreEqual(1, _teamRepository.GetAll().Count);
+        Assert.AreEqual(0, _teamRepository.GetAll().Count);
+        Assert.AreEqual(0, _unitOfWork.CommitCalls);
+    }
+
+    [TestMethod]
+    public void ImportTeams_WhenLaterRowIsInvalid_PersistsNothing()
+    {
+        // H4: una fila valida seguida de una invalida no debe dejar escrituras parciales.
+        MemoryStream stream = CreateImportStream();
+        List<TeamImportDto> rows = new List<TeamImportDto>
+        {
+            new TeamImportDto { RowNumber = 2, Name = "Argentina", Confederation = "CONMEBOL", Ranking = "500" },
+            new TeamImportDto { RowNumber = 3, Name = "Canada", Confederation = "INVALID", Ranking = "800" }
+        };
+        SetupParserRows(stream, rows);
+
+        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.AreEqual(0, _teamRepository.GetAll().Count);
+        Assert.AreEqual(0, _teamRepository.AddCalls);
+        Assert.AreEqual(0, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -176,6 +196,29 @@ public class ImportServiceTests
         CollectionAssert.AreEquivalent(
             new List<string> { "Argentina", "Japan" },
             result.ImportedTeams.Select(t => t.Name).ToList());
+    }
+
+    [TestMethod]
+    public void ImportTeamsWhenTotalWouldExceed48ImportsOnlyUntil48AndReturnsWarning()
+    {
+        // Arrange
+        for (int i = 1; i <= 47; i++)
+        {
+            _teamRepository.Add(new Team(i, $"Team{i}", 1000 + i, false, Confederation.UEFA));
+        }
+
+        MemoryStream stream = CreateImportStream();
+        List<TeamImportDto> rows = BuildValidRows();
+        SetupParserRows(stream, rows);
+
+        // Act
+        ImportResult result = _service.ImportTeams(stream);
+
+        // Assert
+        Assert.AreEqual(48, _teamRepository.GetAll().Count);
+        Assert.AreEqual(1, result.ImportedCount);
+        Assert.AreEqual("Argentina", result.ImportedTeams.First().Name);
+        Assert.AreEqual("No se agregaron todos los equipos, max:48", result.WarningMessage);
     }
 
     [TestMethod]

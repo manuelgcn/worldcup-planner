@@ -1,40 +1,49 @@
-# WorldCupPlanner 2026 — Build de Entrega 1
+# WorldCupPlanner 2026 — Release (Entrega 2)
 
-Build self-contained para Windows x64. **No requiere instalar .NET 8** — todo
-está incluido.
+App self-contained para Windows x64. **No requiere instalar .NET.** La persistencia
+usa Azure SQL Edge, así que **Docker Desktop tiene que estar instalado y abierto**.
+El primer arranque necesita Internet para descargar la imagen de la base.
 
-## Cómo correrlo
+> Todos los comandos van en PowerShell, dentro de esta carpeta.
 
-1. Entrar a la carpeta `win-x64/`.
-2. Doble click en `UI.exe` (o desde cmd: `UI.exe`).
-3. Abrir el browser en la URL que muestra la consola (por defecto
-   `http://localhost:5000`).
+## Arrancar
 
-## Credenciales seed
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass   # una vez por ventana
+.\start.ps1
+```
 
-| Rol    | Email             | Password   |
-|--------|-------------------|------------|
-| Admin  | admin@copa.com    | Admin@123  |
-| Editor | editor@copa.com   | Editor@123 |
+Abrí `http://localhost:5000`. Login: `admin@copa.com` / `Admin@123`.
+Detener: **Ctrl + C** (la base sigue levantada).
 
-## Configuración
+## Cargar la demo (48 equipos + fixture simulado)
 
-Las semillas (FixtureSeed, CrossingsSeed, SimulationSeed, CompletionSeed) y
-parámetros del torneo se leen de `win-x64/appsettings.json`, sección
-`TournamentSettings`. Cambiar valores y reiniciar para verlo aplicado.
+El restore necesita la app desconectada, por eso este orden:
 
-## Versión
+```powershell
+.\start.ps1      # 1. levanta todo
+# 2. Ctrl + C para cortar SOLO la app (la base queda arriba)
+.\seed.ps1       # 3. carga la demo
+.\start.ps1      # 4. vuelve a arrancar la app
+```
 
-- Tag: `v1.0.1-entrega1`
-- Build: self-contained `win-x64`, .NET 8.0
+Login demo: `admin1@copa.com` / `Admin@123`.
 
-### Cambios respecto a `v1.0.0-entrega1`
+## Qué hace cada script
 
-- `fix(fixture)`: la generación de fixture ahora respeta los cupos de
-  confederación por grupo (máx. 1 no-UEFA, máx. 2 UEFA) usando Fisher-Yates
-  determinístico sobre `FixtureSeed`.
-- `fix(matches)`: los filtros de la página de partidos funcionan de forma
-  independiente, "Hasta" incluye el mismo día y la lista incluye los partidos
-  de eliminación.
-- `feat(bracket)`: en `/fixture`, los partidos de eliminación que se definen
-  por penales muestran el resultado de la tanda y el equipo que pasó.
+| Script | Qué hace |
+|---|---|
+| `start.ps1` | Valida Docker, levanta Azure SQL Edge, espera a que acepte conexiones y arranca la app en `http://localhost:5000`. En el primer arranque crea la base, aplica migraciones y crea los usuarios básicos. |
+| `seed.ps1` | Restaura la demo completa (`db/backups/seed-full.bak`). Requiere la app detenida. `.\seed.ps1 empty` reinicia la base a vacía (solo esquema). |
+
+## Si algo falla
+
+- **"Docker Desktop no esta iniciado"** → abrí Docker Desktop y esperá a que diga *Running*.
+- **`seed.ps1` falla en el RESTORE** → la app sigue conectada: cortala con Ctrl+C y reintentá.
+- **La app cierra con error de conexión** → arrancaste `UI.exe` antes que la base. Usá siempre `start.ps1`.
+
+## Contenido del asset
+
+`win-x64/` (app), `start.ps1`, `seed.ps1`, `docker-compose.yml`, `.env`,
+`db/` (esquema y backups), `README.md`, `INSTALL.md` y el `.sha256` que verifica
+la integridad del ZIP. La instalación manual paso a paso está en `INSTALL.md`.

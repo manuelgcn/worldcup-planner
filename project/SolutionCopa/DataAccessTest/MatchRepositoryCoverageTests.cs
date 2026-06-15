@@ -1,6 +1,7 @@
+using DataAccess.Repositories;
+using DataAccessTest.TestDoubles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProjectCopa;
-using DataAccess.Repositories;
 
 namespace DataAccessTest;
 
@@ -10,46 +11,31 @@ public class MatchRepositoryCoverageTests
     [TestMethod]
     public void Add_Update_Delete_And_Query_MatchRepository()
     {
-        MatchRepository repo = new MatchRepository();
+        InMemoryDbContextFactory factory = new InMemoryDbContextFactory();
+        MatchRepository repo = new MatchRepository(factory);
 
-        Team team1 = new Team(1, "T1", 1200, false, Confederation.UEFA);
-        Team team2 = new Team(2, "T2", 1100, false, Confederation.UEFA);
-        Stadium stadium = new Stadium("S1", "City", null, 30000);
+        Team team1 = EfFixtureData.MakeTeam(1, "T1");
+        Team team2 = EfFixtureData.MakeTeam(2, "T2");
+        Stadium stadium = EfFixtureData.MakeStadium(1, "S1");
         Group group = new Group("A");
         Journey journey = Journey.CreateInstance(1);
+        EfFixtureData.Seed(factory, team1, team2, stadium, group, journey);
 
-        MatchGroup match = MatchGroup.CreateInstance(1, DateTime.UtcNow.AddDays(1), team1, team2, stadium, group, journey);
+        DateTime date = new DateTime(2026, 6, 2);
+        repo.Add(EfFixtureData.MakeGroupMatch(1, date, team1, team2, stadium, group, journey));
 
-        // Add
-        repo.Add(match);
         Assert.IsTrue(repo.ExistsById(1));
-        Match? fetched = repo.GetById(1);
-        Assert.IsNotNull(fetched);
+        Assert.IsNotNull(repo.GetById(1));
+        Assert.IsTrue(repo.GetByGroup("A").Any(match => match.MatchId == 1));
+        Assert.IsTrue(repo.GetByJourney(1).Any(match => match.MatchId == 1));
+        Assert.IsTrue(repo.GetByDateRange(new DateTime(2026, 6, 1), new DateTime(2026, 6, 30)).Any(match => match.MatchId == 1));
 
-        // Query by group and journey
-        List<Match> byGroup = repo.GetByGroup("A");
-        Assert.IsTrue(byGroup.Any(m => m.MatchId == 1));
+        Match stored = repo.GetById(1)!;
+        stored.SetGoals(2, 1);
+        repo.Update(stored);
+        Assert.AreEqual(2, repo.GetById(1)!.HomeGoals);
 
-        List<Match> byJourney = repo.GetByJourney(1);
-        Assert.IsTrue(byJourney.Any(m => m.MatchId == 1));
-
-        // Date range
-        DateTime from = DateTime.UtcNow;
-        DateTime to = DateTime.UtcNow.AddDays(7);
-        List<Match> byDate = repo.GetByDateRange(from, to);
-        Assert.IsTrue(byDate.Any(m => m.MatchId == 1));
-
-        // Update (replace)
-        MatchGroup updated = MatchGroup.CreateInstance(1, DateTime.UtcNow.AddDays(2), team1, team2, stadium, group, journey);
-        updated.SetGoals(2, 1);
-        repo.Update(updated);
-
-        Match? fetchedUpdated = repo.GetById(1);
-        Assert.IsNotNull(fetchedUpdated);
-        Assert.AreEqual(2, fetchedUpdated!.HomeGoals);
-
-        // Delete
-        repo.Delete(updated);
+        repo.Delete(repo.GetById(1)!);
         Assert.IsFalse(repo.ExistsById(1));
     }
 }

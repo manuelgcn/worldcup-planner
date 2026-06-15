@@ -1,7 +1,9 @@
 using ProjectCopa;
 using DataAccess.Repositories;
+using Moq;
 using Services;
 using Services.Exceptions;
+using Services.Interfaces;
 using ServiceTest.TestDoubles.Mocks;
 
 namespace ServiceTest;
@@ -24,15 +26,17 @@ public sealed class TournamentSimulationServiceTests
     private const int SecondMatchDateOffsetDays = 3;
     private const int ThirdMatchDateOffsetDays = 6;
     private const int HomeRankingBase = 2500;
+    private const string AdminEmail = "admin@copa.com";
 
     private MockGroupRepository _groupRepository = null!;
     private MockMatchRepository _matchRepository = null!;
-    private EliminationMatchRepository _eliminationMatchRepository = null!;
+    private MockEliminationMatchRepository _eliminationMatchRepository = null!;
     private MockMatchSimulationEngine _matchSimulationEngine = null!;
     private MockKnockoutFixtureGenerator _knockoutFixtureGenerator = null!;
     private MockAuditLogRepository _auditLogRepository = null!;
-    private TournamentSettingsRepository _tournamentSettingsRepository = null!;
+    private MockTournamentSettingsRepository _tournamentSettingsRepository = null!;
     private MockUnitOfWork _unitOfWork = null!;
+    private Mock<IRankingService> _rankingServiceMock = null!;
     private TournamentSimulationService _service = null!;
 
     [TestInitialize]
@@ -40,27 +44,41 @@ public sealed class TournamentSimulationServiceTests
     {
         _groupRepository = new MockGroupRepository();
         _matchRepository = new MockMatchRepository();
-        _eliminationMatchRepository = new EliminationMatchRepository();
+        _eliminationMatchRepository = new MockEliminationMatchRepository();
         _matchSimulationEngine = new MockMatchSimulationEngine();
         _knockoutFixtureGenerator = new MockKnockoutFixtureGenerator();
         _auditLogRepository = new MockAuditLogRepository();
-        _tournamentSettingsRepository = new TournamentSettingsRepository();
+        _tournamentSettingsRepository = new MockTournamentSettingsRepository();
         _unitOfWork = new MockUnitOfWork();
+        _rankingServiceMock = new Mock<IRankingService>();
 
         SeedGroupsAndMatches();
         SeedSettings();
         _matchRepository.ResetCounters();
 
-        AuditLogService auditLogService = AuditLogService.CreateInstance(_auditLogRepository, 1);
+        AuditLogService auditLogService = AuditLogService.CreateInstance(_auditLogRepository);
         _service = new TournamentSimulationService(
             _groupRepository,
             _matchRepository,
             _eliminationMatchRepository,
             _unitOfWork,
-            _matchSimulationEngine,
+            new SimulationEngineRegistry([_matchSimulationEngine]),
             auditLogService,
             _tournamentSettingsRepository,
-            _knockoutFixtureGenerator);
+            _knockoutFixtureGenerator,
+            notificationService: new MockNotificationService(),
+            rankingService: _rankingServiceMock.Object);
+    }
+
+    [TestMethod]
+    public void SimulateGroupStage_AppliesGroupStageRankingPerSimulatedMatch()
+    {
+        _service.SimulateGroupStage(Seed, AdminEmail);
+
+        // Cada uno de los 72 partidos de grupos simulados debe actualizar el ranking como GroupStage
+        _rankingServiceMock.Verify(
+            r => r.ApplyMatchResult(It.IsAny<ProjectCopa.Match>(), MatchPhase.GroupStage),
+            Times.Exactly(GroupCount * MatchesPerGroup));
     }
 
     [TestMethod]
@@ -78,27 +96,52 @@ public sealed class TournamentSimulationServiceTests
     }
 
     [TestMethod]
+    public void SimulateGroupStage_SimulatesAllGroupMatchesWithoutGeneratingKnockout()
+    {
+        _service.SimulateGroupStage(Seed, AdminEmail);
+
+        Assert.AreEqual(GroupCount * MatchesPerGroup, _matchSimulationEngine.SimulateCalls);
+        Assert.AreEqual(GroupCount * MatchesPerGroup, _matchRepository.UpdateCalls);
+        Assert.AreEqual(0, _matchRepository.AddCalls);
+        Assert.AreEqual(0, _eliminationMatchRepository.GetAll().Count);
+        Assert.AreEqual(Seed, _matchSimulationEngine.LastSeedReceived);
+        Assert.IsTrue(_unitOfWork.CommitCalls >= 1);
+    }
+
+    [TestMethod]
+    public void SimulateGroupStage_LogsSimulateGroupStageActionWithSeedAndPerformer()
+    {
+        _service.SimulateGroupStage(Seed, AdminEmail);
+
+        AuditLog log = _auditLogRepository.GetAll().First(entry => entry.Action == AuditActions.SimulateGroupStage);
+        Assert.IsTrue(log.Details.Contains(Seed.ToString()), $"Expected seed in details, got '{log.Details}'");
+        Assert.AreEqual(AdminEmail, log.PerformedByEmail);
+    }
+
+    [TestMethod]
     public void SimulateGroupStageAndGenerateKnockout_WithoutGroupMatches_ThrowsMatchServicesException()
     {
         MockGroupRepository emptyGroupRepository = new MockGroupRepository();
         MockMatchRepository emptyMatchRepository = new MockMatchRepository();
-        EliminationMatchRepository emptyEliminationRepository = new EliminationMatchRepository();
+        MockEliminationMatchRepository emptyEliminationRepository = new MockEliminationMatchRepository();
         MockKnockoutFixtureGenerator emptyKnockoutFixtureGenerator = new MockKnockoutFixtureGenerator();
-        TournamentSettingsRepository emptySettingsRepository = new TournamentSettingsRepository();
+        MockTournamentSettingsRepository emptySettingsRepository = new MockTournamentSettingsRepository();
         MockUnitOfWork emptyUnitOfWork = new MockUnitOfWork();
         emptyGroupRepository.Seed(FirstGroupId, new Group("A"));
         emptySettingsRepository.Add(new TournamentSettings(1, new DateTime(StartYear, StartMonth, StartDay), 3, 3, Seed, Seed, Seed, Seed));
 
-        AuditLogService auditLogService = AuditLogService.CreateInstance(_auditLogRepository, 1);
+        AuditLogService auditLogService = AuditLogService.CreateInstance(_auditLogRepository);
         TournamentSimulationService service = new TournamentSimulationService(
             emptyGroupRepository,
             emptyMatchRepository,
             emptyEliminationRepository,
             emptyUnitOfWork,
-            _matchSimulationEngine,
+            new SimulationEngineRegistry([_matchSimulationEngine]),
             auditLogService,
             emptySettingsRepository,
-            emptyKnockoutFixtureGenerator);
+            emptyKnockoutFixtureGenerator,
+            new MockNotificationService(),
+            _rankingServiceMock.Object);
 
         MatchServicesException exception = Assert.ThrowsException<MatchServicesException>(
             () => service.SimulateGroupStageAndGenerateKnockout(Seed));

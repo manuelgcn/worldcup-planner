@@ -18,13 +18,25 @@ public static class AuditActions
 
     public const string SimulateMatch = "SIMULATE_MATCH";
 
+    // Simulacion individual ejecutada con exito (registra motor y semilla);
+    // las operaciones agregadas conservan sus acciones (SIMULATE_ROUND, etc.).
+    public const string SimulationExecuted = "SIMULATION_EXECUTED";
+
+    public const string RankingUpdated = "RANKING_UPDATED";
+
     public const string PublishMatchResult = "PUBLISH_MATCH_RESULT";
+
+    public const string IncidentAdded = "INCIDENT_ADDED";
+
+    public const string IncidentRemoved = "INCIDENT_REMOVED";
 
     public const string CreateTeam = "CREATE_TEAM";
 
     public const string UpdateTeam = "UPDATE_TEAM";
 
     public const string DeleteTeam = "DELETE_TEAM";
+
+    public const string AssignTeamFlags = "ASSIGN_TEAM_FLAGS";
 
     public const string CreateStadium = "CREATE_STADIUM";
 
@@ -48,9 +60,27 @@ public static class AuditActions
 
     public const string ClearFixture = "CLEAR_FIXTURE";
 
+    public const string DeleteFixture = "DELETE_FIXTURE";
+
     public const string GenerateKnockout = "GENERATE_KNOCKOUT";
 
     public const string SimulateRound = "SIMULATE_ROUND";
 
+    public const string AdvanceRound = "ADVANCE_ROUND";
+
+    public const string SimulateGroupStage = "SIMULATE_GROUP_STAGE";
+
     public const string SimulateGroupStageAndGenerateKnockout = "SIMULATE_GROUP_STAGE_AND_GENERATE_KNOCKOUT";
+
+    public const string NotificationRead = "NOTIFICATION_READ";
+
+    public const string NotificationReadAll = "NOTIFICATION_READ_ALL";
+
+    public const string ExportFixtureCsv = "EXPORT_FIXTURE_CSV";
+
+    public const string ExportFixtureXlsx = "EXPORT_FIXTURE_XLSX";
+
+    public const string ExportAuditCsv = "EXPORT_AUDIT_CSV";
+
+    public const string ExportAuditXlsx = "EXPORT_AUDIT_XLSX";
 }

@@ -135,6 +135,30 @@ public class UserTests
             new User(1, "Juan", "Perez", "mailinvalido", "Pass1234@", DateTime.Now));
     }
 
+    [DataTestMethod]
+    [DataRow("a@b.")]
+    [DataRow("@.")]
+    [DataRow("a@b")]
+    [DataRow("a@.com")]
+    [DataRow("nombre apellido@mail.com")]
+    [DataRow("juan@@mail.com")]
+    public void UserRejectsMalformedEmail(string email)
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(1, "Juan", "Perez", email, "Pass1234@", new DateTime(1990, 5, 15)));
+    }
+
+    [DataTestMethod]
+    [DataRow("juan@mail.com")]
+    [DataRow("juan.perez@sub.dominio.uy")]
+    [DataRow("user+tag@mail.co")]
+    public void UserAcceptsWellFormedEmail(string email)
+    {
+        User user = new User(1, "Juan", "Perez", email, "Pass1234@", new DateTime(1990, 5, 15));
+
+        Assert.AreEqual(email, user.email);
+    }
+
 
     [TestMethod]
     public void PasswordMustHaveAtLeast8Characters()
@@ -178,6 +202,22 @@ public class UserTests
         Assert.AreNotEqual(originalPassword, usuario.password);
     }
 
+    [TestMethod]
+    public void PasswordMatchesReturnsTrueForCorrectPassword()
+    {
+        User usuario = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        Assert.IsTrue(usuario.PasswordMatches("Pass123@"));
+    }
+
+    [TestMethod]
+    public void PasswordMatchesReturnsFalseForWrongPassword()
+    {
+        User usuario = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        Assert.IsFalse(usuario.PasswordMatches("Other123@"));
+    }
+
     
     [TestMethod]
     public void UserStartsWithoutRoles()
@@ -194,7 +234,7 @@ public class UserTests
         User usuario = new User(1, "Juan", "Perez", "juan@mail.com", "Passs1234@", new DateTime(1990, 5, 15));
         usuario.AddRole(UserRoles.Admin);
 
-        Assert.IsTrue(usuario.Roles.Contains(UserRoles.Admin));
+        Assert.IsTrue(usuario.Roles.Any(r => r.Role == UserRoles.Admin));
     }
 
     
@@ -215,6 +255,198 @@ public class UserTests
 
         Assert.AreEqual(1, usuario.Roles.Count);
     }
+    
+    
+    [TestMethod]
+    public void CannotCreateUserWithFutureDateOfBirth()
+    {
+        DateTime futureDate = DateTime.Today.AddDays(1);
 
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@mail.com",
+                "Pass123@",
+                futureDate
+            )
+        );
+    }
+
+    
+    [TestMethod]
+    public void CannotCreateUserYoungerThan18()
+    {
+        DateTime underageDate = DateTime.Today.AddYears(-17);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@mail.com",
+                "Pass123@",
+                underageDate
+            )
+        );
+    }
+
+    
+    [TestMethod]
+    public void CanCreateUserWhoIsExactly18YearsOld()
+    {
+        DateTime exactly18YearsOld = DateTime.Today.AddYears(-18);
+
+        User user = new User(
+            1,
+            "Juan",
+            "Perez",
+            "juan@mail.com",
+            "Pass123@",
+            exactly18YearsOld
+        );
+
+        Assert.AreEqual(exactly18YearsOld, user.dateOfBirth);
+    }
+
+    
+    [TestMethod]
+    public void CannotCreateUserWhoIsOneDayYoungerThan18()
+    {
+        DateTime oneDayYoungerThan18 = DateTime.Today.AddYears(-18).AddDays(1);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@mail.com",
+                "Pass123@",
+                oneDayYoungerThan18
+            )
+        );
+    }
+
+    [TestMethod]
+    public void UserCannotHaveEmailWithoutLocalPart()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "@mail.com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
+
+    [TestMethod]
+    public void UserCannotHaveEmailWithSpaces()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan @mail.com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
+    
+    [TestMethod]
+    public void UserCannotHaveEmailWithMultipleAtSymbols()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@@mail.com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
+    
+    
+    [TestMethod]
+    public void UserCannotHaveEmailWithoutDotInDomain()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@mailcom",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
+
+    [TestMethod]
+    public void UserCannotHaveEmailWithDomainStartingWithDot()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@.com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
+    
+    [TestMethod]
+    public void UserCannotHaveEmailWithConsecutiveDotsInDomain()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan@mail..com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
+    
+    [TestMethod]
+    public void UserCannotHaveEmailWithLocalPartEndingWithDot()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                "juan.@mail.com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
+    
+    [TestMethod]
+    public void UserCannotHaveEmailWithLocalPartStartingWithDot()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(
+                1,
+                "Juan",
+                "Perez",
+                ".juan@mail.com",
+                "Pass1234@",
+                new DateTime(1990, 5, 15)
+            )
+        );
+    }
     
 }

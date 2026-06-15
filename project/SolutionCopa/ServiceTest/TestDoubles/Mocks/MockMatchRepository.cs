@@ -129,9 +129,50 @@ public sealed class MockMatchRepository : IMatchRepository
         return result;
     }
 
+    public List<Match> Search(MatchQueryCriteria criteria)
+    {
+        IEnumerable<Match> query = _matches.Values;
+
+        if (criteria.From.HasValue)
+        {
+            query = query.Where(match => match.MatchDate >= criteria.From.Value);
+        }
+
+        if (criteria.To.HasValue)
+        {
+            query = query.Where(match => match.MatchDate < criteria.To.Value);
+        }
+
+        if (criteria.StadiumId.HasValue)
+        {
+            query = query.Where(match => match.Stadium != null && match.Stadium.Id == criteria.StadiumId.Value);
+        }
+
+        if (!string.IsNullOrEmpty(criteria.GroupName))
+        {
+            query = query.Where(match => BelongsToGroup(match, criteria.GroupName));
+        }
+
+        if (criteria.Phase.HasValue)
+        {
+            query = query.Where(match => match is MatchElimination elimination && elimination.Phase == criteria.Phase.Value);
+        }
+
+        return query.ToList();
+    }
+
     public List<Match> GetAll()
     {
         return _matches.Values.ToList();
+    }
+
+    public int NextIncidentId()
+    {
+        int maxId = _matches.Values
+            .SelectMany(match => match.Incidents)
+            .Select(incident => (int?)incident.Id)
+            .Max() ?? 0;
+        return maxId + 1;
     }
 
     public void Clear()

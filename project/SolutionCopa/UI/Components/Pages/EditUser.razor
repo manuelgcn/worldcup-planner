@@ -1,8 +1,9 @@
 
 @page "/edit-user"
 @using Services
+@using Services.Interfaces
 @inject SessionState Session
-@inject UserServices UserServices
+@inject IUserService UserServices
 @inject NavigationManager Nav
 
 <PageTitle>Editar Usuario</PageTitle>
@@ -15,7 +16,7 @@
         <div class="auth-body">
             @if (errors.Any())
             {
-                <div class="alert alert-danger" role="alert">
+                <div class="alert alert-error" role="alert">
                     <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
                     Se encontraron errores:
                     <ul>
@@ -101,12 +102,13 @@
                 Session.CurrentUser!.idUser,
                 name,
                 lastname,
-                email
+                email,
+                Session.CurrentUser?.email
             );
 
             successMessage = "Usuario actualizado correctamente";
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
             errors.Add(ex.Message);
         }

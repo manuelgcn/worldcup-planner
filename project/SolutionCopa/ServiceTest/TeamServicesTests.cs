@@ -9,6 +9,7 @@ namespace ServiceTest;
 public sealed class TeamServicesTests
 {
     private MockTeamRepository _repo = null!;
+    private MockGroupRepository _groupRepo = null!;
     private MockUnitOfWork _uow = null!;
     private TeamServices _service = null!;
 
@@ -16,8 +17,9 @@ public sealed class TeamServicesTests
     public void Setup()
     {
         _repo = new MockTeamRepository();
+        _groupRepo = new MockGroupRepository();
         _uow = new MockUnitOfWork();
-        _service = new TeamServices(_repo, _uow);
+        _service = new TeamServices(_repo, _groupRepo, _uow, new MockAuditLogService());
     }
 
     [TestMethod]
@@ -46,8 +48,15 @@ public sealed class TeamServicesTests
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
         MockTeamRepository teamRepository = new MockTeamRepository();
+        MockGroupRepository groupRepository = new MockGroupRepository();
         MockUnitOfWork unitOfWork = new MockUnitOfWork();
-        TeamServices auditedService = new TeamServices(teamRepository, unitOfWork, AuditLogService.CreateInstance(repository, 1));
+
+        TeamServices auditedService = new TeamServices(
+            teamRepository,
+            groupRepository,
+            unitOfWork,
+            AuditLogService.CreateInstance(repository));
+
         Team team = new Team(1, "Uruguay", 2000, false, Confederation.CONMEBOL);
 
         auditedService.AddTeam(team);
@@ -62,14 +71,54 @@ public sealed class TeamServicesTests
     {
         MockAuditLogRepository repository = new MockAuditLogRepository();
         MockTeamRepository teamRepository = new MockTeamRepository();
+        MockGroupRepository groupRepository = new MockGroupRepository();
         MockUnitOfWork unitOfWork = new MockUnitOfWork();
-        TeamServices auditedService = new TeamServices(teamRepository, unitOfWork, AuditLogService.CreateInstance(repository, 1));
+
+        TeamServices auditedService = new TeamServices(
+            teamRepository,
+            groupRepository,
+            unitOfWork,
+            AuditLogService.CreateInstance(repository));
+
         Team team = new Team(1, "Uruguay", 2000, false, Confederation.CONMEBOL);
 
         auditedService.AddTeam(team);
         auditedService.RemoveTeam("Uruguay");
 
         Assert.IsTrue(repository.GetAll().Any(log => log.Action == AuditActions.DeleteTeam));
+    }
+
+    [TestMethod]
+    public void AddTeam_RecordsPerformingActor()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        TeamServices auditedService = new TeamServices(
+            new MockTeamRepository(),
+            new MockGroupRepository(),
+            new MockUnitOfWork(),
+            AuditLogService.CreateInstance(repository));
+
+        auditedService.AddTeam(new Team(1, "Uruguay", 2000, false, Confederation.CONMEBOL), performedByEmail: "admin@copa.com");
+
+        AuditLog log = repository.GetAll().Single(l => l.Action == AuditActions.CreateTeam);
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void RemoveTeam_RecordsPerformingActor()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        TeamServices auditedService = new TeamServices(
+            new MockTeamRepository(),
+            new MockGroupRepository(),
+            new MockUnitOfWork(),
+            AuditLogService.CreateInstance(repository));
+
+        auditedService.AddTeam(new Team(1, "Uruguay", 2000, false, Confederation.CONMEBOL));
+        auditedService.RemoveTeam("Uruguay", performedByEmail: "admin@copa.com");
+
+        AuditLog log = repository.GetAll().Single(l => l.Action == AuditActions.DeleteTeam);
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
     }
 
     [TestMethod]
@@ -81,6 +130,15 @@ public sealed class TeamServicesTests
         _service.AddTeam(t1);
 
         Assert.ThrowsException<TeamServicesException>(() => _service.AddTeam(t2));
+    }
+
+    [TestMethod]
+    public void CannotAddDuplicateTeamNameIgnoringCaseAndAccents()
+    {
+        _service.AddTeam(new Team(1, "Brasil", 2000, false, Confederation.CONMEBOL));
+
+        Assert.ThrowsException<TeamServicesException>(
+            () => _service.AddTeam(new Team(2, "BRASIL", 1800, false, Confederation.CONMEBOL)));
     }
 
     [TestMethod]
@@ -303,8 +361,10 @@ public sealed class TeamServicesTests
         List<int> firstRankings = _service.GetTeams().Select(team => team.FifaRanking).OrderBy(rank => rank).ToList();
 
         MockTeamRepository repo2 = new MockTeamRepository();
+        MockGroupRepository groupRepo2 = new MockGroupRepository();
         MockUnitOfWork uow2 = new MockUnitOfWork();
-        TeamServices service2 = new TeamServices(repo2, uow2);
+        TeamServices service2 = new TeamServices(repo2, groupRepo2, uow2, new MockAuditLogService());
+
         service2.FillToFortyEight(completionSeed: 42, performedByEmail: null);
         List<int> secondRankings = service2.GetTeams().Select(team => team.FifaRanking).OrderBy(rank => rank).ToList();
 
@@ -312,12 +372,63 @@ public sealed class TeamServicesTests
     }
 
     [TestMethod]
+    public void FillToFortyEight_GeneratesTeamsInFixedConfederationOrder()
+    {
+        // Blinda el orden de recorrido de confederaciones: no debe depender del orden
+        // de iteracion de un Dictionary (que el lenguaje no garantiza). Recorriendo por
+        // Id ascendente (orden de insercion) las confederaciones deben aparecer agrupadas
+        // en el orden fijo AFC, CAF, OFC, UEFA, CONMEBOL, CONCACAF.
+        _service.FillToFortyEight(completionSeed: 7, performedByEmail: null);
+
+        List<Confederation> orderById = _service.GetTeams()
+            .OrderBy(team => team.Id)
+            .Select(team => team.Confederation)
+            .ToList();
+
+        List<Confederation> expected = new List<Confederation>();
+        expected.AddRange(Enumerable.Repeat(Confederation.AFC, 8));
+        expected.AddRange(Enumerable.Repeat(Confederation.CAF, 9));
+        expected.AddRange(Enumerable.Repeat(Confederation.OFC, 1));
+        expected.AddRange(Enumerable.Repeat(Confederation.UEFA, 16));
+        expected.AddRange(Enumerable.Repeat(Confederation.CONMEBOL, 7));
+        expected.AddRange(Enumerable.Repeat(Confederation.CONCACAF, 7));
+
+        CollectionAssert.AreEqual(expected, orderById);
+    }
+
+    [TestMethod]
+    public void FillToFortyEight_SameSeedProducesSameNamesAndRankingsPerId()
+    {
+        _service.FillToFortyEight(completionSeed: 42, performedByEmail: null);
+        List<(int Id, string Name, int Ranking)> first = _service.GetTeams()
+            .OrderBy(team => team.Id)
+            .Select(team => (team.Id, team.Name, team.FifaRanking))
+            .ToList();
+
+        TeamServices service2 = new TeamServices(
+            new MockTeamRepository(), new MockGroupRepository(), new MockUnitOfWork(), new MockAuditLogService());
+        service2.FillToFortyEight(completionSeed: 42, performedByEmail: null);
+        List<(int Id, string Name, int Ranking)> second = service2.GetTeams()
+            .OrderBy(team => team.Id)
+            .Select(team => (team.Id, team.Name, team.FifaRanking))
+            .ToList();
+
+        CollectionAssert.AreEqual(first, second);
+    }
+
+    [TestMethod]
     public void FillToFortyEight_AuditsCreateTeamPerGeneratedTeam()
     {
         MockAuditLogRepository auditRepo = new MockAuditLogRepository();
         MockTeamRepository teamRepo = new MockTeamRepository();
+        MockGroupRepository groupRepository = new MockGroupRepository();
         MockUnitOfWork uow = new MockUnitOfWork();
-        TeamServices auditedService = new TeamServices(teamRepo, uow, AuditLogService.CreateInstance(auditRepo, 1));
+
+        TeamServices auditedService = new TeamServices(
+            teamRepo,
+            groupRepository,
+            uow,
+            AuditLogService.CreateInstance(auditRepo));
 
         auditedService.FillToFortyEight(completionSeed: 7, performedByEmail: "admin@copa.com");
 

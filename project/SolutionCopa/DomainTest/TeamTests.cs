@@ -179,4 +179,189 @@ public sealed class TeamTests
             _ = new ProjectCopa.Team(0, "Argentina", 2400, false, Confederation.CONMEBOL);
         });
     }
+
+
+    [TestMethod]
+    public void CanCreateTeamWithoutFlag_DefaultFlagIsNull()
+    {
+        Team team = new Team(
+            1,
+            "Uruguay",
+            2100,
+            false,
+            Confederation.CONMEBOL
+        );
+
+        Assert.IsNull(team.FlagBase64);
+    }
+    
+    
+    [TestMethod]
+    public void CanCreateTeamWithValidBase64Flag()
+    {
+        string validBase64Flag = "dGVzdA==";
+
+        Team team = new Team(
+            1,
+            "Uruguay",
+            2100,
+            false,
+            Confederation.CONMEBOL,
+            validBase64Flag
+        );
+
+        Assert.AreEqual(validBase64Flag, team.FlagBase64);
+    }
+    
+    
+    [TestMethod]
+    public void CannotCreateTeamWithInvalidBase64Flag()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Team(
+                1,
+                "Uruguay",
+                2100,
+                false,
+                Confederation.CONMEBOL,
+                "esto-no-es-base64"
+            )
+        );
+    }
+
+    
+    
+    [TestMethod]
+    public void CreateTeamWithEmptyFlag_StoresNull()
+    {
+        Team team = new Team(
+            1,
+            "Uruguay",
+            2100,
+            false,
+            Confederation.CONMEBOL,
+            ""
+        );
+
+        Assert.IsNull(team.FlagBase64);
+    }
+
+    
+    
+    [TestMethod]
+    public void UpdateFlagWithValidBase64_UpdatesFlag()
+    {
+        Team team = new Team(
+            1,
+            "Uruguay",
+            2100,
+            false,
+            Confederation.CONMEBOL
+        );
+
+        string validBase64Flag = "dGVzdA==";
+
+        team.UpdateFlag(validBase64Flag);
+
+        Assert.AreEqual(validBase64Flag, team.FlagBase64);
+    }
+
+    
+    [TestMethod]
+    public void UpdateFlagWithInvalidBase64_ThrowsException()
+    {
+        Team team = new Team(
+            1,
+            "Uruguay",
+            2100,
+            false,
+            Confederation.CONMEBOL
+        );
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateFlag("esto-no-es-base64")
+        );
+    }
+
+    [TestMethod]
+    public void CannotCreateTeamWithFlagExceedingMaxSize()
+    {
+        string oversizedFlag = Convert.ToBase64String(new byte[200 * 1024 + 1]);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Team(
+                1,
+                "Uruguay",
+                2100,
+                false,
+                Confederation.CONMEBOL,
+                oversizedFlag
+            )
+        );
+    }
+
+    [TestMethod]
+    public void UpdateFlagExceedingMaxSize_ThrowsException()
+    {
+        Team team = new Team(
+            1,
+            "Uruguay",
+            2100,
+            false,
+            Confederation.CONMEBOL
+        );
+
+        string oversizedFlag = Convert.ToBase64String(new byte[200 * 1024 + 1]);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateFlag(oversizedFlag)
+        );
+    }
+
+    [TestMethod]
+    public void CanCreateTeamWithFlagAtMaxSize()
+    {
+        string maxSizeFlag = Convert.ToBase64String(new byte[200 * 1024]);
+
+        Team team = new Team(
+            1,
+            "Uruguay",
+            2100,
+            false,
+            Confederation.CONMEBOL,
+            maxSizeFlag
+        );
+
+        Assert.AreEqual(maxSizeFlag, team.FlagBase64);
+    }
+
+    [TestMethod]
+    public void UpdateFifaRankingClampsBelowMinimumTo300()
+    {
+        Team team = new Team(1, "Uruguay", 2100, false, Confederation.CONMEBOL);
+
+        team.UpdateFifaRanking(100);
+
+        Assert.AreEqual(300, team.FifaRanking);
+    }
+
+    [TestMethod]
+    public void UpdateFifaRankingClampsAboveMaximumTo2500()
+    {
+        Team team = new Team(1, "Uruguay", 2100, false, Confederation.CONMEBOL);
+
+        team.UpdateFifaRanking(9999);
+
+        Assert.AreEqual(2500, team.FifaRanking);
+    }
+
+    [TestMethod]
+    public void UpdateFifaRankingAssignsIntermediateValueUnchanged()
+    {
+        Team team = new Team(1, "Uruguay", 2100, false, Confederation.CONMEBOL);
+
+        team.UpdateFifaRanking(1800);
+
+        Assert.AreEqual(1800, team.FifaRanking);
+    }
 }

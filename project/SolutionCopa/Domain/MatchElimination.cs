@@ -4,11 +4,11 @@ namespace ProjectCopa;
 
 public class MatchElimination : Match
 {
-    private const string RequiredMatchCodeMessage = "Match code is required.";
-    private const string InvalidPhaseMessage = "Phase is invalid.";
-    private const string NegativePenaltyGoalsMessage = "Penalty shootout goals cannot be negative.";
-    private const string DrawnPenaltyShootoutMessage = "Penalty shootout must produce a winner.";
-    private const string PenaltyShootoutOnDecidedMatchMessage = "Penalty shootout can only be recorded when regulation goals are tied.";
+    private const string RequiredMatchCodeMessage = "El codigo de partido es obligatorio.";
+    private const string InvalidPhaseMessage = "La fase es invalida.";
+    private const string NegativePenaltyGoalsMessage = "Los goles de la definicion por penales no pueden ser negativos.";
+    private const string DrawnPenaltyShootoutMessage = "La definicion por penales debe tener un ganador.";
+    private const string PenaltyShootoutOnDecidedMatchMessage = "La definicion por penales solo puede registrarse cuando los goles del tiempo reglamentario estan empatados.";
 
     public string MatchCode { get; private set; } = null!;
     public Phase Phase { get; private set; }
@@ -36,6 +36,13 @@ public class MatchElimination : Match
             EnsureRequiredAwaySourceMatch(value);
             _matchAway = value;
         }
+    }
+
+    // Constructor sin parametros exclusivo para la materializacion de EF Core (TPH).
+    // EF escribe MatchHome/MatchAway por backing field (_matchHome/_matchAway) evitando los
+    // setters con validacion. No usar desde la app: las factories estaticas conservan las invariantes.
+    private MatchElimination()
+    {
     }
 
     private MatchElimination(
@@ -67,6 +74,21 @@ public class MatchElimination : Match
         : base(id, matchDate, homeTeam, awayTeam, stadium, tournamentSettings)
     {
         InitializeEliminationData(phase, matchCode, matchHome, matchAway);
+    }
+
+    // Constructor de la ronda inicial (R32): sin partidos fuente.
+    private MatchElimination(
+        int id,
+        DateTime matchDate,
+        Team homeTeam,
+        Team awayTeam,
+        Stadium stadium,
+        TournamentSettings tournamentSettings,
+        Phase phase,
+        string matchCode)
+        : base(id, matchDate, homeTeam, awayTeam, stadium, tournamentSettings)
+    {
+        InitializeInitialRoundData(phase, matchCode);
     }
 
     public static MatchElimination Create(
@@ -108,6 +130,32 @@ public class MatchElimination : Match
             matchAway);
     }
 
+    // Factory para la ronda INICIAL del bracket (R32). Sus emparejamientos salen directamente de la
+    // clasificacion de grupos, no de partidos previos, asi que NO recibe ni setea partidos fuente:
+    // MatchHome/MatchAway quedan null (sus tipos ya son nullables). Las rondas posteriores (R16 en
+    // adelante) siguen creandose con Create/CreateMatchWithConfig, que exigen fuentes reales ya
+    // persistidas. Mantener separadas ambas vias evita fabricar fuentes sinteticas para R32.
+    public static MatchElimination CreateInitialRound(
+        int id,
+        DateTime matchDate,
+        Team homeTeam,
+        Team awayTeam,
+        Stadium stadium,
+        TournamentSettings tournamentSettings,
+        Phase phase,
+        string matchCode)
+    {
+        return new MatchElimination(
+            id,
+            matchDate,
+            homeTeam,
+            awayTeam,
+            stadium,
+            tournamentSettings,
+            phase,
+            matchCode);
+    }
+
     private void InitializeEliminationData(Phase phase, string matchCode, Match matchHome, Match matchAway)
     {
         EnsureValidPhase(phase);
@@ -120,6 +168,16 @@ public class MatchElimination : Match
         MatchCode = matchCode;
         MatchHome = matchHome;
         MatchAway = matchAway;
+    }
+
+    private void InitializeInitialRoundData(Phase phase, string matchCode)
+    {
+        EnsureValidPhase(phase);
+        EnsureRequiredMatchCode(matchCode);
+
+        Phase = phase;
+        MatchCode = matchCode;
+        // MatchHome / MatchAway quedan null: la ronda inicial no tiene partidos fuente.
     }
 
     private static void EnsureValidPhase(Phase phase)

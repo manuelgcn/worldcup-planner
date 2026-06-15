@@ -6,35 +6,93 @@ using Services.Interfaces;
 
 namespace Services;
 
-public sealed class TournamentSimulationService(
-    IGroupRepository groupRepository,
-    IMatchRepository matchRepository,
-    IEliminationMatchRepository eliminationMatchRepository,
-    IUnitOfWork unitOfWork,
-    IMatchSimulationEngine matchSimulationEngine,
-    IAuditLogService auditLogService,
-    ITournamentSettingsRepository tournamentSettingsRepository,
-    IKnockoutFixtureGenerator knockoutFixtureGenerator) : ITournamentSimulationService
+public sealed class TournamentSimulationService : ITournamentSimulationService
 {
-    private const string FixtureNotGeneratedMessage = "El fixture aún no ha sido generado";
-    private const string AuditLogMessage = "La fase de grupos fue simulada y la fase 2 fue generada.";
+    private readonly IGroupRepository groupRepository;
+    private readonly IMatchRepository matchRepository;
+    private readonly IEliminationMatchRepository eliminationMatchRepository;
+    private readonly IUnitOfWork unitOfWork;
+    private readonly ISimulationEngineRegistry simulationEngineRegistry;
+    private readonly IAuditLogService auditLogService;
+    private readonly ITournamentSettingsRepository tournamentSettingsRepository;
+    private readonly IKnockoutFixtureGenerator knockoutFixtureGenerator;
+    private readonly INotificationService notificationService;
+    private readonly IRankingService rankingService;
 
+    private const string FixtureNotGeneratedMessage = "El fixture aún no ha sido generado";
+
+    public TournamentSimulationService(
+        IGroupRepository groupRepository,
+        IMatchRepository matchRepository,
+        IEliminationMatchRepository eliminationMatchRepository,
+        IUnitOfWork unitOfWork,
+        ISimulationEngineRegistry simulationEngineRegistry,
+        IAuditLogService auditLogService,
+        ITournamentSettingsRepository tournamentSettingsRepository,
+        IKnockoutFixtureGenerator knockoutFixtureGenerator,
+        INotificationService notificationService,
+        IRankingService rankingService)
+    {
+        ArgumentNullException.ThrowIfNull(notificationService);
+        ArgumentNullException.ThrowIfNull(rankingService);
+        this.groupRepository = groupRepository;
+        this.matchRepository = matchRepository;
+        this.eliminationMatchRepository = eliminationMatchRepository;
+        this.unitOfWork = unitOfWork;
+        this.simulationEngineRegistry = simulationEngineRegistry;
+        this.auditLogService = auditLogService;
+        this.tournamentSettingsRepository = tournamentSettingsRepository;
+        this.knockoutFixtureGenerator = knockoutFixtureGenerator;
+        this.notificationService = notificationService;
+        this.rankingService = rankingService;
+    }
+
+    public void SimulateGroupStage(int seed, string? performedByEmail)
+    {
+        IMatchSimulationEngine engine = ResolveSelectedEngine(seed);
+        RunGroupStageSimulation(seed, engine);
+        LogGroupStageSimulation(seed, engine.Name, performedByEmail);
+        unitOfWork.Commit();
+    }
+
+    // Accion "todo en uno" deliberada y separada: simula la fase de grupos y genera
+    // los cruces de fase 2 en un solo paso. La usa unicamente la pagina Simulador
+    // (Simulator.razor), que avisa explicitamente al usuario. El flujo manual paso a
+    // paso (Fixture.razor) NO la usa: alli se simula la fase de grupos con
+    // SimulateGroupStage y la fase 2 se genera con un boton aparte.
     public void SimulateGroupStageAndGenerateKnockout(int seed)
+    {
+        TournamentSettings settings = ResolveTournamentSettings(seed);
+        IMatchSimulationEngine engine = simulationEngineRegistry.Resolve(settings.SelectedSimulationEngine);
+
+        (List<Group> groups, List<Match> groupStageMatches) = RunGroupStageSimulation(seed, engine);
+
+        QualifiedTeams qualifiedTeams = ClassifyQualifiedTeams(groups, groupStageMatches, settings);
+
+        GenerateAndPersistKnockoutPhase(qualifiedTeams);
+
+        LogSimulation(engine.Name);
+        unitOfWork.Commit();
+    }
+
+    // Simula los 72 partidos de la fase de grupos (sin generar la fase 2) y devuelve los grupos y
+    // sus partidos, para que el llamador pueda opcionalmente clasificar y armar el knockout.
+    private (List<Group> Groups, List<Match> Matches) RunGroupStageSimulation(int seed, IMatchSimulationEngine engine)
     {
         List<Group> groups = GetOrderedGroups();
         List<Match> groupStageMatches = GetGroupStageMatches(groups);
 
         ValidateFixtureGenerated(groupStageMatches);
 
-        SimulateMatches(groupStageMatches, seed);
+        SimulateMatches(groupStageMatches, seed, engine);
 
+        return (groups, groupStageMatches);
+    }
+
+    private IMatchSimulationEngine ResolveSelectedEngine(int seed)
+    {
         TournamentSettings settings = ResolveTournamentSettings(seed);
-        QualifiedTeams qualifiedTeams = ClassifyQualifiedTeams(groups, groupStageMatches, settings);
-
-        GenerateAndPersistKnockoutPhase(qualifiedTeams);
-
-        LogSimulation();
-        unitOfWork.Commit();
+        return simulationEngineRegistry.Resolve(settings.SelectedSimulationEngine);
     }
 
     private List<Group> GetOrderedGroups()
@@ -69,13 +127,20 @@ public sealed class TournamentSimulationService(
         }
     }
 
-    private void SimulateMatches(List<Match> matches, int seed)
+    private void SimulateMatches(List<Match> matches, int seed, IMatchSimulationEngine engine)
     {
         foreach (Match match in matches)
         {
-            matchSimulationEngine.Simulate(match, seed);
+            engine.Simulate(match, seed);
+            ApplyRankingUpdate(match);
             matchRepository.Update(match);
+            notificationService.NotifyMatchSimulated(match);
         }
+    }
+
+    private void ApplyRankingUpdate(Match match)
+    {
+        rankingService.ApplyMatchResultOnce(match);
     }
 
     private static QualifiedTeams ClassifyQualifiedTeams(List<Group> groups, List<Match> matches, TournamentSettings settings)
@@ -112,11 +177,20 @@ public sealed class TournamentSimulationService(
             completionSeed: seed);
     }
 
-    private void LogSimulation()
+    private void LogSimulation(string engineName)
     {
         auditLogService.Log(
             AuditActions.SimulateGroupStageAndGenerateKnockout,
-            AuditLogMessage,
+            $"La fase de grupos fue simulada con el motor {engineName} y la fase 2 fue generada.",
+            affectedEntityType: nameof(TournamentSimulationService));
+    }
+
+    private void LogGroupStageSimulation(int seed, string engineName, string? performedByEmail)
+    {
+        auditLogService.LogPerformedBy(
+            AuditActions.SimulateGroupStage,
+            $"Group stage simulated with engine {engineName} and seed {seed}.",
+            performedByEmail,
             affectedEntityType: nameof(TournamentSimulationService));
     }
 }

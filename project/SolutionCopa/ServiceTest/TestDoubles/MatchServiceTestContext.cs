@@ -1,5 +1,6 @@
 using DataAccess.Interfaces;
 using DataAccess.Repositories;
+using Moq;
 using ProjectCopa;
 using Services;
 using Services.DTOs;
@@ -27,12 +28,16 @@ public sealed class MatchServiceTestContext
     private IAuditLogRepository AuditLogRepository { get; set; } = null!;
     
     public MockMatchRepository MatchRepository { get; } = new MockMatchRepository();
-    public EliminationMatchRepository EliminationMatchRepository { get; } = new EliminationMatchRepository();
+    public MockEliminationMatchRepository EliminationMatchRepository { get; } = new MockEliminationMatchRepository();
     public MockMatchSimulationEngine SimulationEngine { get; } = new MockMatchSimulationEngine();
+    public Mock<IRankingService> RankingServiceMock { get; } = new Mock<IRankingService>();
     public MockUnitOfWork UnitOfWork { get; } = new MockUnitOfWork();
+    public MockNotificationRepository NotificationRepository { get; } = new MockNotificationRepository();
+    public MockUserRepository UserRepository { get; } = new MockUserRepository();
     public IReadOnlyCollection<AuditLog> AuditLogs => _auditLog.AsReadOnly();
 
     private AuditLogService AuditLogService { get; set; } = null!;
+    private NotificationService NotificationService { get; set; } = null!;
     
     public IMatchService Service { get; set; } = null!;
     private IMatchFactory MatchFactory { get; set; } = null!;
@@ -85,7 +90,11 @@ public sealed class MatchServiceTestContext
     
     private void BuildServices()
     {
-        AuditLogService = AuditLogService.CreateInstance(AuditLogRepository, 1);
+        AuditLogService = AuditLogService.CreateInstance(AuditLogRepository);
+
+        // NotificationService real, respaldado por repos inspeccionables: permite verificar que
+        // MatchService (no la UI) avisa a periodistas al simular/registrar resultados.
+        NotificationService = new NotificationService(NotificationRepository, UserRepository, AuditLogService);
 
         // 1. Construimos la fábrica con sus responsabilidades de lectura, incluyendo IStadiumRepository
         MatchFactory = new MatchFactory(
@@ -101,8 +110,10 @@ public sealed class MatchServiceTestContext
             MatchRepository,
             TournamentSettingsRepository,
             MatchFactory,
-            SimulationEngine,
+            new SimulationEngineRegistry([SimulationEngine]),
             AuditLogService, // <-- Inyectado directamente en el servicio
+            RankingServiceMock.Object,
+            NotificationService,
             UnitOfWork,
             EliminationMatchRepository);
     }
@@ -338,6 +349,18 @@ public sealed class MatchServiceTestContext
         public List<AuditLog> GetAll()
         {
             return auditLogs;
+        }
+
+        public List<AuditLog> GetFiltered(DateTime? from, DateTime? to, string? action, string? performedByEmail)
+        {
+            return auditLogs
+                .Where(log => !from.HasValue || log.Timestamp >= from.Value)
+                .Where(log => !to.HasValue || log.Timestamp <= to.Value)
+                .Where(log => string.IsNullOrWhiteSpace(action)
+                    || log.Action.Contains(action.Trim(), StringComparison.OrdinalIgnoreCase))
+                .Where(log => string.IsNullOrWhiteSpace(performedByEmail)
+                    || (log.PerformedByEmail != null && log.PerformedByEmail.Contains(performedByEmail.Trim(), StringComparison.OrdinalIgnoreCase)))
+                .ToList();
         }
     }
 

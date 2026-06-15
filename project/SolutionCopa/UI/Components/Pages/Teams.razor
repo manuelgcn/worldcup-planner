@@ -1,9 +1,12 @@
-
 @page "/teams"
 @using ProjectCopa
 @using Services
+@using Services.DTOs
 @using Services.Exceptions
-@inject TeamServices TeamServices
+@using Services.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+@inject ITeamService TeamServices
+@inject IFlagAssignmentService FlagAssignmentService
 @inject SessionState Session
 @inject NavigationManager Nav
 
@@ -13,7 +16,7 @@
 {
     <section class="m26-card auth-card">
         <h1 class="m26-page-title mb-2">Equipos</h1>
-        <p class="mb-3">No estás logueado.</p>
+        <p class="mb-3">No estas logueado.</p>
         <button class="btn btn-primary" @onclick="GoToLogin">
             <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
             Ir a Login
@@ -22,50 +25,33 @@
 }
 else if (!IsAdmin)
 {
-    <div class="alert alert-danger" role="alert">
+    <div class="alert alert-error" role="alert">
         <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
-        No tenés permisos para administrar equipos.
+        No tenes permisos para administrar equipos.
     </div>
 }
 else
 {
     <h1 class="m26-page-title">Equipos</h1>
 
-    if (errors.Any())
-    {
-        <div class="alert alert-danger" role="alert">
-            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
-            Se encontraron errores:
-            <ul>
-                @foreach (string error in errors)
-                {
-                    <li>@error</li>
-                }
-            </ul>
-        </div>
-    }
-
-    if (!string.IsNullOrWhiteSpace(successMessage))
-    {
-        <div class="alert alert-success" role="alert">
-            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-            @successMessage
-        </div>
-    }
+    <FeedbackAlerts Errors="errors" SuccessMessage="@successMessage" />
 
     <section class="admin-grid">
         <article class="m26-card pane">
             <h2 class="pane-title">Crear equipo</h2>
+
             <div class="mb-3">
                 <label class="form-label" for="teamName">Nombre</label>
                 <input id="teamName" class="form-control" placeholder="Nombre" @bind="nombre" />
             </div>
+
             <div class="mb-3">
                 <label class="form-label" for="teamRanking">Ranking FIFA</label>
                 <input id="teamRanking" class="form-control" placeholder="Ranking FIFA" type="number" @bind="rankingFifa" />
             </div>
+
             <div class="mb-3">
-                <label class="form-label" for="teamConfederation">Confederación</label>
+                <label class="form-label" for="teamConfederation">Confederacion</label>
                 <select id="teamConfederation" class="form-select" @bind="confederation">
                     @foreach (Confederation c in Enum.GetValues<Confederation>())
                     {
@@ -73,6 +59,26 @@ else
                     }
                 </select>
             </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="teamFlag">Bandera</label>
+                <InputFile id="teamFlag"
+                           OnChange="OnFlagSelected"
+                           accept=".png,.jpg,.jpeg,.webp,.svg"
+                           class="form-control" />
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(flagBase64))
+            {
+                <div class="mb-3">
+                    <label class="form-label">Preview</label>
+                    <div>
+                        <img src="@GetPreviewDataUri()"
+                             alt="Bandera"
+                             style="max-width:120px; max-height:80px;" />
+                    </div>
+                </div>
+            }
 
             <button class="btn btn-primary" @onclick="Create">
                 <i class="bi bi-plus-circle-fill" aria-hidden="true"></i>
@@ -82,6 +88,18 @@ else
 
         <article class="m26-card pane">
             <h2 class="pane-title">Equipos existentes</h2>
+
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <button class="btn btn-outline-primary" @onclick="AssignFlags">
+                    <i class="bi bi-flag-fill" aria-hidden="true"></i>
+                    Asignar banderas
+                </button>
+                <div class="form-check mb-0">
+                    <input id="overwriteFlags" class="form-check-input" type="checkbox" @bind="overwriteFlags" />
+                    <label class="form-check-label" for="overwriteFlags">Sobrescribir existentes</label>
+                </div>
+            </div>
+
             @if (!equipos.Any())
             {
                 <div class="m26-empty">
@@ -95,9 +113,10 @@ else
                     <table class="table table-hover m26-scoreboard mb-0">
                         <thead>
                             <tr>
+                                <th>Bandera</th>
                                 <th>Nombre</th>
                                 <th>Ranking</th>
-                                <th>Confederación</th>
+                                <th>Confederacion</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -105,16 +124,32 @@ else
                             @foreach (Team equipo in equipos)
                             {
                                 <tr>
+                                    <td>
+                                        <TeamFlag Team="equipo" Large="true" />
+                                    </td>
                                     <td>@equipo.Name</td>
                                     <td>@equipo.FifaRanking</td>
                                     <td>
                                         <span class="m26-conf-badge conf-@equipo.Confederation">@equipo.Confederation</span>
                                     </td>
                                     <td class="text-end">
-                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => Remove(equipo.Name)">
-                                            <i class="bi bi-trash" aria-hidden="true"></i>
-                                            Eliminar
-                                        </button>
+                                        @if (confirmingDeleteName == equipo.Name)
+                                        {
+                                            <span class="me-2">¿Eliminar <strong>@equipo.Name</strong>?</span>
+                                            <button class="btn btn-danger btn-sm me-1" @onclick="() => Remove(equipo.Name)">
+                                                Sí, eliminar
+                                            </button>
+                                            <button class="btn btn-outline-secondary btn-sm" @onclick="CancelDelete">
+                                                Cancelar
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-outline-danger btn-sm" @onclick="() => StartDelete(equipo.Name)">
+                                                <i class="bi bi-trash" aria-hidden="true"></i>
+                                                Eliminar
+                                            </button>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -130,14 +165,18 @@ else
     private string nombre = "";
     private int rankingFifa;
     private Confederation confederation;
+    private string? flagBase64;
+    private string? flagContentType;
 
-    private readonly List<string> errors = new List<string>();
+    private const long MaxFlagSize = 200 * 1024;
+    
+    private readonly List<string> errors = new();
     private string? successMessage;
 
     private IReadOnlyCollection<Team> equipos = Array.Empty<Team>();
 
     private bool IsAdmin =>
-        Session.CurrentUser!.Roles.Contains(UserRoles.Admin);
+        Session.CurrentUser!.HasRole(UserRoles.Admin);
 
     protected override void OnInitialized()
     {
@@ -146,7 +185,26 @@ else
 
     private void LoadTeams()
     {
-            equipos = TeamServices.GetTeams();
+        equipos = TeamServices.GetTeams();
+    }
+
+    private async Task OnFlagSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            IBrowserFile file = e.File;
+            flagContentType = file.ContentType;
+
+            await using Stream stream = file.OpenReadStream(MaxFlagSize);
+            using MemoryStream ms = new();
+            await stream.CopyToAsync(ms);
+
+            flagBase64 = Convert.ToBase64String(ms.ToArray());
+        }
+        catch (Exception ex)
+        {
+            errors.Add("No se pudo cargar la bandera: " + ex.Message);
+        }
     }
 
     private void Create()
@@ -159,9 +217,14 @@ else
 
         try
         {
-            int nextId = TeamServices.GetTeams().Select(t => t.Id).DefaultIfEmpty(0).Max() + 1;
-            Team team = new Team(nextId, nombre, rankingFifa, false, confederation);
-            TeamServices.AddTeam(team);
+            int nextId = TeamServices.GetTeams()
+                .Select(t => t.Id)
+                .DefaultIfEmpty(0)
+                .Max() + 1;
+
+            Team team = new Team(nextId, nombre, rankingFifa, false, confederation, flagBase64);
+
+            TeamServices.AddTeam(team, Session.CurrentUser?.email);
             successMessage = "Equipo creado correctamente";
             ClearForm();
             LoadTeams();
@@ -176,14 +239,66 @@ else
         }
     }
 
-    private void Remove(string nombreEquipo)
+    private string? confirmingDeleteName;
+
+    private void StartDelete(string nombreEquipo)
+    {
+        confirmingDeleteName = nombreEquipo;
+    }
+
+    private void CancelDelete()
+    {
+        confirmingDeleteName = null;
+    }
+
+    private bool overwriteFlags;
+
+    private void AssignFlags()
     {
         errors.Clear();
         successMessage = null;
 
         try
         {
-            TeamServices.RemoveTeam(nombreEquipo);
+            FlagAssignmentResult result = FlagAssignmentService.AssignFlags(
+                overwriteFlags,
+                Session.CurrentUser?.email);
+
+            successMessage = BuildFlagAssignmentMessage(result);
+            LoadTeams();
+        }
+        catch (Exception ex)
+        {
+            errors.Add("No se pudieron asignar las banderas: " + ex.Message);
+        }
+    }
+
+    private static string BuildFlagAssignmentMessage(FlagAssignmentResult result)
+    {
+        string message = $"Se asignaron {result.AssignedCount} banderas";
+
+        if (result.SkippedExistingCount > 0)
+        {
+            message += $", {result.SkippedExistingCount} ya tenían bandera";
+        }
+
+        if (result.UnmappedTeamNames.Count > 0)
+        {
+            message += $" ({result.UnmappedTeamNames.Count} sin mapeo: {string.Join(", ", result.UnmappedTeamNames)})";
+        }
+
+        return message;
+    }
+
+    private void Remove(string nombreEquipo)
+    {
+        errors.Clear();
+        successMessage = null;
+        confirmingDeleteName = null;
+
+        try
+        {
+            TeamServices.RemoveTeam(nombreEquipo, Session.CurrentUser?.email);
             successMessage = "Equipo eliminado correctamente";
             LoadTeams();
         }
@@ -209,10 +324,17 @@ else
         nombre = "";
         rankingFifa = 0;
         confederation = default;
+        flagBase64 = null;
+        flagContentType = null;
     }
 
     private void GoToLogin()
     {
         Nav.NavigateTo("/login");
+    }
+
+    private string GetPreviewDataUri()
+    {
+        return ImageHelper.GetDataUri(flagBase64, flagContentType);
     }
 }

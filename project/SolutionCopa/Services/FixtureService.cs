@@ -1,6 +1,5 @@
 using ProjectCopa;
 using Services.Exceptions;
-using Services.Interfaces;
 namespace Services;
 
 public class FixtureService
@@ -11,21 +10,21 @@ public class FixtureService
     private const int MaxUefaTeamsPerGroup = 2;
     private const int MaxNonUefaTeamsPerGroup = 1;
 
+    // Each group draws exactly one team from each bombo, so there are as many bombos as teams per group.
+    private const int BomboCount = TeamsPerGroup;
+
     private readonly IReadOnlyCollection<Team> teams;
     private readonly IReadOnlyCollection<Stadium> stadiums;
-    private readonly IAuditLogService? _auditLogService;
     private readonly int seed;
 
     public FixtureService(
         IReadOnlyCollection<Team> teams,
         IReadOnlyCollection<Stadium> stadiums,
-        int? seed = null,
-        IAuditLogService? auditLogService = null)
+        int? seed = null)
     {
         this.teams = teams;
         this.stadiums = stadiums;
         this.seed = seed ?? 0;
-        _auditLogService = auditLogService;
     }
 
     public IReadOnlyCollection<Group> CreateFixture()
@@ -34,10 +33,6 @@ public class FixtureService
 
         List<Group> groups = CreateGroups();
         AssignTeamsToGroups(groups);
-        _auditLogService?.Log(
-            AuditActions.GenerateFixture,
-            $"Fixture created with {groups.Count} groups and {teams.Count} teams using seed {seed}.",
-            nameof(Group));
 
         return groups;
     }
@@ -46,10 +41,10 @@ public class FixtureService
     private void ValidatePreconditions()
     {
         if (teams.Count != RequiredTeams)
-            throw new ArgumentException("Fixture requires exactly 48 teams");
+            throw new ArgumentException("El fixture requiere exactamente 48 equipos");
 
         if (stadiums.Count < 4)
-            throw new ArgumentException("At least 4 stadiums are required");
+            throw new ArgumentException("Se requieren al menos 4 estadios");
     }
 
     private List<Group> CreateGroups()
@@ -66,7 +61,8 @@ public class FixtureService
 
     private void AssignTeamsToGroups(List<Group> groups)
     {
-        List<List<Team>> bombos = CreateBombos();
+        Random random = new Random(seed);
+        List<List<Team>> bombos = CreateBombos(random);
 
         List<List<Team>> assignments = new List<List<Team>>();
         for (int i = 0; i < groups.Count; i++)
@@ -78,8 +74,8 @@ public class FixtureService
             if (!TryPlaceBomboOneTeamPerGroup(assignments, bombo, groupAlreadyTakenInBombo, 0))
             {
                 throw new FixtureServiceException(
-                    "Cannot build fixture: confederation quotas cannot be satisfied " +
-                    "(max 1 team per non-UEFA confederation per group, max 2 UEFA per group).");
+                    "No se puede generar el fixture: no se pueden satisfacer los cupos por confederacion " +
+                    "(maximo 1 equipo por confederacion no-UEFA por grupo, maximo 2 UEFA por grupo).");
             }
         }
 
@@ -92,13 +88,13 @@ public class FixtureService
         }
     }
 
-    private List<List<Team>> CreateBombos()
+    private List<List<Team>> CreateBombos(Random random)
     {
-        List<Team> orderedTeams = OrderTeamsByRankingWithDeterministicTieBreak();
+        List<Team> orderedTeams = OrderTeamsByRankingWithDeterministicTieBreak(random);
 
         List<List<Team>> bombos = new List<List<Team>>();
 
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < BomboCount; i++)
         {
             bombos.Add(
                 orderedTeams
@@ -106,6 +102,13 @@ public class FixtureService
                     .Take(GroupsInTournament)
                     .ToList()
             );
+        }
+
+        // The composition of each bombo (which 12 teams it holds, by ranking) is fixed; FixtureSeed
+        // only decides the draw order within each bombo, which is what makes the group assignment vary.
+        foreach (List<Team> bombo in bombos)
+        {
+            ShuffleDeterministically(bombo, random);
         }
 
         return bombos;
@@ -151,10 +154,8 @@ public class FixtureService
         return sameConfederationCount < maxAllowed;
     }
 
-    private List<Team> OrderTeamsByRankingWithDeterministicTieBreak()
+    private List<Team> OrderTeamsByRankingWithDeterministicTieBreak(Random random)
     {
-        Random random = new Random(seed);
-
         return teams
             .GroupBy(t => t.FifaRanking)
             .OrderByDescending(g => g.Key)

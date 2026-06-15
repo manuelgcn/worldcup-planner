@@ -6,24 +6,53 @@ using Services.Interfaces;
 
 namespace Services;
 
-public class MatchService(
-    IMatchRepository matchRepository,
-    ITournamentSettingsRepository tournamentSettingsRepository,
-    IMatchFactory matchFactory,
-    IMatchSimulationEngine matchSimulationEngine,
-    IAuditLogService auditLogService,
-    IUnitOfWork unitOfWork,
-    IEliminationMatchRepository? eliminationMatchRepository = null)
-    : IMatchService
+public class MatchService : IMatchService
 {
+    private readonly IMatchRepository matchRepository;
+    private readonly ITournamentSettingsRepository tournamentSettingsRepository;
+    private readonly IMatchFactory matchFactory;
+    private readonly ISimulationEngineRegistry simulationEngineRegistry;
+    private readonly IAuditLogService auditLogService;
+    private readonly IRankingService rankingService;
+    private readonly INotificationService notificationService;
+    private readonly IUnitOfWork unitOfWork;
+    private readonly IEliminationMatchRepository eliminationMatchRepository;
+
     private const int DefaultTournamentSettingsId = 1;
-    private const string MatchIdAlreadyExistsMessage = "Match ID already exists";
-    private const string GroupNameRequiredMessage = "Group name is required";
-    private const string FromMustBeLessOrEqualToMessage = "'from' must be less than or equal to 'to'";
-    private const string MatchNotFoundMessage = "Match not found";
-    private const string ValueRequiredMessage = "Value is required";
-    private const string TournamentSettingsNotFoundMessage = "Tournament settings not found";
-    private const string GroupMatchFrozenByKnockoutMessage = "Group-stage matches cannot be edited once the knockout phase is generated.";
+    private const string MatchIdAlreadyExistsMessage = "El id de partido ya existe";
+    private const string GroupNameRequiredMessage = "El nombre del grupo es obligatorio";
+    private const string FromMustBeLessOrEqualToMessage = "'desde' debe ser menor o igual que 'hasta'";
+    private const string MatchNotFoundMessage = "Partido no encontrado";
+    private const string ValueRequiredMessage = "El valor es obligatorio";
+    private const string TournamentSettingsNotFoundMessage = "No se encontro la configuracion del torneo";
+    private const string GroupMatchFrozenByKnockoutMessage = "No se pueden editar los partidos de fase de grupos una vez generada la fase eliminatoria.";
+    private const string IncidentNotFoundMessage = "Incidencia no encontrada";
+    private const string IncidentTeamNotInMatchMessage = "El equipo de la incidencia debe ser uno de los dos que disputan el partido";
+    private const string ResultRegisteredDetailTemplate = "MatchId={0} resultado registrado: {1}-{2}.";
+
+    public MatchService(
+        IMatchRepository matchRepository,
+        ITournamentSettingsRepository tournamentSettingsRepository,
+        IMatchFactory matchFactory,
+        ISimulationEngineRegistry simulationEngineRegistry,
+        IAuditLogService auditLogService,
+        IRankingService rankingService,
+        INotificationService notificationService,
+        IUnitOfWork unitOfWork,
+        IEliminationMatchRepository eliminationMatchRepository)
+    {
+        ArgumentNullException.ThrowIfNull(notificationService);
+        ArgumentNullException.ThrowIfNull(eliminationMatchRepository);
+        this.matchRepository = matchRepository;
+        this.tournamentSettingsRepository = tournamentSettingsRepository;
+        this.matchFactory = matchFactory;
+        this.simulationEngineRegistry = simulationEngineRegistry;
+        this.auditLogService = auditLogService;
+        this.rankingService = rankingService;
+        this.notificationService = notificationService;
+        this.unitOfWork = unitOfWork;
+        this.eliminationMatchRepository = eliminationMatchRepository;
+    }
 
     public MatchDto CreateMatch(CreateMatchRequestDto request)
     {
@@ -124,6 +153,9 @@ public class MatchService(
             AuditActions.PublishMatchResult,
             $"MatchId={matchId} published.",
             matchId);
+
+        ApplyRankingUpdate(match);
+
         matchRepository.Update(match);
         unitOfWork.Commit();
     }
@@ -133,19 +165,130 @@ public class MatchService(
         Match match = GetMatchOrThrow(matchId);
         EnsureGroupMatchIsEditable(match);
         TournamentSettings tournamentSettings = GetSimulationTournamentSettingsOrThrow();
+        IMatchSimulationEngine engine = simulationEngineRegistry.Resolve(tournamentSettings.SelectedSimulationEngine);
 
-        matchSimulationEngine.Simulate(match, tournamentSettings.SimulationSeed);
+        engine.Simulate(match, tournamentSettings.SimulationSeed);
         LogAuditAction(
-            AuditActions.SimulateMatch,
-            $"MatchId={matchId} simulated with seed {tournamentSettings.SimulationSeed}.",
+            AuditActions.SimulationExecuted,
+            $"MatchId={matchId} simulated with engine {engine.Name} and seed {tournamentSettings.SimulationSeed}.",
             matchId);
+
+        ApplyRankingUpdate(match);
+        notificationService.NotifyMatchSimulated(match);
+
         matchRepository.Update(match);
         unitOfWork.Commit();
+    }
+
+    public void AddYellowCard(int matchId, int teamId, int minute, string? performedByEmail)
+    {
+        AddIncident(matchId, teamId, performedByEmail,
+            (id, team) => new YellowCardIncident(id, minute, team));
+    }
+
+    public void AddRedCard(int matchId, int teamId, int minute, string? performedByEmail)
+    {
+        AddIncident(matchId, teamId, performedByEmail,
+            (id, team) => new RedCardIncident(id, minute, team));
+    }
+
+    public void RemoveIncident(int matchId, int incidentId, string? performedByEmail)
+    {
+        Match match = GetMatchOrThrow(matchId);
+        EnsureGroupMatchIsEditable(match);
+
+        MatchIncident incident = match.Incidents.FirstOrDefault(stored => stored.Id == incidentId)
+                                 ?? throw new MatchServicesException(IncidentNotFoundMessage);
+
+        match.RemoveIncident(incident);
+
+        LogIncidentAction(
+            AuditActions.IncidentRemoved,
+            $"Incident Id={incidentId} ({IncidentTypeName(incident)}) removed from MatchId={matchId}.",
+            matchId,
+            performedByEmail);
+
+        matchRepository.Update(match);
+        unitOfWork.Commit();
+    }
+
+    public List<MatchIncidentDto> GetIncidents(int matchId)
+    {
+        Match match = GetMatchOrThrow(matchId);
+        return match.Incidents.Select(MapToIncidentDto).ToList();
+    }
+
+    private void AddIncident(int matchId, int teamId, string? performedByEmail, Func<int, Team, MatchIncident> factory)
+    {
+        Match match = GetMatchOrThrow(matchId);
+        EnsureGroupMatchIsEditable(match);
+
+        Team team = ResolveMatchTeamOrThrow(match, teamId);
+        MatchIncident incident = factory(matchRepository.NextIncidentId(), team);
+        match.AddIncident(incident);
+
+        LogIncidentAction(
+            AuditActions.IncidentAdded,
+            $"Incident ({IncidentTypeName(incident)}) added to MatchId={matchId} for TeamId={teamId} at minute {incident.Minute}.",
+            matchId,
+            performedByEmail);
+
+        matchRepository.Update(match);
+        unitOfWork.Commit();
+    }
+
+    // Las incidencias exigen la misma referencia de Team que juega el partido
+    // (el dominio compara por referencia), por eso se resuelve desde el Match.
+    private static Team ResolveMatchTeamOrThrow(Match match, int teamId)
+    {
+        if (match.HomeTeam?.Id == teamId)
+        {
+            return match.HomeTeam;
+        }
+
+        if (match.AwayTeam?.Id == teamId)
+        {
+            return match.AwayTeam;
+        }
+
+        throw new MatchServicesException(IncidentTeamNotInMatchMessage);
+    }
+
+    private void LogIncidentAction(string action, string details, int matchId, string? performedByEmail)
+    {
+        auditLogService.LogPerformedBy(
+            action: action,
+            details: details,
+            performedByEmail: performedByEmail,
+            affectedEntityType: nameof(Match),
+            affectedEntityId: matchId);
+    }
+
+    private static string IncidentTypeName(MatchIncident incident)
+    {
+        return incident is RedCardIncident ? MatchIncidentDto.RedCardType : MatchIncidentDto.YellowCardType;
+    }
+
+    private static MatchIncidentDto MapToIncidentDto(MatchIncident incident)
+    {
+        return new MatchIncidentDto
+        {
+            Id = incident.Id,
+            Minute = incident.Minute,
+            TeamId = incident.Team.Id,
+            TeamName = incident.Team.Name,
+            Type = IncidentTypeName(incident)
+        };
     }
 
     public MatchDto GetById(int matchId)
     {
         return MapToDto(GetMatchOrThrow(matchId));
+    }
+
+    public Match GetEntity(int matchId)
+    {
+        return GetMatchOrThrow(matchId);
     }
 
     public List<MatchDto> GetByGroup(string groupName)
@@ -184,6 +327,45 @@ public class MatchService(
             matchId);
         matchRepository.Update(match);
         unitOfWork.Commit();
+    }
+
+    // Controlador GRASP del caso de uso "registrar resultado": carga el partido, valida que
+    // sea editable, registra los goles, audita con el actor, aplica el ranking una sola vez,
+    // notifica a periodistas y persiste. La UI solo captura datos y delega aca.
+    public MatchDto RegisterResult(int matchId, int homeGoals, int awayGoals, string? performedByEmail)
+    {
+        Match match = GetMatchOrThrow(matchId);
+        EnsureGroupMatchIsEditable(match);
+
+        int previousHomeGoals = match.HomeGoals;
+        int previousAwayGoals = match.AwayGoals;
+
+        match.SetGoals(homeGoals, awayGoals);
+        LogResultRegistered(matchId, homeGoals, awayGoals, performedByEmail);
+        // Editar un resultado ya registrado debe recalcular el Elo (revertir el anterior y aplicar
+        // el nuevo), no quedar bloqueado por el flag de "aplicado una vez" (H7).
+        rankingService.ReapplyMatchResult(match);
+        notificationService.NotifyResultLoaded(match, previousHomeGoals, previousAwayGoals);
+
+        matchRepository.Update(match);
+        unitOfWork.Commit();
+
+        return MapToDto(match);
+    }
+
+    private void LogResultRegistered(int matchId, int homeGoals, int awayGoals, string? performedByEmail)
+    {
+        auditLogService.LogPerformedBy(
+            action: AuditActions.UpdateMatch,
+            details: string.Format(ResultRegisteredDetailTemplate, matchId, homeGoals, awayGoals),
+            performedByEmail: performedByEmail,
+            affectedEntityType: nameof(Match),
+            affectedEntityId: matchId);
+    }
+
+    private void ApplyRankingUpdate(Match match)
+    {
+        rankingService.ApplyMatchResultOnce(match);
     }
 
     private void LogAuditAction(string action, string details, int affectedEntityId, int? tournamentSettingsId = null)
@@ -225,11 +407,6 @@ public class MatchService(
     private void EnsureGroupMatchIsEditable(Match match)
     {
         if (match is not MatchGroup)
-        {
-            return;
-        }
-
-        if (eliminationMatchRepository == null)
         {
             return;
         }

@@ -15,18 +15,18 @@ public class MatchFactory(
     IMatchRepository matchRepository) 
     : IMatchFactory
 {
-    private const string PhaseRequiredMessage = "Phase is required";
-    private const string MatchCodeRequiredMessage = "MatchCode is required";
-    private const string MatchHomeIdRequiredMessage = "MatchHomeId is required";
-    private const string MatchAwayIdRequiredMessage = "MatchAwayId is required";
-    private const string GroupNameRequiredMessage = "Group name is required";
-    private const string JourneyIdRequiredMessage = "JourneyId is required";
-    private const string TeamNotFoundMessage = "Team not found";
-    private const string StadiumNotFoundMessage = "Stadium not found";
-    private const string GroupNotFoundMessage = "Group not found";
-    private const string JourneyNotFoundMessage = "Journey not found";
-    private const string TournamentSettingsNotFoundMessage = "Tournament settings not found";
-    private const string MatchNotFoundMessage = "Match not found";
+    private const string PhaseRequiredMessage = "La fase es obligatoria";
+    private const string MatchCodeRequiredMessage = "El codigo de partido es obligatorio";
+    private const string MatchHomeIdRequiredMessage = "El id del local del cruce es obligatorio";
+    private const string MatchAwayIdRequiredMessage = "El id del visitante del cruce es obligatorio";
+    private const string GroupNameRequiredMessage = "El nombre del grupo es obligatorio";
+    private const string JourneyIdRequiredMessage = "El id de la jornada es obligatorio";
+    private const string TeamNotFoundMessage = "Equipo no encontrado";
+    private const string StadiumNotFoundMessage = "Estadio no encontrado";
+    private const string GroupNotFoundMessage = "Grupo no encontrado";
+    private const string JourneyNotFoundMessage = "Jornada no encontrada";
+    private const string TournamentSettingsNotFoundMessage = "No se encontro la configuracion del torneo";
+    private const string MatchNotFoundMessage = "Partido no encontrado";
 
     public Match Create(CreateMatchRequestDto request)
     {
@@ -77,6 +77,11 @@ public class MatchFactory(
     
     public void ApplyUpdate(Match match, UpdateMatchRequestDto request)
     {
+        if (request.MatchDate.HasValue)
+        {
+            match.ChangeDate(request.MatchDate.Value);
+        }
+
         if (request.StadiumId.HasValue)
         {
             Stadium stadium = GetStadiumOrThrow(request.StadiumId.Value);

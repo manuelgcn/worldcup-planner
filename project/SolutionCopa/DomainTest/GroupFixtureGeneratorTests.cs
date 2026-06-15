@@ -172,6 +172,80 @@ public class GroupFixtureGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateMatches_WithFiveStadiums_GeneratesValidFullFixture()
+    {
+        const int FiveStadiums = 5;
+        List<Group> groups = CreateGroups(TotalGroups);
+        List<Stadium> stadiums = CreateStadiums(FiveStadiums);
+        GroupFixtureGenerator generator = new GroupFixtureGenerator();
+
+        List<Match> matches = generator.GenerateMatches(groups, stadiums, DefaultStartDate);
+
+        Assert.AreEqual(ExpectedTotalMatches, matches.Count);
+
+        IEnumerable<IGrouping<string, Match>> dailyUsage = matches.GroupBy(match => match.Stadium!.Name + match.MatchDate.Date);
+        foreach (IGrouping<string, Match> usage in dailyUsage)
+        {
+            Assert.IsTrue(usage.Count() <= MaxMatchesPerStadiumPerDay);
+        }
+
+        foreach (Group group in groups)
+        {
+            List<MatchGroup> jornadaThreeMatches = matches.OfType<MatchGroup>()
+                .Where(match => match.Group!.Name == group.Name && match.Journey!.Number == SimultaneousJornadaNumber)
+                .ToList();
+
+            Assert.AreEqual(ExpectedSimultaneousMatchesPerGroup, jornadaThreeMatches.Count);
+            Assert.AreEqual(jornadaThreeMatches[0].MatchDate, jornadaThreeMatches[1].MatchDate);
+            Assert.AreNotEqual(jornadaThreeMatches[0].Stadium!.Name, jornadaThreeMatches[1].Stadium!.Name);
+        }
+    }
+
+    [TestMethod]
+    public void GenerateMatches_HonorsConfiguredDaysBetweenJourneys()
+    {
+        // H9: el generador debe usar DaysBetweenJourneys de la configuracion, no la constante 3.
+        const int CustomDaysBetween = 5;
+        List<Group> groups = CreateGroups(SingleGroupCount);
+        List<Stadium> stadiums = CreateStadiums();
+        GroupFixtureGenerator generator = new GroupFixtureGenerator();
+
+        List<Match> matches = generator.GenerateMatches(
+            groups, stadiums, DefaultStartDate, daysBetweenJourneys: CustomDaysBetween, maxMatchesPerDay: 3);
+
+        DateTime journeyOne = JourneyDate(matches, 1);
+        DateTime journeyTwo = JourneyDate(matches, 2);
+        DateTime journeyThree = JourneyDate(matches, 3);
+        Assert.AreEqual(DefaultStartDate.Date, journeyOne);
+        Assert.AreEqual(DefaultStartDate.AddDays(CustomDaysBetween).Date, journeyTwo);
+        Assert.AreEqual(DefaultStartDate.AddDays(CustomDaysBetween * 2).Date, journeyThree);
+    }
+
+    [TestMethod]
+    public void GenerateMatches_HonorsConfiguredMaxMatchesPerDay()
+    {
+        // H9: con MaxMatchesPerDay=2 solo deben usarse 2 horarios (14:00 y 18:00), no el de 22:00.
+        const int CustomMaxPerDay = 2;
+        List<Group> groups = CreateGroups(SingleGroupCount);
+        List<Stadium> stadiums = CreateStadiums();
+        GroupFixtureGenerator generator = new GroupFixtureGenerator();
+
+        List<Match> matches = generator.GenerateMatches(
+            groups, stadiums, DefaultStartDate, daysBetweenJourneys: 3, maxMatchesPerDay: CustomMaxPerDay);
+
+        List<int> hours = matches.Select(match => match.MatchDate.Hour).Distinct().ToList();
+        CollectionAssert.IsSubsetOf(hours, new List<int> { 14, 18 });
+        Assert.IsFalse(hours.Contains(22), "Con MaxMatchesPerDay=2 no debe usarse el horario de 22:00.");
+    }
+
+    private static DateTime JourneyDate(List<Match> matches, int journeyNumber)
+    {
+        return matches.OfType<MatchGroup>()
+            .First(match => match.Journey!.Number == journeyNumber)
+            .MatchDate.Date;
+    }
+
+    [TestMethod]
     public void GenerateMatches_RespectsMaxMatchesPerStadiumPerDay()
     {
         List<Group> groups = CreateGroups(TotalGroups);
