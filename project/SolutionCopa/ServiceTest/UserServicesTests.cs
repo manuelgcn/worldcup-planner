@@ -457,4 +457,141 @@ public class UserServicesTests
         Assert.IsTrue(actions.Contains("DELETE_USER"));
         Assert.AreEqual(0, auditedService.GetAllUsers().Count);
     }
+
+    [TestMethod]
+    public void AddUser_WithoutAnyRole_Throws()
+    {
+        User user = new User(3, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        Assert.ThrowsException<UserServicesException>(() => service.AddUser(user));
+    }
+
+    [TestMethod]
+    public void RemoveUser_SystemAdmin_Throws()
+    {
+        Assert.ThrowsException<UserServicesException>(() => service.RemoveUser(1));
+    }
+
+    [TestMethod]
+    public void UpdateUser_SystemAdmin_Throws()
+    {
+        Assert.ThrowsException<UserServicesException>(() =>
+            service.UpdateUser(1, "Ana", "Lopez", "ana@mail.com"));
+    }
+
+    [TestMethod]
+    public void UpdateUser_KeepingSameEmail_Succeeds()
+    {
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        service.AddUser(user);
+
+        service.UpdateUser(2, "Juan Carlos", "Perez", "juan@mail.com");
+
+        User updated = service.GetUserById(2);
+        Assert.AreEqual("Juan Carlos", updated.name);
+        Assert.AreEqual("juan@mail.com", updated.email);
+    }
+
+    [TestMethod]
+    public void RemoveRole_SystemAdmin_Throws()
+    {
+        Assert.ThrowsException<UserServicesException>(() =>
+            service.RemoveRole(1, UserRoles.Editor));
+    }
+
+    [TestMethod]
+    public void RemoveRole_WhenUserDoesNotHaveRole_DoesNothing()
+    {
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15), UserRoles.Editor);
+        service.AddUser(user);
+
+        service.RemoveRole(2, UserRoles.Admin);
+
+        User unchanged = service.GetUserById(2);
+        Assert.IsTrue(unchanged.HasRole(UserRoles.Editor));
+        Assert.AreEqual(1, unchanged.Roles.Count);
+    }
+
+    [TestMethod]
+    public void RemoveRole_WhenUserHasOnlyOneRole_Throws()
+    {
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15), UserRoles.Editor);
+        service.AddUser(user);
+
+        Assert.ThrowsException<UserServicesException>(() =>
+            service.RemoveRole(2, UserRoles.Editor));
+    }
+
+    [TestMethod]
+    public void RemoveRole_RemovesRoleAndLogsAuditEntry()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        UserServices auditedService = new UserServices(
+            new MockUserRepository(),
+            AuditLogService.CreateInstance(auditRepo));
+
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15), UserRoles.Editor);
+        auditedService.AddUser(user);
+        auditedService.AssignRole(2, UserRoles.Admin);
+
+        auditedService.RemoveRole(2, UserRoles.Admin, performedByEmail: "admin@copa.com");
+
+        User updated = auditedService.GetUserById(2);
+        Assert.IsFalse(updated.HasRole(UserRoles.Admin));
+        Assert.IsTrue(updated.HasRole(UserRoles.Editor));
+        AuditLog log = auditRepo.GetAll().Single(l => l.Action == "REMOVE_ROLES");
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void ToggleRole_SystemAdmin_Throws()
+    {
+        Assert.ThrowsException<UserServicesException>(() =>
+            service.ToggleRole(1, UserRoles.Admin));
+    }
+
+    [TestMethod]
+    public void ToggleRole_WhenUserLacksRole_AddsItAndLogsAssign()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        UserServices auditedService = new UserServices(
+            new MockUserRepository(),
+            AuditLogService.CreateInstance(auditRepo));
+
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15), UserRoles.Editor);
+        auditedService.AddUser(user);
+
+        auditedService.ToggleRole(2, UserRoles.Admin);
+
+        Assert.IsTrue(auditedService.GetUserById(2).HasRole(UserRoles.Admin));
+        Assert.IsTrue(auditRepo.GetAll().Any(l => l.Action == "ASSIGN_USER_ROLE"));
+    }
+
+    [TestMethod]
+    public void ToggleRole_WhenUserHasRole_RemovesItAndLogsRemove()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        UserServices auditedService = new UserServices(
+            new MockUserRepository(),
+            AuditLogService.CreateInstance(auditRepo));
+
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15), UserRoles.Editor);
+        auditedService.AddUser(user);
+        auditedService.AssignRole(2, UserRoles.Admin);
+
+        auditedService.ToggleRole(2, UserRoles.Admin);
+
+        Assert.IsFalse(auditedService.GetUserById(2).HasRole(UserRoles.Admin));
+        Assert.IsTrue(auditRepo.GetAll().Any(l => l.Action == "REMOVE_ROLES"));
+    }
+
+    [TestMethod]
+    public void ToggleRole_WhenUserHasOnlyThatRole_Throws()
+    {
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15), UserRoles.Editor);
+        service.AddUser(user);
+
+        Assert.ThrowsException<UserServicesException>(() =>
+            service.ToggleRole(2, UserRoles.Editor));
+    }
 }
