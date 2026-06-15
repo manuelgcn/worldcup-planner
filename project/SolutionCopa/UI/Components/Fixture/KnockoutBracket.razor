@@ -6,12 +6,48 @@
 }
 else
 {
-    <div class="bracket">
+    @* Vista 1: cuadro visual compacto (referencial). Solo banderas, árbol
+       horizontal R32 → Final, para tener noción de los cruces de un vistazo. *@
+    <div class="bracket-compact-wrap">
+        <h5 class="bracket-subtitle">Cuadro de cruces</h5>
+        <p class="bracket-hint">Referencial: cada llave muestra las banderas de los dos equipos. Pasá el mouse para ver nombres y resultado.</p>
+        <div class="bracket-compact">
+            @foreach (BracketColumn column in BuildColumns())
+            {
+                <div class="bracket-compact-column">
+                    <h6>@column.Title</h6>
+                    <div class="bracket-compact-cells">
+                        @foreach (MatchElimination match in column.Matches)
+                        {
+                            <div class="bracket-mini @PlayedClass(match)" title="@MatchTooltip(match)">
+                                <span class="bracket-mini-code">@match.MatchCode</span>
+                                <div class="bracket-mini-team @WinnerClass(match, true)">
+                                    <TeamFlag Team="match.HomeTeam" />
+                                </div>
+                                <div class="bracket-mini-team @WinnerClass(match, false)">
+                                    <TeamFlag Team="match.AwayTeam" />
+                                </div>
+                            </div>
+                        }
+                        @if (column.Matches.Count == 0)
+                        {
+                            <div class="bracket-mini placeholder">Pendiente</div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* Vista 2: detalle por fase con resultados completos (nombres, goles,
+       penales, estadio). Cada fase es una franja a lo ancho que envuelve. *@
+    <div class="bracket-detail">
+        <h5 class="bracket-subtitle">Resultados por fase</h5>
         @foreach (BracketColumn column in BuildColumns())
         {
-            <div class="bracket-column">
-                <h5>@column.Title</h5>
-                <div class="bracket-column-cells">
+            <div class="bracket-detail-phase">
+                <h6>@column.Title</h6>
+                <div class="bracket-detail-cells">
                     @foreach (MatchElimination match in column.Matches)
                     {
                         <BracketCell Match="match" />
@@ -49,6 +85,31 @@ else
                 .ToList();
             yield return new BracketColumn(title, matches);
         }
+    }
+
+    private static string PlayedClass(MatchElimination match) => match.HasResult ? "played" : "pending";
+
+    private static string WinnerClass(MatchElimination match, bool isHome)
+    {
+        if (!match.HasResult) return "";
+        Team? winner = match.GetWinner();
+        if (winner == null) return "";
+        bool isWinner = isHome ? winner == match.HomeTeam : winner == match.AwayTeam;
+        return isWinner ? "winner" : "loser";
+    }
+
+    private static string MatchTooltip(MatchElimination match)
+    {
+        string home = match.HomeTeam?.Name ?? "TBD";
+        string away = match.AwayTeam?.Name ?? "TBD";
+        if (!match.HasResult)
+        {
+            return $"{match.MatchCode}: {home} vs {away} (pendiente)";
+        }
+        string penalties = match.WonByPenalties
+            ? $" (pen. {match.HomePenaltyGoals}-{match.AwayPenaltyGoals})"
+            : "";
+        return $"{match.MatchCode}: {home} {match.HomeGoals}-{match.AwayGoals} {away}{penalties}";
     }
 
     private sealed record BracketColumn(string Title, List<MatchElimination> Matches);
