@@ -1,67 +1,49 @@
-# WorldCupPlanner 2026 - Release de Entrega 2
+# WorldCupPlanner 2026 — Release (Entrega 2)
 
-Paquete ejecutable para Windows x64. La aplicacion es self-contained: no
-requiere instalar .NET 8. La persistencia usa Azure SQL Edge, por lo que
-**Docker Desktop debe estar instalado e iniciado**. El primer arranque necesita
-acceso a Internet si la imagen `mcr.microsoft.com/azure-sql-edge:latest` aun no
-esta descargada.
+App self-contained para Windows x64. **No requiere instalar .NET.** La persistencia
+usa Azure SQL Edge, así que **Docker Desktop tiene que estar instalado y abierto**.
+El primer arranque necesita Internet para descargar la imagen de la base.
 
-## Inicio recomendado
+> Todos los comandos van en PowerShell, dentro de esta carpeta.
 
-1. Extraer el ZIP completo.
-2. Abrir PowerShell en la carpeta extraida.
-3. Ejecutar:
-
-   ```powershell
-   Set-ExecutionPolicy -Scope Process Bypass
-   .\start.ps1
-   ```
-
-4. Abrir `http://localhost:5000`.
-
-`start.ps1` valida Docker, levanta Azure SQL Edge, espera que acepte conexiones
-y ejecuta `win-x64/UI.exe`. En el primer arranque, la aplicacion crea la base,
-aplica todas las migraciones y crea usuarios basicos.
-
-## Credenciales del primer arranque
-
-| Rol | Email | Password |
-|---|---|---|
-| Admin | `admin@copa.com` | `Admin@123` |
-| Editor | `editor@copa.com` | `Editor@123` |
-| Periodista | `periodista@copa.com` | `Periodista@123` |
-
-## Cargar datos de demo
-
-Con la app ya corriendo (`start.ps1` dejo el contenedor levantado), en otra
-ventana de PowerShell:
+## Arrancar
 
 ```powershell
-.\seed.ps1          # carga la demo completa (login: admin1@copa.com / Admin@123)
-.\seed.ps1 empty    # reinicia la base a vacia (solo esquema)
+Set-ExecutionPolicy -Scope Process Bypass   # una vez por ventana
+.\start.ps1
 ```
 
-`seed.ps1` restaura `db/backups/seed-full.bak` (o `seed-empty.bak`) en un solo
-paso. El RESTORE requiere que no haya conexiones activas: si falla, deten la app
-con Ctrl+C, corre `seed.ps1` y volve a iniciar. Alternativa manual con
-`sqlcmd`/`seed-full.sql` documentada en `INSTALL.md`.
+Abrí `http://localhost:5000`. Login: `admin@copa.com` / `Admin@123`.
+Detener: **Ctrl + C** (la base sigue levantada).
 
-## Inicio manual
+## Cargar la demo (48 equipos + fixture simulado)
+
+El restore necesita la app desconectada, por eso este orden:
 
 ```powershell
-docker compose up -d sqlserver
-.\win-x64\UI.exe --urls http://localhost:5000
+.\start.ps1      # 1. levanta todo
+# 2. Ctrl + C para cortar SOLO la app (la base queda arriba)
+.\seed.ps1       # 3. carga la demo
+.\start.ps1      # 4. vuelve a arrancar la app
 ```
 
-No ejecutar `UI.exe` antes de que SQL Edge este listo: la aplicacion aplica
-migraciones al arrancar y terminara con error si no puede conectarse.
+Login demo: `admin1@copa.com` / `Admin@123`.
 
-## Contenido del asset formal
+## Qué hace cada script
 
-- `win-x64/`: aplicacion self-contained.
-- `start.ps1`: inicio verificado de base + aplicacion.
-- `INSTALL.md`: instalacion manual, restauracion y datos de prueba.
-- `docker-compose.yml` y `.env`: configuracion reproducible de SQL Edge.
-- `db/scripts/`: scripts de esquema y datos.
-- `db/backups/`: backups vacio y con datos de prueba.
-- Archivo `.sha256`: integridad del ZIP publicado en GitHub Releases.
+| Script | Qué hace |
+|---|---|
+| `start.ps1` | Valida Docker, levanta Azure SQL Edge, espera a que acepte conexiones y arranca la app en `http://localhost:5000`. En el primer arranque crea la base, aplica migraciones y crea los usuarios básicos. |
+| `seed.ps1` | Restaura la demo completa (`db/backups/seed-full.bak`). Requiere la app detenida. `.\seed.ps1 empty` reinicia la base a vacía (solo esquema). |
+
+## Si algo falla
+
+- **"Docker Desktop no esta iniciado"** → abrí Docker Desktop y esperá a que diga *Running*.
+- **`seed.ps1` falla en el RESTORE** → la app sigue conectada: cortala con Ctrl+C y reintentá.
+- **La app cierra con error de conexión** → arrancaste `UI.exe` antes que la base. Usá siempre `start.ps1`.
+
+## Contenido del asset
+
+`win-x64/` (app), `start.ps1`, `seed.ps1`, `docker-compose.yml`, `.env`,
+`db/` (esquema y backups), `README.md`, `INSTALL.md` y el `.sha256` que verifica
+la integridad del ZIP. La instalación manual paso a paso está en `INSTALL.md`.
