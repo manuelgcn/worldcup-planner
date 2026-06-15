@@ -52,7 +52,7 @@ public sealed class GroupFixtureGenerator
         foreach (Group group in orderedGroups)
         {
             if (group.Teams.Count != TeamsPerGroup)
-                throw new MatchException("Each group must contain exactly 4 teams.");
+                throw new MatchException("Cada grupo debe contener exactamente 4 equipos.");
 
             List<Team> teams = new List<Team>(group.Teams);
             int groupsPerDay = GroupsPerDay(orderedStadiums.Count);

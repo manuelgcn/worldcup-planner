@@ -41,10 +41,10 @@ public class FixtureService
     private void ValidatePreconditions()
     {
         if (teams.Count != RequiredTeams)
-            throw new ArgumentException("Fixture requires exactly 48 teams");
+            throw new ArgumentException("El fixture requiere exactamente 48 equipos");
 
         if (stadiums.Count < 4)
-            throw new ArgumentException("At least 4 stadiums are required");
+            throw new ArgumentException("Se requieren al menos 4 estadios");
     }
 
     private List<Group> CreateGroups()
@@ -74,8 +74,8 @@ public class FixtureService
             if (!TryPlaceBomboOneTeamPerGroup(assignments, bombo, groupAlreadyTakenInBombo, 0))
             {
                 throw new FixtureServiceException(
-                    "Cannot build fixture: confederation quotas cannot be satisfied " +
-                    "(max 1 team per non-UEFA confederation per group, max 2 UEFA per group).");
+                    "No se puede generar el fixture: no se pueden satisfacer los cupos por confederacion " +
+                    "(maximo 1 equipo por confederacion no-UEFA por grupo, maximo 2 UEFA por grupo).");
             }
         }
 

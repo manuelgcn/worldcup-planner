@@ -239,7 +239,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         if (qualifiedWithGroups == null) throw new ArgumentNullException(nameof(qualifiedWithGroups));
 
         List<(Team Team, string Group)> entries = qualifiedWithGroups.ToList();
-        if (entries.Count != 32) throw new ArgumentException("Requires 32 qualified teams with group info");
+        if (entries.Count != 32) throw new ArgumentException("Se requieren 32 equipos clasificados con su grupo");
 
         EliminationOrchestrator orchestrator = new EliminationOrchestrator(
             eliminationRepo,
