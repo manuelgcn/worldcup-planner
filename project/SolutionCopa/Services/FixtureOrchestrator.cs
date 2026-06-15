@@ -165,7 +165,9 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         List<Match> matches = matchGenerator.GenerateMatches(
             groups.ToList(),
             stadiums.ToList(),
-            settings.StartDate);
+            settings.StartDate,
+            settings.DaysBetweenJourneys,
+            settings.MaxMatchesPerDay);
 
         foreach (Match match in matches)
         {
