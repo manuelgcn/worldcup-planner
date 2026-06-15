@@ -342,7 +342,9 @@ public class MatchService : IMatchService
 
         match.SetGoals(homeGoals, awayGoals);
         LogResultRegistered(matchId, homeGoals, awayGoals, performedByEmail);
-        ApplyRankingUpdate(match);
+        // Editar un resultado ya registrado debe recalcular el Elo (revertir el anterior y aplicar
+        // el nuevo), no quedar bloqueado por el flag de "aplicado una vez" (H7).
+        rankingService.ReapplyMatchResult(match);
         notificationService.NotifyResultLoaded(match, previousHomeGoals, previousAwayGoals);
 
         matchRepository.Update(match);
