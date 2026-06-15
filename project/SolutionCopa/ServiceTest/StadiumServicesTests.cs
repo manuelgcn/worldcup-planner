@@ -135,6 +135,32 @@ public class StadiumServicesTests
 
     
     [TestMethod]
+    public void AddStadium_WhenIdNotProvided_AssignsSequentialIds()
+    {
+        // La UI crea estadios sin Id (default 0). Como la clave es ValueGeneratedNever,
+        // dos estadios con Id 0 violarian la PK; AddStadium debe asignar Id = max+1.
+        _service.AddStadium(new Stadium("Centenario", "Montevideo", null, 60000));
+        _service.AddStadium(new Stadium("Maracana", "Rio", null, 78000));
+
+        List<Stadium> all = _service.GetAllStadiums().ToList();
+        Assert.AreEqual(2, all.Count);
+        List<int> ids = all.Select(stadium => stadium.Id).ToList();
+        Assert.AreEqual(2, ids.Distinct().Count());
+        Assert.IsFalse(ids.Contains(0));
+    }
+
+    [TestMethod]
+    public void AddStadium_AssignsIdAfterTheMaximumExistingId()
+    {
+        _service.AddStadium(new Stadium("Wembley", "London", null, 90000) { Id = 5 });
+
+        _service.AddStadium(new Stadium("Centenario", "Montevideo", null, 60000));
+
+        Stadium added = _service.GetByName("Centenario");
+        Assert.AreEqual(6, added.Id);
+    }
+
+    [TestMethod]
     public void CanGetStadiumByName()
     {
         Stadium stadium = new Stadium(

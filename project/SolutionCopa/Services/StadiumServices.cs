@@ -90,6 +90,14 @@ public class StadiumServices : IStadiumService
             throw new StadiumServicesException(DuplicateStadiumNameMessage);
         }
 
+        // La clave es ValueGeneratedNever: la UI crea estadios con Id 0, por lo que
+        // dos altas consecutivas chocarian en la PK. Asignamos Id = max+1 (igual que el
+        // seed por defecto y ImportService) cuando no llega un Id explicito.
+        if (stadium.Id <= 0)
+        {
+            stadium.Id = NextStadiumId();
+        }
+
         stadiumRepository.Add(stadium);
         
         auditLogService.Log(
@@ -99,6 +107,12 @@ public class StadiumServices : IStadiumService
         unitOfWork.Commit();
     }
     
+    private int NextStadiumId()
+    {
+        IReadOnlyCollection<Stadium> existing = stadiumRepository.GetAll();
+        return existing.Count == 0 ? 1 : existing.Max(stadium => stadium.Id) + 1;
+    }
+
     public Stadium GetById(int id)
     {
         return stadiumRepository.GetById(id)
