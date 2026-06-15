@@ -6,14 +6,14 @@ namespace Services.Interfaces;
 public interface IUserService
 {
     IReadOnlyCollection<User> GetAllUsers();
-    void AddUser(User user);
+    void AddUser(User user, string? performedByEmail = null);
     void RegisterUser(CreateUserRequestDto request);
-    void RemoveRole(int userId, UserRoles role);
+    void RemoveRole(int userId, UserRoles role, string? performedByEmail = null);
     User Authenticate(string email, string password);
     User GetUserByEmail(string email);
     User GetUserById(int id);
-    void RemoveUser(int id);
-    void UpdateUser(int id, string name, string lastname, string email);
-    void AssignRole(int userId, UserRoles role);
-    void ToggleRole(int userId, UserRoles role);
+    void RemoveUser(int id, string? performedByEmail = null);
+    void UpdateUser(int id, string name, string lastname, string email, string? performedByEmail = null);
+    void AssignRole(int userId, UserRoles role, string? performedByEmail = null);
+    void ToggleRole(int userId, UserRoles role, string? performedByEmail = null);
 }

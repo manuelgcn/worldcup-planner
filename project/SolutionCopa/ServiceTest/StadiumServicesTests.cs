@@ -290,6 +290,46 @@ public class StadiumServicesTests
         Assert.ThrowsException<StadiumServicesException>(() => service.RemoveById(7));
     }
 
+    [TestMethod]
+    public void AddStadium_RecordsPerformingActor()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        StadiumServices auditedService = CreateAuditedService(auditRepo);
+
+        auditedService.AddStadium(new Stadium("Centenario", "Montevideo", null, 60000), performedByEmail: "admin@copa.com");
+
+        AuditLog log = auditRepo.GetAll().Single(l => l.Action == "CREATE_STADIUM");
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void UpdateById_RecordsPerformingActor()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        StadiumServices auditedService = CreateAuditedService(auditRepo);
+        auditedService.AddStadium(new Stadium("Centenario", "Montevideo", null, 60000));
+        int stadiumId = auditedService.GetByName("Centenario").Id;
+
+        auditedService.UpdateById(stadiumId, "Montevideo Nuevo", null, 65000, performedByEmail: "admin@copa.com");
+
+        AuditLog log = auditRepo.GetAll().Single(l => l.Action == "UPDATE_STADIUM");
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void RemoveById_RecordsPerformingActor()
+    {
+        MockAuditLogRepository auditRepo = new MockAuditLogRepository();
+        StadiumServices auditedService = CreateAuditedService(auditRepo);
+        auditedService.AddStadium(new Stadium("Centenario", "Montevideo", null, 60000));
+        int stadiumId = auditedService.GetByName("Centenario").Id;
+
+        auditedService.RemoveById(stadiumId, performedByEmail: "admin@copa.com");
+
+        AuditLog log = auditRepo.GetAll().Single(l => l.Action == "DELETE_STADIUM");
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
+    }
+
     private static StadiumServices CreateAuditedService(MockAuditLogRepository repository)
     {
         return new StadiumServices(

@@ -81,7 +81,7 @@ public class StadiumServices : IStadiumService
         unitOfWork.Commit();
     }
 
-    public void AddStadium(Stadium stadium)
+    public void AddStadium(Stadium stadium, string? performedByEmail = null)
     {
         ArgumentNullException.ThrowIfNull(stadium);
 
@@ -99,11 +99,13 @@ public class StadiumServices : IStadiumService
         }
 
         stadiumRepository.Add(stadium);
-        
-        auditLogService.Log(
+
+        auditLogService.LogPerformedBy(
             AuditActions.CreateStadium,
             $"Stadium '{stadium.Name}' created in {stadium.City}.",
-            nameof(Stadium));
+            performedByEmail,
+            nameof(Stadium),
+            stadium.Id);
         unitOfWork.Commit();
     }
     
@@ -127,7 +129,7 @@ public class StadiumServices : IStadiumService
                ?? throw new StadiumServicesException(StadiumNotFoundMessage);
     }
     
-    public void RemoveById(int id)
+    public void RemoveById(int id, string? performedByEmail = null)
     {
         Stadium stadium = GetById(id);
         try
@@ -138,22 +140,26 @@ public class StadiumServices : IStadiumService
         {
             throw new StadiumServicesException(StadiumReferencedByMatchMessage);
         }
-        auditLogService.Log(
+        auditLogService.LogPerformedBy(
             AuditActions.DeleteStadium,
             $"Stadium '{stadium.Name}' removed.",
-            nameof(Stadium));
+            performedByEmail,
+            nameof(Stadium),
+            stadium.Id);
         unitOfWork.Commit();
     }
-    
-    public void UpdateById(int id, string city, string? description, int capacity)
+
+    public void UpdateById(int id, string city, string? description, int capacity, string? performedByEmail = null)
     {
         Stadium stadium = GetById(id);
         stadium.Update(city, description, capacity);
         stadiumRepository.Update(stadium);
-        auditLogService.Log(
+        auditLogService.LogPerformedBy(
             AuditActions.UpdateStadium,
             $"Stadium '{stadium.Name}' updated.",
-            nameof(Stadium));
+            performedByEmail,
+            nameof(Stadium),
+            stadium.Id);
         unitOfWork.Commit();
     }
     

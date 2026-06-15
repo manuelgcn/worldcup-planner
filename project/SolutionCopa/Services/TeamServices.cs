@@ -127,7 +127,7 @@ public class TeamServices : ITeamService
         return new Team(id, name, ranking, true, confederation);
     }
 
-    public void AddTeam(Team team)
+    public void AddTeam(Team team, string? performedByEmail = null)
     {
         ArgumentNullException.ThrowIfNull(team);
 
@@ -136,9 +136,10 @@ public class TeamServices : ITeamService
 
         teamRepository.Add(team);
 
-        auditLogService.Log(
+        auditLogService.LogPerformedBy(
             AuditActions.CreateTeam,
             $"Team '{team.Name}' added with ranking {team.FifaRanking}.",
+            performedByEmail,
             nameof(Team),
             team.Id);
 
@@ -158,7 +159,7 @@ public class TeamServices : ITeamService
             ?? throw new TeamServicesException(TeamNotFoundMessage);
     }
 
-    public void RemoveTeam(string name)
+    public void RemoveTeam(string name, string? performedByEmail = null)
     {
         ArgumentNullException.ThrowIfNull(name);
 
@@ -176,9 +177,10 @@ public class TeamServices : ITeamService
 
         teamRepository.Delete(team);
 
-        auditLogService.Log(
+        auditLogService.LogPerformedBy(
             AuditActions.DeleteTeam,
             $"Team '{team.Name}' removed.",
+            performedByEmail,
             nameof(Team),
             team.Id);
 

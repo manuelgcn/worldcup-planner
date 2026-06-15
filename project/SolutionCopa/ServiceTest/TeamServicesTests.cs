@@ -89,6 +89,39 @@ public sealed class TeamServicesTests
     }
 
     [TestMethod]
+    public void AddTeam_RecordsPerformingActor()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        TeamServices auditedService = new TeamServices(
+            new MockTeamRepository(),
+            new MockGroupRepository(),
+            new MockUnitOfWork(),
+            AuditLogService.CreateInstance(repository));
+
+        auditedService.AddTeam(new Team(1, "Uruguay", 2000, false, Confederation.CONMEBOL), performedByEmail: "admin@copa.com");
+
+        AuditLog log = repository.GetAll().Single(l => l.Action == AuditActions.CreateTeam);
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void RemoveTeam_RecordsPerformingActor()
+    {
+        MockAuditLogRepository repository = new MockAuditLogRepository();
+        TeamServices auditedService = new TeamServices(
+            new MockTeamRepository(),
+            new MockGroupRepository(),
+            new MockUnitOfWork(),
+            AuditLogService.CreateInstance(repository));
+
+        auditedService.AddTeam(new Team(1, "Uruguay", 2000, false, Confederation.CONMEBOL));
+        auditedService.RemoveTeam("Uruguay", performedByEmail: "admin@copa.com");
+
+        AuditLog log = repository.GetAll().Single(l => l.Action == AuditActions.DeleteTeam);
+        Assert.AreEqual("admin@copa.com", log.PerformedByEmail);
+    }
+
+    [TestMethod]
     public void CannotAddDuplicateTeamName()
     {
         Team t1 = new Team(1, "Uruguay", 2000, false, Confederation.CONMEBOL);
