@@ -58,12 +58,16 @@ Abrir el browser en la URL que muestra la consola.
 
 ### Correr desde la Release formal
 
-Para evaluar la entrega sin compilar, descargar el asset
-`WorldCupPlanner-<tag>-win-x64.zip` de la **Release** de GitHub (tag
-`v2.0.0-entrega2`), extraerlo completo y, con Docker Desktop iniciado, ejecutar
-`start.ps1`: levanta y espera Azure SQL Edge antes de iniciar la app
-self-contained. La integridad del zip se verifica con el `.sha256` adjunto. No
-ejecutar `UI.exe` con la base detenida (detalle en `INSTALL.md`).
+Hay **dos assets** en la **Release** de GitHub, ambos requieren Docker para la base:
+
+- **Portátil (cualquier SO)** — `WorldCupPlanner-<tag>-portable.zip`: build
+  framework-dependent que corre con el **runtime de .NET 8** en macOS, Linux o
+  Windows. Levantar la base (`docker compose up -d sqlserver`) y, dentro de la
+  carpeta `portable/`, ejecutar `dotnet UI.dll`. Pasos completos en `INSTALL.md` §7.
+- **Self-contained Windows** — `WorldCupPlanner-<tag>-win-x64.zip`: no requiere
+  instalar .NET. Extraerlo completo y, con Docker Desktop iniciado, ejecutar
+  `start.ps1`; la integridad se verifica con el `.sha256` adjunto. No ejecutar
+  `UI.exe` con la base detenida (detalle en `INSTALL.md`).
 
 ### Credenciales seed
 

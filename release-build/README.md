@@ -1,12 +1,19 @@
 # WorldCupPlanner 2026 — Release (Entrega 2)
 
-App self-contained para Windows x64. **No requiere instalar .NET.** La persistencia
-usa Azure SQL Edge, así que **Docker Desktop tiene que estar instalado y abierto**.
-El primer arranque necesita Internet para descargar la imagen de la base.
+Hay **dos formas de correr la entrega**, ambas usan Azure SQL Edge, así que
+**Docker tiene que estar instalado y abierto** (el primer arranque baja la imagen):
 
-> Todos los comandos van en PowerShell, dentro de esta carpeta.
+- **Portátil — cualquier SO (macOS / Linux / Windows)**: carpeta `portable/`.
+  Requiere **.NET 8 instalado** (no es self-contained). Levantar la base con
+  `docker compose up -d sqlserver` y, dentro de `portable/`, ejecutar
+  `dotnet UI.dll`. Es la opción recomendada fuera de Windows. Detalle en
+  `INSTALL.md` §7.
+- **Self-contained Windows x64**: carpeta `win-x64/` + los `.ps1` de abajo.
+  **No requiere instalar .NET.** Solo Windows.
 
-## Arrancar
+> Los comandos `.ps1` de abajo van en PowerShell, dentro de esta carpeta (Windows).
+
+## Arrancar (Windows, self-contained)
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass   # una vez por ventana
@@ -44,6 +51,8 @@ Login demo: `admin1@copa.com` / `Admin@123`.
 
 ## Contenido del asset
 
-`win-x64/` (app), `start.ps1`, `seed.ps1`, `docker-compose.yml`, `.env`,
-`db/` (esquema y backups), `README.md`, `INSTALL.md` y el `.sha256` que verifica
-la integridad del ZIP. La instalación manual paso a paso está en `INSTALL.md`.
+`win-x64/` (app self-contained Windows), `portable/` (app framework-dependent
+cross-platform, `dotnet UI.dll`), `start.ps1`, `seed.ps1`, `docker-compose.yml`,
+`.env`, `db/` (esquema y backups), `README.md`, `INSTALL.md` y el `.sha256` que
+verifica la integridad del ZIP. La instalación manual paso a paso está en
+`INSTALL.md`.

@@ -171,7 +171,9 @@ else
                                                 Periodista
                                             </button>
 
-                                            <button class="btn btn-outline-danger btn-sm" @onclick="() => Remove(u.idUser)">
+                                            <button class="btn btn-outline-danger btn-sm"
+                                                    disabled="@(u.idUser == 1 || u.idUser == Session.CurrentUser!.idUser)"
+                                                    @onclick="() => Remove(u.idUser)">
                                                 <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
                                             </button>
                                         </div>
