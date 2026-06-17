@@ -542,15 +542,18 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         TournamentSettings settings,
         IEliminationMatchRepository elimRepo)
     {
-        Stadium stadium = ResolveStadium();
         int nextId = NextMatchId(elimRepo);
-        DateTime nextDate = KnockoutPhaseDate(settings, nextPhase);
+        // Calendario por ronda (igual que BuildRoundOf32): rota estadio y franja horaria por indice
+        // de partido para que ningun par comparta (estadio, dia, hora). Antes todos los partidos de
+        // la ronda compartian estadio y fecha fijos, colisionando en octavos (8) y cuartos (4).
+        KnockoutRoundScheduler scheduler = CreateRoundScheduler(settings, nextPhase);
         List<MatchElimination> created = new();
 
         // El emparejamiento por adyacencia depende del orden: se ordena por MatchId para que el
         // bracket sea determinista (C1..C8 = ganadores Ai vs Bi, segun el orden intercalado del R32).
         previousRound = previousRound.OrderBy(match => match.MatchId).ToList();
 
+        int matchIndex = 0;
         for (int i = 0; i < previousRound.Count; i += 2)
         {
             MatchElimination sourceHome = previousRound[i];
@@ -561,10 +564,10 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
             MatchElimination match = MatchElimination.CreateMatchWithConfig(
                 nextId++,
-                nextDate,
+                scheduler.DateProvider(matchIndex),
                 home,
                 away,
-                stadium,
+                scheduler.StadiumProvider(matchIndex),
                 settings,
                 nextPhase,
                 code,
@@ -572,6 +575,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
                 sourceAway);
 
             created.Add(match);
+            matchIndex++;
         }
 
         return created;
@@ -588,9 +592,10 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             return new List<MatchElimination>();
         }
 
-        Stadium stadium = ResolveStadium();
         int nextId = NextMatchId(elimRepo);
-        DateTime nextDate = KnockoutPhaseDate(settings, phase);
+        // El tercer puesto es un unico partido: el calendario por ronda le asigna el primer slot
+        // (14:00) de la fecha base de la fase, en un estadio segun la rotacion.
+        KnockoutRoundScheduler scheduler = CreateRoundScheduler(settings, phase);
 
         MatchElimination first = semiFinals[0];
         MatchElimination second = semiFinals[1];
@@ -599,10 +604,10 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
         MatchElimination thirdPlace = MatchElimination.CreateMatchWithConfig(
             nextId,
-            nextDate,
+            scheduler.DateProvider(0),
             home,
             away,
-            stadium,
+            scheduler.StadiumProvider(0),
             settings,
             phase,
             $"3PL-{nextId}",
@@ -615,6 +620,19 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private static DateTime KnockoutPhaseDate(TournamentSettings settings, Phase phase)
     {
         return settings.StartDate.AddDays(KnockoutPhaseOffsetDays(phase));
+    }
+
+    // Arma el calendario de una ronda usando la fecha base por fase (offset cronologico) como dia
+    // de arranque. Mantener el offset por fase evita que rondas distintas se solapen entre si.
+    private KnockoutRoundScheduler CreateRoundScheduler(TournamentSettings settings, Phase phase)
+    {
+        List<Stadium> stadiums = _stadiumRepository.GetAll().ToList();
+        if (stadiums.Count == 0)
+        {
+            throw new KnockoutGeneratorException(StadiumsRequiredMessage);
+        }
+
+        return new KnockoutRoundScheduler(stadiums, settings.MaxMatchesPerDay, KnockoutPhaseDate(settings, phase));
     }
 
     // Offset cronologico explicito (en dias desde StartDate) por fase eliminatoria.
@@ -776,12 +794,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private IGroupRepository RequireGroupRepository()
     {
         return _groupRepository;
-    }
-
-    private Stadium ResolveStadium()
-    {
-        Stadium? stadium = _stadiumRepository.GetAll().FirstOrDefault();
-        return stadium ?? throw new KnockoutGeneratorException(StadiumsRequiredMessage);
     }
 
     private int NextMatchId(IEliminationMatchRepository elimRepo)
