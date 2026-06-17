@@ -7,6 +7,7 @@
 @using Microsoft.Extensions.Logging
 @inject ITournamentSimulationService TournamentSimulationService
 @inject ISimulationConfigurationService SimulationConfiguration
+@inject IGroupStandingsService GroupStandings
 @inject SessionState Session
 @inject NavigationManager Nav
 @inject ILogger<Simulator> Logger
@@ -62,6 +63,14 @@
             Motor de simulación: <strong>@(config?.SelectedSimulationEngine ?? "sin configurar")</strong>.
         </div>
 
+        @if (GroupStageAlreadyPlayed)
+        {
+            <div class="alert alert-info">
+                <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                La fase de grupos ya fue jugada. Para volver a simularla, reiniciá el torneo desde el fixture.
+            </div>
+        }
+
         <div class="sim-grid">
             <section class="m26-card sim-card">
                 <div class="m26-card-header">
@@ -74,7 +83,7 @@
                     <p class="sim-help">Reproducible: la misma semilla siempre produce el mismo torneo.</p>
                     <label for="seedInput">Semilla</label>
                     <input id="seedInput" class="form-control" type="number" @bind="seed" placeholder="0" />
-                    <button class="btn btn-primary" disabled="@isBusy" @onclick="SimulateWithSeed">
+                    <button class="btn btn-primary" disabled="@(isBusy || GroupStageAlreadyPlayed)" @onclick="SimulateWithSeed">
                         <i class="bi @(isBusy ? "bi-arrow-repeat spin" : "bi-play-fill")" aria-hidden="true"></i>
                         Simular con semilla
                     </button>
@@ -90,7 +99,7 @@
                 </div>
                 <div class="sim-card-body">
                     <p class="sim-help">Usa una semilla al azar. El resultado queda igualmente registrado en el log.</p>
-                    <button class="btn btn-secondary" disabled="@isBusy" @onclick="SimulateRandom">
+                    <button class="btn btn-secondary" disabled="@(isBusy || GroupStageAlreadyPlayed)" @onclick="SimulateRandom">
                         <i class="bi @(isBusy ? "bi-arrow-repeat spin" : "bi-shuffle")" aria-hidden="true"></i>
                         Simular aleatorio
                     </button>
@@ -110,6 +119,10 @@
     private string? successMessage;
     private SimulationConfigurationDto? config;
 
+    // Primera barrera de UI: si la fase de grupos ya esta completa se deshabilitan ambos botones.
+    // El servicio mantiene la segunda barrera (lanza MatchServicesException).
+    private bool GroupStageAlreadyPlayed { get; set; }
+
     // Según la letra, la simulación es tarea del Editor (el Admin también puede).
     private bool CanSimulate =>
         Session.CurrentUser?.HasRole(UserRoles.Admin) == true ||
@@ -119,6 +132,12 @@
     {
         config = SimulationConfiguration.GetConfiguration();
         seed = config?.SimulationSeed ?? 0;
+        RefreshGroupStageState();
+    }
+
+    private void RefreshGroupStageState()
+    {
+        GroupStageAlreadyPlayed = GroupStandings.IsGroupStageComplete();
     }
 
     private void SimulateWithSeed()
@@ -143,6 +162,7 @@
         {
             TournamentSimulationService.SimulateGroupStageAndGenerateKnockout(simulationSeed);
             successMessage = successText;
+            RefreshGroupStageState();
         }
         catch (Exception ex) when (ex is MatchServicesException or SimulationEngineException)
         {

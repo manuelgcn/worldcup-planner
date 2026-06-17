@@ -149,6 +149,24 @@ public sealed class TournamentSimulationServiceTests
         Assert.AreEqual("El fixture aún no ha sido generado", exception.Message);
     }
 
+    [TestMethod]
+    public void SimulateGroupStageAndGenerateKnockout_WhenGroupStageAlreadyPlayed_Throws()
+    {
+        // Todos los partidos de grupos quedan con resultado cargado: la fase ya se jugo.
+        foreach (ProjectCopa.Match match in _matchRepository.GetAll())
+        {
+            match.SetGoals(1, 0);
+        }
+
+        MatchServicesException exception = Assert.ThrowsException<MatchServicesException>(
+            () => _service.SimulateGroupStageAndGenerateKnockout(Seed));
+
+        Assert.AreEqual("La fase de grupos ya fue jugada", exception.Message);
+        // No se simulo de nuevo ni se genero la fase 2.
+        Assert.AreEqual(0, _matchSimulationEngine.SimulateCalls);
+        Assert.AreEqual(0, _eliminationMatchRepository.GetAll().Count);
+    }
+
     private void SeedSettings()
     {
         _tournamentSettingsRepository.Add(

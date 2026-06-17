@@ -20,6 +20,7 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
     private readonly IRankingService rankingService;
 
     private const string FixtureNotGeneratedMessage = "El fixture aún no ha sido generado";
+    private const string GroupStageAlreadyPlayedMessage = "La fase de grupos ya fue jugada";
 
     public TournamentSimulationService(
         IGroupRepository groupRepository,
@@ -62,6 +63,10 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
     // SimulateGroupStage y la fase 2 se genera con un boton aparte.
     public void SimulateGroupStageAndGenerateKnockout(int seed)
     {
+        // No re-simular una fase de grupos ya jugada: re-correr los 72 partidos pisaria resultados
+        // ya cargados. La regla vive en el servicio; la UI ofrece una primera barrera (Simulator.razor).
+        EnsureGroupStageNotAlreadyPlayed();
+
         TournamentSettings settings = ResolveTournamentSettings(seed);
         IMatchSimulationEngine engine = simulationEngineRegistry.Resolve(settings.SelectedSimulationEngine);
 
@@ -124,6 +129,18 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
         if (matches.Count == 0)
         {
             throw new MatchServicesException(FixtureNotGeneratedMessage);
+        }
+    }
+
+    // Considera "ya jugada" la fase de grupos cuando existe al menos un partido y TODOS tienen
+    // resultado. Si todavia no hay fixture (0 partidos) no aplica esta regla: ese caso lo cubre
+    // ValidateFixtureGenerated con su propio mensaje.
+    private void EnsureGroupStageNotAlreadyPlayed()
+    {
+        List<MatchGroup> groupMatches = matchRepository.GetAll().OfType<MatchGroup>().ToList();
+        if (groupMatches.Count > 0 && groupMatches.All(match => match.HasResult))
+        {
+            throw new MatchServicesException(GroupStageAlreadyPlayedMessage);
         }
     }
 
