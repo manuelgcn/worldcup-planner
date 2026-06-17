@@ -473,6 +473,34 @@ public class UserServicesTests
     }
 
     [TestMethod]
+    public void RemoveUser_ActorDeletingThemselves_Throws()
+    {
+        // El actor (id 2) intenta eliminar su propia cuenta usando su email como performedBy.
+        User actor = BuildUser(2, "Admin", "Self", "self@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        service.AddUser(actor);
+
+        Assert.ThrowsException<UserServicesException>(
+            () => service.RemoveUser(2, performedByEmail: "self@mail.com"));
+
+        // La cuenta sigue existiendo: la auto-eliminacion fue rechazada.
+        Assert.AreEqual(1, service.GetAllUsers().Count);
+    }
+
+    [TestMethod]
+    public void RemoveUser_ActorDeletingAnotherUser_Succeeds()
+    {
+        User actor = BuildUser(2, "Admin", "Real", "admin@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User target = BuildUser(3, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1991, 6, 16));
+        service.AddUser(actor);
+        service.AddUser(target);
+
+        service.RemoveUser(3, performedByEmail: "admin@mail.com");
+
+        Assert.IsNull(service.GetAllUsers().FirstOrDefault(u => u.idUser == 3));
+        Assert.IsNotNull(service.GetAllUsers().FirstOrDefault(u => u.idUser == 2));
+    }
+
+    [TestMethod]
     public void UpdateUser_SystemAdmin_Throws()
     {
         Assert.ThrowsException<UserServicesException>(() =>
