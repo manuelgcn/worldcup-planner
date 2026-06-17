@@ -23,6 +23,7 @@ public class UserServices : IUserService
     private const string UserNotFoundMessage = "Usuario no encontrado";
     private const string SystemAdminCannotBeModifiedMessage = "El usuario administrador del sistema no puede ser modificado";
     private const string SystemAdminCannotBeDeletedMessage = "El usuario administrador del sistema no puede ser eliminado";
+    private const string UserCannotDeleteThemselvesMessage = "Un usuario no puede eliminar su propia cuenta";
 
     private readonly IAuditLogService _auditLogService;
     private readonly IUserRepository _userRepository;
@@ -143,6 +144,8 @@ public class UserServices : IUserService
         if (id == SystemAdminUserId)
             throw new UserServicesException(SystemAdminCannotBeDeletedMessage);
 
+        EnsureNotSelfDeletion(id, performedByEmail);
+
         User user = GetUserById(id);
 
         _userRepository.Remove(user);
@@ -154,6 +157,20 @@ public class UserServices : IUserService
             nameof(User),
             user.idUser
         );
+    }
+
+    // Impide la auto-eliminacion: si quien ejecuta la accion (resuelto por su email) es el mismo
+    // usuario objetivo, se rechaza. Cuando no se conoce el actor (email nulo o inexistente) no se
+    // puede afirmar que sea auto-eliminacion, asi que no se bloquea por esta regla.
+    private void EnsureNotSelfDeletion(int targetUserId, string? performedByEmail)
+    {
+        if (string.IsNullOrWhiteSpace(performedByEmail))
+            return;
+
+        User? actor = _userRepository.GetByEmail(performedByEmail);
+
+        if (actor is not null && actor.idUser == targetUserId)
+            throw new UserServicesException(UserCannotDeleteThemselvesMessage);
     }
 
     public void UpdateUser(int id, string name, string lastname, string email, string? performedByEmail = null)
