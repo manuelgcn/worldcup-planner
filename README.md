@@ -1,99 +1,109 @@
-# WorldCupPlanner 2026
+# ⚽ WorldCupPlanner
 
-> README generado con el skill propio `generate-readme` (ver `.github/skills/`).
+> A web application to plan and run a **48-team World Cup** — group stage, knockouts, live standings, match simulation, notifications and audit — built with **.NET 8** and a clean, fully-tested layered architecture.
 
-## Descripción
+![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
+![Blazor](https://img.shields.io/badge/Blazor-Server-512BD4?logo=blazor&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-866%20passing-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-96%25-brightgreen)
+![CI](https://github.com/manuelgcn/worldcup-planner/actions/workflows/dotnet-tests.yml/badge.svg)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
-WorldCupPlanner 2026 es una solución .NET 8 por capas para gestionar un torneo
-mundial de 48 equipos (12 grupos de 4): usuarios y roles, equipos con bandera,
-estadios, grupos, partidos e incidencias, fixture de grupos y cruces eliminatorios
-(Round of 32 → Final). Incorpora ranking dinámico (Elo), motores de simulación
-intercambiables, notificaciones a periodistas, exportación de fixture y auditoría, y
-auditoría global del sistema. La lógica de negocio vive en el dominio; los servicios
-orquestan; la UI solo presenta.
+WorldCupPlanner manages an entire tournament of 48 teams (12 groups of 4): users and roles,
+teams with flags, stadiums, groups, matches and incidents, the full fixture (group stage →
+Round of 32 → Final), a dynamic **Elo** ranking, interchangeable simulation engines,
+journalist notifications, CSV/XLSX export and a global audit log.
 
-## Tecnologías
+The design keeps a strict separation of concerns: **business logic lives in the domain, services
+orchestrate use cases, and the UI only presents.**
 
-- **C# / .NET 8**.
-- **Blazor Server** para la UI.
-- **EF Core (Code-First)** contra **Azure SQL Edge** en Docker (autosave por
-  operación vía `IUnitOfWork`). Jerarquías por TPH.
-- **MSTest** + test doubles (provider InMemory de EF; SQLite in-memory para FKs).
-- **CsvHelper** y **ClosedXML** para exportación CSV/XLSX.
+> Built as a university project (team of 3) for *Diseño de Aplicaciones 1* at Universidad ORT del
+> Uruguay, following **Test-Driven Development** and **Gitflow**.
 
-## Estructura de la solución
+---
 
-Solución única: `project/SolutionCopa/SolutionCopa.sln`.
+## ✨ Engineering highlights
 
-| Capa | Proyecto | Rol |
+- **866 automated tests · 96% coverage** on the business layers (Domain / Services / DataAccess).
+- **Clean layered architecture** with enforced dependency direction — the domain depends on nothing.
+- **TDD** throughout (red → green → refactor), with focused, incremental commits.
+- **CI/CD with GitHub Actions**: build + tests on every push and pull request, plus automated release packaging.
+- **Deterministic** ordering and simulation via configurable seeds — every seeded operation is audited (ISO-8601 timestamp + actor).
+
+## 🧩 Features
+
+- Tournament setup: 48 teams, confederation quotas (UEFA 16, CONMEBOL 7, CONCACAF 7, CAF 9, AFC 8, OFC 1).
+- Group fixture (12 groups × 6 matches) with stadium rotation, plus the full knockout bracket (Round of 32 → Final).
+- Dynamic **Elo** ranking updated as results are entered.
+- **Interchangeable match simulation engines** (Strategy pattern).
+- Users and roles (Admin / Editor / Journalist) and journalist notifications.
+- CSV / XLSX export and a global audit log.
+
+## 🛠️ Tech stack
+
+| Area | Technology |
+|---|---|
+| Language | C# / .NET 8 |
+| UI | Blazor Server |
+| Data | Entity Framework Core (Code-First), Azure SQL Edge on Docker, TPH inheritance, Unit of Work |
+| Testing | MSTest + test doubles (EF InMemory provider; SQLite in-memory for FK behavior) |
+| Export | CsvHelper, ClosedXML |
+| Tooling | Git & Gitflow, GitHub Actions, Docker |
+
+## 🏗️ Architecture
+
+```
+UI  ──▶  Services  ──▶  Domain
+              │
+              ▼
+          DataAccess  ──▶  Domain
+```
+
+`Domain` has no dependencies. Single solution: `project/SolutionCopa/SolutionCopa.sln`.
+
+| Layer | Project | Responsibility |
 |---|---|---|
-| Dominio | `Domain` (`ProjectCopa`) | Entidades, invariantes, enums y excepciones de negocio |
-| Servicios | `Services` | Casos de uso, orquestación, DTOs, auditoría y motores de simulación |
-| Datos | `DataAccess` | `AppDbContext`, repos EF, `Configurations/`, `Migrations/`, `IUnitOfWork` |
-| UI | `UI` | Blazor Server, solo presentación |
-| Pruebas | `DomainTest`, `ServiceTest`, `DataAccessTest` | MSTest |
+| Domain | `Domain` | Entities, invariants, enums and business exceptions |
+| Services | `Services` | Use cases, orchestration, DTOs, auditing and simulation engines |
+| Data | `DataAccess` | `AppDbContext`, EF repositories, configurations, migrations, `IUnitOfWork` |
+| UI | `UI` | Blazor Server — presentation only |
+| Tests | `DomainTest`, `ServiceTest`, `DataAccessTest` | MSTest suites |
 
-Dependencias: `UI → Services → Domain` y `Services → DataAccess → Domain`.
-`Domain` no depende de nadie.
+## 🚀 Getting started
 
-## Ejecución
-
-Detalle completo en `INSTALL.md`. Resumen:
+**Prerequisites:** [.NET 8 SDK](https://dotnet.microsoft.com/download) and [Docker](https://www.docker.com/).
 
 ```bash
-# 1. Levantar la base (Azure SQL Edge)
+# 1. Start the database (Azure SQL Edge)
 cp .env.example .env
 docker compose up -d sqlserver
 
-# 2. Aplicar migraciones (la app también las aplica al arrancar)
+# 2. Apply migrations (the app also applies them on startup)
 dotnet ef database update \
   --project project/SolutionCopa/DataAccess \
   --startup-project project/SolutionCopa/UI
 
-# 3. Correr la UI
+# 3. Run the app
 dotnet run --project project/SolutionCopa/UI/UI.csproj
 ```
 
-Abrir el browser en la URL que muestra la consola.
+Then open the URL shown in the console.
 
-### Correr desde la Release formal
+**Seed accounts**
 
-Hay **dos assets** en la **Release** de GitHub, ambos requieren Docker para la base:
+| Role | Email | Password |
+|---|---|---|
+| Admin | admin@copa.com | Admin@123 |
+| Editor | editor@copa.com | Editor@123 |
+| Journalist | periodista@copa.com | Periodista@123 |
 
-- **Portátil (cualquier SO)** — `WorldCupPlanner-<tag>-portable.zip`: build
-  framework-dependent que corre con el **runtime de .NET 8** en macOS, Linux o
-  Windows. Levantar la base (`docker compose up -d sqlserver`) y, dentro de la
-  carpeta `portable/`, ejecutar `dotnet UI.dll`. Pasos completos en `INSTALL.md` §7.
-- **Self-contained Windows** — `WorldCupPlanner-<tag>-win-x64.zip`: no requiere
-  instalar .NET. Extraerlo completo y, con Docker Desktop iniciado, ejecutar
-  `start.ps1`; la integridad se verifica con el `.sha256` adjunto. No ejecutar
-  `UI.exe` con la base detenida (detalle en `INSTALL.md`).
-
-### Credenciales seed
-
-| Rol        | Email                 | Password       |
-|------------|-----------------------|----------------|
-| Admin      | admin@copa.com        | Admin@123      |
-| Editor     | editor@copa.com       | Editor@123     |
-| Periodista | periodista@copa.com   | Periodista@123 |
-
-### Configuración
-
-Las semillas y parámetros del torneo (`FixtureSeed`, `CompletionSeed`,
-`CrossingsSeed`, `SimulationSeed`, fechas) se leen de
-`project/SolutionCopa/UI/appsettings.json`, sección `TournamentSettings`. La
-connection string vive en `ConnectionStrings:Default` (sobrescribible con la env
-`ConnectionStrings__Default`).
-
-## Compilar y testear
+## 🧪 Running the tests
 
 ```bash
-dotnet restore project/SolutionCopa/SolutionCopa.sln
-dotnet build   project/SolutionCopa/SolutionCopa.sln
-dotnet test    project/SolutionCopa/SolutionCopa.sln
+dotnet test project/SolutionCopa/SolutionCopa.sln
 ```
 
-Pruebas por capa:
+Or per layer:
 
 ```bash
 dotnet test project/SolutionCopa/DomainTest/DomainTest.csproj
@@ -101,25 +111,32 @@ dotnet test project/SolutionCopa/ServiceTest/ServiceTest.csproj
 dotnet test project/SolutionCopa/DataAccessTest/DataAccessTest.csproj
 ```
 
-## Reglas clave
+## 📸 Screenshots
 
-- Ordenamiento y simulación determinísticos con semillas; toda operación con semilla
-  queda auditada (timestamp ISO-8601 + usuario).
-- Cupos por confederación: UEFA 16, CONMEBOL 7, CONCACAF 7, CAF 9, AFC 8, OFC 1.
-- Fixture de 12 grupos × 6 partidos con rotación de estadios por nombre normalizado.
-- Clasificación: Pts → DG → GF → sorteo con `CrossingsSeed`.
+<!-- Add 2–3 screenshots of the app (login, group stage, bracket) to docs/screenshots/ and link them here. -->
+_Screenshots coming soon — see `docs/screenshots/`._
 
-## Contribución
+## 📁 Project structure
 
-- TDD: red → green → refactor. Un commit por paso en el flujo de fixture.
-- Gitflow: `feature/*` desde `develop`; `main` solo para release/tag.
-- No mover lógica de negocio a UI ni Controllers.
-- Conservar nombres públicos existentes (en especial en `User` y DTOs).
-- Convenciones e instrucciones de agente en `AGENTS.md`; reglas de negocio en `CLAUDE.md`.
+```
+project/SolutionCopa/
+├── Domain/          # Entities, business rules and invariants
+├── Services/        # Use cases, DTOs, auditing, simulation engines
+├── DataAccess/      # EF Core DbContext, repositories, migrations
+├── UI/              # Blazor Server presentation layer
+├── DomainTest/      # Unit tests — domain
+├── ServiceTest/     # Unit tests — services
+└── DataAccessTest/  # Integration tests — data access
+```
 
-## Uso de IA generativa
+## 👥 Authors
 
-Skills del repo en `.github/skills/` (índice en `.github/skills/README.md`).
-Para el Obligatorio 2 (Fase 10) se agregaron dos skills nuevos
-(`efcore-migrations-helper`, `audit-logger-instrumentation`) y un skill **propio**
-(`generate-readme`) que produce este README y mantiene `AGENTS.md`.
+Developed by a team of 3 for *Diseño de Aplicaciones 1*, Universidad ORT del Uruguay (2026).
+
+- Manuel García Conde Neira — [manu10.garciaconde@gmail.com](mailto:manu10.garciaconde@gmail.com) · [@manuelgcn](https://github.com/manuelgcn)
+- Joaquín Costa — [@CostaJoacoORT](https://github.com/CostaJoacoORT)
+- Tomás Dotta — [@Toto829](https://github.com/Toto829)
+
+## 📄 License
+
+Released under the [MIT License](LICENSE).

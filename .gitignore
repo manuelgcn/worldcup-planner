@@ -163,3 +163,9 @@ PROMPTS_*.md
 PASOS_DEMO.md
 PROBAR_RELEASE.md
 
+
+# Releases portables y artefactos de build locales (no van al repo)
+WorldCupPlanner-*-portable/
+WorldCupPlanner-v*-win-x64/
+255503---330734---326829-*-entrega*/
+wcp-coverage/
