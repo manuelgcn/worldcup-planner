@@ -12,6 +12,8 @@ public interface IMatchService
     // Devuelve la entidad con su grafo (equipos/estadio) para alimentar el editor de
     // resultados en la UI sin que la pagina inyecte repositorios.
     Match GetEntity(int matchId);
+    // Partidos de eliminatoria que ya alimentaron la ronda siguiente: no se pueden editar.
+    IReadOnlySet<int> GetLockedKnockoutMatchIds();
     List<MatchDto> GetByGroup(string groupName);
     List<MatchDto> GetByJourney(int journeyNumber);
     List<MatchDto> GetByDateRange(DateTime from, DateTime to);

@@ -167,6 +167,45 @@ public sealed class MatchServiceRegisterResultTests
             () => harness.Service.RegisterResult(MatchId, homeGoals: 2, awayGoals: 0, Email));
     }
 
+    [TestMethod]
+    public void RegisterResult_SameDrawOnAKnockoutMatchDecidedOnPenalties_KeepsTheResult()
+    {
+        Harness harness = new Harness();
+        MatchElimination match = harness.SeedRoundOf32Match(MatchId);
+        match.SetGoals(1, 1);
+        match.SetPenaltyShootoutResult(4, 3);
+
+        harness.Service.RegisterResult(MatchId, homeGoals: 1, awayGoals: 1, Email);
+
+        Assert.AreSame(match.HomeTeam, ((MatchElimination)harness.MatchRepository.GetById(MatchId)!).GetWinner());
+    }
+
+    [TestMethod]
+    public void RegisterResult_NewDrawOnAKnockoutMatchDecidedOnPenalties_ThrowsMatchServicesException()
+    {
+        Harness harness = new Harness();
+        MatchElimination match = harness.SeedRoundOf32Match(MatchId);
+        match.SetGoals(1, 1);
+        match.SetPenaltyShootoutResult(4, 3);
+
+        Assert.ThrowsException<MatchServicesException>(
+            () => harness.Service.RegisterResult(MatchId, homeGoals: 2, awayGoals: 2, Email));
+    }
+
+    [TestMethod]
+    public void GetLockedKnockoutMatchIds_ReturnsOnlyTheMatchesThatFedTheNextRound()
+    {
+        Harness harness = new Harness();
+        MatchElimination first = harness.SeedRoundOf32Match(MatchId);
+        MatchElimination second = harness.SeedRoundOf32Match(MatchId + 1);
+        harness.SeedRoundOf32Match(MatchId + 2);
+        harness.SeedRoundOf16Match(first, second);
+
+        CollectionAssert.AreEquivalent(
+            new[] { MatchId, MatchId + 1 },
+            harness.Service.GetLockedKnockoutMatchIds().ToArray());
+    }
+
     // SimulateMatch ahora tambien notifica a periodistas (antes no colaboraba con
     // INotificationService). El motor del Harness simula 2-1.
     [TestMethod]

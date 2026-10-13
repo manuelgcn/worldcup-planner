@@ -280,6 +280,11 @@ public class MatchService : IMatchService
         return GetMatchOrThrow(matchId);
     }
 
+    public IReadOnlySet<int> GetLockedKnockoutMatchIds()
+    {
+        return new HashSet<int>();
+    }
+
     public List<MatchDto> GetByGroup(string groupName)
     {
         if (string.IsNullOrWhiteSpace(groupName))
