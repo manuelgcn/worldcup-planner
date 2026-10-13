@@ -409,6 +409,47 @@ public class KnockoutFixtureGeneratorExtensionTests
             () => _generator.AdvanceToNextRound(performedByEmail: AdminEmail));
     }
 
+    [TestMethod]
+    public void IsBracketComplete_AfterSimulateUntilFinal_ReturnsTrue()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+
+        _generator.SimulateUntilFinal(performedByEmail: AdminEmail);
+
+        Assert.IsTrue(_generator.IsBracketComplete());
+    }
+
+    [TestMethod]
+    public void IsBracketComplete_WhenFinalAndThirdPlaceWereLoadedByHand_ReturnsTrue()
+    {
+        AdvanceManuallyToFinal();
+        PlayPhaseManually(Phase.Final);
+        PlayPhaseManually(Phase.ThirdPlace);
+
+        Assert.IsTrue(_generator.IsBracketComplete());
+    }
+
+    [TestMethod]
+    public void IsBracketComplete_WhenFinalIsStillPending_ReturnsFalse()
+    {
+        AdvanceManuallyToFinal();
+        PlayPhaseManually(Phase.ThirdPlace);
+
+        Assert.IsFalse(_generator.IsBracketComplete());
+    }
+
+    private void AdvanceManuallyToFinal()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        foreach (Phase phase in new[] { Phase.RoundOf32, Phase.RoundOf16, Phase.QuarterFinals, Phase.SemiFinal })
+        {
+            PlayPhaseManually(phase);
+            _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+        }
+    }
+
     // Carga resultados a mano (no simulados) en todos los partidos de una fase,
     // con un marcador no empatado para que GetWinner() devuelva un ganador claro.
     private void PlayPhaseManually(Phase phase)

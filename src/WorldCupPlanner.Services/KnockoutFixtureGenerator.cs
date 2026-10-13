@@ -108,6 +108,11 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         return _eliminationRepository.GetAll().Count > 0;
     }
 
+    public bool IsBracketComplete()
+    {
+        return false;
+    }
+
     public void GenerateBracket(int? crossingsSeedOverride, string? performedByEmail)
     {
 

@@ -14,8 +14,11 @@ public sealed class MockKnockoutFixtureGenerator : IKnockoutFixtureGenerator
     public int AdvanceToNextRoundCalls { get; private set; }
     public bool BracketGenerated { get; set; }
     public bool CanAdvance { get; set; }
+    public bool BracketComplete { get; set; }
 
     public bool IsBracketGenerated() => BracketGenerated;
+
+    public bool IsBracketComplete() => BracketComplete;
 
     public bool CanAdvanceToNextRound() => CanAdvance;
 
