@@ -44,10 +44,9 @@ if ($LASTEXITCODE -ne 0) {
     throw 'dotnet publish fallo.'
 }
 
-Copy-Item -LiteralPath (Join-Path $repoRoot 'release-build/README.md') -Destination (Join-Path $stagingRoot 'README.md')
-Copy-Item -LiteralPath (Join-Path $repoRoot 'INSTALL.md') -Destination (Join-Path $stagingRoot 'INSTALL.md')
-Copy-Item -LiteralPath (Join-Path $repoRoot 'release-build/start.ps1') -Destination (Join-Path $stagingRoot 'start.ps1')
-Copy-Item -LiteralPath (Join-Path $repoRoot 'release-build/seed.ps1') -Destination (Join-Path $stagingRoot 'seed.ps1')
+Copy-Item -LiteralPath (Join-Path $repoRoot 'scripts/release/README.md') -Destination (Join-Path $stagingRoot 'README.md')
+Copy-Item -LiteralPath (Join-Path $repoRoot 'scripts/release/start.ps1') -Destination (Join-Path $stagingRoot 'start.ps1')
+Copy-Item -LiteralPath (Join-Path $repoRoot 'scripts/release/seed.ps1') -Destination (Join-Path $stagingRoot 'seed.ps1')
 Copy-Item -LiteralPath (Join-Path $repoRoot 'docker-compose.yml') -Destination (Join-Path $stagingRoot 'docker-compose.yml')
 Copy-Item -LiteralPath (Join-Path $repoRoot '.env.example') -Destination (Join-Path $stagingRoot '.env')
 Copy-Item -LiteralPath (Join-Path $repoRoot 'db') -Destination (Join-Path $stagingRoot 'db') -Recurse
@@ -56,7 +55,6 @@ $requiredFiles = @(
     'win-x64/UI.exe',
     'win-x64/appsettings.json',
     'README.md',
-    'INSTALL.md',
     'start.ps1',
     'seed.ps1',
     'docker-compose.yml',
