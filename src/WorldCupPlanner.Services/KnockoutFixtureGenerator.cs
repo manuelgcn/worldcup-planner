@@ -20,6 +20,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private const string BracketNotGeneratedMessage = "El cuadro eliminatorio aun no fue generado.";
     private const string BracketAlreadyCompleteMessage = "El cuadro eliminatorio ya llego a la final: no hay mas fases para avanzar.";
     private const string MissingGroupForTeamMessagePrefix = "No se encontro grupo para el equipo ";
+    private const string MatchWithoutWinnerMessage = "No se puede avanzar de fase: el partido {0} no tiene ganador.";
 
     private readonly ISimulationEngineRegistry _simulationEngineRegistry;
     private readonly IMatchRepository _matchRepository;
@@ -442,8 +443,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         {
             MatchElimination sourceHome = previousRound[i];
             MatchElimination sourceAway = previousRound[i + 1];
-            Team home = sourceHome.GetWinner() ?? sourceHome.HomeTeam!;
-            Team away = sourceAway.GetWinner() ?? sourceAway.HomeTeam!;
+            Team home = WinnerOf(sourceHome);
+            Team away = WinnerOf(sourceAway);
             string code = $"{nextPhase}-{nextId}";
 
             MatchElimination match = MatchElimination.CreateMatchWithConfig(
@@ -536,14 +537,15 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         };
     }
 
+    private static Team WinnerOf(MatchElimination match)
+    {
+        return match.GetWinner()
+            ?? throw new MatchServicesException(string.Format(MatchWithoutWinnerMessage, match.MatchCode));
+    }
+
     private static Team LoserOf(MatchElimination match)
     {
-        Team? winner = match.GetWinner();
-        if (winner == null)
-        {
-            return match.AwayTeam!;
-        }
-
+        Team winner = WinnerOf(match);
         return ReferenceEquals(winner, match.HomeTeam) ? match.AwayTeam! : match.HomeTeam!;
     }
 
