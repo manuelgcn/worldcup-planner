@@ -65,7 +65,7 @@ UI  ──▶  Services  ──▶  Domain
 |---|---|---|
 | Domain | `WorldCupPlanner.Domain` | Entities, invariants, enums and business exceptions |
 | Services | `WorldCupPlanner.Services` | Use cases, orchestration, DTOs, auditing and simulation engines |
-| Data | `WorldCupPlanner.DataAccess` | `AppDbContext`, EF repositories, configurations, migrations, `IUnitOfWork` |
+| Data | `WorldCupPlanner.DataAccess` | `AppDbContext`, EF repositories, configurations, migrations |
 | UI | `WorldCupPlanner.UI` | Blazor Server — presentation only |
 | Seeder | `WorldCupPlanner.DataSeeder` | Console app that resets the database and loads a full demo tournament |
 | Tests | `WorldCupPlanner.*.Tests` | One MSTest suite per layer |

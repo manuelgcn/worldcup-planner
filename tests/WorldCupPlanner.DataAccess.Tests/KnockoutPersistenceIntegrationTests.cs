@@ -36,7 +36,6 @@ public sealed class KnockoutPersistenceIntegrationTests
     private MatchRepository _matchRepository = null!;
     private EliminationMatchRepository _eliminationRepository = null!;
     private AuditLogRepository _auditRepository = null!;
-    private UnitOfWorkRepository _unitOfWork = null!;
     private AuditLogService _auditService = null!;
     private ProbabilisticSimulationEngine _engine = null!;
     private KnockoutFixtureGenerator _knockoutGenerator = null!;
@@ -55,7 +54,6 @@ public sealed class KnockoutPersistenceIntegrationTests
         _matchRepository = new MatchRepository(_factory);
         _eliminationRepository = new EliminationMatchRepository(_factory);
         _auditRepository = new AuditLogRepository(_factory);
-        _unitOfWork = new UnitOfWorkRepository();
         _auditService = AuditLogService.CreateInstance(_auditRepository);
         _engine = new ProbabilisticSimulationEngine();
 
@@ -66,7 +64,6 @@ public sealed class KnockoutPersistenceIntegrationTests
             _groupRepository,
             _stadiumRepository,
             _settingsRepository,
-            _unitOfWork,
             _auditService,
             new NotificationService(
                 new NotificationRepository(_factory),
@@ -82,7 +79,6 @@ public sealed class KnockoutPersistenceIntegrationTests
             _journeyRepository,
             _matchRepository,
             _eliminationRepository,
-            _unitOfWork,
             _auditService,
             new SimulationEngineRegistry([_engine]));
 
@@ -90,7 +86,6 @@ public sealed class KnockoutPersistenceIntegrationTests
             _groupRepository,
             _matchRepository,
             _eliminationRepository,
-            _unitOfWork,
             new SimulationEngineRegistry([_engine]),
             _auditService,
             _settingsRepository,

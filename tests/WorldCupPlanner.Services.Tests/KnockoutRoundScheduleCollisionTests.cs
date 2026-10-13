@@ -39,7 +39,6 @@ public sealed class KnockoutRoundScheduleCollisionTests
             new MockGroupRepository(),
             stadiumRepository,
             settingsRepository,
-            new MockUnitOfWork(),
             new MockAuditLogService(),
             new MockNotificationService(),
             new MockRankingService());

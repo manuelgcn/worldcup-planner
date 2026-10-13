@@ -30,7 +30,6 @@ public class KnockoutFixtureGeneratorExtensionTests
     private MockStadiumRepository _stadiumRepository = null!;
     private MockTournamentSettingsRepository _settingsRepository = null!;
     private MockMatchSimulationEngine _simulationEngine = null!;
-    private MockUnitOfWork _unitOfWork = null!;
     private MockAuditLogRepository _auditRepository = null!;
     private AuditLogService _auditService = null!;
     private KnockoutFixtureGenerator _generator = null!;
@@ -44,7 +43,6 @@ public class KnockoutFixtureGeneratorExtensionTests
         _stadiumRepository = new MockStadiumRepository();
         _settingsRepository = new MockTournamentSettingsRepository();
         _simulationEngine = new MockMatchSimulationEngine();
-        _unitOfWork = new MockUnitOfWork();
         _auditRepository = new MockAuditLogRepository();
         _auditService = AuditLogService.CreateInstance(_auditRepository);
 
@@ -133,16 +131,6 @@ public class KnockoutFixtureGeneratorExtensionTests
 
         Assert.ThrowsException<MatchServicesException>(
             () => _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail));
-    }
-
-    [TestMethod]
-    public void GenerateBracket_CallsUnitOfWorkCommit()
-    {
-        SeedPlayedGroupStageMatches();
-
-        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
-
-        Assert.IsTrue(_unitOfWork.CommitCalls >= 1);
     }
 
     [TestMethod]
@@ -436,7 +424,6 @@ public class KnockoutFixtureGeneratorExtensionTests
             groupRepository,
             stadiumRepository,
             settingsRepository,
-            new MockUnitOfWork(),
             AuditLogService.CreateInstance(new MockAuditLogRepository()),
             new MockNotificationService(),
             new MockRankingService());
@@ -511,7 +498,6 @@ public class KnockoutFixtureGeneratorExtensionTests
             _groupRepository,
             _stadiumRepository,
             _settingsRepository,
-            _unitOfWork,
             _auditService,
             new MockNotificationService(),
             new MockRankingService());

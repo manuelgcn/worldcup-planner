@@ -11,7 +11,6 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
     private readonly IGroupRepository groupRepository;
     private readonly IMatchRepository matchRepository;
     private readonly IEliminationMatchRepository eliminationMatchRepository;
-    private readonly IUnitOfWork unitOfWork;
     private readonly ISimulationEngineRegistry simulationEngineRegistry;
     private readonly IAuditLogService auditLogService;
     private readonly ITournamentSettingsRepository tournamentSettingsRepository;
@@ -26,7 +25,6 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
         IGroupRepository groupRepository,
         IMatchRepository matchRepository,
         IEliminationMatchRepository eliminationMatchRepository,
-        IUnitOfWork unitOfWork,
         ISimulationEngineRegistry simulationEngineRegistry,
         IAuditLogService auditLogService,
         ITournamentSettingsRepository tournamentSettingsRepository,
@@ -39,7 +37,6 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
         this.groupRepository = groupRepository;
         this.matchRepository = matchRepository;
         this.eliminationMatchRepository = eliminationMatchRepository;
-        this.unitOfWork = unitOfWork;
         this.simulationEngineRegistry = simulationEngineRegistry;
         this.auditLogService = auditLogService;
         this.tournamentSettingsRepository = tournamentSettingsRepository;
@@ -53,7 +50,6 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
         IMatchSimulationEngine engine = ResolveSelectedEngine(seed);
         RunGroupStageSimulation(seed, engine);
         LogGroupStageSimulation(seed, engine.Name, performedByEmail);
-        unitOfWork.Commit();
     }
 
     // Accion "todo en uno" deliberada y separada: simula la fase de grupos y genera
@@ -77,7 +73,6 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
         GenerateAndPersistKnockoutPhase(qualifiedTeams);
 
         LogSimulation(engine.Name);
-        unitOfWork.Commit();
     }
 
     // Simula los 72 partidos de la fase de grupos (sin generar la fase 2) y devuelve los grupos y

@@ -14,7 +14,6 @@ namespace WorldCupPlanner.Services.Tests;
 public class ImportServiceTests
 {
     private MockTeamRepository _teamRepository = null!;
-    private MockUnitOfWork _unitOfWork = null!;
     private Mock<ITeamParser> _teamParserMock = null!;
     private ImportService _service = null!;
 
@@ -22,13 +21,12 @@ public class ImportServiceTests
     public void TestInitialize()
     {
         _teamRepository = new MockTeamRepository();
-        _unitOfWork = new MockUnitOfWork();
         _teamParserMock = new Mock<ITeamParser>();
-        _service = CreateService(_teamRepository, _unitOfWork, _teamParserMock.Object);
+        _service = CreateService(_teamRepository, _teamParserMock.Object);
     }
 
     [TestMethod]
-    public void ImportTeamsCreatesTeamsAndCommits()
+    public void ImportTeamsCreatesTeams()
     {
         // Arrange
         MemoryStream stream = CreateImportStream();
@@ -40,7 +38,6 @@ public class ImportServiceTests
 
         // Assert
         Assert.AreEqual(2, _teamRepository.GetAll().Count);
-        Assert.AreEqual(1, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -59,7 +56,6 @@ public class ImportServiceTests
 
         // Assert
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
-        Assert.AreEqual(0, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -85,7 +81,6 @@ public class ImportServiceTests
 
         // Assert
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
-        Assert.AreEqual(0, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -111,7 +106,6 @@ public class ImportServiceTests
 
         // Assert
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
-        Assert.AreEqual(0, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -126,7 +120,6 @@ public class ImportServiceTests
         // la primera valida que la precede.
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
         Assert.AreEqual(0, _teamRepository.GetAll().Count);
-        Assert.AreEqual(0, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -144,7 +137,6 @@ public class ImportServiceTests
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
         Assert.AreEqual(0, _teamRepository.GetAll().Count);
         Assert.AreEqual(0, _teamRepository.AddCalls);
-        Assert.AreEqual(0, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -221,25 +213,9 @@ public class ImportServiceTests
         Assert.AreEqual("No se agregaron todos los equipos, max:48", result.WarningMessage);
     }
 
-    [TestMethod]
-    public void ImportTeamsPropagatesUnitOfWorkFailure()
+    private static ImportService CreateService(ITeamRepository teamRepository, ITeamParser teamParser)
     {
-        // Arrange
-        MockUnitOfWork failingUnitOfWork = CreateFailingUnitOfWork();
-        ImportService service = CreateService(_teamRepository, failingUnitOfWork, _teamParserMock.Object);
-
-        MemoryStream stream = CreateImportStream();
-        List<TeamImportDto> rows = BuildSingleValidRow();
-        SetupParserRows(stream, rows);
-
-        // Assert
-        Assert.ThrowsException<InvalidOperationException>(() => service.ImportTeams(stream));
-        Assert.AreEqual(1, failingUnitOfWork.CommitCalls);
-    }
-
-    private static ImportService CreateService(ITeamRepository teamRepository, IUnitOfWork unitOfWork, ITeamParser teamParser)
-    {
-        return ImportService.CreateInstance(teamRepository, unitOfWork, teamParser);
+        return ImportService.CreateInstance(teamRepository, teamParser);
     }
 
     private static MemoryStream CreateImportStream()
@@ -409,12 +385,5 @@ public class ImportServiceTests
         };
 
         return rows;
-    }
-
-    private static MockUnitOfWork CreateFailingUnitOfWork()
-    {
-        MockUnitOfWork failingUnitOfWork = new MockUnitOfWork();
-        failingUnitOfWork.EnableCommitFailure(new InvalidOperationException("Database unavailable"));
-        return failingUnitOfWork;
     }
 }

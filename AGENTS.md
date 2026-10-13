@@ -24,7 +24,7 @@ Each project's root namespace equals its name.
 |---|---|
 | `WorldCupPlanner.Domain` | Entities, enums, invariants, domain exceptions. Depends on nothing. |
 | `WorldCupPlanner.Services` | Use cases, orchestration, DTOs, auditing, simulation engines. |
-| `WorldCupPlanner.DataAccess` | `AppDbContext`, repositories, `Configurations/`, `Migrations/`, `IUnitOfWork`. |
+| `WorldCupPlanner.DataAccess` | `AppDbContext`, repositories, `Configurations/`, `Migrations/`. |
 | `WorldCupPlanner.UI` | Blazor Server pages. Presentation only, no business logic. |
 | `WorldCupPlanner.DataSeeder` | Console app that resets the DB and seeds a full demo tournament. |
 | `WorldCupPlanner.{Domain,Services,DataAccess}.Tests` | MSTest suites, one per layer. |

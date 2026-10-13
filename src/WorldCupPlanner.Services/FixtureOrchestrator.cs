@@ -26,7 +26,6 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     private readonly IJourneyRepository _journeyRepository;
     private readonly IMatchRepository _matchRepository;
     private readonly IEliminationMatchRepository _eliminationRepository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditLogService _auditLogService;
     private readonly ISimulationEngineRegistry _simulationEngineRegistry;
 
@@ -38,7 +37,6 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         IJourneyRepository journeyRepository,
         IMatchRepository matchRepository,
         IEliminationMatchRepository eliminationRepository,
-        IUnitOfWork unitOfWork,
         IAuditLogService auditLogService,
         ISimulationEngineRegistry simulationEngineRegistry)
     {
@@ -49,7 +47,6 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         _journeyRepository = journeyRepository;
         _matchRepository = matchRepository;
         _eliminationRepository = eliminationRepository;
-        _unitOfWork = unitOfWork;
         _auditLogService = auditLogService;
         _simulationEngineRegistry = simulationEngineRegistry;
     }
@@ -111,7 +108,6 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         // porque las eliminatorias referencian a los partidos de grupo como fuente (FK Matches->Matches).
         _eliminationRepository.Clear();
         ClearGroupStageStorage();
-        _unitOfWork.Commit();
 
         AuditDeleted(performedByEmail);
     }
@@ -131,7 +127,6 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         PersistGroups(groups);
         PersistJourneys();
         PersistMatches(groups, plan.Stadiums, plan.Settings);
-        _unitOfWork.Commit();
     }
 
     private static IReadOnlyCollection<Group> BuildGroups(GenerationPlan plan)

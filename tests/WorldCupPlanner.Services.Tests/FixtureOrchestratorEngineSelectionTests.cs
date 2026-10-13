@@ -27,7 +27,6 @@ public sealed class FixtureOrchestratorEngineSelectionTests
     private MockJourneyRepository _journeyRepository = null!;
     private MockMatchRepository _matchRepository = null!;
     private MockEliminationMatchRepository _eliminationRepository = null!;
-    private MockUnitOfWork _unitOfWork = null!;
     private MockAuditLogRepository _auditRepository = null!;
     private FixtureOrchestrator _orchestrator = null!;
 
@@ -41,7 +40,6 @@ public sealed class FixtureOrchestratorEngineSelectionTests
         _journeyRepository = new MockJourneyRepository();
         _matchRepository = new MockMatchRepository();
         _eliminationRepository = new MockEliminationMatchRepository();
-        _unitOfWork = new MockUnitOfWork();
         _auditRepository = new MockAuditLogRepository();
 
         _settingsRepository.Add(new TournamentSettings(
@@ -57,7 +55,6 @@ public sealed class FixtureOrchestratorEngineSelectionTests
             _journeyRepository,
             _matchRepository,
             _eliminationRepository,
-            _unitOfWork,
             AuditLogService.CreateInstance(_auditRepository),
             new SimulationEngineRegistry(new IMatchSimulationEngine[]
             {

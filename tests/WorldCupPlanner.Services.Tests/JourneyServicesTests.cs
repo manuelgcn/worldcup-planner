@@ -9,26 +9,23 @@ namespace WorldCupPlanner.Services.Tests;
 public sealed class JourneyServicesTests
 {
     private MockJourneyRepository _repo = null!;
-    private MockUnitOfWork _uow = null!;
     private JourneyServices _service = null!;
 
     [TestInitialize]
     public void Setup()
     {
         _repo = new MockJourneyRepository();
-        _uow = new MockUnitOfWork();
-        _service = new JourneyServices(_repo, _uow, new MockAuditLogService());
+        _service = new JourneyServices(_repo, new MockAuditLogService());
     }
 
     [TestMethod]
-    public void AddJourneyCallsRepositoryAndCommits()
+    public void AddJourneyCallsRepository()
     {
         Journey journey = CreateJourney(1);
 
         _service.AddJourney(journey);
 
         Assert.AreEqual(1, _repo.AddCalls);
-        Assert.AreEqual(1, _uow.CommitCalls);
     }
 
     [TestMethod]
@@ -54,7 +51,6 @@ public sealed class JourneyServicesTests
         _service.RemoveByNumber(1);
 
         Assert.AreEqual(1, _repo.DeleteCalls);
-        Assert.AreEqual(2, _uow.CommitCalls);
     }
 
     [TestMethod]

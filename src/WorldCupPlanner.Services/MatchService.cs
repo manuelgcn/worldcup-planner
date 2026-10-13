@@ -15,7 +15,6 @@ public class MatchService : IMatchService
     private readonly IAuditLogService auditLogService;
     private readonly IRankingService rankingService;
     private readonly INotificationService notificationService;
-    private readonly IUnitOfWork unitOfWork;
     private readonly IEliminationMatchRepository eliminationMatchRepository;
 
     private const int DefaultTournamentSettingsId = 1;
@@ -38,7 +37,6 @@ public class MatchService : IMatchService
         IAuditLogService auditLogService,
         IRankingService rankingService,
         INotificationService notificationService,
-        IUnitOfWork unitOfWork,
         IEliminationMatchRepository eliminationMatchRepository)
     {
         ArgumentNullException.ThrowIfNull(notificationService);
@@ -50,7 +48,6 @@ public class MatchService : IMatchService
         this.auditLogService = auditLogService;
         this.rankingService = rankingService;
         this.notificationService = notificationService;
-        this.unitOfWork = unitOfWork;
         this.eliminationMatchRepository = eliminationMatchRepository;
     }
 
@@ -72,7 +69,6 @@ public class MatchService : IMatchService
             match.MatchId,
             request.TournamentSettingsId);
 
-        unitOfWork.Commit();
 
         return MapToDto(match);
     }
@@ -93,7 +89,6 @@ public class MatchService : IMatchService
             request.TournamentSettingsId);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
 
         return MapToDto(match);
     }
@@ -108,8 +103,6 @@ public class MatchService : IMatchService
             AuditActions.DeleteMatch,
             $"MatchId={matchId} deleted.",
             matchId);
-
-        unitOfWork.Commit();
     }
 
     public void AddGoal(int matchId, bool isHomeTeam)
@@ -126,7 +119,6 @@ public class MatchService : IMatchService
             matchId);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
     }
 
     public void RemoveGoal(int matchId, bool isHomeTeam)
@@ -143,7 +135,6 @@ public class MatchService : IMatchService
             matchId);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
     }
 
     public void PublishResult(int matchId)
@@ -157,7 +148,6 @@ public class MatchService : IMatchService
         ApplyRankingUpdate(match);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
     }
 
     public void SimulateMatch(int matchId)
@@ -177,7 +167,6 @@ public class MatchService : IMatchService
         notificationService.NotifyMatchSimulated(match);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
     }
 
     public void AddYellowCard(int matchId, int teamId, int minute, string? performedByEmail)
@@ -209,7 +198,6 @@ public class MatchService : IMatchService
             performedByEmail);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
     }
 
     public List<MatchIncidentDto> GetIncidents(int matchId)
@@ -234,7 +222,6 @@ public class MatchService : IMatchService
             performedByEmail);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
     }
 
     // Las incidencias exigen la misma referencia de Team que juega el partido
@@ -326,7 +313,6 @@ public class MatchService : IMatchService
             $"MatchId={matchId} goals set to {homeGoals}-{awayGoals}.",
             matchId);
         matchRepository.Update(match);
-        unitOfWork.Commit();
     }
 
     // Controlador GRASP del caso de uso "registrar resultado": carga el partido, valida que
@@ -348,7 +334,6 @@ public class MatchService : IMatchService
         notificationService.NotifyResultLoaded(match, previousHomeGoals, previousAwayGoals);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
 
         return MapToDto(match);
     }

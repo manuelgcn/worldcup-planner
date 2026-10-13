@@ -103,17 +103,15 @@ public sealed class MatchServiceRegisterResultTests
     }
 
     [TestMethod]
-    public void RegisterResult_UpdatesRepositoryAndCommits()
+    public void RegisterResult_UpdatesRepository()
     {
         Harness harness = new Harness();
         harness.SeedGroupMatch(MatchId);
         int updates = harness.MatchRepository.UpdateCalls;
-        int commits = harness.UnitOfWork.CommitCalls;
 
         harness.Service.RegisterResult(MatchId, homeGoals: 2, awayGoals: 1, Email);
 
         Assert.AreEqual(updates + 1, harness.MatchRepository.UpdateCalls);
-        Assert.AreEqual(commits + 1, harness.UnitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -156,7 +154,6 @@ public sealed class MatchServiceRegisterResultTests
         public MockNotificationService Notifications { get; } = new MockNotificationService();
         public Mock<IRankingService> RankingMock { get; } = new Mock<IRankingService>();
         public MockAuditLogRepository AuditRepository { get; } = new MockAuditLogRepository();
-        public MockUnitOfWork UnitOfWork { get; } = new MockUnitOfWork();
         public MatchService Service { get; }
 
         private readonly MockMatchSimulationEngine _engine = new MockMatchSimulationEngine();
@@ -182,7 +179,6 @@ public sealed class MatchServiceRegisterResultTests
                 AuditLogService.CreateInstance(AuditRepository),
                 RankingMock.Object,
                 Notifications,
-                UnitOfWork,
                 EliminationRepository);
         }
 

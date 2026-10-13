@@ -13,30 +13,26 @@ namespace WorldCupPlanner.Services.Tests;
 public class StadiumServicesTests
 {
     private MockStadiumRepository _repository = null!;
-    private MockUnitOfWork _unitOfWork = null!;
     private StadiumServices _service = null!;
 
     [TestInitialize]
     public void Setup()
     {
         _repository = new MockStadiumRepository();
-        _unitOfWork = new MockUnitOfWork();
-        _service = new StadiumServices(_repository, _unitOfWork, new MockAuditLogService());
+        _service = new StadiumServices(_repository, new MockAuditLogService());
     }
 
     
     [TestMethod]
-    public void AddStadiumCallsRepositoryAndCommits()
+    public void AddStadiumCallsRepository()
     {
         MockStadiumRepository repository = new MockStadiumRepository();
-        MockUnitOfWork unitOfWork = new MockUnitOfWork();
-        StadiumServices localService = new StadiumServices(repository, unitOfWork, new MockAuditLogService());
+        StadiumServices localService = new StadiumServices(repository, new MockAuditLogService());
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         localService.AddStadium(stadium);
 
         Assert.AreEqual(1, repository.AddCalls);
-        Assert.AreEqual(1, unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -53,7 +49,6 @@ public class StadiumServicesTests
     {
         ServiceCollection services = new ServiceCollection();
         services.AddSingleton<IStadiumRepository, MockStadiumRepository>();
-        services.AddSingleton<IUnitOfWork, MockUnitOfWork>();
         services.AddSingleton<IAuditLogService, MockAuditLogService>();
         services.AddSingleton<StadiumServices>();
         services.AddSingleton<IStadiumService>(sp => sp.GetRequiredService<StadiumServices>());
@@ -214,8 +209,7 @@ public class StadiumServicesTests
     public void StadiumServices_RemoveByIdDeletesViaRepository()
     {
         MockStadiumRepository repository = new MockStadiumRepository();
-        MockUnitOfWork unitOfWork = new MockUnitOfWork();
-        StadiumServices localService = new StadiumServices(repository, unitOfWork, new MockAuditLogService());
+        StadiumServices localService = new StadiumServices(repository, new MockAuditLogService());
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         localService.AddStadium(stadium);
@@ -223,7 +217,6 @@ public class StadiumServicesTests
         localService.RemoveById(stadiumId);
 
         Assert.AreEqual(1, repository.DeleteCalls);
-        Assert.AreEqual(2, unitOfWork.CommitCalls);
     }
 
      
@@ -257,8 +250,7 @@ public class StadiumServicesTests
     public void StadiumServices_UpdateByIdPersistsViaRepository()
     {
         MockStadiumRepository repository = new MockStadiumRepository();
-        MockUnitOfWork unitOfWork = new MockUnitOfWork();
-        StadiumServices localService = new StadiumServices(repository, unitOfWork, new MockAuditLogService());
+        StadiumServices localService = new StadiumServices(repository, new MockAuditLogService());
         Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
 
         localService.AddStadium(stadium);
@@ -266,7 +258,6 @@ public class StadiumServicesTests
         localService.UpdateById(stadiumId, "NuevaCiudad", null, 30000);
 
         Assert.AreEqual(1, repository.UpdateCalls);
-        Assert.AreEqual(2, unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -284,7 +275,6 @@ public class StadiumServicesTests
         Stadium referenced = new Stadium("Centenario", "Montevideo", null, 60000) { Id = 7 };
         StadiumServices service = new StadiumServices(
             new DeleteFailingStadiumRepository(referenced),
-            new MockUnitOfWork(),
             new MockAuditLogService());
 
         Assert.ThrowsException<StadiumServicesException>(() => service.RemoveById(7));
@@ -334,7 +324,6 @@ public class StadiumServicesTests
     {
         return new StadiumServices(
             new MockStadiumRepository(),
-            new MockUnitOfWork(),
             AuditLogService.CreateInstance(repository));
     }
 
@@ -397,7 +386,6 @@ public class StadiumServicesTests
         MockAuditLogRepository auditRepo = new MockAuditLogRepository();
         StadiumServices auditedService = new StadiumServices(
             new MockStadiumRepository(),
-            new MockUnitOfWork(),
             AuditLogService.CreateInstance(auditRepo));
 
         auditedService.SeedDefaultStadiums(performedByEmail: "admin@copa.com");

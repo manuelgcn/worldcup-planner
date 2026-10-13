@@ -73,20 +73,6 @@ public sealed class MatchServiceSimulationTests
     }
 
     [TestMethod]
-    public void SimulateMatch_CommitsChanges()
-    {
-        // Arrange
-        _context.Service.CreateMatch(_createMatchRequest);
-        int initialCommitCalls = _context.UnitOfWork.CommitCalls;
-
-        // Act
-        _context.Service.SimulateMatch(MatchId);
-
-        // Assert
-        Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);
-    }
-
-    [TestMethod]
     public void SimulateMatch_WithNonexistentMatch_ThrowsException()
     {
         // Arrange

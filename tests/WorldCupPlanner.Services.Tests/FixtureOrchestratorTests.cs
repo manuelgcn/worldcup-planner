@@ -29,7 +29,6 @@ public class FixtureOrchestratorTests
     private MockMatchRepository _matchRepository = null!;
     private InMemoryEliminationMatchRepository _eliminationRepository = null!;
     private MockTournamentSettingsRepository _settingsRepository = null!;
-    private MockUnitOfWork _unitOfWork = null!;
     private MockAuditLogRepository _auditRepository = null!;
     private AuditLogService _auditService = null!;
     private FixtureOrchestrator _orchestrator = null!;
@@ -44,7 +43,6 @@ public class FixtureOrchestratorTests
         _matchRepository = new MockMatchRepository();
         _eliminationRepository = new InMemoryEliminationMatchRepository();
         _settingsRepository = new MockTournamentSettingsRepository();
-        _unitOfWork = new MockUnitOfWork();
         _auditRepository = new MockAuditLogRepository();
         _auditService = AuditLogService.CreateInstance(_auditRepository);
 
@@ -60,7 +58,6 @@ public class FixtureOrchestratorTests
             _journeyRepository,
             _matchRepository,
             _eliminationRepository,
-            _unitOfWork,
             _auditService,
             new SimulationEngineRegistry([new ProbabilisticSimulationEngine(), new PureRandomSimulationEngine()]));
     }
@@ -153,14 +150,6 @@ public class FixtureOrchestratorTests
 
         TimeSpan minimumKickoff = new TimeSpan(14, 0, 0);
         Assert.IsTrue(_matchRepository.GetAll().All(match => match.MatchDate.TimeOfDay >= minimumKickoff));
-    }
-
-    [TestMethod]
-    public void GenerateGroupStage_CallsUnitOfWorkCommit()
-    {
-        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
-
-        Assert.IsTrue(_unitOfWork.CommitCalls >= 1);
     }
 
     [TestMethod]
@@ -327,7 +316,6 @@ public class FixtureOrchestratorTests
             _journeyRepository,
             _matchRepository,
             _eliminationRepository,
-            _unitOfWork,
             _auditService,
             new SimulationEngineRegistry([new ProbabilisticSimulationEngine(), new PureRandomSimulationEngine()]));
     }

@@ -21,7 +21,6 @@ public class KnockoutFixtureGeneratorTests
         MockMatchRepository matchRepository = new MockMatchRepository();
         MockTournamentSettingsRepository settingsRepository = new MockTournamentSettingsRepository();
         settingsRepository.Add(new TournamentSettings(1, new DateTime(2026, 6, 1), 3, 3, 0, 77, 99, 0));
-        MockUnitOfWork unitOfWork = new MockUnitOfWork();
         MockStadiumRepository stadiumRepository = new MockStadiumRepository();
         stadiumRepository.Add(new Stadium("S1", "City1", null, 30000) { Id = 1 });
         stadiumRepository.Add(new Stadium("S2", "City2", null, 30000) { Id = 2 });
@@ -33,7 +32,6 @@ public class KnockoutFixtureGeneratorTests
             new MockGroupRepository(),
             stadiumRepository,
             settingsRepository,
-            unitOfWork,
             new MockAuditLogService(),
             new MockNotificationService(),
             new MockRankingService());
@@ -74,7 +72,6 @@ public class KnockoutFixtureGeneratorTests
             groupRepository,
             stadiumRepository,
             settingsRepository,
-            new MockUnitOfWork(),
             AuditLogService.CreateInstance(new MockAuditLogRepository()),
             new MockNotificationService(),
             rankingServiceMock.Object);

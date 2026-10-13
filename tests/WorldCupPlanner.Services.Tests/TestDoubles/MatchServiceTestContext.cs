@@ -31,7 +31,6 @@ public sealed class MatchServiceTestContext
     public MockEliminationMatchRepository EliminationMatchRepository { get; } = new MockEliminationMatchRepository();
     public MockMatchSimulationEngine SimulationEngine { get; } = new MockMatchSimulationEngine();
     public Mock<IRankingService> RankingServiceMock { get; } = new Mock<IRankingService>();
-    public MockUnitOfWork UnitOfWork { get; } = new MockUnitOfWork();
     public MockNotificationRepository NotificationRepository { get; } = new MockNotificationRepository();
     public MockUserRepository UserRepository { get; } = new MockUserRepository();
     public IReadOnlyCollection<AuditLog> AuditLogs => _auditLog.AsReadOnly();
@@ -114,7 +113,6 @@ public sealed class MatchServiceTestContext
             AuditLogService, // <-- Inyectado directamente en el servicio
             RankingServiceMock.Object,
             NotificationService,
-            UnitOfWork,
             EliminationMatchRepository);
     }
 

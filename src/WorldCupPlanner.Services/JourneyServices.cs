@@ -8,17 +8,15 @@ namespace WorldCupPlanner.Services;
 public class JourneyServices : IJourneyService
 {
     private readonly IJourneyRepository journeyRepository;
-    private readonly IUnitOfWork unitOfWork;
     private readonly IAuditLogService auditLogService;
 
     private const string DuplicateJourneyNumberMessage = "El numero de jornada debe ser unico en el sistema.";
     private const string JourneyNotFoundMessage = "No se encontro la jornada.";
 
-    public JourneyServices(IJourneyRepository journeyRepository, IUnitOfWork unitOfWork, IAuditLogService auditLogService)
+    public JourneyServices(IJourneyRepository journeyRepository, IAuditLogService auditLogService)
     {
         ArgumentNullException.ThrowIfNull(auditLogService);
         this.journeyRepository = journeyRepository;
-        this.unitOfWork = unitOfWork;
         this.auditLogService = auditLogService;
     }
 
@@ -42,7 +40,6 @@ public class JourneyServices : IJourneyService
             $"Journey '{journey.Number}' created.",
             nameof(Journey),
             journey.Number);
-        unitOfWork.Commit();
     }
 
     public Journey GetByNumber(int number)
@@ -60,6 +57,5 @@ public class JourneyServices : IJourneyService
             $"Journey '{journey.Number}' removed.",
             nameof(Journey),
             journey.Number);
-        unitOfWork.Commit();
     }
 }

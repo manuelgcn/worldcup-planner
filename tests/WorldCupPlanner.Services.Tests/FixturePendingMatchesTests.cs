@@ -26,7 +26,6 @@ public class FixturePendingMatchesTests
     private MockMatchRepository _matchRepository = null!;
     private InMemoryEliminationMatchRepository _eliminationRepository = null!;
     private MockTournamentSettingsRepository _settingsRepository = null!;
-    private MockUnitOfWork _unitOfWork = null!;
     private MockAuditLogRepository _auditRepository = null!;
     private AuditLogService _auditService = null!;
     private FixtureOrchestrator _orchestrator = null!;
@@ -43,7 +42,6 @@ public class FixturePendingMatchesTests
         _matchRepository = new MockMatchRepository();
         _eliminationRepository = new InMemoryEliminationMatchRepository();
         _settingsRepository = new MockTournamentSettingsRepository();
-        _unitOfWork = new MockUnitOfWork();
         _auditRepository = new MockAuditLogRepository();
         _auditService = AuditLogService.CreateInstance(_auditRepository);
         _simulationEngine = new ProbabilisticSimulationEngine();
@@ -60,7 +58,6 @@ public class FixturePendingMatchesTests
             _journeyRepository,
             _matchRepository,
             _eliminationRepository,
-            _unitOfWork,
             _auditService,
             new SimulationEngineRegistry([_simulationEngine]));
 

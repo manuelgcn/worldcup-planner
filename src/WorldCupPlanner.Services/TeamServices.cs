@@ -9,7 +9,6 @@ public class TeamServices : ITeamService
 {
     private readonly ITeamRepository teamRepository;
     private readonly IGroupRepository groupRepository;
-    private readonly IUnitOfWork unitOfWork;
     private readonly IAuditLogService auditLogService;
 
     private const int FixtureTeamCount = 48;
@@ -55,17 +54,14 @@ public class TeamServices : ITeamService
     public TeamServices(
         ITeamRepository teamRepository,
         IGroupRepository groupRepository,
-        IUnitOfWork unitOfWork,
         IAuditLogService auditLogService)
     {
         ArgumentNullException.ThrowIfNull(teamRepository);
         ArgumentNullException.ThrowIfNull(groupRepository);
-        ArgumentNullException.ThrowIfNull(unitOfWork);
         ArgumentNullException.ThrowIfNull(auditLogService);
 
         this.teamRepository = teamRepository;
         this.groupRepository = groupRepository;
-        this.unitOfWork = unitOfWork;
         this.auditLogService = auditLogService;
     }
 
@@ -107,8 +103,6 @@ public class TeamServices : ITeamService
                 nextId++;
             }
         }
-
-        unitOfWork.Commit();
     }
 
     private static int NextAvailableTeamId(IReadOnlyCollection<Team> existing)
@@ -142,8 +136,6 @@ public class TeamServices : ITeamService
             performedByEmail,
             nameof(Team),
             team.Id);
-
-        unitOfWork.Commit();
     }
 
     public IReadOnlyCollection<Team> GetTeams()
@@ -183,8 +175,6 @@ public class TeamServices : ITeamService
             performedByEmail,
             nameof(Team),
             team.Id);
-
-        unitOfWork.Commit();
     }
 
     public IReadOnlyList<Team> OrderForFixture(IReadOnlyCollection<Team> teams, int fixtureSeed)

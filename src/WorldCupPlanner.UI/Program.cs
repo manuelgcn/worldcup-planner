@@ -30,7 +30,6 @@ builder.Services.AddSingleton<IJourneyRepository, JourneyRepository>();
 builder.Services.AddSingleton<ITournamentSettingsRepository, TournamentSettingsRepository>();
 builder.Services.AddSingleton<IEliminationMatchRepository, EliminationMatchRepository>();
 builder.Services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
-builder.Services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 
 builder.Services.AddSingleton<UserServices>();
 builder.Services.AddSingleton<IUserService>(sp => sp.GetRequiredService<UserServices>());
@@ -70,7 +69,6 @@ builder.Services.AddSingleton<KnockoutFixtureGenerator>(sp =>
         sp.GetRequiredService<IGroupRepository>(),
         sp.GetRequiredService<IStadiumRepository>(),
         sp.GetRequiredService<ITournamentSettingsRepository>(),
-        sp.GetRequiredService<IUnitOfWork>(),
         sp.GetRequiredService<IAuditLogService>(),
         sp.GetRequiredService<INotificationService>(),
         sp.GetRequiredService<IRankingService>()));
@@ -86,7 +84,6 @@ builder.Services.AddSingleton<ITeamParser, CsvStreamTeamParser>();
 builder.Services.AddSingleton<IImportService>(sp =>
     ImportService.CreateInstance(
         sp.GetRequiredService<ITeamRepository>(),
-        sp.GetRequiredService<IUnitOfWork>(),
         sp.GetRequiredService<ITeamParser>()));
 
 string flagsDirectory = Path.Combine(
@@ -96,7 +93,6 @@ string flagsDirectory = Path.Combine(
 builder.Services.AddSingleton<IFlagAssignmentService>(sp =>
     new FlagAssignmentService(
         sp.GetRequiredService<ITeamRepository>(),
-        sp.GetRequiredService<IUnitOfWork>(),
         flagsDirectory,
         sp.GetRequiredService<IAuditLogService>()));
 

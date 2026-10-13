@@ -20,19 +20,17 @@ public sealed class ImportService : IImportService
     private const string MaxTeamsWarningMessage = "No se agregaron todos los equipos, max:48";
 
     private readonly ITeamRepository _teamRepository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly ITeamParser _teamParser;
 
-    private ImportService(ITeamRepository teamRepository, IUnitOfWork unitOfWork, ITeamParser teamParser)
+    private ImportService(ITeamRepository teamRepository, ITeamParser teamParser)
     {
         _teamRepository = teamRepository;
-        _unitOfWork = unitOfWork;
         _teamParser = teamParser;
     }
 
-    public static ImportService CreateInstance(ITeamRepository teamRepository, IUnitOfWork unitOfWork, ITeamParser teamParser)
+    public static ImportService CreateInstance(ITeamRepository teamRepository, ITeamParser teamParser)
     {
-        return new ImportService(teamRepository, unitOfWork, teamParser);
+        return new ImportService(teamRepository, teamParser);
     }
 
     public ImportResult ImportTeams(Stream fileStream)
@@ -84,11 +82,6 @@ public sealed class ImportService : IImportService
         foreach (Team team in teamsToImport)
         {
             _teamRepository.Add(team);
-        }
-
-        if (teamsToImport.Count > 0)
-        {
-            _unitOfWork.Commit();
         }
 
         return new ImportResult(teamsToImport, warningMessage);

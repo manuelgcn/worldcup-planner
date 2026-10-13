@@ -35,7 +35,6 @@ public sealed class TournamentSimulationServiceTests
     private MockKnockoutFixtureGenerator _knockoutFixtureGenerator = null!;
     private MockAuditLogRepository _auditLogRepository = null!;
     private MockTournamentSettingsRepository _tournamentSettingsRepository = null!;
-    private MockUnitOfWork _unitOfWork = null!;
     private Mock<IRankingService> _rankingServiceMock = null!;
     private TournamentSimulationService _service = null!;
 
@@ -49,7 +48,6 @@ public sealed class TournamentSimulationServiceTests
         _knockoutFixtureGenerator = new MockKnockoutFixtureGenerator();
         _auditLogRepository = new MockAuditLogRepository();
         _tournamentSettingsRepository = new MockTournamentSettingsRepository();
-        _unitOfWork = new MockUnitOfWork();
         _rankingServiceMock = new Mock<IRankingService>();
 
         SeedGroupsAndMatches();
@@ -61,7 +59,6 @@ public sealed class TournamentSimulationServiceTests
             _groupRepository,
             _matchRepository,
             _eliminationMatchRepository,
-            _unitOfWork,
             new SimulationEngineRegistry([_matchSimulationEngine]),
             auditLogService,
             _tournamentSettingsRepository,
@@ -91,7 +88,6 @@ public sealed class TournamentSimulationServiceTests
         Assert.AreEqual(0, _matchRepository.AddCalls);
         Assert.AreEqual(KnockoutMatchesCount, _eliminationMatchRepository.GetAll().Count);
         Assert.IsNotNull(_knockoutFixtureGenerator.LastQualifiedTeamsReceived);
-        Assert.AreEqual(1, _unitOfWork.CommitCalls);
         Assert.IsTrue(_auditLogRepository.GetAll().Any(log => log.Action == AuditActions.SimulateGroupStageAndGenerateKnockout));
     }
 
@@ -105,7 +101,6 @@ public sealed class TournamentSimulationServiceTests
         Assert.AreEqual(0, _matchRepository.AddCalls);
         Assert.AreEqual(0, _eliminationMatchRepository.GetAll().Count);
         Assert.AreEqual(Seed, _matchSimulationEngine.LastSeedReceived);
-        Assert.IsTrue(_unitOfWork.CommitCalls >= 1);
     }
 
     [TestMethod]
@@ -126,7 +121,6 @@ public sealed class TournamentSimulationServiceTests
         MockEliminationMatchRepository emptyEliminationRepository = new MockEliminationMatchRepository();
         MockKnockoutFixtureGenerator emptyKnockoutFixtureGenerator = new MockKnockoutFixtureGenerator();
         MockTournamentSettingsRepository emptySettingsRepository = new MockTournamentSettingsRepository();
-        MockUnitOfWork emptyUnitOfWork = new MockUnitOfWork();
         emptyGroupRepository.Seed(FirstGroupId, new Group("A"));
         emptySettingsRepository.Add(new TournamentSettings(1, new DateTime(StartYear, StartMonth, StartDay), 3, 3, Seed, Seed, Seed, Seed));
 
@@ -135,7 +129,6 @@ public sealed class TournamentSimulationServiceTests
             emptyGroupRepository,
             emptyMatchRepository,
             emptyEliminationRepository,
-            emptyUnitOfWork,
             new SimulationEngineRegistry([_matchSimulationEngine]),
             auditLogService,
             emptySettingsRepository,

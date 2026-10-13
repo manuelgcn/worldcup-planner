@@ -9,7 +9,6 @@ namespace WorldCupPlanner.Services.Tests;
 public sealed class FlagAssignmentServiceTests
 {
     private MockTeamRepository _teamRepository = null!;
-    private MockUnitOfWork _unitOfWork = null!;
     private MockAuditLogRepository _auditLogRepository = null!;
     private FlagAssignmentService _service = null!;
     private string _flagsDirectory = null!;
@@ -21,11 +20,9 @@ public sealed class FlagAssignmentServiceTests
         Directory.CreateDirectory(_flagsDirectory);
 
         _teamRepository = new MockTeamRepository();
-        _unitOfWork = new MockUnitOfWork();
         _auditLogRepository = new MockAuditLogRepository();
         _service = new FlagAssignmentService(
             _teamRepository,
-            _unitOfWork,
             _flagsDirectory,
             AuditLogService.CreateInstance(_auditLogRepository));
     }
@@ -56,7 +53,6 @@ public sealed class FlagAssignmentServiceTests
 
         Assert.AreEqual(1, result.AssignedCount);
         Assert.IsNotNull(team.FlagBase64);
-        Assert.AreEqual(1, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]

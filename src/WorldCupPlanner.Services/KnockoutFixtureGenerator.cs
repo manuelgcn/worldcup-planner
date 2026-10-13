@@ -26,7 +26,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private readonly IEliminationMatchRepository _eliminationRepository;
     private readonly IGroupRepository _groupRepository;
     private readonly ITournamentSettingsRepository _settingsRepository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditLogService _auditLog;
     private readonly IStadiumRepository _stadiumRepository;
     private readonly INotificationService _notificationService;
@@ -39,7 +38,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         IGroupRepository groupRepository,
         IStadiumRepository stadiumRepository,
         ITournamentSettingsRepository settingsRepository,
-        IUnitOfWork unitOfWork,
         IAuditLogService auditLog,
         INotificationService notificationService,
         IRankingService rankingService)
@@ -50,7 +48,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         ArgumentNullException.ThrowIfNull(groupRepository);
         ArgumentNullException.ThrowIfNull(stadiumRepository);
         ArgumentNullException.ThrowIfNull(settingsRepository);
-        ArgumentNullException.ThrowIfNull(unitOfWork);
         ArgumentNullException.ThrowIfNull(auditLog);
         ArgumentNullException.ThrowIfNull(notificationService);
         ArgumentNullException.ThrowIfNull(rankingService);
@@ -60,7 +57,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         _groupRepository = groupRepository;
         _stadiumRepository = stadiumRepository;
         _settingsRepository = settingsRepository;
-        _unitOfWork = unitOfWork;
         _auditLog = auditLog;
         _notificationService = notificationService;
         _rankingService = rankingService;
@@ -135,7 +131,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             elimRepo.Add(match);
         }
 
-        _unitOfWork.Commit();
 
         _auditLog.LogPerformedBy(
             AuditActions.GenerateKnockout,
@@ -287,7 +282,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     private void CommitAndAuditAdvance(Phase createdPhase, string? performedByEmail)
     {
-        _unitOfWork.Commit();
         _auditLog.LogPerformedBy(
             AuditActions.AdvanceRound,
             $"Advanced bracket to phase {createdPhase} (pending manual results).",
@@ -592,7 +586,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     private void CommitAndAuditRound(Phase phase, string? performedByEmail)
     {
-        _unitOfWork.Commit();
         _auditLog.LogPerformedBy(
             AuditActions.SimulateRound,
             $"Simulated phase {phase}.",

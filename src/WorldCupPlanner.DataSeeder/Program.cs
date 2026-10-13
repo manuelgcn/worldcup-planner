@@ -67,7 +67,6 @@ public static class Program
         services.AddSingleton<ITournamentSettingsRepository, TournamentSettingsRepository>();
         services.AddSingleton<IEliminationMatchRepository, EliminationMatchRepository>();
         services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
-        services.AddSingleton<IUnitOfWork, UnitOfWorkRepository>();
 
         services.AddSingleton<UserServices>();
         services.AddSingleton<IUserService>(sp => sp.GetRequiredService<UserServices>());
@@ -99,7 +98,6 @@ public static class Program
                 sp.GetRequiredService<IGroupRepository>(),
                 sp.GetRequiredService<IStadiumRepository>(),
                 sp.GetRequiredService<ITournamentSettingsRepository>(),
-                sp.GetRequiredService<IUnitOfWork>(),
                 sp.GetRequiredService<IAuditLogService>(),
                 sp.GetRequiredService<INotificationService>(),
                 sp.GetRequiredService<IRankingService>()));
@@ -113,14 +111,12 @@ public static class Program
         services.AddSingleton<IImportService>(sp =>
             ImportService.CreateInstance(
                 sp.GetRequiredService<ITeamRepository>(),
-                sp.GetRequiredService<IUnitOfWork>(),
                 sp.GetRequiredService<ITeamParser>()));
 
         string flagsDirectory = Path.Combine(AppContext.BaseDirectory, "flags-master");
         services.AddSingleton<IFlagAssignmentService>(sp =>
             new FlagAssignmentService(
                 sp.GetRequiredService<ITeamRepository>(),
-                sp.GetRequiredService<IUnitOfWork>(),
                 flagsDirectory,
                 sp.GetRequiredService<IAuditLogService>()));
 

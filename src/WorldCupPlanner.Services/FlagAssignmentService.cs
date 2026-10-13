@@ -10,7 +10,6 @@ namespace WorldCupPlanner.Services;
 public class FlagAssignmentService : IFlagAssignmentService
 {
     private readonly ITeamRepository teamRepository;
-    private readonly IUnitOfWork unitOfWork;
     private readonly string flagsDirectoryPath;
     private readonly IAuditLogService auditLogService;
 
@@ -72,13 +71,11 @@ public class FlagAssignmentService : IFlagAssignmentService
 
     public FlagAssignmentService(
         ITeamRepository teamRepository,
-        IUnitOfWork unitOfWork,
         string flagsDirectoryPath,
         IAuditLogService auditLogService)
     {
         ArgumentNullException.ThrowIfNull(auditLogService);
         this.teamRepository = teamRepository;
-        this.unitOfWork = unitOfWork;
         this.flagsDirectoryPath = flagsDirectoryPath;
         this.auditLogService = auditLogService;
     }
@@ -116,11 +113,6 @@ public class FlagAssignmentService : IFlagAssignmentService
             team.UpdateFlag(flagBase64);
             teamRepository.Update(team);
             assignedCount++;
-        }
-
-        if (assignedCount > 0)
-        {
-            unitOfWork.Commit();
         }
 
         auditLogService.LogPerformedBy(
