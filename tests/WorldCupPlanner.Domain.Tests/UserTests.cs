@@ -177,6 +177,14 @@ public class UserTests
 
     
     [TestMethod]
+    public void PasswordMustHaveLowercaseLetter()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(1, "Juan", "Perez", "juan@mail.com", "PASS123@", new DateTime(1990, 5, 15)));
+    }
+
+    
+    [TestMethod]
     public void PasswordMustHaveNumber()
     {
         Assert.ThrowsException<ArgumentException>(() =>
@@ -200,6 +208,15 @@ public class UserTests
         User usuario = new User(1, "Juan", "Perez", "juan@mail.com", originalPassword, new DateTime(1990, 5, 15));
 
         Assert.AreNotEqual(originalPassword, usuario.password);
+    }
+
+    [TestMethod]
+    public void SamePasswordIsStoredDifferentlyForEachUser()
+    {
+        User first = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User second = new User(2, "Ana", "Gomez", "ana@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        Assert.AreNotEqual(first.password, second.password);
     }
 
     [TestMethod]
