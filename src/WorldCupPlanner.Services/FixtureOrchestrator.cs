@@ -86,7 +86,9 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         ClearGroupStageStorage();
         AuditCleared(performedByEmail);
 
-        ExecuteAndCommit(plan);
+        // El plan se armo antes de revertir (para validar sin tocar nada); los bombos salen del
+        // ranking, asi que se arman con los equipos releidos tras la reversion.
+        ExecuteAndCommit(plan with { Teams = LoadTeams() });
 
         AuditRegenerated(plan.EffectiveSeed, plan.Settings.SelectedSimulationEngine, performedByEmail);
     }
