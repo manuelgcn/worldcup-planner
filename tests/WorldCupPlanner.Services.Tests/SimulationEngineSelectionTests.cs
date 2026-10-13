@@ -89,14 +89,14 @@ public sealed class SimulationEngineSelectionTests
     }
 
     [TestMethod]
-    public void KnockoutFixtureGenerator_SimulateEliminationMatches_UsesEngineSelectedInSettings()
+    public void KnockoutFixtureGenerator_SimulateNextRound_UsesEngineSelectedInSettings()
     {
-        MockMatchRepository matchRepository = new MockMatchRepository();
-        matchRepository.Add(CreateGroupMatch(MatchId));
+        MockEliminationMatchRepository eliminationRepository = new MockEliminationMatchRepository();
+        eliminationRepository.Add(CreateRoundOf32Match(MatchId));
         KnockoutFixtureGenerator generator = new KnockoutFixtureGenerator(
             _registry,
-            matchRepository,
-            new MockEliminationMatchRepository(),
+            new MockMatchRepository(),
+            eliminationRepository,
             new MockGroupRepository(),
             new MockStadiumRepository(),
             _settingsRepository,
@@ -105,33 +105,10 @@ public sealed class SimulationEngineSelectionTests
             new MockNotificationService(),
             new MockRankingService());
 
-        generator.SimulateEliminationMatches(new[] { MatchId });
+        generator.SimulateNextRound(AdminEmail);
 
         Assert.AreEqual(1, _selectedEngineSpy.SimulateCalls);
         Assert.AreEqual(0, _defaultEngineSpy.SimulateCalls);
-    }
-
-    [TestMethod]
-    public void KnockoutFixtureGenerator_SimulateEliminationMatches_AuditsEngineName()
-    {
-        MockMatchRepository matchRepository = new MockMatchRepository();
-        matchRepository.Add(CreateGroupMatch(MatchId));
-        KnockoutFixtureGenerator generator = new KnockoutFixtureGenerator(
-            _registry,
-            matchRepository,
-            new MockEliminationMatchRepository(),
-            new MockGroupRepository(),
-            new MockStadiumRepository(),
-            _settingsRepository,
-            _unitOfWork,
-            _auditLogService,
-            new MockNotificationService(),
-            new MockRankingService());
-
-        generator.SimulateEliminationMatches(new[] { MatchId });
-
-        AuditLog log = _auditLogRepository.GetAll().First(entry => entry.Action == AuditActions.SimulationExecuted);
-        Assert.IsTrue(log.Details.Contains(PureRandomName), $"Expected engine name in details, got '{log.Details}'");
     }
 
     private TournamentSimulationService CreateTournamentSimulationService()
@@ -195,6 +172,17 @@ public sealed class SimulationEngineSelectionTests
 
         return MatchGroup.CreateInstance(
             matchId, new DateTime(2026, 6, 1), homeTeam, awayTeam, stadium, group, Journey.CreateInstance(1));
+    }
+
+    private static MatchElimination CreateRoundOf32Match(int matchId)
+    {
+        Team homeTeam = new Team(1, "Home Team", 1500, false, Confederation.CONCACAF);
+        Team awayTeam = new Team(2, "Away Team", 1600, false, Confederation.UEFA);
+        Stadium stadium = new Stadium("Main Stadium", "Main City", "None", 25000);
+
+        return MatchElimination.Create(
+            matchId, new DateTime(2026, 7, 1), homeTeam, awayTeam, stadium, Phase.RoundOf32, "R32-1",
+            CreateGroupMatch(matchId + 100), CreateGroupMatch(matchId + 200));
     }
 
     // Stub minimo: SimulateMatch no pasa por la fabrica, pero el constructor la exige.

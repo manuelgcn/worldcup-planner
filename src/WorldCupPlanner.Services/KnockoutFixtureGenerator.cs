@@ -327,106 +327,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         }
     }
 
-    public void SimulateEliminationMatches(IEnumerable<int> matchIds)
-    {
-        TournamentSettings? settings = _settingsRepository.GetAll().FirstOrDefault();
-        if (settings == null)
-        {
-            throw new KnockoutGeneratorException("La configuracion del torneo es obligatoria para simular partidos.");
-        }
-
-        int baseSeed = settings.SimulationSeed;
-        IMatchSimulationEngine engine = ResolveSelectedEngine(settings);
-
-        foreach (int matchId in matchIds)
-        {
-            Match? match = GetMatchById(matchId);
-            if (match == null)
-            {
-                continue;
-            }
-
-            int seed = baseSeed + matchId;
-            engine.Simulate(match, seed);
-            ApplyRankingUpdate(match);
-
-            _matchRepository.Update(match);
-            NotifyJournalistsAboutSimulatedResult(match);
-            _auditLog.Log(AuditActions.SimulationExecuted, BuildSimulationAuditDetails(match, seed, engine.Name), settings.Id, "Match", match.MatchId);
-        }
-
-        _unitOfWork.Commit();
-    }
-
-    private static string BuildSimulationAuditDetails(Match match, int seed, string engineName)
-    {
-        string baseMessage = $"Simulated elimination match {match.MatchId} with engine {engineName} and seed {seed}.";
-        if (match is MatchElimination eliminationMatch && eliminationMatch.WonByPenalties)
-        {
-            return baseMessage + $" Tiebreaker resolved by penalty shootout {eliminationMatch.HomePenaltyGoals}-{eliminationMatch.AwayPenaltyGoals}.";
-        }
-
-        return baseMessage;
-    }
-
-    public void OrchestrateAndSimulateEliminationPhase(
-        IEnumerable<(Team Team, string Group)> qualifiedWithGroups,
-        IReadOnlyCollection<Stadium> stadiums,
-        TournamentSettings settings,
-        IEliminationMatchRepository eliminationRepo,
-        int? crossingsSeedOverride = null)
-    {
-        if (qualifiedWithGroups == null) throw new ArgumentNullException(nameof(qualifiedWithGroups));
-
-        List<(Team Team, string Group)> entries = qualifiedWithGroups.ToList();
-        if (entries.Count != 32) throw new ArgumentException("Se requieren 32 equipos clasificados con su grupo");
-
-        EliminationOrchestrator orchestrator = new EliminationOrchestrator(
-            eliminationRepo,
-            _auditLog);
-
-        orchestrator.OrchestrateEliminationPhase(entries, stadiums, settings, crossingsSeedOverride);
-
-        IMatchSimulationEngine engine = ResolveSelectedEngine(settings);
-        List<Match> allMatches = eliminationRepo.GetAll().ToList();
-        foreach (Match match in allMatches)
-        {
-            try
-            {
-                int seed = settings.SimulationSeed + match.MatchId;
-                engine.Simulate(match, seed);
-                ApplyRankingUpdate(match);
-                eliminationRepo.Update(match);
-                NotifyJournalistsAboutSimulatedResult(match);
-                _auditLog.Log(AuditActions.SimulationExecuted, BuildSimulationAuditDetails(match, seed, engine.Name), settings.Id, "Match", match.MatchId);
-            }
-            catch (Exception ex)
-            {
-                // Resiliencia deliberada: si la simulacion de un partido falla, se deja
-                // constancia en el log de auditoria y se continua con el resto del cuadro
-                // en lugar de abortar toda la simulacion eliminatoria.
-                _auditLog.Log(AuditActions.SimulateMatch, $"No se pudo simular el partido {match.MatchId}: {ex.Message}", settings.Id, "Match", match.MatchId);
-            }
-        }
-
-        _unitOfWork.Commit();
-    }
-
-    public List<(Team Team, string Group)> ComputeQualified32FromGroups(IReadOnlyCollection<Group> groups, TournamentSettings settings)
-    {
-        if (groups == null) throw new ArgumentNullException(nameof(groups));
-        if (settings == null) throw new ArgumentNullException(nameof(settings));
-
-        List<Match> matches = groups
-            .SelectMany(group => _matchRepository.GetByGroup(group.Name) ?? new List<Match>())
-            .ToList();
-
-        GroupQualifier qualifier = new GroupQualifier();
-        QualifiedTeams qualifiedTeams = qualifier.ClassifyTeams(groups.ToList(), matches, settings.CrossingsSeed);
-
-        return FlattenQualifiedTeams(qualifiedTeams);
-    }
-
     private QualifiedTeams ComputeQualifiedTeams(IReadOnlyCollection<Group> groups, TournamentSettings settings)
     {
         List<Match> matches = groups
@@ -837,22 +737,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         }
 
         return qualifiedWithGroups;
-    }
-
-    private Match? GetMatchById(int matchId)
-    {
-        // Resiliencia deliberada de la simulacion por lotes de fase 2: si la lectura de
-        // un partido falla, se trata como "no disponible" (null) y el bucle de
-        // SimulateEliminationMatches lo saltea para no abortar todo el cuadro.
-        // Comportamiento verificado por KnockoutFixtureGeneratorSimulationTests.
-        try
-        {
-            return _matchRepository.GetById(matchId);
-        }
-        catch (Exception)
-        {
-            return null;
-        }
     }
 
     private void NotifyJournalistsAboutSimulatedResult(Match match)
