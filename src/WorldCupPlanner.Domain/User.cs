@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace WorldCupPlanner.Domain;
 
@@ -10,10 +9,15 @@ public class User
     private const string EmailInvalidMessage = "Email invalido";
     private const string PasswordTooShortMessage = "La contrasena debe tener al menos 8 caracteres";
     private const string PasswordMissingUppercaseMessage = "La contrasena debe contener al menos una mayuscula";
+    private const string PasswordMissingLowercaseMessage = "La contrasena debe contener al menos una minuscula";
     private const string PasswordMissingDigitMessage = "La contrasena debe contener al menos un numero";
     private const string PasswordMissingSpecialCharMessage = "La contrasena debe contener al menos un caracter especial";
     private const string FutureDateOfBirthMessage = "La fecha de nacimiento no puede ser futura";
     private const string UnderageUserMessage = "El usuario debe tener al menos 18 anos";
+    private const int PasswordSaltSize = 16;
+    private const int PasswordHashSize = 32;
+    private const int PasswordHashIterations = 100_000;
+    private const char PasswordSaltSeparator = ':';
     public int idUser { get; set; }
 
     public string name { get; set; }
@@ -42,7 +46,7 @@ public class User
         this.name = name;
         this.lastname = lastname;
         this.email = email;
-        this.password = EncryptPassword(password);
+        this.password = HashPassword(password);
         this.dateOfBirth = dateOfBirth;
     }
 
@@ -118,6 +122,9 @@ public class User
         if (!Regex.IsMatch(password, "[A-Z]"))
             throw new ArgumentException(PasswordMissingUppercaseMessage);
 
+        if (!Regex.IsMatch(password, "[a-z]"))
+            throw new ArgumentException(PasswordMissingLowercaseMessage);
+
         if (!Regex.IsMatch(password, "[0-9]"))
             throw new ArgumentException(PasswordMissingDigitMessage);
 
@@ -143,16 +150,28 @@ public class User
 
 
     
-    private string EncryptPassword(string password)
+    // Se guarda "sal:hash" en base64. La sal es aleatoria a proposito (no es un sorteo): dos
+    // usuarios con la misma contrasena no comparten hash y no sirven tablas precalculadas.
+    private static string HashPassword(string password)
     {
-        using SHA256 sha = SHA256.Create();
-        byte[] bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
-        return Convert.ToBase64String(bytes);
+        byte[] salt = RandomNumberGenerator.GetBytes(PasswordSaltSize);
+        return Convert.ToBase64String(salt) + PasswordSaltSeparator + Convert.ToBase64String(DeriveHash(password, salt));
+    }
+
+    private static byte[] DeriveHash(string password, byte[] salt)
+    {
+        return Rfc2898DeriveBytes.Pbkdf2(password, salt, PasswordHashIterations, HashAlgorithmName.SHA256, PasswordHashSize);
     }
 
     public bool PasswordMatches(string plainTextPassword)
     {
-        return password == EncryptPassword(plainTextPassword);
+        string[] parts = password.Split(PasswordSaltSeparator);
+        if (parts.Length != 2)
+            return false;
+
+        byte[] salt = Convert.FromBase64String(parts[0]);
+        byte[] expectedHash = Convert.FromBase64String(parts[1]);
+        return CryptographicOperations.FixedTimeEquals(expectedHash, DeriveHash(plainTextPassword, salt));
     }
 
     public void AddRole(UserRoles role)
