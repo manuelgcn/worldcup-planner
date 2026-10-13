@@ -1,4 +1,6 @@
 
+using System.Security.Cryptography;
+using System.Text;
 using WorldCupPlanner.Domain;
 
 namespace WorldCupPlanner.Domain.Tests;
@@ -217,6 +219,36 @@ public class UserTests
         User second = new User(2, "Ana", "Gomez", "ana@mail.com", "Pass123@", new DateTime(1990, 5, 15));
 
         Assert.AreNotEqual(first.password, second.password);
+    }
+
+    [TestMethod]
+    public void PasswordMatchesAcceptsTheLegacyUnsaltedSha256Hash()
+    {
+        User user = WithLegacyHash(new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)), "Pass123@");
+
+        Assert.IsTrue(user.HasLegacyPasswordHash);
+        Assert.IsTrue(user.PasswordMatches("Pass123@"));
+        Assert.IsFalse(user.PasswordMatches("Other123@"));
+    }
+
+    [TestMethod]
+    public void UpgradeLegacyPasswordHashStoresASaltedHashForTheSamePassword()
+    {
+        User user = WithLegacyHash(new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)), "Pass123@");
+
+        user.UpgradeLegacyPasswordHash("Pass123@");
+
+        Assert.IsFalse(user.HasLegacyPasswordHash);
+        Assert.IsTrue(user.PasswordMatches("Pass123@"));
+    }
+
+    [TestMethod]
+    public void UpgradeLegacyPasswordHashRejectsAWrongPassword()
+    {
+        User user = WithLegacyHash(new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)), "Pass123@");
+
+        Assert.ThrowsException<ArgumentException>(() => user.UpgradeLegacyPasswordHash("Other123@"));
+        Assert.IsTrue(user.HasLegacyPasswordHash);
     }
 
     [TestMethod]
@@ -465,5 +497,12 @@ public class UserTests
             )
         );
     }
-    
+
+    // Lo que guardaba la version anterior: SHA-256 del texto en base64, sin sal.
+    private static User WithLegacyHash(User user, string plainTextPassword)
+    {
+        string legacyHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(plainTextPassword)));
+        typeof(User).GetProperty(nameof(User.password))!.SetValue(user, legacyHash);
+        return user;
+    }
 }

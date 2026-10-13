@@ -163,6 +163,12 @@ public class User
         return Rfc2898DeriveBytes.Pbkdf2(password, salt, PasswordHashIterations, HashAlgorithmName.SHA256, PasswordHashSize);
     }
 
+    public bool HasLegacyPasswordHash => false;
+
+    public void UpgradeLegacyPasswordHash(string plainTextPassword)
+    {
+    }
+
     public bool PasswordMatches(string plainTextPassword)
     {
         string[] parts = password.Split(PasswordSaltSeparator);

@@ -1,9 +1,12 @@
+using System.Security.Cryptography;
+using System.Text;
 using WorldCupPlanner.DataAccess;
 using WorldCupPlanner.DataAccess.Repositories;
 using WorldCupPlanner.DataAccess.Tests.TestDoubles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WorldCupPlanner.Domain;
+using WorldCupPlanner.Services;
 
 namespace WorldCupPlanner.DataAccess.Tests;
 
@@ -34,6 +37,23 @@ public class UserRepositoryTests
     {
         using AppDbContext context = _factory.CreateDbContext();
         return context.UserRoles.Count(r => r.UserId == userId);
+    }
+
+    [TestMethod]
+    public void LoginWithALegacyHashSavesAPbkdf2HashThatStillMatches()
+    {
+        User user = CreateUser("juan@mail.com", UserRoles.Editor);
+        _repository.Add(user);
+        string legacyHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes("Pass123@")));
+        typeof(User).GetProperty(nameof(User.password))!.SetValue(user, legacyHash);
+        _repository.Update(user);
+        UserServices userServices = new UserServices(_repository, AuditLogService.CreateInstance(new AuditLogRepository(_factory)));
+
+        userServices.Authenticate("juan@mail.com", "Pass123@");
+
+        User stored = new UserRepository(_factory).GetByEmail("juan@mail.com")!;
+        Assert.IsFalse(stored.HasLegacyPasswordHash);
+        Assert.IsTrue(stored.PasswordMatches("Pass123@"));
     }
 
     [TestMethod]
