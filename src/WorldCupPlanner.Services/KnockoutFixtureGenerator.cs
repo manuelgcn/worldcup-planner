@@ -844,7 +844,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         // Resiliencia deliberada de la simulacion por lotes de fase 2: si la lectura de
         // un partido falla, se trata como "no disponible" (null) y el bucle de
         // SimulateEliminationMatches lo saltea para no abortar todo el cuadro.
-        // Comportamiento verificado por Fase2ConsolidatedTests.Test_Fase2_AllScenarios.
+        // Comportamiento verificado por KnockoutFixtureGeneratorSimulationTests.
         try
         {
             return _matchRepository.GetById(matchId);

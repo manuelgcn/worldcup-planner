@@ -4,7 +4,7 @@ using WorldCupPlanner.Services.DTOs;
 namespace WorldCupPlanner.Services.Tests;
 
 [TestClass]
-public sealed class DtoCoverageTests
+public sealed class DtoTests
 {
     [TestMethod]
     public void MatchDtoCanStoreAndExposeAllProperties()

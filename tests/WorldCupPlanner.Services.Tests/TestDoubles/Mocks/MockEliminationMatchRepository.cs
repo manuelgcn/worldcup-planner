@@ -3,7 +3,7 @@ using WorldCupPlanner.Domain;
 
 namespace WorldCupPlanner.Services.Tests.TestDoubles.Mocks;
 
-// Doble en memoria de IEliminationMatchRepository para los tests de servicios (Fase2, simulacion,
+// Doble en memoria de IEliminationMatchRepository para los tests de servicios (cuadro eliminatorio, simulacion,
 // knockout). Reproduce el comportamiento del antiguo repositorio basado en List<Match>: guarda las
 // instancias tal cual (con sus navegaciones intactas), de modo que los servicios pueden leer
 // HomeTeam/AwayTeam/MatchHome/MatchAway sin depender de una BD ni de prerrequisitos sembrados.

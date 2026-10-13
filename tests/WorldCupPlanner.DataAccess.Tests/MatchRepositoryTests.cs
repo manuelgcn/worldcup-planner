@@ -44,6 +44,16 @@ public class MatchRepositoryTests
     }
 
     [TestMethod]
+    public void GetByIdReturnsRequestedMatchWhenSeveralExist()
+    {
+        AddIsolatedGroupMatch(matchId: 10, groupName: "A", date: Date(1));
+        AddIsolatedGroupMatch(matchId: 20, groupName: "B", date: Date(2));
+
+        Assert.AreEqual(10, _repository.GetById(10)!.MatchId);
+        Assert.AreEqual(20, _repository.GetById(20)!.MatchId);
+    }
+
+    [TestMethod]
     public void UpdatePersistsEditedResult()
     {
         AddIsolatedGroupMatch(matchId: 3, groupName: "A", date: Date(2));

@@ -10,7 +10,7 @@ using Match = WorldCupPlanner.Domain.Match;
 
 namespace WorldCupPlanner.Services.Tests;
 
-// Tests de caracterizacion para la Fase 9 (refactor GRASP/SOLID/Demeter).
+// Tests de caracterizacion escritos antes del refactor GRASP/SOLID/Demeter.
 //
 // Objetivo: congelar el comportamiento ACTUAL antes del refactor, incluso cuando
 // ese comportamiento es incorrecto. No "arreglan" nada; son una fotografia. Cuando
@@ -20,7 +20,7 @@ namespace WorldCupPlanner.Services.Tests;
 // ciclo RED/GREEN, no en un commit de refactor puro.
 
 [TestClass]
-public sealed class Fase9NotifyResultLoadedCharacterizationTests
+public sealed class NotifyResultLoadedCharacterizationTests
 {
     private const int JournalistId = 1;
 
@@ -121,7 +121,7 @@ public sealed class Fase9NotifyResultLoadedCharacterizationTests
 }
 
 [TestClass]
-public sealed class Fase9MatchServiceResultFlowCharacterizationTests
+public sealed class MatchServiceResultFlowCharacterizationTests
 {
     private const int MatchId = 1;
 
@@ -134,7 +134,7 @@ public sealed class Fase9MatchServiceResultFlowCharacterizationTests
         _context.Service.CreateMatch(MatchServiceTestContext.NewGroupMatchRequest(MatchId));
     }
 
-    // (b) Comportamiento invertido en Fase 9: SimulateMatch ahora SI notifica a periodistas.
+    // (b) Comportamiento invertido en el refactor: SimulateMatch ahora SI notifica a periodistas.
     // MatchService pasa a colaborar con INotificationService (NotifyMatchSimulated), por lo
     // que un periodista registrado recibe la notificacion al simular un partido por el servicio.
     // Antes este test verificaba lo contrario (la UI/flujos agregados eran los unicos que avisaban).
@@ -213,7 +213,7 @@ public sealed class Fase9MatchServiceResultFlowCharacterizationTests
 }
 
 [TestClass]
-public sealed class Fase9GroupStandingsCharacterizationTests
+public sealed class GroupStandingsCharacterizationTests
 {
     private const string GroupName = "A";
 

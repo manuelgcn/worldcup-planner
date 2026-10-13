@@ -7,7 +7,7 @@ using WorldCupPlanner.Services;
 namespace WorldCupPlanner.Services.Tests;
 
 [TestClass]
-public class Fase2ComputeQualified32Tests
+public class KnockoutFixtureGeneratorQualificationTests
 {
     private const int PointsForWin = 3;
     private const int PointsForDraw = 1;
@@ -40,7 +40,7 @@ public class Fase2ComputeQualified32Tests
         List<Group> groups = BuildGroups();
         PopulateMatches(groups, matchRepo, settings);
  
-        Fase2 fase2 = new Fase2(
+        KnockoutFixtureGenerator generator = new KnockoutFixtureGenerator(
             simulationEngineRegistry: new SimulationEngineRegistry([new MockMatchSimulationEngine()]),
             matchRepository: matchRepo,
             eliminationRepository: new MockEliminationMatchRepository(),
@@ -54,8 +54,8 @@ public class Fase2ComputeQualified32Tests
         );
  
            
-        List<(Team Team, string Group)> result1 = fase2.ComputeQualified32FromGroups(groups, settings);
-        List<(Team Team, string Group)> result2 = fase2.ComputeQualified32FromGroups(groups, settings);
+        List<(Team Team, string Group)> result1 = generator.ComputeQualified32FromGroups(groups, settings);
+        List<(Team Team, string Group)> result2 = generator.ComputeQualified32FromGroups(groups, settings);
  
             
         Assert.AreEqual(ExpectedQualifiedCount, result1.Count);

@@ -6,10 +6,10 @@ using WorldCupPlanner.Services.Tests.TestDoubles.Mocks;
 namespace WorldCupPlanner.Services.Tests;
 
 [TestClass]
-public class Fase2OrchestrationTests
+public class EliminationOrchestratorTests
 {
     [TestMethod]
-    public void Orchestrate_Creates_All_Rounds_And_Audits()
+    public void OrchestrateEliminationPhase_CreatesAllRounds_AndAudits()
     {
         List<(Team Team, string Group)> teamsWithGroup = new List<(Team Team, string Group)>();
         int id = 1;
