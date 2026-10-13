@@ -81,20 +81,20 @@
                 <summary>Estado del torneo (clic para expandir)</summary>
                 <div class="status-grid">
                     <div>
-                        <strong>Equipos:</strong> @teamCount / 48
-                        @if (teamCount < 48)
+                        <strong>Equipos:</strong> @teamCount / @RequiredTeamCount
+                        @if (teamCount < RequiredTeamCount)
                         {
-                            <span class="status-warn">(faltan @(48 - teamCount))</span>
+                            <span class="status-warn">(faltan @(RequiredTeamCount - teamCount))</span>
                         }
                     </div>
                     <div>
                         <strong>Estadios:</strong> @stadiumCount
-                        @if (stadiumCount < 4)
+                        @if (stadiumCount < MinimumStadiumCount)
                         {
-                            <span class="status-warn">(mínimo 4)</span>
+                            <span class="status-warn">(mínimo @MinimumStadiumCount)</span>
                         }
                     </div>
-                    <div><strong>Partidos de grupos:</strong> @groupMatches.Count / 72</div>
+                    <div><strong>Partidos de grupos:</strong> @groupMatches.Count / @GroupStageMatchCount</div>
                     <div><strong>Pendientes (sin simular):</strong> @pendingGroupMatches</div>
                     <div><strong>Knockout generado:</strong> @(IsKnockoutGenerated ? "sí" : "no")</div>
                     <div><strong>Motor de simulación:</strong> @settings.SelectedSimulationEngine</div>
@@ -135,28 +135,28 @@
             }
 
             @* PASO 1: cargar equipos y estadios demo *@
-            @if (IsAdmin && (teamCount < 48 || stadiumCount < 4))
+            @if (IsAdmin && !HasBaseData)
             {
                 <section class="step-section">
                     <h4>1. Cargar datos base</h4>
                     <p class="step-help">Atajo para tener 48 equipos y 4 estadios sin cargarlos a mano.</p>
                     <div class="step-actions">
                         <button class="btn btn-primary"
-                                disabled="@(teamCount >= 48 || isBusy)"
+                                disabled="@(teamCount >= RequiredTeamCount || isBusy)"
                                 @onclick="HandleFillTeamsAsync">
-                            @(teamCount >= 48 ? "✓ 48 equipos listos" : $"Cargar {48 - teamCount} equipos demo")
+                            @(teamCount >= RequiredTeamCount ? $"✓ {RequiredTeamCount} equipos listos" : $"Cargar {RequiredTeamCount - teamCount} equipos demo")
                         </button>
                         <button class="btn btn-primary"
-                                disabled="@(stadiumCount >= 4 || isBusy)"
+                                disabled="@(stadiumCount >= MinimumStadiumCount || isBusy)"
                                 @onclick="HandleSeedStadiumsAsync">
-                            @(stadiumCount >= 4 ? "✓ Estadios listos" : "Cargar estadios demo")
+                            @(stadiumCount >= MinimumStadiumCount ? "✓ Estadios listos" : "Cargar estadios demo")
                         </button>
                     </div>
                 </section>
             }
 
             @* PASO 2: generar fixture *@
-            @if (CanManageFixture && teamCount >= 48 && stadiumCount >= 4 && !IsFixtureGenerated)
+            @if (CanManageFixture && HasBaseData && !IsFixtureGenerated)
             {
                 <section class="step-section">
                     <h4>2. Generar fixture de fase de grupos</h4>
@@ -355,6 +355,10 @@
 @code {
     private const string StandingsLoadErrorMessage =
         "No se pudo cargar la tabla de posiciones del grupo. Intentá nuevamente.";
+    // Mismos umbrales que validan FixtureService y StadiumServices; aca solo guian el asistente.
+    private const int RequiredTeamCount = 48;
+    private const int MinimumStadiumCount = 4;
+    private const int GroupStageMatchCount = 72;
 
     private TournamentSettings? settings;
     private List<Group> groups = new();
@@ -390,6 +394,9 @@
 
     private bool CanEditResults => CanManageFixture;
 
+    private bool HasBaseData =>
+        teamCount >= RequiredTeamCount && stadiumCount >= MinimumStadiumCount;
+
     private bool IsFixtureGenerated => FixtureOrchestrator.IsFixtureGenerated();
     private bool IsKnockoutGenerated => KnockoutGenerator.IsBracketGenerated();
     private bool IsGroupStageComplete => StandingsService.IsGroupStageComplete();
@@ -416,7 +423,7 @@
     {
         get
         {
-            if (teamCount < 48 || stadiumCount < 4)
+            if (!HasBaseData)
             {
                 return new WizardStep(1, "Cargar datos base", "Necesitás 48 equipos y al menos 4 estadios antes de generar el fixture.", "step-1");
             }

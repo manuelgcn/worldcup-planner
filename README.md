@@ -4,7 +4,7 @@
 
 ![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
 ![Blazor](https://img.shields.io/badge/Blazor-Server-512BD4?logo=blazor&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-950%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-937%20passing-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)
 ![CI](https://github.com/manuelgcn/worldcup-planner/actions/workflows/dotnet-tests.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -24,7 +24,7 @@ orchestrate use cases, and the UI only presents.**
 
 ## ✨ Engineering highlights
 
-- **950 automated tests · 97% line coverage** on the business layers (Domain / Services / DataAccess, excluding generated EF migrations).
+- **937 automated tests · 97% line coverage** on the business layers (Domain / Services / DataAccess, excluding generated EF migrations).
 - **Clean layered architecture** with enforced dependency direction — the domain depends on nothing.
 - **TDD** throughout (red → green → refactor), with focused, incremental commits.
 - **CI/CD with GitHub Actions**: build + tests on every push and pull request, plus automated release packaging.
@@ -116,13 +116,11 @@ dotnet test tests/WorldCupPlanner.Services.Tests
 dotnet test tests/WorldCupPlanner.DataAccess.Tests
 ```
 
-<!-- Uncomment once the images are in docs/screenshots/
 ## 📸 Screenshots
 
 | Group stage | Knockout bracket |
 |---|---|
-| ![Group stage](docs/screenshots/group-stage.png) | ![Knockout bracket](docs/screenshots/bracket.png) |
--->
+| ![Group stage standings with flags](docs/screenshots/group-stage.png) | ![Knockout bracket from Round of 32 to the final](docs/screenshots/bracket.png) |
 
 ## 📁 Project structure
 
@@ -138,7 +136,7 @@ dotnet test tests/WorldCupPlanner.DataAccess.Tests
 │   ├── WorldCupPlanner.Services.Tests/    # Unit tests — services
 │   └── WorldCupPlanner.DataAccess.Tests/  # Integration tests — data access
 ├── db/                                    # SQL seed scripts and database backups used by the release
-├── docs/                                  # Architecture notes
+├── docs/                                  # Architecture notes and screenshots
 ├── samples/                               # Sample CSV with the 48 teams (for the Import page)
 ├── scripts/                               # Release packaging and Windows start/seed scripts
 ├── .github/                               # CI/CD workflows and AI agent skills
