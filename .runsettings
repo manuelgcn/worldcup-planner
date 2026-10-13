@@ -11,7 +11,7 @@
       <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
           <Format>cobertura</Format>
-          <Exclude>[DomainTest]*,[ServiceTest]*,[DataAccessTest]*</Exclude>
+          <Exclude>[*.Tests]*</Exclude>
           <ExcludeByFile>**/Migrations/*.cs</ExcludeByFile>
         </Configuration>
       </DataCollector>

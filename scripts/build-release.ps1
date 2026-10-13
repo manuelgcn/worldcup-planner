@@ -34,7 +34,7 @@ Remove-ReleasePath $checksumPath
 $publishDirectory = Join-Path $stagingRoot 'win-x64'
 New-Item -ItemType Directory -Path $publishDirectory -Force | Out-Null
 
-dotnet publish (Join-Path $repoRoot 'project/SolutionCopa/UI/UI.csproj') `
+dotnet publish (Join-Path $repoRoot 'src/WorldCupPlanner.UI/WorldCupPlanner.UI.csproj') `
     --configuration Release `
     --runtime win-x64 `
     --self-contained true `
@@ -52,7 +52,7 @@ Copy-Item -LiteralPath (Join-Path $repoRoot '.env.example') -Destination (Join-P
 Copy-Item -LiteralPath (Join-Path $repoRoot 'db') -Destination (Join-Path $stagingRoot 'db') -Recurse
 
 $requiredFiles = @(
-    'win-x64/UI.exe',
+    'win-x64/WorldCupPlanner.UI.exe',
     'win-x64/appsettings.json',
     'README.md',
     'start.ps1',

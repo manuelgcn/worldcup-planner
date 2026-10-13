@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="6.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.*" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.*" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+        <PackageReference Include="MSTest.TestAdapter" Version="3.5.2" />
+        <PackageReference Include="MSTest.TestFramework" Version="3.5.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\WorldCupPlanner.DataAccess\WorldCupPlanner.DataAccess.csproj" />
+      <ProjectReference Include="..\..\src\WorldCupPlanner.Domain\WorldCupPlanner.Domain.csproj" />
+      <!-- Solo para los tests de integracion de persistencia: ejercitan el stack EF real
+           manejado a traves de los servicios orquestadores (FixtureOrchestrator,
+           TournamentSimulationService, KnockoutFixtureGenerator). -->
+      <ProjectReference Include="..\..\src\WorldCupPlanner.Services\WorldCupPlanner.Services.csproj" />
+    </ItemGroup>
+
+</Project>

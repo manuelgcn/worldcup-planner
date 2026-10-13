@@ -1,0 +1,340 @@
+@page "/users"
+@using WorldCupPlanner.Domain
+@using WorldCupPlanner.Services
+@using WorldCupPlanner.Services.DTOs
+@using WorldCupPlanner.Services.Interfaces
+@inject IUserService UserServices
+@inject SessionState Session
+@inject NavigationManager Nav
+
+<PageTitle>Usuarios</PageTitle>
+
+@if (!Session.IsLoggedIn)
+{
+    <section class="m26-card auth-card">
+        <h1 class="m26-page-title mb-2">Usuarios</h1>
+        <p class="mb-3">No estas logueado.</p>
+        <button class="btn btn-primary" @onclick="GoToLogin">
+            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+            Ir a Login
+        </button>
+    </section>
+}
+else if (!IsAdmin)
+{
+    <div class="alert alert-error" role="alert">
+        <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
+        No tenes permisos para administrar usuarios.
+    </div>
+}
+else
+{
+    <h1 class="m26-page-title">Usuarios</h1>
+
+    @if (errors.Any())
+    {
+        <div class="alert alert-error" role="alert">
+            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+            Se encontraron errores:
+            <ul>
+                @foreach (string error in errors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <div class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+            @successMessage
+        </div>
+    }
+
+    <section class="admin-grid">
+        <article class="m26-card pane">
+            <h2 class="pane-title">@(editingUserId is null ? "Crear usuario" : $"Editar usuario #{editingUserId}")</h2>
+
+            <div class="mb-3">
+                <label class="form-label" for="userName">Nombre</label>
+                <input id="userName" class="form-control" @bind="name" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="userLastname">Apellido</label>
+                <input id="userLastname" class="form-control" @bind="lastname" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="userEmail">Email</label>
+                <input id="userEmail" class="form-control" @bind="email" />
+            </div>
+
+            @if (editingUserId is null)
+            {
+                <div class="mb-3">
+                    <label class="form-label" for="userPassword">Contrasena</label>
+                    <input id="userPassword" class="form-control" type="password" @bind="password" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="userBirth">Fecha de nacimiento</label>
+                    <input id="userBirth" class="form-control" type="date" @bind="dateOfBirth" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Rol inicial</label>
+                    <select class="form-select" @bind="initialRole">
+                        @foreach (UserRoles role in Enum.GetValues<UserRoles>())
+                        {
+                            <option value="@role">@role</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            <div class="d-flex gap-2">
+                @if (editingUserId is null)
+                {
+                    <button class="btn btn-primary" @onclick="Create">Crear</button>
+                }
+                else
+                {
+                    <button class="btn btn-primary" @onclick="SaveEdit">Guardar</button>
+                    <button class="btn btn-outline-secondary" @onclick="CancelEdit">Cancelar</button>
+                }
+            </div>
+        </article>
+
+        <article class="m26-card pane">
+            <h2 class="pane-title">Usuarios existentes</h2>
+
+            @if (!usuarios.Any())
+            {
+                <div class="m26-empty">
+                    <i class="bi bi-people" aria-hidden="true"></i>
+                    <p class="mb-0">No hay usuarios.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover m26-scoreboard mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Roles</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (User u in usuarios)
+                            {
+                                <tr>
+                                    <td>@u.idUser</td>
+                                    <td>@u.name @u.lastname</td>
+                                    <td>@u.email</td>
+                                    <td>
+                                        @foreach (var r in u.Roles)
+                                        {
+                                            <span class="badge bg-secondary me-1">@r.Role</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <button class="btn btn-outline-primary btn-sm" @onclick="() => StartEdit(u)">
+                                                <i class="bi bi-pencil" aria-hidden="true"></i> Editar
+                                            </button>
+
+                                            <button class="btn btn-outline-secondary btn-sm"
+                                                    disabled="@(u.idUser == 1)"
+                                                    @onclick="() => ToggleRole(u, UserRoles.Admin)">
+                                                <i class="bi bi-shield-fill" aria-hidden="true"></i>
+                                                Admin
+                                            </button>
+
+                                            <button class="btn btn-outline-secondary btn-sm"
+                                                    disabled="@(u.idUser == 1)"
+                                                    @onclick="() => ToggleRole(u, UserRoles.Editor)">
+                                                <i class="bi bi-person-check-fill" aria-hidden="true"></i>
+                                                Editor
+                                            </button>
+
+                                            <button class="btn btn-outline-secondary btn-sm"
+                                                    disabled="@(u.idUser == 1)"
+                                                    @onclick="() => ToggleRole(u, UserRoles.Periodista)">
+                                                <i class="bi bi-newspaper" aria-hidden="true"></i>
+                                                Periodista
+                                            </button>
+
+                                            <button class="btn btn-outline-danger btn-sm"
+                                                    disabled="@(u.idUser == 1 || u.idUser == Session.CurrentUser!.idUser)"
+                                                    @onclick="() => Remove(u.idUser)">
+                                                <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </section>
+}
+
+@code {
+    private string name = "";
+    private string lastname = "";
+    private string email = "";
+    private string password = "";
+    private DateTime dateOfBirth = DateTime.Today;
+    private UserRoles initialRole = UserRoles.Editor;
+
+    private int? editingUserId;
+
+    private List<string> errors = new();
+    private string? successMessage;
+
+    private List<User> usuarios = new();
+
+    private bool IsAdmin =>
+        Session.IsLoggedIn && Session.CurrentUser!.HasRole(UserRoles.Admin);
+
+    protected override void OnInitialized()
+    {
+        LoadUsers();
+    }
+
+    private void LoadUsers()
+    {
+        usuarios = UserServices.GetAllUsers().ToList();
+    }
+
+    private void Create()
+    {
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            UserServices.RegisterUser(new CreateUserRequestDto
+            {
+                Id = 0,
+                Name = name,
+                Lastname = lastname,
+                Email = email,
+                Password = password,
+                DateOfBirth = dateOfBirth,
+                InitialRole = initialRole
+            });
+
+            successMessage = "Usuario creado";
+            ClearForm();
+            LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void StartEdit(User u)
+    {
+        errors.Clear();
+        successMessage = null;
+
+        editingUserId = u.idUser;
+        name = u.name;
+        lastname = u.lastname ?? "";
+        email = u.email;
+    }
+
+    private void CancelEdit()
+    {
+        editingUserId = null;
+        ClearForm();
+    }
+
+    private void SaveEdit()
+    {
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            UserServices.UpdateUser(editingUserId!.Value, name, lastname, email, Session.CurrentUser?.email);
+            successMessage = "Usuario actualizado";
+            editingUserId = null;
+            ClearForm();
+            LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void Remove(int id)
+    {
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            UserServices.RemoveUser(id, Session.CurrentUser?.email);
+            successMessage = "Usuario eliminado";
+            LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void ToggleRole(User user, UserRoles role)
+    {
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            if (user.HasRole(role))
+            {
+                UserServices.RemoveRole(user.idUser, role, Session.CurrentUser?.email);
+                successMessage = $"Rol {role} removido";
+            }
+            else
+            {
+                UserServices.AssignRole(user.idUser, role, Session.CurrentUser?.email);
+                successMessage = $"Rol {role} asignado";
+            }
+
+            LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void ClearForm()
+    {
+        name = "";
+        lastname = "";
+        email = "";
+        password = "";
+        dateOfBirth = DateTime.Today;
+        initialRole = UserRoles.Editor;
+    }
+
+    private void GoToLogin()
+    {
+        Nav.NavigateTo("/login");
+    }
+}

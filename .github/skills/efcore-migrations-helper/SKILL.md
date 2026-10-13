@@ -12,7 +12,7 @@ contra Azure SQL Edge en Docker**, con jerarquías por **TPH**.
 ## Antes de tocar el modelo
 
 - Configurá cada entidad con `IEntityTypeConfiguration<T>` en
-  `DataAccess/Configurations/` — nunca fluido suelto en `OnModelCreating`.
+  `src/WorldCupPlanner.DataAccess/Configurations/` — nunca fluido suelto en `OnModelCreating`.
 - Jerarquías (`Match` → `MatchGroup`/`MatchElimination`, `MatchIncident` →
   `YellowCardIncident`/`RedCardIncident`) van por **TPH** con discriminador.
 - TDD primero: escribí el test con el provider InMemory (`UseInMemoryDatabase`).
@@ -25,12 +25,12 @@ contra Azure SQL Edge en Docker**, con jerarquías por **TPH**.
 docker compose up -d
 
 dotnet ef migrations add <Nombre> \
-  --project project/SolutionCopa/DataAccess \
-  --startup-project project/SolutionCopa/UI
+  --project src/WorldCupPlanner.DataAccess \
+  --startup-project src/WorldCupPlanner.UI
 
 dotnet ef database update \
-  --project project/SolutionCopa/DataAccess \
-  --startup-project project/SolutionCopa/UI
+  --project src/WorldCupPlanner.DataAccess \
+  --startup-project src/WorldCupPlanner.UI
 ```
 
 - Nombre de migración descriptivo en PascalCase (`AddTeamFlag`, `AddMatchIncidents`).
@@ -46,7 +46,7 @@ dotnet ef database update \
   ningún servicio asuma `!= 0`.
 - Revisá el `.cs` generado antes de commitear: que el `Up()`/`Down()` sean simétricos
   y que el snapshot (`AppDbContextModelSnapshot.cs`) entre en el mismo commit.
-- La app corre `db.Database.Migrate()` al arrancar (`UI/Program.cs`): una migración
+- La app corre `db.Database.Migrate()` al arrancar (`src/WorldCupPlanner.UI/Program.cs`): una migración
   rota deja la app sin levantar.
 
 ## Verificación

@@ -1,0 +1,169 @@
+@page "/admin/users"
+@using WorldCupPlanner.Domain
+@using WorldCupPlanner.Services
+@using WorldCupPlanner.Services.Interfaces
+@inject SessionState Session
+@inject IUserService UserServices
+@inject NavigationManager Nav
+
+<PageTitle>Administración de Usuarios</PageTitle>
+
+@if (!Session.IsLoggedIn)
+{
+    <section class="m26-card auth-card">
+        <h1 class="m26-page-title mb-2">Administración de Usuarios</h1>
+        <p class="mb-3">No estás logueado.</p>
+        <button class="btn btn-primary" @onclick="GoToLogin">
+            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Ir a Login
+        </button>
+    </section>
+}
+else if (!IsAdmin)
+{
+    <div class="alert alert-error" role="alert">
+        <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
+        No tenés permisos para acceder a esta sección.
+    </div>
+}
+else
+{
+    <h1 class="m26-page-title">Administración de Usuarios</h1>
+
+    @if (errors.Any())
+    {
+        <div class="alert alert-error">
+            <strong>Error:</strong>
+            <ul>
+                @foreach (string e in errors)
+                {
+                    <li>@e</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>@successMessage
+        </div>
+    }
+
+    <article class="m26-card pane">
+        <div class="table-responsive">
+            <table class="table m26-scoreboard mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Nombre</th>
+                        <th>Roles</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (User user in users)
+                    {
+                        <tr>
+                            <td>@user.idUser</td>
+                            <td>@user.email</td>
+                            <td>@user.name @user.lastname</td>
+                            <td>
+                                @foreach (var role in user.Roles)
+                                {
+                                    <span class="role-chip">
+                                        @role.Role
+                                        <button class="role-remove"
+                                                title="Quitar rol @role.Role"
+                                                aria-label="Quitar rol @role.Role"
+                                                @onclick="() => RemoveRole(user.idUser, role.Role)">
+                                            <i class="bi bi-x-lg" aria-hidden="true"></i>
+                                        </button>
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <div class="role-actions">
+                                    <select class="form-select" @bind="selectedRole" aria-label="Rol a asignar">
+                                        @foreach (UserRoles role in Enum.GetValues<UserRoles>())
+                                        {
+                                            <option value="@role">@role</option>
+                                        }
+                                    </select>
+                                    <button class="btn btn-sm btn-primary" @onclick="() => AddRole(user.idUser)">
+                                        <i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar rol
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </article>
+}
+
+@code {
+    private List<User> users = new();
+    private readonly List<string> errors = new();
+    private string? successMessage;
+    private UserRoles selectedRole;
+
+    private bool IsAdmin =>
+        Session.CurrentUser?.HasRole(UserRoles.Admin) == true;
+
+    protected override void OnInitialized()
+    {
+        LoadUsers();
+    }
+
+    private void LoadUsers()
+    {
+        users = UserServices.GetAllUsers().ToList();
+    }
+
+    private void AddRole(int userId)
+    {
+        errors.Clear();
+        successMessage = null;
+
+        try
+        {
+            UserServices.AssignRole(userId, selectedRole, Session.CurrentUser?.email);
+            successMessage = "Rol asignado correctamente";
+            LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void RemoveRole(int userId, UserRoles role)
+    {
+        errors.Clear();
+        successMessage = null;
+
+        if (userId == 1)
+        {
+            errors.Add("El administrador del sistema no puede ser modificado");
+            return;
+        }
+
+        try
+        {
+            UserServices.RemoveRole(userId, role, Session.CurrentUser?.email);
+            successMessage = "Rol removido correctamente";
+            LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            errors.Add(ex.Message);
+        }
+    }
+
+    private void GoToLogin()
+    {
+        Nav.NavigateTo("/login");
+    }
+}

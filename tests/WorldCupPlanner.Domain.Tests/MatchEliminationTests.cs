@@ -1,0 +1,413 @@
+using WorldCupPlanner.Domain;
+using WorldCupPlanner.Domain.Exceptions;
+using WorldCupPlanner.Domain.Tests.TestDoubles;
+using Match = WorldCupPlanner.Domain.Match;
+
+namespace WorldCupPlanner.Domain.Tests;
+
+[TestClass]
+public class MatchEliminationTests
+{
+    private static readonly DateTime MatchDate = new DateTime(2026, 6, 21);
+
+    private Team _homeTeam = null!;
+    private Team _awayTeam = null!;
+    private Stadium _stadium = null!;
+    private TournamentSettings _tournamentSettings = null!;
+
+    
+    private static Match CreateSourceMatch(int matchId)
+    {
+        Team sourceHomeTeam = new Team(matchId + 1, name: "SourceHome", fifaRanking: 1000, isFictitious: true, confederation: Confederation.CONMEBOL);
+        Team sourceAwayTeam = new Team(matchId + 2, name: "SourceAway", fifaRanking: 900, isFictitious: true, confederation: Confederation.CONMEBOL);
+        Stadium sourceStadium = new Stadium(name: "SourceStadium", city: "Test City", description: null, capacity: 50000);
+
+        return new MockMatch(matchId, MatchDate, sourceHomeTeam, sourceAwayTeam, sourceStadium);
+    }
+
+    private MatchElimination CreateValidMatchElimination(
+        Match matchHome,
+        Match matchAway,
+        string matchCode = "A1",
+        Phase phase = Phase.RoundOf16)
+    {
+        return MatchElimination.Create(
+            1,
+            MatchDate,
+            _homeTeam,
+            _awayTeam,
+            _stadium,
+            phase,
+            matchCode,
+            matchHome,
+            matchAway);
+    }
+
+    private MatchElimination CreateValidMatchEliminationWithConfiguration(
+        Match matchHome,
+        Match matchAway,
+        string matchCode = "A1",
+        Phase phase = Phase.RoundOf16)
+    {
+        return MatchElimination.CreateMatchWithConfig(
+            1,
+            MatchDate,
+            _homeTeam,
+            _awayTeam,
+            _stadium,
+            _tournamentSettings,
+            phase,
+            matchCode,
+            matchHome,
+            matchAway);
+    }
+
+    private MatchElimination CreateValidInitialRound(
+        string matchCode = "R32-2000",
+        Phase phase = Phase.RoundOf32)
+    {
+        return MatchElimination.CreateInitialRound(
+            1,
+            MatchDate,
+            _homeTeam,
+            _awayTeam,
+            _stadium,
+            _tournamentSettings,
+            phase,
+            matchCode);
+    }
+
+    [TestInitialize]
+    public void Setup()
+    {
+        _homeTeam = new Team(1, name: "Team A", fifaRanking: 1000, isFictitious: true, confederation: Confederation.CONMEBOL);
+        _awayTeam = new Team(2, name: "Team B", fifaRanking: 900, isFictitious: true, confederation: Confederation.CONMEBOL);
+        _stadium = new Stadium(name: "Test Stadium", city: "Test City", description: "A test stadium", capacity: 50000);
+        _tournamentSettings = new TournamentSettings();
+    }
+
+    [TestMethod]
+    public void MatchEliminationCanGetMatchCode()
+    {
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
+
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch);
+
+        Assert.AreEqual("A1", matchElimination.MatchCode);
+    }
+
+    [TestMethod]
+    public void MatchEliminationInheritsFromAbstractMatch()
+    {
+        Assert.IsTrue(typeof(Match).IsAbstract);
+        Assert.IsTrue(typeof(MatchElimination).IsSubclassOf(typeof(Match)));
+    }
+
+    [TestMethod]
+    public void MatchEliminationCanGetPhase()
+    {
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
+
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, phase: Phase.SemiFinal);
+
+        Assert.AreEqual(Phase.SemiFinal, matchElimination.Phase);
+    }
+
+    [TestMethod]
+    public void MatchEliminationCanGetMatchHome()
+    {
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
+
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch);
+
+        Assert.AreSame(sourceHomeMatch, matchElimination.MatchHome);
+    }
+
+    [TestMethod]
+    public void MatchEliminationCanGetMatchAway()
+    {
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
+
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch);
+
+        Assert.AreSame(sourceAwayMatch, matchElimination.MatchAway);
+    }
+
+    [TestMethod]
+    public void MatchEliminationCanBeCreatedWithtournamentSettings()
+    {
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
+
+        MatchElimination matchElimination = CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch);
+
+        Assert.AreEqual(MatchDate, matchElimination.MatchDate);
+    }
+
+    [TestMethod]
+    public void MatchEliminationCanGetPhaseWhenUsingtournamentSettings()
+    {
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
+
+        MatchElimination matchElimination = CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch, phase: Phase.Final);
+
+        Assert.AreEqual(Phase.Final, matchElimination.Phase);
+    }
+
+    [DataTestMethod]
+    [DataRow(Phase.Final)]
+    [DataRow(Phase.SemiFinal)]
+    [DataRow(Phase.QuarterFinals)]
+    [DataRow(Phase.RoundOf16)]
+    [DataRow(Phase.RoundOf32)]
+    public void MatchEliminationAcceptsEveryDefinedPhase(Phase phase)
+    {
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
+
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, phase: phase);
+
+        Assert.AreEqual(phase, matchElimination.Phase);
+    }
+
+    [TestMethod]
+    public void MatchEliminationRejectsInvalidPhase()
+    {
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
+
+        Assert.ThrowsException<MatchException>(() =>
+            CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, phase: (Phase)999));
+    }
+
+    [TestMethod]
+    public void MatchEliminationRejectsNullMatchCode()
+    {
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
+
+        Assert.ThrowsException<MatchException>(() =>
+            CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, matchCode: null!));
+    }
+
+    [TestMethod]
+    public void MatchEliminationRejectsWhitespaceMatchCode()
+    {
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
+
+        Assert.ThrowsException<MatchException>(() =>
+            CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, matchCode: "   "));
+    }
+
+    [TestMethod]
+    public void MatchEliminationRejectsEmptyMatchCode()
+    {
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
+
+        Assert.ThrowsException<MatchException>(() =>
+            CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, matchCode: string.Empty));
+    }
+
+    [TestMethod]
+    public void MatchEliminationRejectsNullHomeSourceMatch()
+    {
+        Match sourceAwayMatch = CreateSourceMatch(200);
+
+        Assert.ThrowsException<MatchException>(() =>
+            CreateValidMatchElimination(null!, sourceAwayMatch));
+    }
+
+    [TestMethod]
+    public void MatchEliminationRejectsNullAwaySourceMatch()
+    {
+        Match sourceHomeMatch = CreateSourceMatch(100);
+
+        Assert.ThrowsException<MatchException>(() =>
+            CreateValidMatchElimination(sourceHomeMatch, null!));
+    }
+
+    [TestMethod]
+    public void MatchEliminationRejectsSameSourceMatchForHomeAndAway()
+    {
+        Match sourceMatch = CreateSourceMatch(100);
+
+        Assert.ThrowsException<MatchException>(() =>
+            CreateValidMatchElimination(sourceMatch, sourceMatch));
+    }
+
+    [TestMethod]
+    public void MatchEliminationRejectsNullMatchCodeWhenUsingtournamentSettings()
+    {
+        Match sourceHomeMatch = CreateSourceMatch(100);
+        Match sourceAwayMatch = CreateSourceMatch(200);
+
+        Assert.ThrowsException<MatchException>(() =>
+            CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch, matchCode: null!));
+    }
+
+    // Ronda inicial (R32): factory sin partidos fuente.
+    [TestMethod]
+    public void CreateInitialRound_HasNoSourceMatches()
+    {
+        MatchElimination match = CreateValidInitialRound();
+
+        Assert.IsNull(match.MatchHome);
+        Assert.IsNull(match.MatchAway);
+    }
+
+    [TestMethod]
+    public void CreateInitialRound_SetsPhaseAndMatchCode()
+    {
+        MatchElimination match = CreateValidInitialRound(matchCode: "R32-2001", phase: Phase.RoundOf32);
+
+        Assert.AreEqual(Phase.RoundOf32, match.Phase);
+        Assert.AreEqual("R32-2001", match.MatchCode);
+    }
+
+    [TestMethod]
+    public void CreateInitialRound_UsesTournamentSettingsForMatchDate()
+    {
+        MatchElimination match = CreateValidInitialRound();
+
+        Assert.AreEqual(MatchDate, match.MatchDate);
+    }
+
+    [TestMethod]
+    public void CreateInitialRound_RejectsInvalidPhase()
+    {
+        Assert.ThrowsException<MatchException>(() => CreateValidInitialRound(phase: (Phase)999));
+    }
+
+    [TestMethod]
+    public void CreateInitialRound_RejectsNullMatchCode()
+    {
+        Assert.ThrowsException<MatchException>(() => CreateValidInitialRound(matchCode: null!));
+    }
+
+    [TestMethod]
+    public void CreateInitialRound_RejectsWhitespaceMatchCode()
+    {
+        Assert.ThrowsException<MatchException>(() => CreateValidInitialRound(matchCode: "   "));
+    }
+
+    // Inheritance: scoring behaviors
+    [TestMethod]
+    public void MatchElimination_SetHomeGoals_SetsValue()
+    {
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.SetHomeGoals(2);
+        Assert.AreEqual(2, matchElimination.HomeGoals);
+    }
+
+    [TestMethod]
+    public void MatchElimination_SetAwayGoals_SetsValue()
+    {
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.SetAwayGoals(1);
+        Assert.AreEqual(1, matchElimination.AwayGoals);
+    }
+
+    [TestMethod]
+    public void MatchElimination_AddHomeGoal_Increments()
+    {
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.AddHomeGoal();
+        Assert.AreEqual(1, matchElimination.HomeGoals);
+    }
+
+    [TestMethod]
+    public void MatchElimination_AddAwayGoal_Increments()
+    {
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.AddAwayGoal();
+        Assert.AreEqual(1, matchElimination.AwayGoals);
+    }
+
+    [TestMethod]
+    public void MatchElimination_RemoveHomeGoal_Decrements()
+    {
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.AddHomeGoal();
+        matchElimination.RemoveHomeGoal();
+        Assert.AreEqual(0, matchElimination.HomeGoals);
+    }
+
+    [TestMethod]
+    public void MatchElimination_RemoveAwayGoal_Decrements()
+    {
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.AddAwayGoal();
+        matchElimination.RemoveAwayGoal();
+        Assert.AreEqual(0, matchElimination.AwayGoals);
+    }
+
+    [TestMethod]
+    public void MatchElimination_HasHomeTeamWon_ReturnsTrue()
+    {
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.SetGoals(2, 0);
+        Assert.IsTrue(matchElimination.HasHomeTeamWon());
+    }
+
+    [TestMethod]
+    public void MatchElimination_HasAwayTeamWon_ReturnsTrue()
+    {
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.SetGoals(0, 2);
+        Assert.IsTrue(matchElimination.HasAwayTeamWon());
+    }
+
+    [TestMethod]
+    public void MatchElimination_IsDraw_ReturnsTrueOnEqualGoals()
+    {
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.SetGoals(1, 1);
+        Assert.IsTrue(matchElimination.IsDraw());
+    }
+
+    [TestMethod]
+    public void MatchElimination_GetGoalDifferenceForHome_ReturnsCorrectValue()
+    {
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.SetGoals(3, 1);
+        Assert.AreEqual(2, matchElimination.GetGoalDifferenceForHome());
+    }
+
+    [TestMethod]
+    public void MatchElimination_GetGoalDifferenceForAway_ReturnsCorrectValue()
+    {
+        Match sourceHome = CreateSourceMatch(100);
+        Match sourceAway = CreateSourceMatch(200);
+        MatchElimination matchElimination = CreateValidMatchElimination(sourceHome, sourceAway);
+        matchElimination.SetGoals(1, 3);
+        Assert.AreEqual(2, matchElimination.GetGoalDifferenceForAway());
+    }
+}
+
