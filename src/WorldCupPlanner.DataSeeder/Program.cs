@@ -1,12 +1,10 @@
 using WorldCupPlanner.DataAccess;
 using WorldCupPlanner.DataAccess.Interfaces;
-using WorldCupPlanner.DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using WorldCupPlanner.Domain;
 using WorldCupPlanner.Services;
 using WorldCupPlanner.Services.Interfaces;
-using WorldCupPlanner.Services.Parsers;
 
 namespace WorldCupPlanner.DataSeeder;
 
@@ -52,76 +50,10 @@ public static class Program
 
     private static ServiceProvider BuildServiceProvider(string connectionString)
     {
-        var services = new ServiceCollection();
-
-        services.AddDbContextFactory<AppDbContext>(options =>
-            options.UseSqlServer(connectionString));
-
-        services.AddSingleton<ITeamRepository, TeamRepository>();
-        services.AddSingleton<IUserRepository, UserRepository>();
-        services.AddSingleton<INotificationRepository, NotificationRepository>();
-        services.AddSingleton<IMatchRepository, MatchRepository>();
-        services.AddSingleton<IStadiumRepository, StadiumRepository>();
-        services.AddSingleton<IGroupRepository, GroupRepository>();
-        services.AddSingleton<IJourneyRepository, JourneyRepository>();
-        services.AddSingleton<ITournamentSettingsRepository, TournamentSettingsRepository>();
-        services.AddSingleton<IEliminationMatchRepository, EliminationMatchRepository>();
-        services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
-
-        services.AddSingleton<UserServices>();
-        services.AddSingleton<IUserService>(sp => sp.GetRequiredService<UserServices>());
-        services.AddSingleton<TeamServices>();
-        services.AddSingleton<ITeamService>(sp => sp.GetRequiredService<TeamServices>());
-        services.AddSingleton<StadiumServices>();
-        services.AddSingleton<IStadiumService>(sp => sp.GetRequiredService<StadiumServices>());
-        services.AddSingleton<GroupServices>();
-        services.AddSingleton<IGroupService>(sp => sp.GetRequiredService<GroupServices>());
-        services.AddSingleton<JourneyServices>();
-        services.AddSingleton<IJourneyService>(sp => sp.GetRequiredService<JourneyServices>());
-        services.AddSingleton<INotificationService, NotificationService>();
-
-        services.AddSingleton<IMatchSimulationEngine, ProbabilisticSimulationEngine>();
-        services.AddSingleton<IMatchSimulationEngine, PureRandomSimulationEngine>();
-        services.AddSingleton<ISimulationEngineRegistry, SimulationEngineRegistry>();
-        services.AddSingleton<IAuditLogService>(sp =>
-            AuditLogService.CreateInstance(sp.GetRequiredService<IAuditLogRepository>()));
-
-        services.AddSingleton<IRankingService, RankingService>();
-        services.AddSingleton<IMatchFactory, MatchFactory>();
-        services.AddSingleton<IMatchService, MatchService>();
-
-        services.AddSingleton<KnockoutFixtureGenerator>(sp =>
-            new KnockoutFixtureGenerator(
-                sp.GetRequiredService<ISimulationEngineRegistry>(),
-                sp.GetRequiredService<IMatchRepository>(),
-                sp.GetRequiredService<IEliminationMatchRepository>(),
-                sp.GetRequiredService<IGroupRepository>(),
-                sp.GetRequiredService<IStadiumRepository>(),
-                sp.GetRequiredService<ITournamentSettingsRepository>(),
-                sp.GetRequiredService<IAuditLogService>(),
-                sp.GetRequiredService<INotificationService>(),
-                sp.GetRequiredService<IRankingService>()));
-        services.AddSingleton<IKnockoutFixtureGenerator>(sp =>
-            sp.GetRequiredService<KnockoutFixtureGenerator>());
-
-        services.AddSingleton<ITournamentSimulationService, TournamentSimulationService>();
-        services.AddSingleton<IFixtureOrchestrator, FixtureOrchestrator>();
-        services.AddSingleton<ITeamParser, CsvStreamTeamParser>();
-
-        services.AddSingleton<IImportService>(sp =>
-            ImportService.CreateInstance(
-                sp.GetRequiredService<ITeamRepository>(),
-                sp.GetRequiredService<ITeamParser>(),
-                sp.GetRequiredService<IAuditLogService>()));
-
         string flagsDirectory = Path.Combine(AppContext.BaseDirectory, "flags-master");
-        services.AddSingleton<IFlagAssignmentService>(sp =>
-            new FlagAssignmentService(
-                sp.GetRequiredService<ITeamRepository>(),
-                flagsDirectory,
-                sp.GetRequiredService<IAuditLogService>()));
-
-        return services.BuildServiceProvider();
+        return new ServiceCollection()
+            .AddWorldCupPlanner(connectionString, flagsDirectory)
+            .BuildServiceProvider();
     }
 
     // Estado limpio y reproducible: borra el esquema y vuelve a aplicar migraciones.
@@ -159,7 +91,7 @@ public static class Program
     // 2 administradores, 2 editores, 2 periodistas (passwords cumplen la politica).
     private static void SeedUsers(ServiceProvider provider)
     {
-        var userServices = provider.GetRequiredService<UserServices>();
+        var userServices = provider.GetRequiredService<IUserService>();
 
         (string Name, string Last, string Email, string Password, DateTime Birth, UserRoles Role)[] seeds =
         {
@@ -184,7 +116,7 @@ public static class Program
     // 5 estadios (uno mas que el minimo de 4 exigido por el fixture).
     private static void SeedStadiums(ServiceProvider provider)
     {
-        var stadiumServices = provider.GetRequiredService<StadiumServices>();
+        var stadiumServices = provider.GetRequiredService<IStadiumService>();
 
         (string Name, string City, string? Description, int Capacity)[] stadiums =
         {
