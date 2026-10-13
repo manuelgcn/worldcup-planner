@@ -4,7 +4,7 @@
 
 ![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
 ![Blazor](https://img.shields.io/badge/Blazor-Server-512BD4?logo=blazor&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-959%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-969%20passing-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)
 ![CI](https://github.com/manuelgcn/worldcup-planner/actions/workflows/dotnet-tests.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -24,7 +24,7 @@ orchestrate use cases, and the UI only presents.**
 
 ## ✨ Engineering highlights
 
-- **959 automated tests · 97% line coverage** on the business layers (Domain / Services / DataAccess, excluding generated EF migrations).
+- **969 automated tests · 97% line coverage** on the business layers (Domain / Services / DataAccess, excluding generated EF migrations).
 - **Clean layered architecture** with enforced dependency direction — the domain depends on nothing.
 - **TDD** throughout (red → green → refactor), with focused, incremental commits.
 - **CI/CD with GitHub Actions**: build + tests on every push and pull request, plus automated release packaging.
