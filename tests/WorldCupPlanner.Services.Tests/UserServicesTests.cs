@@ -118,6 +118,29 @@ public class UserServicesTests
     }
 
     [TestMethod]
+    public void CreateUser_KeepsTheRoleChosenByTheAdmin_AndAuditsTheActor()
+    {
+        MockAuditLogService audit = new MockAuditLogService();
+        UserServices auditedService = new UserServices(repository, audit);
+
+        auditedService.CreateUser(new CreateUserRequestDto
+        {
+            Id = 11,
+            Name = "Leo",
+            Lastname = "Ruiz",
+            Email = "leo@mail.com",
+            Password = "Pass123@",
+            DateOfBirth = new DateTime(1992, 4, 10),
+            InitialRole = UserRoles.Editor
+        }, "admin@copa.com");
+
+        User stored = auditedService.GetUserById(11);
+        Assert.IsTrue(stored.HasRole(UserRoles.Editor));
+        Assert.AreEqual(1, stored.Roles.Count);
+        Assert.AreEqual("admin@copa.com", audit.LoggedActions.Single().PerformedByEmail);
+    }
+
+    [TestMethod]
     public void CanAddUser()
     {
         User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));

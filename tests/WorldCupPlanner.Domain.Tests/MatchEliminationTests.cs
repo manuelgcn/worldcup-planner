@@ -105,6 +105,33 @@ public class MatchEliminationTests
     }
 
     [TestMethod]
+    public void ChangingAPenaltyDrawToADecidedScore_ClearsThePenaltyShootout()
+    {
+        MatchElimination match = CreateValidInitialRound();
+        match.SetGoals(1, 1);
+        match.SetPenaltyShootoutResult(4, 3);
+
+        match.SetGoals(2, 1);
+
+        Assert.IsFalse(match.WonByPenalties);
+        Assert.AreEqual(0, match.HomePenaltyGoals);
+        Assert.AreEqual(0, match.AwayPenaltyGoals);
+    }
+
+    [TestMethod]
+    public void SavingTheSameDrawAgain_KeepsThePenaltyShootout()
+    {
+        MatchElimination match = CreateValidInitialRound();
+        match.SetGoals(1, 1);
+        match.SetPenaltyShootoutResult(4, 3);
+
+        match.SetGoals(1, 1);
+
+        Assert.IsTrue(match.WonByPenalties);
+        Assert.AreSame(match.HomeTeam, match.GetWinner());
+    }
+
+    [TestMethod]
     public void MatchEliminationCanGetPhase()
     {
         Match sourceHomeMatch = CreateSourceMatch(100);
