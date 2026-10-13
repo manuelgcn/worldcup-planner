@@ -61,6 +61,14 @@ public class NotificationService : INotificationService
         NotifyJournalists(BuildMatchMessage(MatchSimulatedMessageTemplate, match));
     }
 
+    public void NotifyMatchesSimulated(IReadOnlyCollection<Match> matches)
+    {
+        foreach (Match match in matches)
+        {
+            NotifyMatchSimulated(match);
+        }
+    }
+
     public IReadOnlyCollection<Notification> GetUnreadForUser(int userId)
     {
         return notificationRepository.GetUnreadByUserId(userId);

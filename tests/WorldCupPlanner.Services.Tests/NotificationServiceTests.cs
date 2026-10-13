@@ -193,6 +193,21 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
+    public void NotifyMatchesSimulatedReadsUsersOnceAndWritesOneBatch()
+    {
+        userRepository.Add(BuildJournalist(1, "ana@mail.com"));
+        userRepository.Add(BuildJournalist(2, "luis@mail.com"));
+        List<Match> matches = new List<Match> { BuildGroupMatch(), BuildGroupMatch(), BuildGroupMatch() };
+        int readsBefore = userRepository.GetAllCalls;
+
+        service.NotifyMatchesSimulated(matches);
+
+        Assert.AreEqual(6, notificationRepository.GetAll().Count);
+        Assert.AreEqual(1, userRepository.GetAllCalls - readsBefore);
+        Assert.AreEqual(1, notificationRepository.AddRangeCalls);
+    }
+
+    [TestMethod]
     public void CountUnreadForUserReturnsOnlyUnreadOfThatUser()
     {
         User journalist = BuildJournalist(JournalistId, "ana@mail.com");

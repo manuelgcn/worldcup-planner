@@ -36,6 +36,7 @@ public sealed class TournamentSimulationServiceTests
     private MockAuditLogRepository _auditLogRepository = null!;
     private MockTournamentSettingsRepository _tournamentSettingsRepository = null!;
     private Mock<IRankingService> _rankingServiceMock = null!;
+    private MockNotificationService _notificationService = null!;
     private TournamentSimulationService _service = null!;
 
     [TestInitialize]
@@ -53,6 +54,7 @@ public sealed class TournamentSimulationServiceTests
         SeedGroupsAndMatches();
         SeedSettings();
         _matchRepository.ResetCounters();
+        _notificationService = new MockNotificationService();
 
         AuditLogService auditLogService = AuditLogService.CreateInstance(_auditLogRepository);
         _service = new TournamentSimulationService(
@@ -63,7 +65,7 @@ public sealed class TournamentSimulationServiceTests
             auditLogService,
             _tournamentSettingsRepository,
             _knockoutFixtureGenerator,
-            notificationService: new MockNotificationService(),
+            notificationService: _notificationService,
             rankingService: _rankingServiceMock.Object);
     }
 
@@ -133,6 +135,15 @@ public sealed class TournamentSimulationServiceTests
         AuditLog log = _auditLogRepository.GetAll().First(entry => entry.Action == AuditActions.SimulateGroupStage);
         Assert.IsTrue(log.Details.Contains(Seed.ToString()), $"Expected seed in details, got '{log.Details}'");
         Assert.AreEqual(AdminEmail, log.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void SimulateGroupStage_NotifiesJournalistsOfAllMatchesInOneBatch()
+    {
+        _service.SimulateGroupStage(Seed, AdminEmail);
+
+        Assert.AreEqual(1, _notificationService.SimulatedBatches.Count);
+        Assert.AreEqual(GroupCount * MatchesPerGroup, _notificationService.SimulatedBatches[0].Count);
     }
 
     [TestMethod]

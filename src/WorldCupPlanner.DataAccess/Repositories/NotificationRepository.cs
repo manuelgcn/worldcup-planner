@@ -28,6 +28,14 @@ public class NotificationRepository : INotificationRepository
         context.SaveChanges();
     }
 
+    public void AddRange(IReadOnlyCollection<Notification> notifications)
+    {
+        foreach (Notification notification in notifications)
+        {
+            Add(notification);
+        }
+    }
+
     public Notification? GetById(int id)
     {
         using AppDbContext context = _contextFactory.CreateDbContext();

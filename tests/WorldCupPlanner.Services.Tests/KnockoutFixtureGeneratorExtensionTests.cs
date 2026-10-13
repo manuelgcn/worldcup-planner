@@ -32,6 +32,7 @@ public class KnockoutFixtureGeneratorExtensionTests
     private MockMatchSimulationEngine _simulationEngine = null!;
     private MockAuditLogRepository _auditRepository = null!;
     private AuditLogService _auditService = null!;
+    private MockNotificationService _notificationService = null!;
     private KnockoutFixtureGenerator _generator = null!;
 
     [TestInitialize]
@@ -45,6 +46,7 @@ public class KnockoutFixtureGeneratorExtensionTests
         _simulationEngine = new MockMatchSimulationEngine();
         _auditRepository = new MockAuditLogRepository();
         _auditService = AuditLogService.CreateInstance(_auditRepository);
+        _notificationService = new MockNotificationService();
 
         SeedStadiums();
         SeedSettings();
@@ -166,6 +168,18 @@ public class KnockoutFixtureGeneratorExtensionTests
         _generator.SimulateNextRound(performedByEmail: AdminEmail);
 
         Assert.IsTrue(_auditRepository.GetAll().Any(log => log.Action == AuditActions.SimulateRound));
+    }
+
+    [TestMethod]
+    public void SimulateNextRound_NotifiesJournalistsOfTheRoundInOneBatch()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+
+        _generator.SimulateNextRound(performedByEmail: AdminEmail);
+
+        Assert.AreEqual(1, _notificationService.SimulatedBatches.Count);
+        Assert.AreEqual(ExpectedR32Matches, _notificationService.SimulatedBatches[0].Count);
     }
 
     [TestMethod]
@@ -567,7 +581,7 @@ public class KnockoutFixtureGeneratorExtensionTests
             _stadiumRepository,
             _settingsRepository,
             _auditService,
-            new MockNotificationService(),
+            _notificationService,
             new MockRankingService());
     }
 
