@@ -25,10 +25,6 @@
     flex-wrap: wrap;
 }
 
-.filter-actions .btn i {
-    margin-right: .35rem;
-}
-
 .section-separator {
     margin: 1.1rem 0 .9rem;
     border-top: 1px solid var(--m26-line);
@@ -40,10 +36,6 @@
     margin-bottom: .65rem;
 }
 
-.table-wrap {
-    overflow: hidden;
-}
-
 .goal-input {
     width: 62px;
     display: inline-block;
@@ -51,12 +43,7 @@
 }
 
 .row-editing {
-    background-color: #fff3cd;
-}
-
-.auth-card {
-    max-width: 500px;
-    padding: 1.2rem;
+    background-color: rgba(255, 215, 0, .12);
 }
 
 @media (max-width: 640.98px) {

@@ -85,7 +85,7 @@ else
                     <option value="">-- Todas --</option>
                     @foreach (Phase p in Enum.GetValues<Phase>())
                     {
-                        <option value="@p">@p</option>
+                        <option value="@p">@PhaseLabel(p)</option>
                     }
                 </select>
             </div>
@@ -126,9 +126,13 @@ else
                         <tr>
                             <td>@match.MatchDate.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>@StageLabel(match)</td>
-                            <td>@match.HomeTeamName vs @match.AwayTeamName</td>
+                            <td class="fw-semibold">@match.HomeTeamName vs @match.AwayTeamName</td>
                             <td>@match.StadiumName</td>
-                            <td>@match.HomeGoals - @match.AwayGoals</td>
+                            <td>
+                                <span class="m26-score @(IsPlayed(match) ? "" : "pending")">
+                                    @(IsPlayed(match) ? $"{match.HomeGoals} - {match.AwayGoals}" : "vs")
+                                </span>
+                            </td>
                             <td>
                                 <span class="match-status @(IsPlayed(match) ? "played" : "pending")">
                                     @(IsPlayed(match) ? "Finalizado" : "Pendiente")
@@ -261,7 +265,17 @@ else
     private static string StageLabel(MatchListItemDto match) =>
         match.GroupName is not null
             ? $"Grupo {match.GroupName}"
-            : match.Phase?.ToString() ?? "";
+            : match.Phase is Phase phase ? PhaseLabel(phase) : "";
+
+    private static string PhaseLabel(Phase phase) => phase switch
+    {
+        Phase.RoundOf32 => "16avos de final",
+        Phase.RoundOf16 => "Octavos de final",
+        Phase.QuarterFinals => "Cuartos de final",
+        Phase.SemiFinal => "Semifinal",
+        Phase.ThirdPlace => "Tercer puesto",
+        _ => "Final"
+    };
 
     private void ApplyFilters()
     {

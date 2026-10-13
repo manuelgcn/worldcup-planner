@@ -48,7 +48,11 @@
                         <tr>
                             <td>@match.MatchDate.ToString("dd/MM HH:mm")</td>
                             <td><TeamFlag Team="match.HomeTeam" />@match.HomeTeam?.Name</td>
-                            <td>@match.HomeGoals - @match.AwayGoals</td>
+                            <td>
+                                <span class="m26-score @(IsPlayed(match) ? "" : "pending")">
+                                    @(IsPlayed(match) ? $"{match.HomeGoals} - {match.AwayGoals}" : "vs")
+                                </span>
+                            </td>
                             <td><TeamFlag Team="match.AwayTeam" />@match.AwayTeam?.Name</td>
                             <td>@match.Stadium?.Name</td>
                             <td>

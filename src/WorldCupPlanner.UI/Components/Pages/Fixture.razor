@@ -118,11 +118,11 @@
                     <p class="step-help">Descargá los partidos de grupos y eliminatorias dentro del rango seleccionado.</p>
                     <div class="step-actions">
                         <label for="exportFixtureFrom">Desde:</label>
-                        <input id="exportFixtureFrom" type="date" @bind="exportFromDate" />
+                        <input id="exportFixtureFrom" class="form-control" type="date" @bind="exportFromDate" />
                         <label for="exportFixtureTo">Hasta:</label>
-                        <input id="exportFixtureTo" type="date" @bind="exportToDate" />
+                        <input id="exportFixtureTo" class="form-control" type="date" @bind="exportToDate" />
                         <label for="exportFixtureFormat">Formato:</label>
-                        <select id="exportFixtureFormat" @bind="exportFormat">
+                        <select id="exportFixtureFormat" class="form-select" @bind="exportFormat">
                             <option value="@ExportFormat.Csv">CSV</option>
                             <option value="@ExportFormat.Xlsx">XLSX</option>
                         </select>
@@ -163,14 +163,14 @@
                     <p class="step-help">Reparte los 48 equipos en 12 grupos y crea los 72 partidos.</p>
                     <div class="step-actions">
                         <label for="engineSelect">Motor de simulación:</label>
-                        <select id="engineSelect" @bind="selectedEngine">
+                        <select id="engineSelect" class="form-select" @bind="selectedEngine">
                             @foreach (string engineName in EngineRegistry.AvailableEngineNames)
                             {
                                 <option value="@engineName">@engineName</option>
                             }
                         </select>
-                        <label>Override FixtureSeed (opcional):</label>
-                        <input type="number" @bind="fixtureSeedInput" placeholder="@settings.FixtureSeed.ToString()" />
+                        <label for="fixtureSeedInput">Override FixtureSeed (opcional):</label>
+                        <input id="fixtureSeedInput" class="form-control" type="number" @bind="fixtureSeedInput" placeholder="@settings.FixtureSeed.ToString()" />
                         <button class="btn btn-primary" disabled="@isBusy" @onclick="HandleGenerateFixtureAsync">
                             Generar fixture
                         </button>
@@ -199,7 +199,7 @@
                         {
                             <div class="step-actions">
                                 <label for="simSeedInput">Override SimulationSeed (opcional):</label>
-                                <input id="simSeedInput" type="number" @bind="simulationSeedInput" placeholder="@settings.SimulationSeed.ToString()" />
+                                <input id="simSeedInput" class="form-control" type="number" @bind="simulationSeedInput" placeholder="@settings.SimulationSeed.ToString()" />
                                 <button class="btn btn-primary" disabled="@isBusy" @onclick="HandleSimulateGroupStageAsync">
                                     Simular fase de grupos
                                 </button>
@@ -207,7 +207,7 @@
                         }
                         <div class="step-actions">
                             <label for="crossSeedInput">Override CrossingsSeed (opcional):</label>
-                            <input id="crossSeedInput" type="number" @bind="crossingsSeedInput" placeholder="@settings.CrossingsSeed.ToString()" />
+                            <input id="crossSeedInput" class="form-control" type="number" @bind="crossingsSeedInput" placeholder="@settings.CrossingsSeed.ToString()" />
                             <button class="btn btn-primary"
                                     disabled="@(!CanGenerateKnockout || isBusy)"
                                     @onclick="HandleGenerateKnockoutAsync"
@@ -325,6 +325,10 @@
                                        OnSelect="HandleSelectGroup" />
                         }
                     </div>
+                    <ul class="groups-legend">
+                        <li class="legend-qualified">Clasificados (1.º y 2.º)</li>
+                        <li class="legend-third">Tercero: compite por los 8 mejores terceros</li>
+                    </ul>
                 </section>
 
                 @if (selectedGroupName != null)

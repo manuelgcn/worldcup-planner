@@ -10,7 +10,7 @@
 
 <PageTitle>Inicio</PageTitle>
 
-<section class="home-hero m26-card">
+<section class="home-hero">
     <div class="hero-copy">
         <p class="hero-kicker">TORNEO INTERNACIONAL</p>
         <h1 class="hero-title">LA COPA</h1>
@@ -42,6 +42,9 @@
             }
         </div>
     </div>
+    <div class="hero-art" aria-hidden="true">
+        <i class="bi bi-trophy-fill"></i>
+    </div>
 </section>
 
 @if (Session.IsLoggedIn && Session.IsJournalist && unreadCount > 0)
@@ -62,18 +65,24 @@
 
 <section class="stats-grid">
     <article class="m26-card stat-card">
-        <p class="stat-value">@teamCount / 48</p>
+        <span class="stat-icon"><i class="bi bi-people-fill" aria-hidden="true"></i></span>
+        <p class="stat-value">@teamCount / @RequiredTeamCount</p>
         <p class="stat-label">Equipos</p>
+        <div class="stat-progress" aria-hidden="true"><span style="width: @Percent(teamCount, RequiredTeamCount)%"></span></div>
     </article>
     <article class="m26-card stat-card">
+        <span class="stat-icon"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>
         <p class="stat-value">@stadiumCount</p>
         <p class="stat-label">Estadios</p>
     </article>
     <article class="m26-card stat-card">
+        <span class="stat-icon"><i class="bi bi-calendar-check-fill" aria-hidden="true"></i></span>
         <p class="stat-value">@playedMatches / @totalMatches</p>
         <p class="stat-label">Partidos jugados</p>
+        <div class="stat-progress" aria-hidden="true"><span style="width: @Percent(playedMatches, totalMatches)%"></span></div>
     </article>
-    <article class="m26-card stat-card">
+    <article class="m26-card stat-card stat-card-stage">
+        <span class="stat-icon"><i class="bi bi-flag-fill" aria-hidden="true"></i></span>
         <p class="stat-value stat-value-text">@TournamentStageLabel</p>
         <p class="stat-label">Estado del torneo</p>
     </article>
@@ -82,6 +91,7 @@
 @code {
     private const string DashboardLoadErrorMessage =
         "No se pudo cargar el resumen del torneo. Intentá nuevamente más tarde.";
+    private const int RequiredTeamCount = 48;
 
     private int unreadCount;
     private int teamCount;
@@ -94,6 +104,8 @@
     private string? loadError;
 
     private sealed record CtaLink(string Label, string Href, string Icon);
+
+    private static int Percent(int value, int total) => total == 0 ? 0 : Math.Min(100, value * 100 / total);
 
     private bool CanManageTournament =>
         Session.CurrentUser?.HasRole(UserRoles.Admin) == true ||

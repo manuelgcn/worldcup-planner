@@ -2,15 +2,6 @@
     max-width: 900px;
 }
 
-.auth-card {
-    max-width: 480px;
-    padding: 1.25rem;
-}
-
-.auth-card p {
-    margin-bottom: 1rem;
-}
-
 .sim-grid {
     display: grid;
     gap: 1.25rem;

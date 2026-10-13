@@ -53,47 +53,49 @@ else
         </div>
     }
 
-    <section class="admin-grid">
+    <section class="admin-stack">
         <article class="m26-card pane">
             <h2 class="pane-title">@(editingUserId is null ? "Crear usuario" : $"Editar usuario #{editingUserId}")</h2>
 
-            <div class="mb-3">
-                <label class="form-label" for="userName">Nombre</label>
-                <input id="userName" class="form-control" @bind="name" />
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label" for="userLastname">Apellido</label>
-                <input id="userLastname" class="form-control" @bind="lastname" />
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label" for="userEmail">Email</label>
-                <input id="userEmail" class="form-control" @bind="email" />
-            </div>
-
-            @if (editingUserId is null)
-            {
+            <div class="form-grid">
                 <div class="mb-3">
-                    <label class="form-label" for="userPassword">Contrasena</label>
-                    <input id="userPassword" class="form-control" type="password" @bind="password" />
+                    <label class="form-label" for="userName">Nombre</label>
+                    <input id="userName" class="form-control" @bind="name" />
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label" for="userBirth">Fecha de nacimiento</label>
-                    <input id="userBirth" class="form-control" type="date" @bind="dateOfBirth" />
+                    <label class="form-label" for="userLastname">Apellido</label>
+                    <input id="userLastname" class="form-control" @bind="lastname" />
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Rol inicial</label>
-                    <select class="form-select" @bind="initialRole">
-                        @foreach (UserRoles role in Enum.GetValues<UserRoles>())
-                        {
-                            <option value="@role">@role</option>
-                        }
-                    </select>
+                    <label class="form-label" for="userEmail">Email</label>
+                    <input id="userEmail" class="form-control" @bind="email" />
                 </div>
-            }
+
+                @if (editingUserId is null)
+                {
+                    <div class="mb-3">
+                        <label class="form-label" for="userPassword">Contraseña</label>
+                        <input id="userPassword" class="form-control" type="password" @bind="password" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="userBirth">Fecha de nacimiento</label>
+                        <input id="userBirth" class="form-control" type="date" @bind="dateOfBirth" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="userRole">Rol inicial</label>
+                        <select id="userRole" class="form-select" @bind="initialRole">
+                            @foreach (UserRoles role in Enum.GetValues<UserRoles>())
+                            {
+                                <option value="@role">@role</option>
+                            }
+                        </select>
+                    </div>
+                }
+            </div>
 
             <div class="d-flex gap-2">
                 @if (editingUserId is null)
@@ -141,11 +143,11 @@ else
                                     <td>
                                         @foreach (var r in u.Roles)
                                         {
-                                            <span class="badge bg-secondary me-1">@r.Role</span>
+                                            <span class="m26-conf-badge role-@r.Role me-1">@r.Role</span>
                                         }
                                     </td>
                                     <td>
-                                        <div class="d-flex flex-wrap gap-1">
+                                        <div class="d-flex flex-nowrap gap-1">
                                             <button class="btn btn-outline-primary btn-sm" @onclick="() => StartEdit(u)">
                                                 <i class="bi bi-pencil" aria-hidden="true"></i> Editar
                                             </button>

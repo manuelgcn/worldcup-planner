@@ -9,8 +9,12 @@
     --m26-ink: #0B0F19;
     --m26-fog: #F4F5F7;
     --m26-line: #E5E7EB;
+    --m26-navy: #001637;
+    --m26-muted: #5B6475;
     --m26-gradient: linear-gradient(135deg, var(--m26-blue) 0%, var(--m26-red) 100%);
+    --m26-hosts: linear-gradient(90deg, var(--m26-green) 0 33.3%, var(--m26-gold) 33.3% 66.6%, var(--m26-red) 66.6%);
     --m26-shadow: 0 6px 20px rgba(0, 40, 104, .08);
+    --m26-shadow-hover: 0 10px 28px rgba(0, 40, 104, .14);
     --m26-radius: 14px;
 }
 
@@ -50,10 +54,27 @@ h1:focus {
 }
 
 .m26-page-title {
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
     text-transform: uppercase;
     font-size: clamp(2rem, 4vw, 3rem);
     line-height: 1;
+}
+
+.m26-page-title::after {
+    content: "";
+    display: block;
+    width: 64px;
+    height: 4px;
+    margin-top: .55rem;
+    border-radius: 999px;
+    background: var(--m26-hosts);
+}
+
+code {
+    color: var(--m26-blue);
+    padding: .1rem .35rem;
+    border-radius: 5px;
+    background: rgba(0, 40, 104, .07);
 }
 
 .m26-card {
@@ -73,6 +94,31 @@ h1:focus {
 .btn {
     border-radius: 10px;
     font-weight: 600;
+    transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+.btn i {
+    margin-right: .35rem;
+}
+
+.btn:disabled,
+.btn.disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    color: var(--m26-blue);
+    background: #E8ECF3;
+    border: 1px solid #D5DCE8;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus-visible,
+.btn-secondary:disabled {
+    color: var(--m26-blue);
+    background: #DCE3EE;
+    border-color: #C7D0DF;
 }
 
 .btn-primary {
@@ -111,6 +157,19 @@ h1:focus {
     background: #C20025;
 }
 
+.btn-success {
+    color: var(--m26-white);
+    background: var(--m26-green);
+    border-color: var(--m26-green);
+}
+
+.btn-success:hover,
+.btn-success:focus-visible {
+    color: var(--m26-white);
+    background: #00563B;
+    border-color: #00563B;
+}
+
 .btn-sm {
     border-radius: 8px;
 }
@@ -137,6 +196,11 @@ h1:focus {
 
 .table thead th {
     border-bottom-width: 0;
+    white-space: nowrap;
+}
+
+.table td {
+    vertical-align: middle;
 }
 
 .m26-scoreboard {
@@ -199,6 +263,24 @@ h1:focus {
     background: rgba(255, 215, 0, .18);
     color: #7A5C00;
     border-color: rgba(122, 92, 0, .28);
+}
+
+.role-Admin {
+    background: rgba(228, 0, 43, .10);
+    color: #B0002B;
+    border-color: rgba(228, 0, 43, .25);
+}
+
+.role-Editor {
+    background: rgba(0, 40, 104, .10);
+    color: var(--m26-blue);
+    border-color: rgba(0, 40, 104, .25);
+}
+
+.role-Periodista {
+    background: rgba(0, 104, 71, .12);
+    color: var(--m26-green);
+    border-color: rgba(0, 104, 71, .30);
 }
 
 .conf-OFC {
@@ -285,7 +367,7 @@ h1:focus {
 }
 
 .blazor-error-boundary::after {
-    content: "An error has occurred.";
+    content: "Ocurrió un error.";
 }
 
 .darker-border-checkbox.form-check-input {
@@ -300,17 +382,12 @@ h1:focus {
     margin-left: 0.75rem;
     padding: 0.2rem 0.7rem;
     border-radius: 999px;
-    background: #e7f1ff;
-    color: #0a58ca;
+    background: rgba(255, 215, 0, .2);
+    color: #7A5C00;
+    border: 1px solid rgba(122, 92, 0, .25);
     font-size: 0.95rem;
     font-weight: 600;
     vertical-align: middle;
-}
-
-/* Stat card con texto en lugar de numero */
-.stat-value-text {
-    font-size: 1.35rem;
-    line-height: 2.4rem;
 }
 
 .status-advanced {
@@ -336,23 +413,27 @@ h1:focus {
 }
 
 .group-chip {
-    min-width: 2.2rem;
-    padding: 0.25rem 0.6rem;
-    border: 1px solid #adb5bd;
+    min-width: 2.4rem;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid rgba(0, 40, 104, .25);
     border-radius: 999px;
-    background: transparent;
-    font-weight: 600;
+    background: var(--m26-white);
+    color: var(--m26-blue);
+    font-family: "Bebas Neue", Oswald, sans-serif;
+    font-size: 1.05rem;
+    letter-spacing: .06em;
     cursor: pointer;
+    transition: background-color .15s ease, color .15s ease;
 }
 
 .group-chip:hover {
-    background: #e9ecef;
+    background: rgba(0, 40, 104, .08);
 }
 
 .group-chip.active {
-    background: #0d6efd;
-    border-color: #0d6efd;
-    color: #fff;
+    background: var(--m26-blue);
+    border-color: var(--m26-blue);
+    color: var(--m26-gold);
 }
 
 /* Badge de estado de partido */
@@ -366,13 +447,33 @@ h1:focus {
 }
 
 .match-status.pending {
-    background: #fff3cd;
-    color: #664d03;
+    background: rgba(255, 215, 0, .22);
+    color: #6B5000;
 }
 
 .match-status.played {
-    background: #d1e7dd;
-    color: #0f5132;
+    background: rgba(0, 104, 71, .12);
+    color: var(--m26-green);
+}
+
+/* Marcador tipo scoreboard */
+.m26-score {
+    display: inline-block;
+    min-width: 3.6rem;
+    padding: .15rem .55rem;
+    border-radius: 7px;
+    background: var(--m26-blue);
+    color: var(--m26-white);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.m26-score.pending {
+    background: transparent;
+    color: var(--m26-muted);
+    border: 1px dashed #C5CAD3;
 }
 
 /* Editor de resultado compartido */
@@ -461,4 +562,105 @@ h1:focus {
     width: 48px;
     height: 32px;
     font-size: 1rem;
+}
+
+/* Layouts compartidos por las paginas de autenticacion y de administracion */
+.auth-wrap {
+    min-height: calc(100vh - 9rem);
+    display: grid;
+    place-items: center;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    overflow: hidden;
+}
+
+/* Las tarjetas "No estás logueado" no traen .auth-body: el padding va en la propia tarjeta. */
+.auth-card:not(:has(> .auth-body)) {
+    padding: 1.25rem;
+}
+
+.auth-head {
+    position: relative;
+    text-align: center;
+    padding: 1.4rem 1.1rem 1.6rem;
+}
+
+.auth-head::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 5px;
+    background: var(--m26-hosts);
+}
+
+.auth-title {
+    font-size: 2.2rem;
+    text-transform: uppercase;
+}
+
+.auth-body {
+    padding: 1.4rem 1.4rem 1.6rem;
+}
+
+.admin-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+    align-items: start;
+}
+
+.pane {
+    padding: 1.25rem;
+}
+
+.admin-stack {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    column-gap: 1rem;
+}
+
+@media (min-width: 992px) {
+    /* El formulario de alta queda a mano mientras se recorre una lista larga. */
+    .admin-grid > .pane:first-child {
+        position: sticky;
+        top: 5rem;
+    }
+}
+
+.pane-title {
+    font-family: "Bebas Neue", Oswald, sans-serif;
+    text-transform: uppercase;
+    font-size: 1.6rem;
+    margin-bottom: .9rem;
+}
+
+@media (max-width: 991.98px) {
+    .admin-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* En pantallas angostas la tabla scrollea de costado en vez de partir cada celda en varias lineas. */
+    .table-responsive > .m26-scoreboard td {
+        white-space: nowrap;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition: none !important;
+        animation: none !important;
+    }
 }
