@@ -20,8 +20,8 @@ with the code:
 ## Procedure
 
 1. **Read the sources of truth** before writing anything:
-   - `project/SolutionCopa/SolutionCopa.sln` and the `.csproj` files (projects and packages).
-   - `docker-compose.yml` and `UI/appsettings.json` (how it runs and is configured).
+   - `WorldCupPlanner.sln` and the `.csproj` files (projects and packages).
+   - `docker-compose.yml` and `src/WorldCupPlanner.UI/appsettings.json` (how it runs and is configured).
    - `.github/workflows/` (CI and release).
 2. **Write `README.md`** with these sections, in order:
    - Summary: what the system does and for whom.

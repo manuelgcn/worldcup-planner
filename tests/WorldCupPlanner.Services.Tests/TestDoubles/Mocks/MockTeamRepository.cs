@@ -1,0 +1,58 @@
+using WorldCupPlanner.DataAccess.Interfaces;
+using WorldCupPlanner.Domain;
+
+namespace WorldCupPlanner.Services.Tests.TestDoubles.Mocks;
+
+public sealed class MockTeamRepository : ITeamRepository
+{
+    private readonly Dictionary<int, Team> _teams = new Dictionary<int, Team>();
+
+    public int AddCalls { get; private set; }
+    public int UpdateCalls { get; private set; }
+    public int DeleteCalls { get; private set; }
+
+    public void Add(Team team)
+    {
+        _teams[team.Id] = team;
+        AddCalls++;
+    }
+
+    public void Update(Team team)
+    {
+        _teams[team.Id] = team;
+        UpdateCalls++;
+    }
+
+    public void Delete(Team team)
+    {
+        _teams.Remove(team.Id);
+        DeleteCalls++;
+    }
+
+    public Team? GetById(int teamId)
+    {
+        return _teams.GetValueOrDefault(teamId);
+    }
+
+    public Team? GetByName(string name)
+    {
+        string target = TextNormalizer.Normalize(name);
+        return _teams.Values.FirstOrDefault(team => TextNormalizer.Normalize(team.Name) == target);
+    }
+
+    public bool ExistsByName(string name)
+    {
+        string target = TextNormalizer.Normalize(name);
+        return _teams.Values.Any(team => TextNormalizer.Normalize(team.Name) == target);
+    }
+
+    public IReadOnlyCollection<Team> GetAll()
+    {
+        return _teams.Values.ToList();
+    }
+
+    public int CountByConfederation(Confederation confederation)
+    {
+        return _teams.Values.Count(team => team.Confederation == confederation);
+    }
+}

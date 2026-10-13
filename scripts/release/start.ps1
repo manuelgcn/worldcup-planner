@@ -12,7 +12,7 @@ if (-not (Test-Path -LiteralPath $envFile)) {
     $envFile = Join-Path (Split-Path $releaseRoot -Parent) '.env'
 }
 
-$appPath = Join-Path $releaseRoot 'win-x64/UI.exe'
+$appPath = Join-Path $releaseRoot 'win-x64/WorldCupPlanner.UI.exe'
 
 if (-not (Test-Path -LiteralPath $composeFile -PathType Leaf)) {
     throw 'No se encontro docker-compose.yml junto al release.'
@@ -23,7 +23,7 @@ if (-not (Test-Path -LiteralPath $envFile -PathType Leaf)) {
 }
 
 if (-not (Test-Path -LiteralPath $appPath -PathType Leaf)) {
-    throw 'No se encontro win-x64/UI.exe. Extraiga el ZIP completo antes de iniciar.'
+    throw 'No se encontro win-x64/WorldCupPlanner.UI.exe. Extraiga el ZIP completo antes de iniciar.'
 }
 
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {

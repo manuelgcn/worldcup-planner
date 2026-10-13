@@ -39,7 +39,7 @@ Demo login: `admin1@copa.com` / `Admin@123`.
 
 - **"Docker Desktop no esta iniciado"** → open Docker Desktop and wait until it shows *Running*.
 - **`seed.ps1` fails on RESTORE** → the app is still connected: stop it with Ctrl + C and retry.
-- **The app exits with a connection error** → `UI.exe` was started before the database. Always use `start.ps1`.
+- **The app exits with a connection error** → `WorldCupPlanner.UI.exe` was started before the database. Always use `start.ps1`.
 
 ## Package contents
 

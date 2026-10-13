@@ -16,7 +16,7 @@ permissions:
 
 env:
   DOTNET_VERSION: '8.0.x'
-  SOLUTION_PATH: 'project/SolutionCopa/SolutionCopa.sln'
+  SOLUTION_PATH: 'WorldCupPlanner.sln'
   RELEASE_VERSION: ${{ github.event_name == 'push' && github.ref_name || inputs.version }}
 
 jobs:

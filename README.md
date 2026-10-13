@@ -4,7 +4,7 @@
 
 ![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
 ![Blazor](https://img.shields.io/badge/Blazor-Server-512BD4?logo=blazor&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-953%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-937%20passing-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)
 ![CI](https://github.com/manuelgcn/worldcup-planner/actions/workflows/dotnet-tests.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -24,7 +24,7 @@ orchestrate use cases, and the UI only presents.**
 
 ## ✨ Engineering highlights
 
-- **953 automated tests · 97% line coverage** on the business layers (Domain / Services / DataAccess, excluding generated EF migrations).
+- **937 automated tests · 97% line coverage** on the business layers (Domain / Services / DataAccess, excluding generated EF migrations).
 - **Clean layered architecture** with enforced dependency direction — the domain depends on nothing.
 - **TDD** throughout (red → green → refactor), with focused, incremental commits.
 - **CI/CD with GitHub Actions**: build + tests on every push and pull request, plus automated release packaging.
@@ -59,16 +59,16 @@ UI  ──▶  Services  ──▶  Domain
           DataAccess  ──▶  Domain
 ```
 
-`Domain` has no dependencies. Single solution: `project/SolutionCopa/SolutionCopa.sln`.
+`Domain` has no dependencies. Single solution: `WorldCupPlanner.sln`, with projects under `src/` and tests under `tests/`.
 
 | Layer | Project | Responsibility |
 |---|---|---|
-| Domain | `Domain` | Entities, invariants, enums and business exceptions |
-| Services | `Services` | Use cases, orchestration, DTOs, auditing and simulation engines |
-| Data | `DataAccess` | `AppDbContext`, EF repositories, configurations, migrations, `IUnitOfWork` |
-| UI | `UI` | Blazor Server — presentation only |
-| Seeder | `DataSeeder` | Console app that resets the database and loads a full demo tournament |
-| Tests | `DomainTest`, `ServiceTest`, `DataAccessTest` | MSTest suites |
+| Domain | `WorldCupPlanner.Domain` | Entities, invariants, enums and business exceptions |
+| Services | `WorldCupPlanner.Services` | Use cases, orchestration, DTOs, auditing and simulation engines |
+| Data | `WorldCupPlanner.DataAccess` | `AppDbContext`, EF repositories, configurations, migrations, `IUnitOfWork` |
+| UI | `WorldCupPlanner.UI` | Blazor Server — presentation only |
+| Seeder | `WorldCupPlanner.DataSeeder` | Console app that resets the database and loads a full demo tournament |
+| Tests | `WorldCupPlanner.*.Tests` | One MSTest suite per layer |
 
 See [docs/architecture.md](docs/architecture.md) for the domain model, key mechanisms and external dependencies.
 
@@ -82,14 +82,14 @@ cp .env.example .env
 docker compose up -d sqlserver
 
 # 2. Run the app — it applies migrations and creates the default users on startup
-dotnet run --project project/SolutionCopa/UI/UI.csproj
+dotnet run --project src/WorldCupPlanner.UI
 
 # 3. (Optional) Load a full demo: 48 teams with flags, 5 stadiums, simulated group stage
-dotnet run --project project/SolutionCopa/DataSeeder
+dotnet run --project src/WorldCupPlanner.DataSeeder
 ```
 
 Then open the URL shown in the console. The connection string lives in
-`project/SolutionCopa/UI/appsettings.json` and can be overridden with the
+`src/WorldCupPlanner.UI/appsettings.json` and can be overridden with the
 `ConnectionStrings__Default` environment variable.
 
 **Default accounts** (the demo seeder also creates `admin1@copa.com` / `Admin@123`)
@@ -105,42 +105,42 @@ Then open the URL shown in the console. The connection string lives in
 The tests need no database: they use the EF Core InMemory provider and SQLite in-memory.
 
 ```bash
-dotnet test project/SolutionCopa/SolutionCopa.sln
+dotnet test
 ```
 
 Or per layer:
 
 ```bash
-dotnet test project/SolutionCopa/DomainTest/DomainTest.csproj
-dotnet test project/SolutionCopa/ServiceTest/ServiceTest.csproj
-dotnet test project/SolutionCopa/DataAccessTest/DataAccessTest.csproj
+dotnet test tests/WorldCupPlanner.Domain.Tests
+dotnet test tests/WorldCupPlanner.Services.Tests
+dotnet test tests/WorldCupPlanner.DataAccess.Tests
 ```
 
-<!-- Uncomment once the images are in docs/screenshots/
 ## 📸 Screenshots
 
 | Group stage | Knockout bracket |
 |---|---|
-| ![Group stage](docs/screenshots/group-stage.png) | ![Knockout bracket](docs/screenshots/bracket.png) |
--->
+| ![Group stage standings with flags](docs/screenshots/group-stage.png) | ![Knockout bracket from Round of 32 to the final](docs/screenshots/bracket.png) |
 
 ## 📁 Project structure
 
 ```
-├── project/SolutionCopa/
-│   ├── Domain/          # Entities, business rules and invariants
-│   ├── Services/        # Use cases, DTOs, auditing, simulation engines
-│   ├── DataAccess/      # EF Core DbContext, repositories, migrations
-│   ├── UI/              # Blazor Server presentation layer
-│   ├── DataSeeder/      # Demo data loader
-│   ├── DomainTest/      # Unit tests — domain
-│   ├── ServiceTest/     # Unit tests — services
-│   └── DataAccessTest/  # Integration tests — data access
-├── db/                  # SQL seed scripts and database backups used by the release
-├── docs/                # Architecture notes
-├── samples/             # Sample CSV with the 48 teams (for the Import page)
-├── scripts/             # Release packaging and Windows start/seed scripts
-└── .github/             # CI/CD workflows and AI agent skills
+├── src/
+│   ├── WorldCupPlanner.Domain/            # Entities, business rules and invariants
+│   ├── WorldCupPlanner.Services/          # Use cases, DTOs, auditing, simulation engines
+│   ├── WorldCupPlanner.DataAccess/        # EF Core DbContext, repositories, migrations
+│   ├── WorldCupPlanner.UI/                # Blazor Server presentation layer
+│   └── WorldCupPlanner.DataSeeder/        # Demo data loader
+├── tests/
+│   ├── WorldCupPlanner.Domain.Tests/      # Unit tests — domain
+│   ├── WorldCupPlanner.Services.Tests/    # Unit tests — services
+│   └── WorldCupPlanner.DataAccess.Tests/  # Integration tests — data access
+├── db/                                    # SQL seed scripts and database backups used by the release
+├── docs/                                  # Architecture notes and screenshots
+├── samples/                               # Sample CSV with the 48 teams (for the Import page)
+├── scripts/                               # Release packaging and Windows start/seed scripts
+├── .github/                               # CI/CD workflows and AI agent skills
+└── WorldCupPlanner.sln
 ```
 
 ## 👥 Authors

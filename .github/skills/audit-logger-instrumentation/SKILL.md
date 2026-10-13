@@ -11,7 +11,7 @@ torneo) y debe registrar **toda mutación relevante, uso de semilla y simulació
 
 ## API del repo (usar tal cual)
 
-`Services/Interfaces/IAuditLogService.cs`:
+`src/WorldCupPlanner.Services/Interfaces/IAuditLogService.cs`:
 
 - `LogPerformedBy(action, details, performedByEmail, affectedEntityType?, affectedEntityId?)`
   — **preferido**: guarda el actor en `AuditLog.PerformedByEmail` (no lo concatenes
@@ -24,7 +24,7 @@ torneo) y debe registrar **toda mutación relevante, uso de semilla y simulació
 
 ## Procedimiento para instrumentar un caso de uso
 
-1. **Definí la acción** como constante en `Services/AuditActions.cs`, formato
+1. **Definí la acción** como constante en `src/WorldCupPlanner.Services/AuditActions.cs`, formato
    `SCREAMING_SNAKE` (`RANKING_UPDATED`, `SIMULATION_EXECUTED`, `EXPORT_FIXTURE_CSV`,
    `NOTIFICATION_READ`). No uses literales sueltos en los servicios.
 2. **Logueá en el punto de cierre del caso de uso** (el método del servicio que es
@@ -46,7 +46,7 @@ cambios de ranking, simulaciones (semilla), exportaciones y lectura de notificac
 
 Test primero: el test verifica que tras el caso de uso existe **una entrada** con la
 `action` correcta, el actor esperado y el `affectedEntityId` correcto. Usá el fake de
-auditoría de `ServiceTest/TestDoubles/` en vez de la implementación real.
+auditoría de `tests/WorldCupPlanner.Services.Tests/TestDoubles/` en vez de la implementación real.
 
 ## Verificación
 

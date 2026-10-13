@@ -15,7 +15,7 @@ on:
 
 env:
   DOTNET_VERSION: '8.0.x'
-  SOLUTION_PATH: 'project/SolutionCopa/SolutionCopa.sln'
+  SOLUTION_PATH: 'WorldCupPlanner.sln'
 
 jobs:
   build-test:

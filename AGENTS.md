@@ -17,32 +17,33 @@ notifications, CSV/XLSX export and a global audit log. Draws and simulations are
 
 ## Solution layout
 
-Single solution: `project/SolutionCopa/SolutionCopa.sln`.
+Single solution at the root: `WorldCupPlanner.sln`. Projects live in `src/`, tests in `tests/`.
+Each project's root namespace equals its name.
 
-| Project | Namespace | Responsibility |
-|---|---|---|
-| `Domain` | `ProjectCopa` | Entities, enums, invariants, domain exceptions. Depends on nothing. |
-| `Services` | `Services` | Use cases, orchestration, DTOs, auditing, simulation engines. |
-| `DataAccess` | `DataAccess` | `AppDbContext`, repositories, `Configurations/`, `Migrations/`, `IUnitOfWork`. |
-| `UI` | `UI` | Blazor Server pages. Presentation only, no business logic. |
-| `DataSeeder` | — | Console app that resets the DB and seeds a full demo tournament. |
-| `DomainTest`, `ServiceTest`, `DataAccessTest` | — | MSTest suites, one per layer. |
+| Project | Responsibility |
+|---|---|
+| `WorldCupPlanner.Domain` | Entities, enums, invariants, domain exceptions. Depends on nothing. |
+| `WorldCupPlanner.Services` | Use cases, orchestration, DTOs, auditing, simulation engines. |
+| `WorldCupPlanner.DataAccess` | `AppDbContext`, repositories, `Configurations/`, `Migrations/`, `IUnitOfWork`. |
+| `WorldCupPlanner.UI` | Blazor Server pages. Presentation only, no business logic. |
+| `WorldCupPlanner.DataSeeder` | Console app that resets the DB and seeds a full demo tournament. |
+| `WorldCupPlanner.{Domain,Services,DataAccess}.Tests` | MSTest suites, one per layer. |
 
 Allowed dependencies: `UI → Services → Domain` and `Services → DataAccess → Domain`.
 
 ## Commands
 
 ```bash
-dotnet build project/SolutionCopa/SolutionCopa.sln
-dotnet test  project/SolutionCopa/SolutionCopa.sln          # no database needed
+dotnet build
+dotnet test                                   # no database needed
 
 # Single test
-dotnet test project/SolutionCopa/DomainTest/DomainTest.csproj \
-  --filter "FullyQualifiedName~DomainTest.MatchTests.MatchCanGetMatchId"
+dotnet test tests/WorldCupPlanner.Domain.Tests \
+  --filter "FullyQualifiedName~WorldCupPlanner.Domain.Tests.MatchTests.MatchCanGetMatchId"
 
 # New migration (always with the UI as startup project)
 dotnet ef migrations add <Name> \
-  --project project/SolutionCopa/DataAccess --startup-project project/SolutionCopa/UI
+  --project src/WorldCupPlanner.DataAccess --startup-project src/WorldCupPlanner.UI
 ```
 
 The UI applies pending migrations and seeds settings plus default users on startup.
@@ -70,8 +71,8 @@ Follow the neighbouring file. Good references: `Team.cs`, `FixtureOrchestrator.c
 - Properties are `{ get; }` by default; a private setter only behind a validating mutator (see `Stadium.Update`).
 - `User` keeps its lower-case members (`idUser`, `name`, `lastname`, `email`, `password`, `dateOfBirth`); tests depend on them.
 - `Match` is abstract and `MatchGroup`/`MatchElimination` use static factories. In tests use the factories or the doubles under `*/TestDoubles/`.
-- EF configuration goes in `IEntityTypeConfiguration<T>` classes under `DataAccess/Configurations/`. Filter with `IQueryable` in SQL instead of loading whole tables.
-- Audit actions are `SCREAMING_SNAKE` constants in `Services/AuditActions.cs`; log mutations through `AuditLogService` (ISO-8601 timestamp + actor).
+- EF configuration goes in `IEntityTypeConfiguration<T>` classes under `src/WorldCupPlanner.DataAccess/Configurations/`. Filter with `IQueryable` in SQL instead of loading whole tables.
+- Audit actions are `SCREAMING_SNAKE` constants in `src/WorldCupPlanner.Services/AuditActions.cs`; log mutations through `AuditLogService` (ISO-8601 timestamp + actor).
 
 ## Workflow
 

@@ -1,0 +1,186 @@
+@page "/simulator"
+@using WorldCupPlanner.Domain
+@using WorldCupPlanner.Services.Interfaces
+@using WorldCupPlanner.Services.DTOs
+@using WorldCupPlanner.Services.Exceptions
+@using System.Security.Cryptography
+@using Microsoft.Extensions.Logging
+@inject ITournamentSimulationService TournamentSimulationService
+@inject ISimulationConfigurationService SimulationConfiguration
+@inject IGroupStandingsService GroupStandings
+@inject SessionState Session
+@inject NavigationManager Nav
+@inject ILogger<Simulator> Logger
+
+<PageTitle>Simulador de Torneo</PageTitle>
+
+<div class="simulator-page">
+    <h1 class="m26-page-title">Simulador de Torneo</h1>
+
+    @if (!Session.IsLoggedIn)
+    {
+        <section class="m26-card auth-card">
+            <p>No estás logueado.</p>
+            <button class="btn btn-primary" @onclick="GoToLogin">
+                <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+                Ir a Login
+            </button>
+        </section>
+    }
+    else if (!CanSimulate)
+    {
+        <div class="alert alert-error">
+            <i class="bi bi-shield-lock" aria-hidden="true"></i>
+            No tenés permisos para simular el torneo.
+        </div>
+    }
+    else
+    {
+        @if (errors.Any())
+        {
+            <div class="alert alert-error">
+                <strong>Error:</strong>
+                <ul>
+                    @foreach (string error in errors)
+                    {
+                        <li>@error</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(successMessage))
+        {
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle-fill" aria-hidden="true"></i>@successMessage
+            </div>
+        }
+
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+            Esta acción simula los 72 partidos de la fase de grupos y genera los cruces de fase 2 de una sola vez.
+            Para hacerlo paso a paso, usá la página de <a href="/fixture">Fixture</a>.
+            Motor de simulación: <strong>@(config?.SelectedSimulationEngine ?? "sin configurar")</strong>.
+        </div>
+
+        @if (GroupStageAlreadyPlayed)
+        {
+            <div class="alert alert-info">
+                <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                La fase de grupos ya fue jugada. Para volver a simularla, reiniciá el torneo desde el fixture.
+            </div>
+        }
+
+        <div class="sim-grid">
+            <section class="m26-card sim-card">
+                <div class="m26-card-header">
+                    <h2 class="sim-card-title">
+                        <i class="bi bi-dice-5-fill" aria-hidden="true"></i>
+                        Simulación determinística
+                    </h2>
+                </div>
+                <div class="sim-card-body">
+                    <p class="sim-help">Reproducible: la misma semilla siempre produce el mismo torneo.</p>
+                    <label for="seedInput">Semilla</label>
+                    <input id="seedInput" class="form-control" type="number" @bind="seed" placeholder="0" />
+                    <button class="btn btn-primary" disabled="@(isBusy || GroupStageAlreadyPlayed)" @onclick="SimulateWithSeed">
+                        <i class="bi @(isBusy ? "bi-arrow-repeat spin" : "bi-play-fill")" aria-hidden="true"></i>
+                        Simular con semilla
+                    </button>
+                </div>
+            </section>
+
+            <section class="m26-card sim-card">
+                <div class="m26-card-header">
+                    <h2 class="sim-card-title">
+                        <i class="bi bi-shuffle" aria-hidden="true"></i>
+                        Simulación aleatoria
+                    </h2>
+                </div>
+                <div class="sim-card-body">
+                    <p class="sim-help">Usa una semilla al azar. El resultado queda igualmente registrado en el log.</p>
+                    <button class="btn btn-secondary" disabled="@(isBusy || GroupStageAlreadyPlayed)" @onclick="SimulateRandom">
+                        <i class="bi @(isBusy ? "bi-arrow-repeat spin" : "bi-shuffle")" aria-hidden="true"></i>
+                        Simular aleatorio
+                    </button>
+                </div>
+            </section>
+        </div>
+    }
+</div>
+
+@code {
+    private const string UnexpectedErrorMessage =
+        "Ocurrió un error inesperado al simular el torneo. Revisá el estado del torneo e intentá nuevamente.";
+
+    private int seed;
+    private bool isBusy;
+    private readonly List<string> errors = new();
+    private string? successMessage;
+    private SimulationConfigurationDto? config;
+
+    // Primera barrera de UI: si la fase de grupos ya esta completa se deshabilitan ambos botones.
+    // El servicio mantiene la segunda barrera (lanza MatchServicesException).
+    private bool GroupStageAlreadyPlayed { get; set; }
+
+    // Según la letra, la simulación es tarea del Editor (el Admin también puede).
+    private bool CanSimulate =>
+        Session.CurrentUser?.HasRole(UserRoles.Admin) == true ||
+        Session.CurrentUser?.HasRole(UserRoles.Editor) == true;
+
+    protected override void OnInitialized()
+    {
+        config = SimulationConfiguration.GetConfiguration();
+        seed = config?.SimulationSeed ?? 0;
+        RefreshGroupStageState();
+    }
+
+    private void RefreshGroupStageState()
+    {
+        GroupStageAlreadyPlayed = GroupStandings.IsGroupStageComplete();
+    }
+
+    private void SimulateWithSeed()
+    {
+        RunSimulation(seed, $"Torneo simulado correctamente con semilla {seed}.");
+    }
+
+    private void SimulateRandom()
+    {
+        // Semilla criptográficamente aleatoria sólo para "elegir" el sorteo; la simulación sigue
+        // recibiendo una semilla explícita y reproducible (no se usa Random sin semilla).
+        int randomSeed = RandomNumberGenerator.GetInt32(int.MaxValue);
+        RunSimulation(randomSeed, $"Torneo simulado correctamente (semilla aleatoria {randomSeed}).");
+    }
+
+    private void RunSimulation(int simulationSeed, string successText)
+    {
+        errors.Clear();
+        successMessage = null;
+        isBusy = true;
+        try
+        {
+            TournamentSimulationService.SimulateGroupStageAndGenerateKnockout(simulationSeed);
+            successMessage = successText;
+            RefreshGroupStageState();
+        }
+        catch (Exception ex) when (ex is MatchServicesException or SimulationEngineException)
+        {
+            errors.Add(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while simulating tournament with seed {Seed}.", simulationSeed);
+            errors.Add(UnexpectedErrorMessage);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private void GoToLogin()
+    {
+        Nav.NavigateTo("/login");
+    }
+}

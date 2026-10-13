@@ -1,0 +1,22 @@
+using WorldCupPlanner.Domain;
+
+namespace WorldCupPlanner.Services.DTOs;
+
+public sealed class CreateMatchRequestDto
+{
+    public int MatchId { get; init; }
+    public DateTime MatchDate { get; init; }
+    public int HomeTeamId { get; init; }
+    public int AwayTeamId { get; init; }
+    public int StadiumId { get; init; }
+    public int? TournamentSettingsId { get; init; }
+
+    public bool IsElimination { get; init; }
+    public string? GroupName { get; init; }
+    public int? JourneyId { get; init; }
+
+    public Phase? Phase { get; init; }
+    public string? MatchCode { get; init; }
+    public int? MatchHomeId { get; init; }
+    public int? MatchAwayId { get; init; }
+}

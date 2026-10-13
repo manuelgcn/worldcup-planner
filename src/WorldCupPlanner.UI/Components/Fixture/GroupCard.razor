@@ -1,0 +1,20 @@
+@using WorldCupPlanner.Domain
+@using WorldCupPlanner.Services.DTOs
+
+<div class="group-card">
+    <div class="group-card-head">
+        <span class="group-badge">Grupo @Group.Name</span>
+    </div>
+    <div class="group-card-body">
+        <GroupStandingsTable Standings="Standings" />
+        <button class="btn btn-link" @onclick="HandleSelect">Ver detalle</button>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Group Group { get; set; } = null!;
+    [Parameter, EditorRequired] public List<GroupStandingDto> Standings { get; set; } = new();
+    [Parameter] public EventCallback<string> OnSelect { get; set; }
+
+    private Task HandleSelect() => OnSelect.InvokeAsync(Group.Name);
+}
