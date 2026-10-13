@@ -21,8 +21,8 @@
 
     <!-- Datos de apoyo: el CSV oficial de 48 equipos y las banderas reales. -->
     <ItemGroup>
-        <Content Include="..\..\..\teams-wc2026-48.csv" Link="data\teams-wc2026-48.csv" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="..\..\..\flags-master\**" Link="flags-master\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="..\..\..\samples\teams-wc2026-48.csv" Link="data\teams-wc2026-48.csv" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="..\UI\flags-master\**" Link="flags-master\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
 </Project>
