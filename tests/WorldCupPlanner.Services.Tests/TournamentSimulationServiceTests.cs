@@ -104,6 +104,28 @@ public sealed class TournamentSimulationServiceTests
     }
 
     [TestMethod]
+    public void SimulateGroupStage_KeepsResultsAlreadyLoadedByHand()
+    {
+        WorldCupPlanner.Domain.Match loaded = LoadResultByHand(homeGoals: 3, awayGoals: 0);
+
+        _service.SimulateGroupStage(Seed, AdminEmail);
+
+        AssertResultKept(loaded.MatchId, homeGoals: 3, awayGoals: 0);
+        Assert.AreEqual(GroupCount * MatchesPerGroup - 1, _matchSimulationEngine.SimulateCalls);
+    }
+
+    [TestMethod]
+    public void SimulateGroupStageAndGenerateKnockout_KeepsResultsAlreadyLoadedByHand()
+    {
+        WorldCupPlanner.Domain.Match loaded = LoadResultByHand(homeGoals: 3, awayGoals: 0);
+
+        _service.SimulateGroupStageAndGenerateKnockout(Seed);
+
+        AssertResultKept(loaded.MatchId, homeGoals: 3, awayGoals: 0);
+        Assert.AreEqual(GroupCount * MatchesPerGroup - 1, _matchSimulationEngine.SimulateCalls);
+    }
+
+    [TestMethod]
     public void SimulateGroupStage_LogsSimulateGroupStageActionWithSeedAndPerformer()
     {
         _service.SimulateGroupStage(Seed, AdminEmail);
@@ -229,4 +251,18 @@ public sealed class TournamentSimulationServiceTests
         _matchRepository.Add(match);
     }
 
+    private WorldCupPlanner.Domain.Match LoadResultByHand(int homeGoals, int awayGoals)
+    {
+        WorldCupPlanner.Domain.Match match = _matchRepository.GetAll().First();
+        match.SetGoals(homeGoals, awayGoals);
+        _matchRepository.Update(match);
+        return match;
+    }
+
+    private void AssertResultKept(int matchId, int homeGoals, int awayGoals)
+    {
+        WorldCupPlanner.Domain.Match stored = _matchRepository.GetById(matchId)!;
+        Assert.AreEqual(homeGoals, stored.HomeGoals);
+        Assert.AreEqual(awayGoals, stored.AwayGoals);
+    }
 }
