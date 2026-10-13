@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Text;
 using WorldCupPlanner.DataAccess.Interfaces;
 using WorldCupPlanner.Domain;
 using WorldCupPlanner.Services.DTOs;
@@ -126,7 +124,7 @@ public class FlagAssignmentService : IFlagAssignmentService
 
     private string? LoadFlagFor(string teamName)
     {
-        string normalizedName = NormalizeName(teamName);
+        string normalizedName = TextNormalizer.Normalize(teamName);
 
         if (!IsoCodesByNormalizedName.TryGetValue(normalizedName, out string? isoCode))
         {
@@ -141,28 +139,5 @@ public class FlagAssignmentService : IFlagAssignmentService
         }
 
         return Convert.ToBase64String(File.ReadAllBytes(flagPath));
-    }
-
-    private static string NormalizeName(string name)
-    {
-        string lowered = name.ToLowerInvariant();
-        string decomposed = lowered.Normalize(NormalizationForm.FormD);
-
-        StringBuilder builder = new StringBuilder(decomposed.Length);
-
-        foreach (char character in decomposed)
-        {
-            if (CharUnicodeInfo.GetUnicodeCategory(character) == UnicodeCategory.NonSpacingMark)
-            {
-                continue;
-            }
-
-            builder.Append(char.IsLetterOrDigit(character) ? character : ' ');
-        }
-
-        string withSingleSpaces = string.Join(' ',
-            builder.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries));
-
-        return withSingleSpaces;
     }
 }
