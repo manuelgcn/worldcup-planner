@@ -144,9 +144,9 @@ else
                                         Editar
                                     </button>
                                 }
-                                else if (CanEditMatches && IsGroupStageLocked && match.GroupName is not null)
+                                else if (CanEditMatches)
                                 {
-                                    <span class="text-muted" title="La fase de grupos está cerrada: los cruces de fase 2 ya fueron generados.">
+                                    <span class="text-muted" title="@LockReason(match)">
                                         <i class="bi bi-lock-fill" aria-hidden="true"></i>
                                     </span>
                                 }
@@ -213,7 +213,9 @@ else
         Session.CurrentUser is not null &&
         (Session.CurrentUser.HasRole(UserRoles.Admin) || Session.CurrentUser.HasRole(UserRoles.Editor));
 
-    private bool IsGroupStageLocked => KnockoutGenerator.IsBracketGenerated();
+    // Se leen en cada carga (ApplyFilters corre al entrar y despues de cada guardado), no por fila.
+    private bool IsGroupStageLocked { get; set; }
+    private IReadOnlySet<int> lockedKnockoutMatchIds = new HashSet<int>();
 
     protected override void OnInitialized()
     {
@@ -235,7 +237,8 @@ else
         }
     }
 
-    // Un partido es de grupos si tiene grupo; los de eliminacion no se congelan.
+    // Un partido de grupos se congela al generarse la eliminatoria; uno de eliminatoria, cuando
+    // la ronda siguiente ya se armo con su resultado (la regla vive en el servicio).
     private bool CanEditRow(MatchListItemDto match)
     {
         if (!CanEditMatches)
@@ -243,8 +246,15 @@ else
             return false;
         }
 
-        return match.GroupName is null || !IsGroupStageLocked;
+        return match.GroupName is null
+            ? !lockedKnockoutMatchIds.Contains(match.MatchId)
+            : !IsGroupStageLocked;
     }
+
+    private static string LockReason(MatchListItemDto match) =>
+        match.GroupName is not null
+            ? "La fase de grupos está cerrada: los cruces de fase 2 ya fueron generados."
+            : "La ronda siguiente ya se armó con este resultado.";
 
     private static bool IsPlayed(MatchListItemDto match) => match.HasResult;
 
@@ -272,6 +282,8 @@ else
             };
 
             matches = MatchQuery.Search(filter).ToList();
+            IsGroupStageLocked = KnockoutGenerator.IsBracketGenerated();
+            lockedKnockoutMatchIds = MatchService.GetLockedKnockoutMatchIds();
         }
         catch (MatchServicesException ex)
         {
