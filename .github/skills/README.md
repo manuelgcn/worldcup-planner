@@ -1,19 +1,12 @@
-# Repository Skills
+# Agent skills
 
-## Obligatorio 1
+Reusable instructions for AI coding agents working on this repository.
 
-- `add-educational-comments`: añade comentarios educativos solo donde aportan claridad.
-- `create-readme`: crea o actualiza la documentación principal del repositorio.
-- `csharp-mstest`: guía para escribir tests MSTest claros en C#.
-- `git-commit`: guía para mensajes de commit claros y enfocados.
-
-## Obligatorio 2 (Fase 10)
-
-Dos skills nuevos (distintos a los del Obligatorio 1) + un skill propio.
-
-- `generate-readme` (**propio**): regenera `README.md` + las instrucciones del agente
-  (`AGENTS.md`) desde el código vivo, con las secciones obligatorias.
-- `efcore-migrations-helper`: guía las migraciones EF Core (Azure SQL Edge + TPH) sin
-  romper la cadena de migraciones ni los datos sembrados.
-- `audit-logger-instrumentation`: instrumenta casos de uso nuevos con auditoría
-  consistente vía `AuditLogService`/`AuditActions` (timestamp ISO-8601 + actor).
+| Skill | Purpose |
+|---|---|
+| `generate-readme` | Project-owned. Regenerates `README.md` and `AGENTS.md` from the live codebase. |
+| `efcore-migrations-helper` | EF Core migrations (Azure SQL Edge + TPH) without breaking the migration chain or seeded data. |
+| `audit-logger-instrumentation` | Adds consistent audit logging to new use cases via `AuditLogService` / `AuditActions`. |
+| `csharp-mstest` | Clear MSTest tests with Arrange-Act-Assert. |
+| `git-commit` | Focused commits with conventional messages. |
+| `add-educational-comments` | Short explanatory comments, only where the code is not obvious. |

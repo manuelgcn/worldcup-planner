@@ -12,6 +12,7 @@
         <Configuration>
           <Format>cobertura</Format>
           <Exclude>[DomainTest]*,[ServiceTest]*,[DataAccessTest]*</Exclude>
+          <ExcludeByFile>**/Migrations/*.cs</ExcludeByFile>
         </Configuration>
       </DataCollector>
     </DataCollectors>

@@ -4,8 +4,8 @@
 
 ![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
 ![Blazor](https://img.shields.io/badge/Blazor-Server-512BD4?logo=blazor&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-866%20passing-brightgreen)
-![Coverage](https://img.shields.io/badge/coverage-96%25-brightgreen)
+![Tests](https://img.shields.io/badge/tests-953%20passing-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)
 ![CI](https://github.com/manuelgcn/worldcup-planner/actions/workflows/dotnet-tests.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
@@ -24,7 +24,7 @@ orchestrate use cases, and the UI only presents.**
 
 ## ✨ Engineering highlights
 
-- **866 automated tests · 96% coverage** on the business layers (Domain / Services / DataAccess).
+- **953 automated tests · 97% line coverage** on the business layers (Domain / Services / DataAccess, excluding generated EF migrations).
 - **Clean layered architecture** with enforced dependency direction — the domain depends on nothing.
 - **TDD** throughout (red → green → refactor), with focused, incremental commits.
 - **CI/CD with GitHub Actions**: build + tests on every push and pull request, plus automated release packaging.
@@ -67,29 +67,32 @@ UI  ──▶  Services  ──▶  Domain
 | Services | `Services` | Use cases, orchestration, DTOs, auditing and simulation engines |
 | Data | `DataAccess` | `AppDbContext`, EF repositories, configurations, migrations, `IUnitOfWork` |
 | UI | `UI` | Blazor Server — presentation only |
+| Seeder | `DataSeeder` | Console app that resets the database and loads a full demo tournament |
 | Tests | `DomainTest`, `ServiceTest`, `DataAccessTest` | MSTest suites |
+
+See [docs/architecture.md](docs/architecture.md) for the domain model, key mechanisms and external dependencies.
 
 ## 🚀 Getting started
 
 **Prerequisites:** [.NET 8 SDK](https://dotnet.microsoft.com/download) and [Docker](https://www.docker.com/).
 
 ```bash
-# 1. Start the database (Azure SQL Edge)
+# 1. Start the database (Azure SQL Edge, runs natively on ARM64 too)
 cp .env.example .env
 docker compose up -d sqlserver
 
-# 2. Apply migrations (the app also applies them on startup)
-dotnet ef database update \
-  --project project/SolutionCopa/DataAccess \
-  --startup-project project/SolutionCopa/UI
-
-# 3. Run the app
+# 2. Run the app — it applies migrations and creates the default users on startup
 dotnet run --project project/SolutionCopa/UI/UI.csproj
+
+# 3. (Optional) Load a full demo: 48 teams with flags, 5 stadiums, simulated group stage
+dotnet run --project project/SolutionCopa/DataSeeder
 ```
 
-Then open the URL shown in the console.
+Then open the URL shown in the console. The connection string lives in
+`project/SolutionCopa/UI/appsettings.json` and can be overridden with the
+`ConnectionStrings__Default` environment variable.
 
-**Seed accounts**
+**Default accounts** (the demo seeder also creates `admin1@copa.com` / `Admin@123`)
 
 | Role | Email | Password |
 |---|---|---|
@@ -98,6 +101,8 @@ Then open the URL shown in the console.
 | Journalist | periodista@copa.com | Periodista@123 |
 
 ## 🧪 Running the tests
+
+The tests need no database: they use the EF Core InMemory provider and SQLite in-memory.
 
 ```bash
 dotnet test project/SolutionCopa/SolutionCopa.sln
@@ -111,22 +116,31 @@ dotnet test project/SolutionCopa/ServiceTest/ServiceTest.csproj
 dotnet test project/SolutionCopa/DataAccessTest/DataAccessTest.csproj
 ```
 
+<!-- Uncomment once the images are in docs/screenshots/
 ## 📸 Screenshots
 
-<!-- Add 2–3 screenshots of the app (login, group stage, bracket) to docs/screenshots/ and link them here. -->
-_Screenshots coming soon — see `docs/screenshots/`._
+| Group stage | Knockout bracket |
+|---|---|
+| ![Group stage](docs/screenshots/group-stage.png) | ![Knockout bracket](docs/screenshots/bracket.png) |
+-->
 
 ## 📁 Project structure
 
 ```
-project/SolutionCopa/
-├── Domain/          # Entities, business rules and invariants
-├── Services/        # Use cases, DTOs, auditing, simulation engines
-├── DataAccess/      # EF Core DbContext, repositories, migrations
-├── UI/              # Blazor Server presentation layer
-├── DomainTest/      # Unit tests — domain
-├── ServiceTest/     # Unit tests — services
-└── DataAccessTest/  # Integration tests — data access
+├── project/SolutionCopa/
+│   ├── Domain/          # Entities, business rules and invariants
+│   ├── Services/        # Use cases, DTOs, auditing, simulation engines
+│   ├── DataAccess/      # EF Core DbContext, repositories, migrations
+│   ├── UI/              # Blazor Server presentation layer
+│   ├── DataSeeder/      # Demo data loader
+│   ├── DomainTest/      # Unit tests — domain
+│   ├── ServiceTest/     # Unit tests — services
+│   └── DataAccessTest/  # Integration tests — data access
+├── db/                  # SQL seed scripts and database backups used by the release
+├── docs/                # Architecture notes
+├── samples/             # Sample CSV with the 48 teams (for the Import page)
+├── scripts/             # Release packaging and Windows start/seed scripts
+└── .github/             # CI/CD workflows and AI agent skills
 ```
 
 ## 👥 Authors
@@ -139,4 +153,4 @@ Developed by a team of 3 for *Diseño de Aplicaciones 1*, Universidad ORT del Ur
 
 ## 📄 License
 
-Released under the [MIT License](LICENSE).
+Released under the [MIT License](LICENSE). Flag images from [ashleedawg/flags](https://github.com/ashleedawg/flags).
