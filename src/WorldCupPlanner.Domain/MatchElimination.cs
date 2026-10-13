@@ -218,6 +218,19 @@ public class MatchElimination : Match
         WonByPenalties = true;
     }
 
+    // Los penales solo valen sobre un empate: si el marcador deja de estarlo, se descartan.
+    protected override void OnScoreChanged()
+    {
+        if (IsDraw())
+        {
+            return;
+        }
+
+        HomePenaltyGoals = 0;
+        AwayPenaltyGoals = 0;
+        WonByPenalties = false;
+    }
+
     public override Team? GetWinner()
     {
         if (HasHomeTeamWon())

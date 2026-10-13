@@ -8,6 +8,7 @@ public interface IUserService
     IReadOnlyCollection<User> GetAllUsers();
     void AddUser(User user, string? performedByEmail = null);
     void RegisterUser(CreateUserRequestDto request);
+    void CreateUser(CreateUserRequestDto request, string? performedByEmail);
     void RemoveRole(int userId, UserRoles role, string? performedByEmail = null);
     User Authenticate(string email, string password);
     User GetUserByEmail(string email);

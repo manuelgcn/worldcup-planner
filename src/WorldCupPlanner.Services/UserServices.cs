@@ -43,10 +43,22 @@ public class UserServices : IUserService
 
     public void RegisterUser(CreateUserRequestDto request)
     {
+        // No se confia en request.InitialRole: el registro publico siempre es Periodista.
+        AddUser(BuildUser(request, PublicRegistrationRole));
+    }
+
+    // Alta administrativa: el rol elegido por el admin se respeta y queda auditado su autor.
+    public void CreateUser(CreateUserRequestDto request, string? performedByEmail)
+    {
+        AddUser(BuildUser(request, request.InitialRole), performedByEmail);
+    }
+
+    // La construccion de la entidad de dominio (con sus invariantes) vive aca,
+    // no en la UI: la pantalla solo arma el request.
+    private static User BuildUser(CreateUserRequestDto request, UserRoles role)
+    {
         ArgumentNullException.ThrowIfNull(request);
 
-        // La construccion de la entidad de dominio (con sus invariantes) vive aca,
-        // no en la UI: la pantalla solo arma el request.
         User user = new User(
             request.Id,
             request.Name,
@@ -54,10 +66,8 @@ public class UserServices : IUserService
             request.Email,
             request.Password,
             request.DateOfBirth);
-        // No se confia en request.InitialRole: el registro publico siempre es Periodista.
-        user.AddRole(PublicRegistrationRole);
-
-        AddUser(user);
+        user.AddRole(role);
+        return user;
     }
 
     public void AddUser(User user, string? performedByEmail = null)
