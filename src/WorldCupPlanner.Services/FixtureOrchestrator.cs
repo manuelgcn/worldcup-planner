@@ -82,6 +82,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         GenerationPlan plan = PrepareGenerationPlan(fixtureSeedOverride);
         ApplySimulationEngineSelection(plan.Settings, selectedEngineName);
 
+        RevertRankingOfPlayedMatches();
         ClearGroupStageStorage();
         AuditCleared(performedByEmail);
 
@@ -109,6 +110,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     {
         // Borrado total del torneo: se elimina la fase 2 (knockout) ANTES que los partidos de grupo
         // porque las eliminatorias referencian a los partidos de grupo como fuente (FK Matches->Matches).
+        RevertRankingOfPlayedMatches();
         _eliminationRepository.Clear();
         ClearGroupStageStorage();
 
@@ -170,6 +172,17 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         foreach (Match match in matches)
         {
             _matchRepository.Add(match);
+        }
+    }
+
+    // Cada resultado cambio el ranking guardado en los equipos y el sorteo arma los bombos por
+    // ranking: sin revertirlo, la misma semilla ya no daria los mismos grupos. GetAll trae grupos
+    // y eliminatorias (TPH) con los equipos compartidos, asi que las reversiones se acumulan bien.
+    private void RevertRankingOfPlayedMatches()
+    {
+        foreach (Match match in _matchRepository.GetAll().Where(match => match.RankingApplied))
+        {
+            _rankingService.RevertMatchResult(match);
         }
     }
 
