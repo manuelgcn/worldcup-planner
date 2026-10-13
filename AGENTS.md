@@ -58,7 +58,7 @@ The UI applies pending migrations and seeds settings plus default users on start
 - **Standings**: points → goal difference → goals for → seeded draw (`CrossingsSeed`).
 - **Round of 32**: 12 winners + 12 runners-up + 8 best third places. A1–A8 (winners vs thirds), B1–B4 (remaining winners vs weakest runners-up), B5–B8 (remaining runners-up). Avoid same-group pairings when possible. Then C1–C8 (Ai vs Bi), D1–D4, semi-finals, third place and final.
 - **Match editing**: only date, stadium and result. Group matches are locked once the knockout stage is generated; a knockout match is locked once the next round is built from it, and its result cannot be a draw.
-- **Roles**: `UserRoles { Admin, Editor, Periodista }`. Passwords are stored as salted PBKDF2-SHA256 (`salt:hash`, 100k iterations) and must have ≥ 8 chars with upper, lower, digit and symbol.
+- **Roles**: `UserRoles { Admin, Editor, Periodista }`. Passwords are stored as salted PBKDF2-SHA256 (`salt:hash`, 100k iterations; an older unsalted SHA-256 is accepted and upgraded on the next login) and must have ≥ 8 chars with upper, lower, digit and symbol.
 
 ## Code conventions
 
