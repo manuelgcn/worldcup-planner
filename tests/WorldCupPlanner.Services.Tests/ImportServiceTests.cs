@@ -231,6 +231,20 @@ public class ImportServiceTests
     }
 
     [TestMethod]
+    public void ImportTeamsCountsTheQuotaAcrossRowsOfTheSameFile()
+    {
+        List<TeamImportDto> rows = Enumerable.Range(1, 17)
+            .Select(i => Row(i + 1, $"Europa{i}", "UEFA", (1000 + i).ToString()))
+            .ToList();
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, rows);
+
+        ImportServiceException ex = Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        StringAssert.Contains(ex.Message, "Row: 18.");
+        Assert.AreEqual(0, _teamRepository.GetAll().Count);
+    }
+
+    [TestMethod]
     public void ImportTeamsThrowsWhenConfederationIsANumber()
     {
         MemoryStream stream = CreateImportStream();

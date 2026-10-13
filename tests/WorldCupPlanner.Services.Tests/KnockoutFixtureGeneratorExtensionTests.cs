@@ -10,6 +10,7 @@ namespace WorldCupPlanner.Services.Tests;
 public class KnockoutFixtureGeneratorExtensionTests
 {
     private const int DefaultSeed = 7;
+    private const int DistinctSimulationSeed = 99;
     private const int DefaultSettingsId = 1;
     private const string AdminEmail = "admin@copa.com";
     private const int TotalGroupCount = 12;
@@ -187,11 +188,20 @@ public class KnockoutFixtureGeneratorExtensionTests
     {
         SeedPlayedGroupStageMatches();
         _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        _settingsRepository.Update(new TournamentSettings(
+            id: DefaultSettingsId,
+            startDate: DefaultStartDate,
+            maxMatchesPerDay: 3,
+            daysBetweenJourneys: 3,
+            fixtureSeed: DefaultSeed,
+            crossingsSeed: DefaultSeed,
+            simulationSeed: DistinctSimulationSeed,
+            completionSeed: DefaultSeed));
 
         _generator.SimulateNextRound(performedByEmail: AdminEmail);
 
         AuditLog log = _auditRepository.GetAll().First(entry => entry.Action == AuditActions.SimulateRound);
-        Assert.IsTrue(log.Details.Contains($"seed {DefaultSeed}."), $"Expected seed in details, got '{log.Details}'");
+        Assert.IsTrue(log.Details.Contains($"seed {DistinctSimulationSeed}."), $"Expected seed in details, got '{log.Details}'");
         Assert.AreEqual(AdminEmail, log.PerformedByEmail);
     }
 
