@@ -118,6 +118,8 @@ dotnet test tests/WorldCupPlanner.DataAccess.Tests
 
 ## 📸 Screenshots
 
+![Tournament dashboard with live progress and the champion](docs/screenshots/home.png)
+
 | Group stage | Knockout bracket |
 |---|---|
 | ![Group stage standings with flags](docs/screenshots/group-stage.png) | ![Knockout bracket from Round of 32 to the final](docs/screenshots/bracket.png) |
