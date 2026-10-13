@@ -344,7 +344,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         }
 
         SimulateMatches(unplayed, settings);
-        CommitAndAuditRound(phase, performedByEmail);
+        AuditRound(phase, settings.SimulationSeed, performedByEmail);
         return true;
     }
 
@@ -374,7 +374,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         }
 
         SimulateMatches(created, settings);
-        CommitAndAuditRound(phase, performedByEmail);
+        AuditRound(phase, settings.SimulationSeed, performedByEmail);
         return true;
     }
 
@@ -407,7 +407,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             }
 
             SimulateMatches(finalMatches.Concat(thirdMatches).ToList(), settings);
-            CommitAndAuditRound(Phase.Final, performedByEmail);
+            AuditRound(Phase.Final, settings.SimulationSeed, performedByEmail);
             return true;
         }
 
@@ -418,7 +418,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         }
 
         SimulateMatches(pending, settings);
-        CommitAndAuditRound(Phase.Final, performedByEmail);
+        AuditRound(Phase.Final, settings.SimulationSeed, performedByEmail);
         return true;
     }
 
@@ -574,11 +574,11 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         return _simulationEngineRegistry.Resolve(settings.SelectedSimulationEngine);
     }
 
-    private void CommitAndAuditRound(Phase phase, string? performedByEmail)
+    private void AuditRound(Phase phase, int simulationSeed, string? performedByEmail)
     {
         _auditLog.LogPerformedBy(
             AuditActions.SimulateRound,
-            $"Simulated phase {phase}.",
+            $"Simulated phase {phase} with seed {simulationSeed}.",
             performedByEmail,
             nameof(KnockoutFixtureGenerator));
     }

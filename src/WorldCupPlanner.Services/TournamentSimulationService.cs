@@ -72,7 +72,7 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
 
         GenerateAndPersistKnockoutPhase(qualifiedTeams);
 
-        LogSimulation(engine.Name);
+        LogSimulation(seed, engine.Name, performedByEmail);
     }
 
     // Simula los 72 partidos de la fase de grupos (sin generar la fase 2) y devuelve los grupos y
@@ -190,11 +190,12 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
             completionSeed: seed);
     }
 
-    private void LogSimulation(string engineName)
+    private void LogSimulation(int seed, string engineName, string? performedByEmail)
     {
-        auditLogService.Log(
+        auditLogService.LogPerformedBy(
             AuditActions.SimulateGroupStageAndGenerateKnockout,
-            $"La fase de grupos fue simulada con el motor {engineName} y la fase 2 fue generada.",
+            $"Group stage simulated with engine {engineName} and seed {seed}; knockout stage generated.",
+            performedByEmail,
             affectedEntityType: nameof(TournamentSimulationService));
     }
 
