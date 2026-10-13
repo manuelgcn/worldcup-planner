@@ -60,7 +60,8 @@ public sealed class FixtureOrchestratorEngineSelectionTests
             {
                 new ProbabilisticSimulationEngine(),
                 new PureRandomSimulationEngine()
-            }));
+            }),
+            new RankingService(AuditLogService.CreateInstance(_auditRepository), _teamRepository));
     }
 
     [TestMethod]

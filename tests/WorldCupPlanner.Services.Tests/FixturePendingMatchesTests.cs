@@ -59,7 +59,8 @@ public class FixturePendingMatchesTests
             _matchRepository,
             _eliminationRepository,
             _auditService,
-            new SimulationEngineRegistry([_simulationEngine]));
+            new SimulationEngineRegistry([_simulationEngine]),
+            new RankingService(_auditService, _teamRepository));
 
         _standingsService = new GroupStandingsService(
             _matchRepository,

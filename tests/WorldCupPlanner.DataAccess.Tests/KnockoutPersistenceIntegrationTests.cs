@@ -80,7 +80,8 @@ public sealed class KnockoutPersistenceIntegrationTests
             _matchRepository,
             _eliminationRepository,
             _auditService,
-            new SimulationEngineRegistry([_engine]));
+            new SimulationEngineRegistry([_engine]),
+            new RankingService(_auditService, _teamRepository));
 
         _simulationService = new TournamentSimulationService(
             _groupRepository,

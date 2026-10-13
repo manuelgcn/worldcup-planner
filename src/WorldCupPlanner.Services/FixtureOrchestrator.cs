@@ -28,6 +28,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     private readonly IEliminationMatchRepository _eliminationRepository;
     private readonly IAuditLogService _auditLogService;
     private readonly ISimulationEngineRegistry _simulationEngineRegistry;
+    private readonly IRankingService _rankingService;
 
     public FixtureOrchestrator(
         ITeamRepository teamRepository,
@@ -38,7 +39,8 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         IMatchRepository matchRepository,
         IEliminationMatchRepository eliminationRepository,
         IAuditLogService auditLogService,
-        ISimulationEngineRegistry simulationEngineRegistry)
+        ISimulationEngineRegistry simulationEngineRegistry,
+        IRankingService rankingService)
     {
         _teamRepository = teamRepository;
         _stadiumRepository = stadiumRepository;
@@ -49,6 +51,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         _eliminationRepository = eliminationRepository;
         _auditLogService = auditLogService;
         _simulationEngineRegistry = simulationEngineRegistry;
+        _rankingService = rankingService;
     }
 
     public bool IsFixtureGenerated()

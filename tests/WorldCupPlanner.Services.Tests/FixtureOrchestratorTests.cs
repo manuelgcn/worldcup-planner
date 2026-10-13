@@ -59,7 +59,8 @@ public class FixtureOrchestratorTests
             _matchRepository,
             _eliminationRepository,
             _auditService,
-            new SimulationEngineRegistry([new ProbabilisticSimulationEngine(), new PureRandomSimulationEngine()]));
+            new SimulationEngineRegistry([new ProbabilisticSimulationEngine(), new PureRandomSimulationEngine()]),
+            new RankingService(_auditService, _teamRepository));
     }
 
     [TestMethod]
@@ -260,6 +261,30 @@ public class FixtureOrchestratorTests
     }
 
     [TestMethod]
+    public void DeleteGroupStage_RestoresRankingsChangedByPlayedMatches()
+    {
+        Dictionary<int, int> rankingsBefore = CurrentRankings();
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
+        PlayAllGroupMatches();
+
+        _orchestrator.DeleteGroupStage(AdminEmail);
+
+        CollectionAssert.AreEquivalent(rankingsBefore, CurrentRankings());
+    }
+
+    [TestMethod]
+    public void RegenerateGroupStage_RestoresRankingsChangedByPlayedMatches()
+    {
+        Dictionary<int, int> rankingsBefore = CurrentRankings();
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
+        PlayAllGroupMatches();
+
+        _orchestrator.RegenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
+
+        CollectionAssert.AreEquivalent(rankingsBefore, CurrentRankings());
+    }
+
+    [TestMethod]
     public void IsFixtureGenerated_BeforeGeneration_ReturnsFalse()
     {
         Assert.IsFalse(_orchestrator.IsFixtureGenerated());
@@ -317,7 +342,23 @@ public class FixtureOrchestratorTests
             _matchRepository,
             _eliminationRepository,
             _auditService,
-            new SimulationEngineRegistry([new ProbabilisticSimulationEngine(), new PureRandomSimulationEngine()]));
+            new SimulationEngineRegistry([new ProbabilisticSimulationEngine(), new PureRandomSimulationEngine()]),
+            new RankingService(_auditService, _teamRepository));
+    }
+
+    private Dictionary<int, int> CurrentRankings() =>
+        _teamRepository.GetAll().ToDictionary(team => team.Id, team => team.FifaRanking);
+
+    // Carga un 2-0 en cada partido y aplica el Elo igual que MatchService.RegisterResult.
+    private void PlayAllGroupMatches()
+    {
+        RankingService rankingService = new RankingService(_auditService, _teamRepository);
+        foreach (Match match in _matchRepository.GetAll())
+        {
+            match.SetGoals(2, 0);
+            rankingService.ApplyMatchResultOnce(match);
+            _matchRepository.Update(match);
+        }
     }
 
     private static TournamentSettings CreateDefaultSettings()
