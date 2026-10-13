@@ -39,7 +39,7 @@ public class TournamentDashboardService(
             .OfType<MatchElimination>()
             .FirstOrDefault(match => match.Phase == Phase.Final);
 
-        if (final is null || !final.WasSimulated)
+        if (final is null || !final.HasResult)
         {
             return null;
         }

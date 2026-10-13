@@ -231,7 +231,7 @@
                 <section class="step-section">
                     <h4>4. Simular bracket eliminatorio</h4>
                     <p class="step-help">
-                        @if (IsBracketFullySimulated)
+                        @if (IsBracketComplete)
                         {
                             <text>El torneo está completo. ¡Hay campeón!</text>
                         }
@@ -245,12 +245,12 @@
                     {
                         <div class="step-actions">
                             <button class="btn btn-secondary"
-                                    disabled="@(IsBracketFullySimulated || isBusy)"
+                                    disabled="@(IsBracketComplete || isBusy)"
                                     @onclick="HandleSimulateNextRoundAsync">
                                 Simular siguiente ronda
                             </button>
                             <button class="btn btn-primary"
-                                    disabled="@(IsBracketFullySimulated || isBusy)"
+                                    disabled="@(IsBracketComplete || isBusy)"
                                     @onclick="HandleSimulateUntilFinalAsync">
                                 Simular hasta el final
                             </button>
@@ -407,17 +407,8 @@
     // La regla de "se puede avanzar" vive en el servicio (no en la UI): solo se delega.
     private bool CanAdvancePhase => KnockoutGenerator.CanAdvanceToNextRound();
 
-    private bool IsBracketFullySimulated
-    {
-        get
-        {
-            if (eliminationMatches.Count == 0) return false;
-            bool hasFinal = eliminationMatches.Any(match => match.Phase == Phase.Final);
-            bool hasThird = eliminationMatches.Any(match => match.Phase == Phase.ThirdPlace);
-            if (!hasFinal || !hasThird) return false;
-            return eliminationMatches.All(match => match.WasSimulated);
-        }
-    }
+    // Completo tambien si la final se cargo a mano: la regla vive en el servicio.
+    private bool IsBracketComplete => KnockoutGenerator.IsBracketComplete();
 
     private WizardStep CurrentStep
     {
@@ -439,7 +430,7 @@
                 }
                 return new WizardStep(3, "Jugar fase de grupos", $"Faltan {pendingGroupMatches} partidos por simular. Andá a /simulator o /matches.", "step-3");
             }
-            if (!IsBracketFullySimulated)
+            if (!IsBracketComplete)
             {
                 return new WizardStep(4, "Simular bracket", "Avanzá las rondas eliminatorias hasta el final.", "step-4");
             }
@@ -659,7 +650,7 @@
 
     private string AdvancePhaseTooltip()
     {
-        if (IsBracketFullySimulated) return "El cuadro ya llegó a la final.";
+        if (IsBracketComplete) return "El cuadro ya llegó a la final.";
         if (!CanAdvancePhase) return "Cargá los resultados de todos los partidos de la ronda actual antes de avanzar.";
         return "Crea la siguiente ronda con los ganadores y la deja pendiente para cargar resultados a mano.";
     }

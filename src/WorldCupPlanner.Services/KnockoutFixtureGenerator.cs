@@ -110,7 +110,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     public bool IsBracketComplete()
     {
-        return false;
+        return IsBracketGenerated() && !HasPendingMatches();
     }
 
     public void GenerateBracket(int? crossingsSeedOverride, string? performedByEmail)
