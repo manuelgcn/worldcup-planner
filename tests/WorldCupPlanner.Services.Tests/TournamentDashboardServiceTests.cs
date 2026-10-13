@@ -98,11 +98,21 @@ public sealed class TournamentDashboardServiceTests
     }
 
     [TestMethod]
-    public void GetOverview_WhenFinalIsNotSimulated_ReturnsNullChampion()
+    public void GetOverview_WhenFinalResultWasLoadedByHand_ReturnsChampionName()
     {
         MatchElimination final = EliminationMatch(99, Date(30), Phase.Final, Stadium(1, "St1"));
         final.SetGoals(2, 1);
         _matchRepository.Add(final);
+
+        TournamentDashboardDto overview = _service.GetOverview();
+
+        Assert.AreEqual("H99", overview.ChampionName);
+    }
+
+    [TestMethod]
+    public void GetOverview_WhenFinalHasNoResult_ReturnsNullChampion()
+    {
+        _matchRepository.Add(EliminationMatch(99, Date(30), Phase.Final, Stadium(1, "St1")));
 
         TournamentDashboardDto overview = _service.GetOverview();
 

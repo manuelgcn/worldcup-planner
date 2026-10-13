@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Text;
 using WorldCupPlanner.DataAccess.Interfaces;
 using WorldCupPlanner.Domain;
 using WorldCupPlanner.Services.DTOs;
@@ -10,7 +8,6 @@ namespace WorldCupPlanner.Services;
 public class FlagAssignmentService : IFlagAssignmentService
 {
     private readonly ITeamRepository teamRepository;
-    private readonly IUnitOfWork unitOfWork;
     private readonly string flagsDirectoryPath;
     private readonly IAuditLogService auditLogService;
 
@@ -72,13 +69,11 @@ public class FlagAssignmentService : IFlagAssignmentService
 
     public FlagAssignmentService(
         ITeamRepository teamRepository,
-        IUnitOfWork unitOfWork,
         string flagsDirectoryPath,
         IAuditLogService auditLogService)
     {
         ArgumentNullException.ThrowIfNull(auditLogService);
         this.teamRepository = teamRepository;
-        this.unitOfWork = unitOfWork;
         this.flagsDirectoryPath = flagsDirectoryPath;
         this.auditLogService = auditLogService;
     }
@@ -118,11 +113,6 @@ public class FlagAssignmentService : IFlagAssignmentService
             assignedCount++;
         }
 
-        if (assignedCount > 0)
-        {
-            unitOfWork.Commit();
-        }
-
         auditLogService.LogPerformedBy(
             AuditActions.AssignTeamFlags,
             string.Format(AuditDetailsTemplate, assignedCount, skippedExistingCount, unmappedTeamNames.Count),
@@ -134,7 +124,7 @@ public class FlagAssignmentService : IFlagAssignmentService
 
     private string? LoadFlagFor(string teamName)
     {
-        string normalizedName = NormalizeName(teamName);
+        string normalizedName = TextNormalizer.Normalize(teamName);
 
         if (!IsoCodesByNormalizedName.TryGetValue(normalizedName, out string? isoCode))
         {
@@ -149,28 +139,5 @@ public class FlagAssignmentService : IFlagAssignmentService
         }
 
         return Convert.ToBase64String(File.ReadAllBytes(flagPath));
-    }
-
-    private static string NormalizeName(string name)
-    {
-        string lowered = name.ToLowerInvariant();
-        string decomposed = lowered.Normalize(NormalizationForm.FormD);
-
-        StringBuilder builder = new StringBuilder(decomposed.Length);
-
-        foreach (char character in decomposed)
-        {
-            if (CharUnicodeInfo.GetUnicodeCategory(character) == UnicodeCategory.NonSpacingMark)
-            {
-                continue;
-            }
-
-            builder.Append(char.IsLetterOrDigit(character) ? character : ' ');
-        }
-
-        string withSingleSpaces = string.Join(' ',
-            builder.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries));
-
-        return withSingleSpaces;
     }
 }

@@ -4,7 +4,7 @@
 
 ![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
 ![Blazor](https://img.shields.io/badge/Blazor-Server-512BD4?logo=blazor&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-937%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-969%20passing-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)
 ![CI](https://github.com/manuelgcn/worldcup-planner/actions/workflows/dotnet-tests.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -24,7 +24,7 @@ orchestrate use cases, and the UI only presents.**
 
 ## ✨ Engineering highlights
 
-- **937 automated tests · 97% line coverage** on the business layers (Domain / Services / DataAccess, excluding generated EF migrations).
+- **969 automated tests · 97% line coverage** on the business layers (Domain / Services / DataAccess, excluding generated EF migrations).
 - **Clean layered architecture** with enforced dependency direction — the domain depends on nothing.
 - **TDD** throughout (red → green → refactor), with focused, incremental commits.
 - **CI/CD with GitHub Actions**: build + tests on every push and pull request, plus automated release packaging.
@@ -45,7 +45,7 @@ orchestrate use cases, and the UI only presents.**
 |---|---|
 | Language | C# / .NET 8 |
 | UI | Blazor Server |
-| Data | Entity Framework Core (Code-First), Azure SQL Edge on Docker, TPH inheritance, Unit of Work |
+| Data | Entity Framework Core (Code-First), Azure SQL Edge on Docker, TPH inheritance |
 | Testing | MSTest + test doubles (EF InMemory provider; SQLite in-memory for FK behavior) |
 | Export | CsvHelper, ClosedXML |
 | Tooling | Git & Gitflow, GitHub Actions, Docker |
@@ -65,7 +65,7 @@ UI  ──▶  Services  ──▶  Domain
 |---|---|---|
 | Domain | `WorldCupPlanner.Domain` | Entities, invariants, enums and business exceptions |
 | Services | `WorldCupPlanner.Services` | Use cases, orchestration, DTOs, auditing and simulation engines |
-| Data | `WorldCupPlanner.DataAccess` | `AppDbContext`, EF repositories, configurations, migrations, `IUnitOfWork` |
+| Data | `WorldCupPlanner.DataAccess` | `AppDbContext`, EF repositories, configurations, migrations |
 | UI | `WorldCupPlanner.UI` | Blazor Server — presentation only |
 | Seeder | `WorldCupPlanner.DataSeeder` | Console app that resets the database and loads a full demo tournament |
 | Tests | `WorldCupPlanner.*.Tests` | One MSTest suite per layer |

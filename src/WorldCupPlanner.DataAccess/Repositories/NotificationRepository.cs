@@ -18,13 +18,31 @@ public class NotificationRepository : INotificationRepository
 
     public void Add(Notification notification)
     {
+        AddRange(new[] { notification });
+    }
+
+    // Un contexto, una consulta de usuarios y un SaveChanges para toda la tanda.
+    public void AddRange(IReadOnlyCollection<Notification> notifications)
+    {
+        if (notifications.Count == 0)
+        {
+            return;
+        }
+
         using AppDbContext context = _contextFactory.CreateDbContext();
 
-        User existingUser = context.Users.FirstOrDefault(u => u.idUser == notification.UserId)
-            ?? throw new InvalidOperationException(UserNotFoundMessage);
+        List<int> userIds = notifications.Select(n => n.UserId).Distinct().ToList();
+        Dictionary<int, User> existingUsers = context.Users
+            .Where(u => userIds.Contains(u.idUser))
+            .ToDictionary(u => u.idUser);
 
-        notification.User = existingUser;
-        context.Notifications.Add(notification);
+        foreach (Notification notification in notifications)
+        {
+            notification.User = existingUsers.GetValueOrDefault(notification.UserId)
+                ?? throw new InvalidOperationException(UserNotFoundMessage);
+        }
+
+        context.Notifications.AddRange(notifications);
         context.SaveChanges();
     }
 

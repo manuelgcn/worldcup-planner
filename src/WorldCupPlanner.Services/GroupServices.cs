@@ -8,17 +8,15 @@ namespace WorldCupPlanner.Services;
 public class GroupServices : IGroupService
 {
     private readonly IGroupRepository groupRepository;
-    private readonly IUnitOfWork unitOfWork;
     private readonly IAuditLogService auditLogService;
 
     private const string DuplicateGroupNameMessage = "El nombre del grupo debe ser unico en el sistema.";
     private const string GroupNotFoundMessage = "No se encontro el grupo.";
 
-    public GroupServices(IGroupRepository groupRepository, IUnitOfWork unitOfWork, IAuditLogService auditLogService)
+    public GroupServices(IGroupRepository groupRepository, IAuditLogService auditLogService)
     {
         ArgumentNullException.ThrowIfNull(auditLogService);
         this.groupRepository = groupRepository;
-        this.unitOfWork = unitOfWork;
         this.auditLogService = auditLogService;
     }
 
@@ -41,7 +39,6 @@ public class GroupServices : IGroupService
             AuditActions.CreateGroup,
             $"Group '{group.Name}' created.",
             nameof(Group));
-        unitOfWork.Commit();
     }
 
     public Group GetByName(string name)
@@ -60,6 +57,5 @@ public class GroupServices : IGroupService
             AuditActions.DeleteGroup,
             $"Group '{group.Name}' removed.",
             nameof(Group));
-        unitOfWork.Commit();
     }
 }

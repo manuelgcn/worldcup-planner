@@ -9,26 +9,23 @@ namespace WorldCupPlanner.Services.Tests;
 public sealed class GroupServicesTests
 {
     private MockGroupRepository _repo = null!;
-    private MockUnitOfWork _uow = null!;
     private GroupServices _service = null!;
 
     [TestInitialize]
     public void Setup()
     {
         _repo = new MockGroupRepository();
-        _uow = new MockUnitOfWork();
-        _service = new GroupServices(_repo, _uow, new MockAuditLogService());
+        _service = new GroupServices(_repo, new MockAuditLogService());
     }
 
     [TestMethod]
-    public void AddGroupCallsRepositoryAndCommits()
+    public void AddGroupCallsRepository()
     {
         Group group = CreateGroup("A");
 
         _service.AddGroup(group);
 
         Assert.AreEqual(1, _repo.AddCalls);
-        Assert.AreEqual(1, _uow.CommitCalls);
     }
 
     [TestMethod]
@@ -53,7 +50,6 @@ public sealed class GroupServicesTests
         _service.RemoveByName("A");
 
         Assert.AreEqual(1, _repo.DeleteCalls);
-        Assert.AreEqual(2, _uow.CommitCalls);
     }
 
     [TestMethod]

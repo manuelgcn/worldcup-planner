@@ -231,7 +231,7 @@
                 <section class="step-section">
                     <h4>4. Simular bracket eliminatorio</h4>
                     <p class="step-help">
-                        @if (IsBracketFullySimulated)
+                        @if (IsBracketComplete)
                         {
                             <text>El torneo está completo. ¡Hay campeón!</text>
                         }
@@ -245,12 +245,12 @@
                     {
                         <div class="step-actions">
                             <button class="btn btn-secondary"
-                                    disabled="@(IsBracketFullySimulated || isBusy)"
+                                    disabled="@(IsBracketComplete || isBusy)"
                                     @onclick="HandleSimulateNextRoundAsync">
                                 Simular siguiente ronda
                             </button>
                             <button class="btn btn-primary"
-                                    disabled="@(IsBracketFullySimulated || isBusy)"
+                                    disabled="@(IsBracketComplete || isBusy)"
                                     @onclick="HandleSimulateUntilFinalAsync">
                                 Simular hasta el final
                             </button>
@@ -397,27 +397,16 @@
     private bool HasBaseData =>
         teamCount >= RequiredTeamCount && stadiumCount >= MinimumStadiumCount;
 
-    private bool IsFixtureGenerated => FixtureOrchestrator.IsFixtureGenerated();
-    private bool IsKnockoutGenerated => KnockoutGenerator.IsBracketGenerated();
-    private bool IsGroupStageComplete => StandingsService.IsGroupStageComplete();
+    // Estado del asistente: las reglas viven en los servicios y se consultan una vez por
+    // recarga (ReloadState), no en cada render; cada consulta lee la base.
+    private bool IsFixtureGenerated { get; set; }
+    private bool IsKnockoutGenerated { get; set; }
+    private bool IsGroupStageComplete { get; set; }
+    private bool CanAdvancePhase { get; set; }
+    private bool IsBracketComplete { get; set; }
 
     private bool CanGenerateKnockout =>
         IsFixtureGenerated && IsGroupStageComplete && !IsKnockoutGenerated;
-
-    // La regla de "se puede avanzar" vive en el servicio (no en la UI): solo se delega.
-    private bool CanAdvancePhase => KnockoutGenerator.CanAdvanceToNextRound();
-
-    private bool IsBracketFullySimulated
-    {
-        get
-        {
-            if (eliminationMatches.Count == 0) return false;
-            bool hasFinal = eliminationMatches.Any(match => match.Phase == Phase.Final);
-            bool hasThird = eliminationMatches.Any(match => match.Phase == Phase.ThirdPlace);
-            if (!hasFinal || !hasThird) return false;
-            return eliminationMatches.All(match => match.WasSimulated);
-        }
-    }
 
     private WizardStep CurrentStep
     {
@@ -439,7 +428,7 @@
                 }
                 return new WizardStep(3, "Jugar fase de grupos", $"Faltan {pendingGroupMatches} partidos por simular. Andá a /simulator o /matches.", "step-3");
             }
-            if (!IsBracketFullySimulated)
+            if (!IsBracketComplete)
             {
                 return new WizardStep(4, "Simular bracket", "Avanzá las rondas eliminatorias hasta el final.", "step-4");
             }
@@ -465,6 +454,11 @@
             groupMatches = snapshot.GroupMatches.ToList();
             eliminationMatches = snapshot.EliminationMatches.ToList();
             pendingGroupMatches = StandingsService.PendingGroupStageMatchCount();
+            IsFixtureGenerated = FixtureOrchestrator.IsFixtureGenerated();
+            IsKnockoutGenerated = KnockoutGenerator.IsBracketGenerated();
+            IsGroupStageComplete = StandingsService.IsGroupStageComplete();
+            CanAdvancePhase = KnockoutGenerator.CanAdvanceToNextRound();
+            IsBracketComplete = KnockoutGenerator.IsBracketComplete();
             exportFromDate ??= snapshot.EarliestMatchDate?.Date ?? settings?.StartDate.Date ?? DateTime.UtcNow.Date;
             exportToDate ??= snapshot.LatestMatchDate?.Date ?? exportFromDate;
         }
@@ -635,7 +629,6 @@
         {
             await Task.Run(action);
             successMessage = successText;
-            ReloadState();
         }
         catch (FixtureOrchestratorException ex) { errors.Add(ex.Message); }
         catch (MatchServicesException ex) { errors.Add(ex.Message); }
@@ -647,6 +640,8 @@
         catch (InvalidOperationException ex) { errors.Add(ex.Message); }
         finally
         {
+            // Tambien tras un error: una simulacion que falla a mitad ya pudo guardar rondas.
+            ReloadState();
             isBusy = false;
         }
     }
@@ -659,7 +654,7 @@
 
     private string AdvancePhaseTooltip()
     {
-        if (IsBracketFullySimulated) return "El cuadro ya llegó a la final.";
+        if (IsBracketComplete) return "El cuadro ya llegó a la final.";
         if (!CanAdvancePhase) return "Cargá los resultados de todos los partidos de la ronda actual antes de avanzar.";
         return "Crea la siguiente ronda con los ganadores y la deja pendiente para cargar resultados a mano.";
     }

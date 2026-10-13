@@ -15,7 +15,7 @@ flowchart LR
 - **Services** implement the use cases: fixture generation, standings, knockout bracket,
   simulation, ranking, import/export, notifications and auditing.
 - **DataAccess** maps the domain with EF Core (`IEntityTypeConfiguration<T>` per entity,
-  TPH for `Match` and `MatchIncident`) and exposes repositories plus `IUnitOfWork`.
+  TPH for `Match` and `MatchIncident`) and exposes repositories.
 - **UI** only presents data and calls services.
 
 ## Domain model
@@ -128,7 +128,8 @@ chain from the Round of 32 to the final.
 - **Elo ranking.** `EloRankingCalculator` updates each team's ranking when a result is
   recorded; `RankingService` applies and reverts the deltas when a result is edited.
 - **Persistence.** Each repository works on a short-lived `AppDbContext` from
-  `IDbContextFactory`, and each operation is saved immediately through `IUnitOfWork`.
+  `IDbContextFactory` and saves each operation immediately. A use case that touches
+  several repositories is not one transaction.
 - **Errors.** Domain exceptions (`MatchException`, `SettingsException`, …) protect
   invariants; service exceptions (`MatchServicesException`, …) report use-case failures.
   The UI catches service exceptions and shows their message.

@@ -15,18 +15,18 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private const string TournamentSettingsRequiredMessage = "La configuracion del torneo es obligatoria para generar la fase 2.";
     private const string StadiumsRequiredMessage = "Se requiere al menos un estadio para generar la fase 2.";
     private const string GroupsRequiredMessage = "Deben existir los 12 grupos antes de generar el cuadro eliminatorio.";
-    private const string GroupStageIncompleteMessage = "La fase de grupos no esta completa: cada partido debe tener al menos un gol registrado.";
+    private const string GroupStageIncompleteMessage = "La fase de grupos no esta completa: todos los partidos deben tener un resultado cargado.";
     private const string BracketAlreadyGeneratedMessage = "El cuadro eliminatorio ya fue generado.";
     private const string BracketNotGeneratedMessage = "El cuadro eliminatorio aun no fue generado.";
     private const string BracketAlreadyCompleteMessage = "El cuadro eliminatorio ya llego a la final: no hay mas fases para avanzar.";
     private const string MissingGroupForTeamMessagePrefix = "No se encontro grupo para el equipo ";
+    private const string MatchWithoutWinnerMessage = "No se puede avanzar de fase: el partido {0} no tiene ganador.";
 
     private readonly ISimulationEngineRegistry _simulationEngineRegistry;
     private readonly IMatchRepository _matchRepository;
     private readonly IEliminationMatchRepository _eliminationRepository;
     private readonly IGroupRepository _groupRepository;
     private readonly ITournamentSettingsRepository _settingsRepository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditLogService _auditLog;
     private readonly IStadiumRepository _stadiumRepository;
     private readonly INotificationService _notificationService;
@@ -39,7 +39,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         IGroupRepository groupRepository,
         IStadiumRepository stadiumRepository,
         ITournamentSettingsRepository settingsRepository,
-        IUnitOfWork unitOfWork,
         IAuditLogService auditLog,
         INotificationService notificationService,
         IRankingService rankingService)
@@ -50,7 +49,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         ArgumentNullException.ThrowIfNull(groupRepository);
         ArgumentNullException.ThrowIfNull(stadiumRepository);
         ArgumentNullException.ThrowIfNull(settingsRepository);
-        ArgumentNullException.ThrowIfNull(unitOfWork);
         ArgumentNullException.ThrowIfNull(auditLog);
         ArgumentNullException.ThrowIfNull(notificationService);
         ArgumentNullException.ThrowIfNull(rankingService);
@@ -60,7 +58,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         _groupRepository = groupRepository;
         _stadiumRepository = stadiumRepository;
         _settingsRepository = settingsRepository;
-        _unitOfWork = unitOfWork;
         _auditLog = auditLog;
         _notificationService = notificationService;
         _rankingService = rankingService;
@@ -85,8 +82,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             throw new KnockoutGeneratorException(StadiumsRequiredMessage);
         }
 
-        // Se valida que cada equipo tenga grupo conocido (mismo invariante que el flujo anterior).
-        FlattenQualifiedTeams(qualifiedTeams);
+        EnsureEveryQualifiedTeamHasGroup(qualifiedTeams);
 
         EliminationBuilder builder = new EliminationBuilder();
         int maxPerDay = settings.MaxMatchesPerDay;
@@ -109,18 +105,21 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     public bool IsBracketGenerated()
     {
-        return _eliminationRepository != null && _eliminationRepository.GetAll().Count > 0;
+        return _eliminationRepository.Any();
+    }
+
+    public bool IsBracketComplete()
+    {
+        return IsBracketGenerated() && !HasPendingMatches();
     }
 
     public void GenerateBracket(int? crossingsSeedOverride, string? performedByEmail)
     {
-        IEliminationMatchRepository elimRepo = RequireEliminationRepository();
-        IGroupRepository groupRepo = RequireGroupRepository();
 
         EnsureBracketNotYetGenerated();
 
         TournamentSettings settings = LoadSettingsOrThrow();
-        IReadOnlyCollection<Group> groups = groupRepo.GetAll();
+        IReadOnlyCollection<Group> groups = _groupRepository.GetAll();
         EnsureTwelveGroups(groups);
         EnsureGroupStageComplete();
 
@@ -132,10 +131,9 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
         foreach (Match match in roundOf32)
         {
-            elimRepo.Add(match);
+            _eliminationRepository.Add(match);
         }
 
-        _unitOfWork.Commit();
 
         _auditLog.LogPerformedBy(
             AuditActions.GenerateKnockout,
@@ -146,13 +144,12 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     public void SimulateNextRound(string? performedByEmail)
     {
-        IEliminationMatchRepository elimRepo = RequireEliminationRepository();
         EnsureBracketGenerated();
         TournamentSettings settings = LoadSettingsOrThrow();
 
-        List<MatchElimination> all = LoadAllEliminationMatches(elimRepo);
+        List<MatchElimination> all = LoadAllEliminationMatches();
 
-        if (TrySimulatePhase(all, Phase.RoundOf32, settings, elimRepo, performedByEmail))
+        if (TrySimulatePhase(all, Phase.RoundOf32, settings, performedByEmail))
         {
             return;
         }
@@ -160,20 +157,20 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         Phase[] phasesAfterR32 = { Phase.RoundOf16, Phase.QuarterFinals, Phase.SemiFinal };
         foreach (Phase phase in phasesAfterR32)
         {
-            if (TryCreateAndSimulatePhaseFromPrevious(all, phase, settings, elimRepo, performedByEmail))
+            if (TryCreateAndSimulatePhaseFromPrevious(all, phase, settings, performedByEmail))
             {
                 return;
             }
 
-            all = LoadAllEliminationMatches(elimRepo);
+            all = LoadAllEliminationMatches();
 
-            if (TrySimulatePhase(all, phase, settings, elimRepo, performedByEmail))
+            if (TrySimulatePhase(all, phase, settings, performedByEmail))
             {
                 return;
             }
         }
 
-        TryCreateAndSimulateFinalAndThirdPlace(all, settings, elimRepo, performedByEmail);
+        TryCreateAndSimulateFinalAndThirdPlace(all, settings, performedByEmail);
     }
 
     // Fases que pueden originar un avance manual hacia su fase siguiente, de la mas
@@ -189,7 +186,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             return false;
         }
 
-        List<MatchElimination> all = LoadAllEliminationMatches(_eliminationRepository);
+        List<MatchElimination> all = LoadAllEliminationMatches();
         if (all.Count == 0 || all.Any(match => match.Phase == Phase.Final))
         {
             return false;
@@ -217,10 +214,9 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     public void AdvanceToNextRound(string? performedByEmail)
     {
-        IEliminationMatchRepository elimRepo = RequireEliminationRepository();
         EnsureBracketGenerated();
         TournamentSettings settings = LoadSettingsOrThrow();
-        List<MatchElimination> all = LoadAllEliminationMatches(elimRepo);
+        List<MatchElimination> all = LoadAllEliminationMatches();
 
         if (all.Any(match => match.Phase == Phase.Final))
         {
@@ -234,20 +230,20 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             EnsurePhaseFullyPlayed(semiFinals, Phase.SemiFinal);
 
             // Se agrega la Final ANTES de crear el Tercer puesto: ambos derivan su MatchId de
-            // NextMatchId(elimRepo), por lo que persistir la Final primero evita que compartan id.
-            List<MatchElimination> finalMatches = CreateRoundFromWinners(semiFinals, Phase.Final, settings, elimRepo);
+            // NextMatchId(), por lo que persistir la Final primero evita que compartan id.
+            List<MatchElimination> finalMatches = CreateRoundFromWinners(semiFinals, Phase.Final, settings);
             foreach (MatchElimination match in finalMatches)
             {
-                elimRepo.Add(match);
+                _eliminationRepository.Add(match);
             }
 
-            List<MatchElimination> thirdPlaceMatches = CreateRoundFromLosers(semiFinals, Phase.ThirdPlace, settings, elimRepo);
+            List<MatchElimination> thirdPlaceMatches = CreateRoundFromLosers(semiFinals, Phase.ThirdPlace, settings);
             foreach (MatchElimination match in thirdPlaceMatches)
             {
-                elimRepo.Add(match);
+                _eliminationRepository.Add(match);
             }
 
-            CommitAndAuditAdvance(Phase.Final, performedByEmail);
+            AuditAdvance(Phase.Final, performedByEmail);
             return;
         }
 
@@ -263,8 +259,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
             EnsurePhaseFullyPlayed(phaseMatches, phase);
             Phase next = NextPhase(phase);
-            List<MatchElimination> created = CreateRoundFromWinners(phaseMatches, next, settings, elimRepo);
-            PersistAndAuditAdvance(created, elimRepo, next, performedByEmail);
+            List<MatchElimination> created = CreateRoundFromWinners(phaseMatches, next, settings);
+            PersistAndAuditAdvance(created, next, performedByEmail);
             return;
         }
 
@@ -273,21 +269,19 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     private void PersistAndAuditAdvance(
         List<MatchElimination> created,
-        IEliminationMatchRepository elimRepo,
         Phase createdPhase,
         string? performedByEmail)
     {
         foreach (MatchElimination match in created)
         {
-            elimRepo.Add(match);
+            _eliminationRepository.Add(match);
         }
 
-        CommitAndAuditAdvance(createdPhase, performedByEmail);
+        AuditAdvance(createdPhase, performedByEmail);
     }
 
-    private void CommitAndAuditAdvance(Phase createdPhase, string? performedByEmail)
+    private void AuditAdvance(Phase createdPhase, string? performedByEmail)
     {
-        _unitOfWork.Commit();
         _auditLog.LogPerformedBy(
             AuditActions.AdvanceRound,
             $"Advanced bracket to phase {createdPhase} (pending manual results).",
@@ -340,7 +334,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         List<MatchElimination> all,
         Phase phase,
         TournamentSettings settings,
-        IEliminationMatchRepository elimRepo,
         string? performedByEmail)
     {
         List<MatchElimination> phaseMatches = all.Where(match => match.Phase == phase).ToList();
@@ -355,8 +348,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             return false;
         }
 
-        SimulateMatches(unplayed, settings, elimRepo);
-        CommitAndAuditRound(phase, performedByEmail);
+        SimulateMatches(unplayed, settings);
+        AuditRound(phase, settings.SimulationSeed, performedByEmail);
         return true;
     }
 
@@ -364,7 +357,6 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         List<MatchElimination> all,
         Phase phase,
         TournamentSettings settings,
-        IEliminationMatchRepository elimRepo,
         string? performedByEmail)
     {
         List<MatchElimination> existing = all.Where(match => match.Phase == phase).ToList();
@@ -380,21 +372,20 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             return false;
         }
 
-        List<MatchElimination> created = CreateRoundFromWinners(previous, phase, settings, elimRepo);
+        List<MatchElimination> created = CreateRoundFromWinners(previous, phase, settings);
         foreach (MatchElimination match in created)
         {
-            elimRepo.Add(match);
+            _eliminationRepository.Add(match);
         }
 
-        SimulateMatches(created, settings, elimRepo);
-        CommitAndAuditRound(phase, performedByEmail);
+        SimulateMatches(created, settings);
+        AuditRound(phase, settings.SimulationSeed, performedByEmail);
         return true;
     }
 
     private bool TryCreateAndSimulateFinalAndThirdPlace(
         List<MatchElimination> all,
         TournamentSettings settings,
-        IEliminationMatchRepository elimRepo,
         string? performedByEmail)
     {
         List<MatchElimination> semiFinals = all.Where(match => match.Phase == Phase.SemiFinal).ToList();
@@ -408,20 +399,20 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
         if (existingFinals.Count == 0 && existingThirds.Count == 0)
         {
-            List<MatchElimination> finalMatches = CreateRoundFromWinners(semiFinals, Phase.Final, settings, elimRepo);
+            List<MatchElimination> finalMatches = CreateRoundFromWinners(semiFinals, Phase.Final, settings);
             foreach (MatchElimination match in finalMatches)
             {
-                elimRepo.Add(match);
+                _eliminationRepository.Add(match);
             }
 
-            List<MatchElimination> thirdMatches = CreateRoundFromLosers(semiFinals, Phase.ThirdPlace, settings, elimRepo);
+            List<MatchElimination> thirdMatches = CreateRoundFromLosers(semiFinals, Phase.ThirdPlace, settings);
             foreach (MatchElimination match in thirdMatches)
             {
-                elimRepo.Add(match);
+                _eliminationRepository.Add(match);
             }
 
-            SimulateMatches(finalMatches.Concat(thirdMatches).ToList(), settings, elimRepo);
-            CommitAndAuditRound(Phase.Final, performedByEmail);
+            SimulateMatches(finalMatches.Concat(thirdMatches).ToList(), settings);
+            AuditRound(Phase.Final, settings.SimulationSeed, performedByEmail);
             return true;
         }
 
@@ -431,18 +422,17 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             return false;
         }
 
-        SimulateMatches(pending, settings, elimRepo);
-        CommitAndAuditRound(Phase.Final, performedByEmail);
+        SimulateMatches(pending, settings);
+        AuditRound(Phase.Final, settings.SimulationSeed, performedByEmail);
         return true;
     }
 
     private List<MatchElimination> CreateRoundFromWinners(
         List<MatchElimination> previousRound,
         Phase nextPhase,
-        TournamentSettings settings,
-        IEliminationMatchRepository elimRepo)
+        TournamentSettings settings)
     {
-        int nextId = NextMatchId(elimRepo);
+        int nextId = NextMatchId();
         // Calendario por ronda (igual que BuildRoundOf32): rota estadio y franja horaria por indice
         // de partido para que ningun par comparta (estadio, dia, hora). Antes todos los partidos de
         // la ronda compartian estadio y fecha fijos, colisionando en octavos (8) y cuartos (4).
@@ -458,8 +448,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         {
             MatchElimination sourceHome = previousRound[i];
             MatchElimination sourceAway = previousRound[i + 1];
-            Team home = sourceHome.GetWinner() ?? sourceHome.HomeTeam!;
-            Team away = sourceAway.GetWinner() ?? sourceAway.HomeTeam!;
+            Team home = WinnerOf(sourceHome);
+            Team away = WinnerOf(sourceAway);
             string code = $"{nextPhase}-{nextId}";
 
             MatchElimination match = MatchElimination.CreateMatchWithConfig(
@@ -484,15 +474,14 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private List<MatchElimination> CreateRoundFromLosers(
         List<MatchElimination> semiFinals,
         Phase phase,
-        TournamentSettings settings,
-        IEliminationMatchRepository elimRepo)
+        TournamentSettings settings)
     {
         if (semiFinals.Count != 2)
         {
             return new List<MatchElimination>();
         }
 
-        int nextId = NextMatchId(elimRepo);
+        int nextId = NextMatchId();
         // El tercer puesto es un unico partido: el calendario por ronda le asigna el primer slot
         // (14:00) de la fecha base de la fase, en un estadio segun la rotacion.
         KnockoutRoundScheduler scheduler = CreateRoundScheduler(settings, phase);
@@ -553,21 +542,21 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         };
     }
 
+    private static Team WinnerOf(MatchElimination match)
+    {
+        return match.GetWinner()
+            ?? throw new MatchServicesException(string.Format(MatchWithoutWinnerMessage, match.MatchCode));
+    }
+
     private static Team LoserOf(MatchElimination match)
     {
-        Team? winner = match.GetWinner();
-        if (winner == null)
-        {
-            return match.AwayTeam!;
-        }
-
+        Team winner = WinnerOf(match);
         return ReferenceEquals(winner, match.HomeTeam) ? match.AwayTeam! : match.HomeTeam!;
     }
 
     private void SimulateMatches(
         List<MatchElimination> matches,
-        TournamentSettings settings,
-        IEliminationMatchRepository elimRepo)
+        TournamentSettings settings)
     {
         IMatchSimulationEngine engine = ResolveSelectedEngine(settings);
         foreach (MatchElimination match in matches)
@@ -575,9 +564,10 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             int seed = settings.SimulationSeed + match.MatchId;
             engine.Simulate(match, seed);
             ApplyRankingUpdate(match);
-            elimRepo.Update(match);
-            NotifyJournalistsAboutSimulatedResult(match);
+            _eliminationRepository.Update(match);
         }
+
+        _notificationService.NotifyMatchesSimulated(matches);
     }
 
     private void ApplyRankingUpdate(Match match)
@@ -590,19 +580,18 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         return _simulationEngineRegistry.Resolve(settings.SelectedSimulationEngine);
     }
 
-    private void CommitAndAuditRound(Phase phase, string? performedByEmail)
+    private void AuditRound(Phase phase, int simulationSeed, string? performedByEmail)
     {
-        _unitOfWork.Commit();
         _auditLog.LogPerformedBy(
             AuditActions.SimulateRound,
-            $"Simulated phase {phase}.",
+            $"Simulated phase {phase} with seed {simulationSeed}.",
             performedByEmail,
             nameof(KnockoutFixtureGenerator));
     }
 
     private bool HasPendingMatches()
     {
-        List<MatchElimination> all = LoadAllEliminationMatches(_eliminationRepository);
+        List<MatchElimination> all = LoadAllEliminationMatches();
         if (all.Count == 0)
         {
             return false;
@@ -619,9 +608,9 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         return all.Any(match => !IsMatchPlayed(match));
     }
 
-    private static List<MatchElimination> LoadAllEliminationMatches(IEliminationMatchRepository elimRepo)
+    private List<MatchElimination> LoadAllEliminationMatches()
     {
-        return elimRepo.GetAll().OfType<MatchElimination>().ToList();
+        return _eliminationRepository.GetAll().OfType<MatchElimination>().ToList();
     }
 
     private TournamentSettings LoadSettingsOrThrow()
@@ -686,19 +675,9 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         return match.HasResult;
     }
 
-    private IEliminationMatchRepository RequireEliminationRepository()
+    private int NextMatchId()
     {
-        return _eliminationRepository;
-    }
-
-    private IGroupRepository RequireGroupRepository()
-    {
-        return _groupRepository;
-    }
-
-    private int NextMatchId(IEliminationMatchRepository elimRepo)
-    {
-        int max = elimRepo.GetAll().Select(match => match.MatchId).DefaultIfEmpty(FirstNewMatchIdSeed - 1).Max();
+        int max = _eliminationRepository.GetAll().Select(match => match.MatchId).DefaultIfEmpty(FirstNewMatchIdSeed - 1).Max();
         return max + 1;
     }
 
@@ -715,32 +694,20 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         };
     }
 
-    private static List<(Team Team, string Group)> FlattenQualifiedTeams(QualifiedTeams qualifiedTeams)
+    private static void EnsureEveryQualifiedTeamHasGroup(QualifiedTeams qualifiedTeams)
     {
-        List<Team> orderedTeams = qualifiedTeams.TopEightFirsts
+        IEnumerable<Team> qualified = qualifiedTeams.TopEightFirsts
             .Concat(qualifiedTeams.RemainingFourFirsts)
             .Concat(qualifiedTeams.TopEightSeconds)
             .Concat(qualifiedTeams.WorstFourSeconds)
-            .Concat(qualifiedTeams.BestEightThirds)
-            .ToList();
+            .Concat(qualifiedTeams.BestEightThirds);
 
-        List<(Team Team, string Group)> qualifiedWithGroups = new(orderedTeams.Count);
-
-        foreach (Team team in orderedTeams)
+        foreach (Team team in qualified)
         {
             if (!qualifiedTeams.GroupByTeamId.TryGetValue(team.Id, out string? groupName) || string.IsNullOrWhiteSpace(groupName))
             {
                 throw new KnockoutGeneratorException($"{MissingGroupForTeamMessagePrefix}{team.Id}.");
             }
-
-            qualifiedWithGroups.Add((team, groupName));
         }
-
-        return qualifiedWithGroups;
-    }
-
-    private void NotifyJournalistsAboutSimulatedResult(Match match)
-    {
-        _notificationService.NotifyMatchSimulated(match);
     }
 }

@@ -8,8 +8,6 @@ public sealed class GroupQualifier
     private const int FirstPlaceIndex = 0;
     private const int SecondPlaceIndex = 1;
     private const int ThirdPlaceIndex = 2;
-    private const int PointsForWin = 3;
-    private const int PointsForDraw = 1;
     private const int TopFirstsCount = 8;
     private const int RemainingFirstsCount = 4;
     private const int TopSecondsCount = 8;
@@ -26,9 +24,9 @@ public sealed class GroupQualifier
             .OrderBy(group => group.Name, StringComparer.Ordinal)
             .ToList();
 
-        List<TeamStanding> firstPlaceStandings = new List<TeamStanding>();
-        List<TeamStanding> secondPlaceStandings = new List<TeamStanding>();
-        List<TeamStanding> thirdPlaceStandings = new List<TeamStanding>();
+        List<GroupStanding> firstPlaceStandings = new List<GroupStanding>();
+        List<GroupStanding> secondPlaceStandings = new List<GroupStanding>();
+        List<GroupStanding> thirdPlaceStandings = new List<GroupStanding>();
         Dictionary<int, string> groupByTeamId = new Dictionary<int, string>();
 
         int groupIndex = 0;
@@ -39,14 +37,16 @@ public sealed class GroupQualifier
                 groupByTeamId[team.Id] = group.Name;
             }
 
-            List<TeamStanding> standings = BuildStandingsForGroup(group, playedMatches, seed, groupIndex);
+            IEnumerable<Match> groupMatches = playedMatches
+                .OfType<MatchGroup>()
+                .Where(match => match.Group != null && match.Group.Name == group.Name);
+            List<GroupStanding> orderedStandings = RankGroup(group, groupMatches, seed, groupIndex);
 
-            if (standings.Count != TeamsPerGroup)
+            if (orderedStandings.Count != TeamsPerGroup)
             {
                 throw new InvalidOperationException(InvalidGroupSizeMessage);
             }
 
-            List<TeamStanding> orderedStandings = OrderStandings(standings).ToList();
             firstPlaceStandings.Add(orderedStandings[FirstPlaceIndex]);
             secondPlaceStandings.Add(orderedStandings[SecondPlaceIndex]);
             thirdPlaceStandings.Add(orderedStandings[ThirdPlaceIndex]);
@@ -54,9 +54,9 @@ public sealed class GroupQualifier
             groupIndex++;
         }
 
-        List<TeamStanding> orderedFirsts = OrderStandings(firstPlaceStandings).ToList();
-        List<TeamStanding> orderedSeconds = OrderStandings(secondPlaceStandings).ToList();
-        List<TeamStanding> orderedThirds = OrderStandings(thirdPlaceStandings).ToList();
+        List<GroupStanding> orderedFirsts = OrderStandings(firstPlaceStandings).ToList();
+        List<GroupStanding> orderedSeconds = OrderStandings(secondPlaceStandings).ToList();
+        List<GroupStanding> orderedThirds = OrderStandings(thirdPlaceStandings).ToList();
 
         return new QualifiedTeams
         {
@@ -69,60 +69,35 @@ public sealed class GroupQualifier
         };
     }
 
-    private static List<TeamStanding> BuildStandingsForGroup(
-        Group group,
-        List<Match> playedMatches,
-        int seed,
-        int groupIndex)
+    // Tabla de un grupo ya ordenada. La usan la clasificacion y la tabla visible
+    // (GroupStandingsService), asi las dos no pueden calcular ni ordenar distinto.
+    // 'matches' son los partidos de ese grupo; los que no tienen resultado no cuentan.
+    public static List<GroupStanding> RankGroup(Group group, IEnumerable<Match> matches, int seed, int groupIndex)
     {
-        Dictionary<int, TeamStanding> standings = new Dictionary<int, TeamStanding>();
-        foreach (Team team in group.Teams)
+        ArgumentNullException.ThrowIfNull(group);
+        ArgumentNullException.ThrowIfNull(matches);
+
+        Dictionary<int, GroupStanding> standings = group.Teams.ToDictionary(
+            team => team.Id,
+            team => new GroupStanding(team, GroupTieBreaker.Compute(seed, groupIndex, team.Id)));
+
+        foreach (Match match in matches.Where(match => match.HasResult))
         {
-            standings[team.Id] = new TeamStanding(team, GetTieBreaker(seed, groupIndex, team.Id));
-        }
-
-        List<MatchGroup> groupMatches = playedMatches
-            .OfType<MatchGroup>()
-            .Where(match => match.Group != null && match.Group.Name == group.Name)
-            .ToList();
-
-        foreach (MatchGroup match in groupMatches)
-        {
-            Team? homeTeam = match.HomeTeam;
-            Team? awayTeam = match.AwayTeam;
-
-            if (homeTeam == null || awayTeam == null)
+            if (match.HomeTeam == null || match.AwayTeam == null
+                || !standings.TryGetValue(match.HomeTeam.Id, out GroupStanding? home)
+                || !standings.TryGetValue(match.AwayTeam.Id, out GroupStanding? away))
             {
                 continue;
             }
 
-            TeamStanding homeStanding = standings[homeTeam.Id];
-            TeamStanding awayStanding = standings[awayTeam.Id];
-
-            homeStanding.GoalsFor += match.HomeGoals;
-            homeStanding.GoalsAgainst += match.AwayGoals;
-            awayStanding.GoalsFor += match.AwayGoals;
-            awayStanding.GoalsAgainst += match.HomeGoals;
-
-            if (match.HomeGoals > match.AwayGoals)
-            {
-                homeStanding.Points += PointsForWin;
-            }
-            else if (match.HomeGoals < match.AwayGoals)
-            {
-                awayStanding.Points += PointsForWin;
-            }
-            else
-            {
-                homeStanding.Points += PointsForDraw;
-                awayStanding.Points += PointsForDraw;
-            }
+            home.RegisterResult(match.HomeGoals, match.AwayGoals);
+            away.RegisterResult(match.AwayGoals, match.HomeGoals);
         }
 
-        return standings.Values.ToList();
+        return OrderStandings(standings.Values).ToList();
     }
 
-    private static IOrderedEnumerable<TeamStanding> OrderStandings(IEnumerable<TeamStanding> standings)
+    private static IOrderedEnumerable<GroupStanding> OrderStandings(IEnumerable<GroupStanding> standings)
     {
         return standings
             .OrderByDescending(standing => standing.Points)
@@ -132,40 +107,12 @@ public sealed class GroupQualifier
             .ThenBy(standing => standing.Team.Id);
     }
 
-    private static List<Team> TakeTeams(List<TeamStanding> standings, int startIndex, int count)
+    private static List<Team> TakeTeams(List<GroupStanding> standings, int startIndex, int count)
     {
         return standings
             .Skip(startIndex)
             .Take(count)
             .Select(standing => standing.Team)
             .ToList();
-    }
-
-    private static int GetTieBreaker(int seed, int groupIndex, int teamId)
-    {
-        // Desempate compartido con la tabla visible (GroupStandingsService) para que clasificacion
-        // y tabla ordenen identico ante empate exacto (H8).
-        return GroupTieBreaker.Compute(seed, groupIndex, teamId);
-    }
-
-    private sealed class TeamStanding
-    {
-        public TeamStanding(Team team, int tieBreaker)
-        {
-            Team = team;
-            TieBreaker = tieBreaker;
-        }
-
-        public Team Team { get; }
-
-        public int Points { get; set; }
-
-        public int GoalsFor { get; set; }
-
-        public int GoalsAgainst { get; set; }
-
-        public int GoalDifference => GoalsFor - GoalsAgainst;
-
-        public int TieBreaker { get; }
     }
 }

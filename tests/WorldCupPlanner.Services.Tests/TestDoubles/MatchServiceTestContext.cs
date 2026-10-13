@@ -31,7 +31,6 @@ public sealed class MatchServiceTestContext
     public MockEliminationMatchRepository EliminationMatchRepository { get; } = new MockEliminationMatchRepository();
     public MockMatchSimulationEngine SimulationEngine { get; } = new MockMatchSimulationEngine();
     public Mock<IRankingService> RankingServiceMock { get; } = new Mock<IRankingService>();
-    public MockUnitOfWork UnitOfWork { get; } = new MockUnitOfWork();
     public MockNotificationRepository NotificationRepository { get; } = new MockNotificationRepository();
     public MockUserRepository UserRepository { get; } = new MockUserRepository();
     public IReadOnlyCollection<AuditLog> AuditLogs => _auditLog.AsReadOnly();
@@ -114,13 +113,12 @@ public sealed class MatchServiceTestContext
             AuditLogService, // <-- Inyectado directamente en el servicio
             RankingServiceMock.Object,
             NotificationService,
-            UnitOfWork,
             EliminationMatchRepository);
     }
 
     /// <summary>
     /// Helper used by Phase 6 guard tests: seeds an arbitrary MatchElimination
-    /// into the elimination repository so MatchService.EnsureGroupMatchIsEditable
+    /// into the elimination repository so MatchService.EnsureMatchIsEditable
     /// trips its guard. The elimination match is a stub — only its presence
     /// in the repository matters.
     /// </summary>

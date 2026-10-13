@@ -220,6 +220,17 @@
 
         try
         {
+            // El servicio es el controlador del caso de uso: registra goles, ranking,
+            // auditoria y notificacion. La UI solo captura datos y delega.
+            // Va antes que la fecha: si el resultado se rechaza (empate en eliminatoria) no queda
+            // nada guardado a medias. En eliminatoria un marcador sin cambios no se re-registra:
+            // un 0-0 pendiente no es un resultado.
+            bool scoreChanged = homeGoals != Match.HomeGoals || awayGoals != Match.AwayGoals;
+            if (Match is not MatchElimination || scoreChanged)
+            {
+                MatchService.RegisterResult(Match.MatchId, homeGoals, awayGoals, PerformedByEmail);
+            }
+
             if (ShowDateAndStadium)
             {
                 MatchService.UpdateMatch(Match.MatchId, new UpdateMatchRequestDto
@@ -228,10 +239,6 @@
                     StadiumId = stadiumId
                 });
             }
-
-            // El servicio es el controlador del caso de uso: registra goles, ranking,
-            // auditoria y notificacion. La UI solo captura datos y delega.
-            MatchService.RegisterResult(Match.MatchId, homeGoals, awayGoals, PerformedByEmail);
 
             await OnSaved.InvokeAsync("Resultado guardado correctamente");
         }

@@ -40,20 +40,6 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    public void CreateGroupMatch_WithValidData_CallsCommitExactlyOnce()
-    {
-        // Arrange
-        CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
-        int initialCommitCount = _context.UnitOfWork.CommitCalls;
-
-        // Act
-        _context.Service.CreateMatch(request);
-
-        // Assert
-        Assert.AreEqual(initialCommitCount + 1, _context.UnitOfWork.CommitCalls);
-    }
-
-    [TestMethod]
     public void CreateGroupMatch_WithValidData_LogsAuditEntry()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
@@ -105,21 +91,6 @@ public sealed class MatchServiceTest
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual(2, result.MatchId);
-    }
-
-    [TestMethod]
-    public void CreateEliminationMatch_WithValidData_CallsCommitExactlyOnce()
-    {
-        // Arrange
-        _context.AddSourceEliminationMatches();
-        CreateMatchRequestDto request = BuildEliminationMatchRequest(matchId: 2);
-        int initialCommitCount = _context.UnitOfWork.CommitCalls;
-
-        // Act
-        _context.Service.CreateMatch(request);
-
-        // Assert
-        Assert.AreEqual(initialCommitCount + 1, _context.UnitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -318,14 +289,12 @@ public sealed class MatchServiceTest
         _context.Service.CreateMatch(createRequest);
         UpdateMatchRequestDto updateRequest = new UpdateMatchRequestDto();
         int initialUpdateCalls = _context.MatchRepository.UpdateCalls;
-        int initialCommitCalls = _context.UnitOfWork.CommitCalls;
 
         // Act
         _context.Service.UpdateMatch(matchId: 1, request: updateRequest);
 
         // Assert
         Assert.AreEqual(initialUpdateCalls + 1, _context.MatchRepository.UpdateCalls);
-        Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -348,20 +317,18 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    public void DeleteMatch_WithValidId_DeletesAndCommits()
+    public void DeleteMatch_WithValidId_DeletesMatch()
     {
         // Arrange
         CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
         _context.Service.CreateMatch(request);
         int initialDeleteCalls = _context.MatchRepository.DeleteCalls;
-        int initialCommitCalls = _context.UnitOfWork.CommitCalls;
 
         // Act
         _context.Service.DeleteMatch(matchId: 1);
 
         // Assert
         Assert.AreEqual(initialDeleteCalls + 1, _context.MatchRepository.DeleteCalls);
-        Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);
         
         // Verify match is actually deleted
         MatchServicesException deleteException = Assert.ThrowsException<MatchServicesException>(
@@ -582,20 +549,18 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    public void AddGoal_ForHomeTeam_UpdatesAndCommits()
+    public void AddGoal_ForHomeTeam_UpdatesMatch()
     {
         // Arrange
         CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
         _context.Service.CreateMatch(request);
         int initialUpdateCalls = _context.MatchRepository.UpdateCalls;
-        int initialCommitCalls = _context.UnitOfWork.CommitCalls;
 
         // Act
         _context.Service.AddGoal(matchId: 1, isHomeTeam: true);
 
         // Assert
         Assert.AreEqual(initialUpdateCalls + 1, _context.MatchRepository.UpdateCalls);
-        Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -637,20 +602,18 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    public void AddGoal_ForAwayTeam_UpdatesAndCommits()
+    public void AddGoal_ForAwayTeam_UpdatesMatch()
     {
         // Arrange
         CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
         _context.Service.CreateMatch(request);
         int initialUpdateCalls = _context.MatchRepository.UpdateCalls;
-        int initialCommitCalls = _context.UnitOfWork.CommitCalls;
 
         // Act
         _context.Service.AddGoal(matchId: 1, isHomeTeam: false);
 
         // Assert
         Assert.AreEqual(initialUpdateCalls + 1, _context.MatchRepository.UpdateCalls);
-        Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -680,21 +643,19 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    public void RemoveGoal_FromHomeTeam_UpdatesAndCommits()
+    public void RemoveGoal_FromHomeTeam_UpdatesMatch()
     {
         // Arrange
         CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
         _context.Service.CreateMatch(request);
         _context.Service.AddGoal(matchId: 1, isHomeTeam: true);
         int initialUpdateCalls = _context.MatchRepository.UpdateCalls;
-        int initialCommitCalls = _context.UnitOfWork.CommitCalls;
 
         // Act
         _context.Service.RemoveGoal(matchId: 1, isHomeTeam: true);
 
         // Assert
         Assert.AreEqual(initialUpdateCalls + 1, _context.MatchRepository.UpdateCalls);
-        Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -738,21 +699,19 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    public void RemoveGoal_FromAwayTeam_UpdatesAndCommits()
+    public void RemoveGoal_FromAwayTeam_UpdatesMatch()
     {
         // Arrange
         CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
         _context.Service.CreateMatch(request);
         _context.Service.AddGoal(matchId: 1, isHomeTeam: false);
         int initialUpdateCalls = _context.MatchRepository.UpdateCalls;
-        int initialCommitCalls = _context.UnitOfWork.CommitCalls;
 
         // Act
         _context.Service.RemoveGoal(matchId: 1, isHomeTeam: false);
 
         // Assert
         Assert.AreEqual(initialUpdateCalls + 1, _context.MatchRepository.UpdateCalls);
-        Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -762,20 +721,18 @@ public sealed class MatchServiceTest
     }
 
     [TestMethod]
-    public void PublishResult_WithValidMatchId_UpdatesAndCommits()
+    public void PublishResult_WithValidMatchId_UpdatesMatch()
     {
         // Arrange
         CreateMatchRequestDto request = BuildGroupMatchRequest(matchId: 1);
         _context.Service.CreateMatch(request);
         int initialUpdateCalls = _context.MatchRepository.UpdateCalls;
-        int initialCommitCalls = _context.UnitOfWork.CommitCalls;
 
         // Act
         _context.Service.PublishResult(matchId: 1);
 
         // Assert
         Assert.AreEqual(initialUpdateCalls + 1, _context.MatchRepository.UpdateCalls);
-        Assert.AreEqual(initialCommitCalls + 1, _context.UnitOfWork.CommitCalls);
     }
 
     [TestMethod]

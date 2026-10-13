@@ -42,6 +42,40 @@ public class NotificationRepositoryTest
     }
 
     [TestMethod]
+    public void AddRangeStoresTheWholeBatchForSeveralUsers()
+    {
+        User ana = SeedUser(1, "ana@mail.com");
+        User luis = SeedUser(2, "luis@mail.com");
+
+        _repository.AddRange(new List<Notification>
+        {
+            new Notification(0, ana, "Partido 1"),
+            new Notification(0, luis, "Partido 1"),
+            new Notification(0, ana, "Partido 2"),
+        });
+
+        IReadOnlyCollection<Notification> stored = _repository.GetAll();
+        Assert.AreEqual(3, stored.Count);
+        Assert.AreEqual(2, stored.Count(n => n.UserId == 1));
+        Assert.AreEqual(3, stored.Select(n => n.Id).Distinct().Count());
+    }
+
+    [TestMethod]
+    public void AddRangeWithAnUnknownUserStoresNothing()
+    {
+        User ana = SeedUser(1, "ana@mail.com");
+        User ghost = new User(99, "Ghost", "User", "ghost@mail.com", "Pass123@", new DateTime(1990, 1, 1));
+
+        Assert.ThrowsException<InvalidOperationException>(() => _repository.AddRange(new List<Notification>
+        {
+            new Notification(0, ana, "Partido 1"),
+            new Notification(0, ghost, "Partido 1"),
+        }));
+
+        Assert.AreEqual(0, _repository.GetAll().Count);
+    }
+
+    [TestMethod]
     public void AddGeneratesIdWhenIdIsZero()
     {
         User user = SeedUser(1, "juan@mail.com");

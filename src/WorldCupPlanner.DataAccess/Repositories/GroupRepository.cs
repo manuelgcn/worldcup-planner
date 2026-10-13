@@ -60,6 +60,12 @@ public class GroupRepository : IGroupRepository
         return context.Groups.AsNoTracking().Any(group => group.Name == name);
     }
 
+    public bool Any()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Groups.Any();
+    }
+
     public IReadOnlyCollection<Group> GetAll()
     {
         using AppDbContext context = _contextFactory.CreateDbContext();

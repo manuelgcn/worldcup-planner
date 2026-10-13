@@ -24,7 +24,6 @@ public sealed class SimulationEngineSelectionTests
     private MockTournamentSettingsRepository _settingsRepository = null!;
     private MockAuditLogRepository _auditLogRepository = null!;
     private AuditLogService _auditLogService = null!;
-    private MockUnitOfWork _unitOfWork = null!;
 
     [TestInitialize]
     public void TestInitialize()
@@ -36,7 +35,6 @@ public sealed class SimulationEngineSelectionTests
         _settingsRepository = new MockTournamentSettingsRepository();
         _auditLogRepository = new MockAuditLogRepository();
         _auditLogService = AuditLogService.CreateInstance(_auditLogRepository);
-        _unitOfWork = new MockUnitOfWork();
 
         TournamentSettings settings = new TournamentSettings(
             SettingsId, new DateTime(2026, 6, 1), 3, 3, Seed, Seed, Seed, Seed);
@@ -100,7 +98,6 @@ public sealed class SimulationEngineSelectionTests
             new MockGroupRepository(),
             new MockStadiumRepository(),
             _settingsRepository,
-            _unitOfWork,
             _auditLogService,
             new MockNotificationService(),
             new MockRankingService());
@@ -121,7 +118,6 @@ public sealed class SimulationEngineSelectionTests
             groupRepository,
             matchRepository,
             new MockEliminationMatchRepository(),
-            _unitOfWork,
             _registry,
             _auditLogService,
             _settingsRepository,
@@ -143,7 +139,6 @@ public sealed class SimulationEngineSelectionTests
             _auditLogService,
             new Moq.Mock<IRankingService>().Object,
             new MockNotificationService(),
-            _unitOfWork,
             new MockEliminationMatchRepository());
     }
 

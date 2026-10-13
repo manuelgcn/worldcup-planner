@@ -92,7 +92,7 @@ else
             await upload.CopyToAsync(buffer);
             buffer.Position = 0;
 
-            result = ImportService.ImportTeams(buffer);
+            result = ImportService.ImportTeams(buffer, Session.CurrentUser?.email);
         }
         catch (Exception ex)
         {

@@ -12,8 +12,11 @@ public class MockUserRepository : IUserRepository
         users.Add(user);
     }
 
+    public int GetAllCalls { get; private set; }
+
     public IReadOnlyCollection<User> GetAll()
     {
+        GetAllCalls++;
         return users.ToList();
     }
 

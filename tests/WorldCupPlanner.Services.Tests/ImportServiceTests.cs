@@ -14,21 +14,21 @@ namespace WorldCupPlanner.Services.Tests;
 public class ImportServiceTests
 {
     private MockTeamRepository _teamRepository = null!;
-    private MockUnitOfWork _unitOfWork = null!;
     private Mock<ITeamParser> _teamParserMock = null!;
+    private MockAuditLogService _auditLogService = null!;
     private ImportService _service = null!;
 
     [TestInitialize]
     public void TestInitialize()
     {
         _teamRepository = new MockTeamRepository();
-        _unitOfWork = new MockUnitOfWork();
         _teamParserMock = new Mock<ITeamParser>();
-        _service = CreateService(_teamRepository, _unitOfWork, _teamParserMock.Object);
+        _auditLogService = new MockAuditLogService();
+        _service = CreateService(_teamRepository, _teamParserMock.Object, _auditLogService);
     }
 
     [TestMethod]
-    public void ImportTeamsCreatesTeamsAndCommits()
+    public void ImportTeamsCreatesTeams()
     {
         // Arrange
         MemoryStream stream = CreateImportStream();
@@ -40,7 +40,6 @@ public class ImportServiceTests
 
         // Assert
         Assert.AreEqual(2, _teamRepository.GetAll().Count);
-        Assert.AreEqual(1, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -59,7 +58,6 @@ public class ImportServiceTests
 
         // Assert
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
-        Assert.AreEqual(0, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -85,7 +83,6 @@ public class ImportServiceTests
 
         // Assert
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
-        Assert.AreEqual(0, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -111,7 +108,6 @@ public class ImportServiceTests
 
         // Assert
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
-        Assert.AreEqual(0, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -126,7 +122,6 @@ public class ImportServiceTests
         // la primera valida que la precede.
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
         Assert.AreEqual(0, _teamRepository.GetAll().Count);
-        Assert.AreEqual(0, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -144,7 +139,6 @@ public class ImportServiceTests
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
         Assert.AreEqual(0, _teamRepository.GetAll().Count);
         Assert.AreEqual(0, _teamRepository.AddCalls);
-        Assert.AreEqual(0, _unitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -222,24 +216,73 @@ public class ImportServiceTests
     }
 
     [TestMethod]
-    public void ImportTeamsPropagatesUnitOfWorkFailure()
+    public void ImportTeamsThrowsWhenConfederationQuotaWouldBeExceeded()
     {
-        // Arrange
-        MockUnitOfWork failingUnitOfWork = CreateFailingUnitOfWork();
-        ImportService service = CreateService(_teamRepository, failingUnitOfWork, _teamParserMock.Object);
+        for (int i = 1; i <= 16; i++)
+        {
+            _teamRepository.Add(new Team(i, $"Europa{i}", 1000 + i, false, Confederation.UEFA));
+        }
 
         MemoryStream stream = CreateImportStream();
-        List<TeamImportDto> rows = BuildSingleValidRow();
-        SetupParserRows(stream, rows);
+        SetupParserRows(stream, new List<TeamImportDto> { Row(2, "Noruega", "UEFA", "1500") });
 
-        // Assert
-        Assert.ThrowsException<InvalidOperationException>(() => service.ImportTeams(stream));
-        Assert.AreEqual(1, failingUnitOfWork.CommitCalls);
+        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.AreEqual(16, _teamRepository.GetAll().Count);
     }
 
-    private static ImportService CreateService(ITeamRepository teamRepository, IUnitOfWork unitOfWork, ITeamParser teamParser)
+    [TestMethod]
+    public void ImportTeamsCountsTheQuotaAcrossRowsOfTheSameFile()
     {
-        return ImportService.CreateInstance(teamRepository, unitOfWork, teamParser);
+        List<TeamImportDto> rows = Enumerable.Range(1, 17)
+            .Select(i => Row(i + 1, $"Europa{i}", "UEFA", (1000 + i).ToString()))
+            .ToList();
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, rows);
+
+        ImportServiceException ex = Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        StringAssert.Contains(ex.Message, "Row: 18.");
+        Assert.AreEqual(0, _teamRepository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void ImportTeamsThrowsWhenConfederationIsANumber()
+    {
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, new List<TeamImportDto> { Row(2, "Atlantida", "99", "1500") });
+
+        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+    }
+
+    [TestMethod]
+    public void ImportTeamsThrowsWhenTheSameNameAppearsWithAndWithoutAccents()
+    {
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, new List<TeamImportDto>
+        {
+            Row(2, "España", "UEFA", "1800"),
+            Row(3, "Espana", "UEFA", "1700")
+        });
+
+        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.AreEqual(0, _teamRepository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void ImportTeamsLogsOneAuditEntryWithThePerformer()
+    {
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, BuildValidRows());
+
+        _service.ImportTeams(stream, performedByEmail: "editor@copa.com");
+
+        MockAuditLogService.LoggedAction entry = _auditLogService.LoggedActions.Single();
+        Assert.AreEqual(AuditActions.ImportTeams, entry.Action);
+        Assert.AreEqual("editor@copa.com", entry.PerformedByEmail);
+    }
+
+    private static ImportService CreateService(ITeamRepository teamRepository, ITeamParser teamParser, IAuditLogService auditLogService)
+    {
+        return ImportService.CreateInstance(teamRepository, teamParser, auditLogService);
     }
 
     private static MemoryStream CreateImportStream()
@@ -411,10 +454,6 @@ public class ImportServiceTests
         return rows;
     }
 
-    private static MockUnitOfWork CreateFailingUnitOfWork()
-    {
-        MockUnitOfWork failingUnitOfWork = new MockUnitOfWork();
-        failingUnitOfWork.EnableCommitFailure(new InvalidOperationException("Database unavailable"));
-        return failingUnitOfWork;
-    }
+    private static TeamImportDto Row(int rowNumber, string name, string confederation, string ranking) =>
+        new TeamImportDto { RowNumber = rowNumber, Name = name, Confederation = confederation, Ranking = ranking };
 }

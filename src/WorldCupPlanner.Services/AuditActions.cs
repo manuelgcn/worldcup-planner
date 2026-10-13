@@ -10,6 +10,8 @@ public static class AuditActions
 
     public const string AssignUserRole = "ASSIGN_USER_ROLE";
 
+    public const string UpgradePasswordHash = "UPGRADE_PASSWORD_HASH";
+
     public const string CreateMatch = "CREATE_MATCH";
 
     public const string UpdateMatch = "UPDATE_MATCH";
@@ -37,6 +39,8 @@ public static class AuditActions
     public const string DeleteTeam = "DELETE_TEAM";
 
     public const string AssignTeamFlags = "ASSIGN_TEAM_FLAGS";
+
+    public const string ImportTeams = "IMPORT_TEAMS";
 
     public const string CreateStadium = "CREATE_STADIUM";
 

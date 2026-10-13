@@ -18,7 +18,6 @@ public class TeamServicesRemoveTeamTests
 
         FakeTeamRepository teamRepository = new FakeTeamRepository(team);
         FakeGroupRepository groupRepository = new FakeGroupRepository();
-        FakeUnitOfWork unitOfWork = new FakeUnitOfWork();
         NullAuditLogService auditLogService = new NullAuditLogService();
 
         Group group = new Group("A");
@@ -28,7 +27,6 @@ public class TeamServicesRemoveTeamTests
         TeamServices service = new TeamServices(
             teamRepository,
             groupRepository,
-            unitOfWork,
             auditLogService);
 
         Assert.ThrowsException<TeamServicesException>(() => service.RemoveTeam("Brasil"));
@@ -138,15 +136,6 @@ internal sealed class FakeGroupRepository : IGroupRepository
     }
 }
 
-internal sealed class FakeUnitOfWork : IUnitOfWork
-{
-    public bool CommitCalled { get; private set; }
-
-    public void Commit()
-    {
-        CommitCalled = true;
-    }
-}
 
 internal sealed class NullAuditLogService : IAuditLogService
 {

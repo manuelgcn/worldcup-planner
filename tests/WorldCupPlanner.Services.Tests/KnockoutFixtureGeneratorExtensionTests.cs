@@ -10,6 +10,7 @@ namespace WorldCupPlanner.Services.Tests;
 public class KnockoutFixtureGeneratorExtensionTests
 {
     private const int DefaultSeed = 7;
+    private const int DistinctSimulationSeed = 99;
     private const int DefaultSettingsId = 1;
     private const string AdminEmail = "admin@copa.com";
     private const int TotalGroupCount = 12;
@@ -30,9 +31,9 @@ public class KnockoutFixtureGeneratorExtensionTests
     private MockStadiumRepository _stadiumRepository = null!;
     private MockTournamentSettingsRepository _settingsRepository = null!;
     private MockMatchSimulationEngine _simulationEngine = null!;
-    private MockUnitOfWork _unitOfWork = null!;
     private MockAuditLogRepository _auditRepository = null!;
     private AuditLogService _auditService = null!;
+    private MockNotificationService _notificationService = null!;
     private KnockoutFixtureGenerator _generator = null!;
 
     [TestInitialize]
@@ -44,9 +45,9 @@ public class KnockoutFixtureGeneratorExtensionTests
         _stadiumRepository = new MockStadiumRepository();
         _settingsRepository = new MockTournamentSettingsRepository();
         _simulationEngine = new MockMatchSimulationEngine();
-        _unitOfWork = new MockUnitOfWork();
         _auditRepository = new MockAuditLogRepository();
         _auditService = AuditLogService.CreateInstance(_auditRepository);
+        _notificationService = new MockNotificationService();
 
         SeedStadiums();
         SeedSettings();
@@ -136,16 +137,6 @@ public class KnockoutFixtureGeneratorExtensionTests
     }
 
     [TestMethod]
-    public void GenerateBracket_CallsUnitOfWorkCommit()
-    {
-        SeedPlayedGroupStageMatches();
-
-        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
-
-        Assert.IsTrue(_unitOfWork.CommitCalls >= 1);
-    }
-
-    [TestMethod]
     public void SimulateNextRound_SimulatesR32MatchesWhenR32IsCurrentRound()
     {
         SeedPlayedGroupStageMatches();
@@ -178,6 +169,40 @@ public class KnockoutFixtureGeneratorExtensionTests
         _generator.SimulateNextRound(performedByEmail: AdminEmail);
 
         Assert.IsTrue(_auditRepository.GetAll().Any(log => log.Action == AuditActions.SimulateRound));
+    }
+
+    [TestMethod]
+    public void SimulateNextRound_NotifiesJournalistsOfTheRoundInOneBatch()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+
+        _generator.SimulateNextRound(performedByEmail: AdminEmail);
+
+        Assert.AreEqual(1, _notificationService.SimulatedBatches.Count);
+        Assert.AreEqual(ExpectedR32Matches, _notificationService.SimulatedBatches[0].Count);
+    }
+
+    [TestMethod]
+    public void SimulateNextRound_AuditsTheSimulationSeed()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        _settingsRepository.Update(new TournamentSettings(
+            id: DefaultSettingsId,
+            startDate: DefaultStartDate,
+            maxMatchesPerDay: 3,
+            daysBetweenJourneys: 3,
+            fixtureSeed: DefaultSeed,
+            crossingsSeed: DefaultSeed,
+            simulationSeed: DistinctSimulationSeed,
+            completionSeed: DefaultSeed));
+
+        _generator.SimulateNextRound(performedByEmail: AdminEmail);
+
+        AuditLog log = _auditRepository.GetAll().First(entry => entry.Action == AuditActions.SimulateRound);
+        Assert.IsTrue(log.Details.Contains($"seed {DistinctSimulationSeed}."), $"Expected seed in details, got '{log.Details}'");
+        Assert.AreEqual(AdminEmail, log.PerformedByEmail);
     }
 
     [TestMethod]
@@ -323,6 +348,20 @@ public class KnockoutFixtureGeneratorExtensionTests
     }
 
     [TestMethod]
+    public void AdvanceToNextRound_WhenAMatchEndedInADrawWithoutPenalties_ThrowsAndCreatesNothing()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.RoundOf32);
+        MatchElimination drawn = _eliminationRepository.GetAll().OfType<MatchElimination>().First();
+        drawn.SetGoals(1, 1);
+
+        Assert.ThrowsException<MatchServicesException>(
+            () => _generator.AdvanceToNextRound(performedByEmail: AdminEmail));
+        Assert.IsFalse(_eliminationRepository.GetAll().OfType<MatchElimination>().Any(match => match.Phase == Phase.RoundOf16));
+    }
+
+    [TestMethod]
     public void AdvanceToNextRound_LeavesNextRoundPendingWithoutSimulating()
     {
         SeedPlayedGroupStageMatches();
@@ -394,6 +433,47 @@ public class KnockoutFixtureGeneratorExtensionTests
             () => _generator.AdvanceToNextRound(performedByEmail: AdminEmail));
     }
 
+    [TestMethod]
+    public void IsBracketComplete_AfterSimulateUntilFinal_ReturnsTrue()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+
+        _generator.SimulateUntilFinal(performedByEmail: AdminEmail);
+
+        Assert.IsTrue(_generator.IsBracketComplete());
+    }
+
+    [TestMethod]
+    public void IsBracketComplete_WhenFinalAndThirdPlaceWereLoadedByHand_ReturnsTrue()
+    {
+        AdvanceManuallyToFinal();
+        PlayPhaseManually(Phase.Final);
+        PlayPhaseManually(Phase.ThirdPlace);
+
+        Assert.IsTrue(_generator.IsBracketComplete());
+    }
+
+    [TestMethod]
+    public void IsBracketComplete_WhenFinalIsStillPending_ReturnsFalse()
+    {
+        AdvanceManuallyToFinal();
+        PlayPhaseManually(Phase.ThirdPlace);
+
+        Assert.IsFalse(_generator.IsBracketComplete());
+    }
+
+    private void AdvanceManuallyToFinal()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        foreach (Phase phase in new[] { Phase.RoundOf32, Phase.RoundOf16, Phase.QuarterFinals, Phase.SemiFinal })
+        {
+            PlayPhaseManually(phase);
+            _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+        }
+    }
+
     // Carga resultados a mano (no simulados) en todos los partidos de una fase,
     // con un marcador no empatado para que GetWinner() devuelva un ganador claro.
     private void PlayPhaseManually(Phase phase)
@@ -436,7 +516,6 @@ public class KnockoutFixtureGeneratorExtensionTests
             groupRepository,
             stadiumRepository,
             settingsRepository,
-            new MockUnitOfWork(),
             AuditLogService.CreateInstance(new MockAuditLogRepository()),
             new MockNotificationService(),
             new MockRankingService());
@@ -511,9 +590,8 @@ public class KnockoutFixtureGeneratorExtensionTests
             _groupRepository,
             _stadiumRepository,
             _settingsRepository,
-            _unitOfWork,
             _auditService,
-            new MockNotificationService(),
+            _notificationService,
             new MockRankingService());
     }
 

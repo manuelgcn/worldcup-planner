@@ -24,7 +24,7 @@ Each project's root namespace equals its name.
 |---|---|
 | `WorldCupPlanner.Domain` | Entities, enums, invariants, domain exceptions. Depends on nothing. |
 | `WorldCupPlanner.Services` | Use cases, orchestration, DTOs, auditing, simulation engines. |
-| `WorldCupPlanner.DataAccess` | `AppDbContext`, repositories, `Configurations/`, `Migrations/`, `IUnitOfWork`. |
+| `WorldCupPlanner.DataAccess` | `AppDbContext`, repositories, `Configurations/`, `Migrations/`. |
 | `WorldCupPlanner.UI` | Blazor Server pages. Presentation only, no business logic. |
 | `WorldCupPlanner.DataSeeder` | Console app that resets the DB and seeds a full demo tournament. |
 | `WorldCupPlanner.{Domain,Services,DataAccess}.Tests` | MSTest suites, one per layer. |
@@ -57,8 +57,8 @@ The UI applies pending migrations and seeds settings plus default users on start
 - **Group fixture**: 6 matches per group. Matchday 1: T1–T4, T2–T3. Matchday 2: T1–T3, T2–T4. Matchday 3: T1–T2, T3–T4. Kick-off 14:00; a group's last matchday is played at the same day and time. Stadiums rotate by normalized name: match *n* → `stadium[(n-1) mod count]`.
 - **Standings**: points → goal difference → goals for → seeded draw (`CrossingsSeed`).
 - **Round of 32**: 12 winners + 12 runners-up + 8 best third places. A1–A8 (winners vs thirds), B1–B4 (remaining winners vs weakest runners-up), B5–B8 (remaining runners-up). Avoid same-group pairings when possible. Then C1–C8 (Ai vs Bi), D1–D4, semi-finals, third place and final.
-- **Match editing**: only date, stadium and result. Group matches are locked once the knockout stage is generated.
-- **Roles**: `UserRoles { Admin, Editor, Periodista }`. Passwords are stored as SHA-256 and must have ≥ 8 chars with upper, lower, digit and symbol.
+- **Match editing**: only date, stadium and result. Group matches are locked once the knockout stage is generated; a knockout match is locked once the next round is built from it, and its result cannot be a draw.
+- **Roles**: `UserRoles { Admin, Editor, Periodista }`. Passwords are stored as salted PBKDF2-SHA256 (`salt:hash`, 100k iterations; an older unsalted SHA-256 is accepted and upgraded on the next login) and must have ≥ 8 chars with upper, lower, digit and symbol.
 
 ## Code conventions
 

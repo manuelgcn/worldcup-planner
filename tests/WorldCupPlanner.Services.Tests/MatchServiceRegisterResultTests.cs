@@ -103,17 +103,15 @@ public sealed class MatchServiceRegisterResultTests
     }
 
     [TestMethod]
-    public void RegisterResult_UpdatesRepositoryAndCommits()
+    public void RegisterResult_UpdatesRepository()
     {
         Harness harness = new Harness();
         harness.SeedGroupMatch(MatchId);
         int updates = harness.MatchRepository.UpdateCalls;
-        int commits = harness.UnitOfWork.CommitCalls;
 
         harness.Service.RegisterResult(MatchId, homeGoals: 2, awayGoals: 1, Email);
 
         Assert.AreEqual(updates + 1, harness.MatchRepository.UpdateCalls);
-        Assert.AreEqual(commits + 1, harness.UnitOfWork.CommitCalls);
     }
 
     [TestMethod]
@@ -136,6 +134,78 @@ public sealed class MatchServiceRegisterResultTests
             () => harness.Service.RegisterResult(MatchId, homeGoals: 2, awayGoals: 1, Email));
     }
 
+    [TestMethod]
+    public void RegisterResult_DrawOnKnockoutMatch_ThrowsMatchServicesException()
+    {
+        Harness harness = new Harness();
+        harness.SeedRoundOf32Match(MatchId);
+
+        Assert.ThrowsException<MatchServicesException>(
+            () => harness.Service.RegisterResult(MatchId, homeGoals: 1, awayGoals: 1, Email));
+    }
+
+    [TestMethod]
+    public void RegisterResult_OnKnockoutMatchBeforeNextRoundExists_SavesResult()
+    {
+        Harness harness = new Harness();
+        harness.SeedRoundOf32Match(MatchId);
+
+        harness.Service.RegisterResult(MatchId, homeGoals: 2, awayGoals: 0, Email);
+
+        Assert.AreEqual(2, harness.MatchRepository.GetById(MatchId)!.HomeGoals);
+    }
+
+    [TestMethod]
+    public void RegisterResult_OnKnockoutMatchThatFeedsNextRound_ThrowsMatchServicesException()
+    {
+        Harness harness = new Harness();
+        MatchElimination first = harness.SeedRoundOf32Match(MatchId);
+        MatchElimination second = harness.SeedRoundOf32Match(MatchId + 1);
+        harness.SeedRoundOf16Match(first, second);
+
+        Assert.ThrowsException<MatchServicesException>(
+            () => harness.Service.RegisterResult(MatchId, homeGoals: 2, awayGoals: 0, Email));
+    }
+
+    [TestMethod]
+    public void RegisterResult_SameDrawOnAKnockoutMatchDecidedOnPenalties_KeepsTheResult()
+    {
+        Harness harness = new Harness();
+        MatchElimination match = harness.SeedRoundOf32Match(MatchId);
+        match.SetGoals(1, 1);
+        match.SetPenaltyShootoutResult(4, 3);
+
+        harness.Service.RegisterResult(MatchId, homeGoals: 1, awayGoals: 1, Email);
+
+        Assert.AreSame(match.HomeTeam, ((MatchElimination)harness.MatchRepository.GetById(MatchId)!).GetWinner());
+    }
+
+    [TestMethod]
+    public void RegisterResult_NewDrawOnAKnockoutMatchDecidedOnPenalties_ThrowsMatchServicesException()
+    {
+        Harness harness = new Harness();
+        MatchElimination match = harness.SeedRoundOf32Match(MatchId);
+        match.SetGoals(1, 1);
+        match.SetPenaltyShootoutResult(4, 3);
+
+        Assert.ThrowsException<MatchServicesException>(
+            () => harness.Service.RegisterResult(MatchId, homeGoals: 2, awayGoals: 2, Email));
+    }
+
+    [TestMethod]
+    public void GetLockedKnockoutMatchIds_ReturnsOnlyTheMatchesThatFedTheNextRound()
+    {
+        Harness harness = new Harness();
+        MatchElimination first = harness.SeedRoundOf32Match(MatchId);
+        MatchElimination second = harness.SeedRoundOf32Match(MatchId + 1);
+        harness.SeedRoundOf32Match(MatchId + 2);
+        harness.SeedRoundOf16Match(first, second);
+
+        CollectionAssert.AreEquivalent(
+            new[] { MatchId, MatchId + 1 },
+            harness.Service.GetLockedKnockoutMatchIds().ToArray());
+    }
+
     // SimulateMatch ahora tambien notifica a periodistas (antes no colaboraba con
     // INotificationService). El motor del Harness simula 2-1.
     [TestMethod]
@@ -156,7 +226,6 @@ public sealed class MatchServiceRegisterResultTests
         public MockNotificationService Notifications { get; } = new MockNotificationService();
         public Mock<IRankingService> RankingMock { get; } = new Mock<IRankingService>();
         public MockAuditLogRepository AuditRepository { get; } = new MockAuditLogRepository();
-        public MockUnitOfWork UnitOfWork { get; } = new MockUnitOfWork();
         public MatchService Service { get; }
 
         private readonly MockMatchSimulationEngine _engine = new MockMatchSimulationEngine();
@@ -182,13 +251,34 @@ public sealed class MatchServiceRegisterResultTests
                 AuditLogService.CreateInstance(AuditRepository),
                 RankingMock.Object,
                 Notifications,
-                UnitOfWork,
                 EliminationRepository);
         }
 
         public void SeedGroupMatch(int id)
         {
             MatchRepository.Add(BuildGroupMatch(id));
+        }
+
+        public MatchElimination SeedRoundOf32Match(int id)
+        {
+            Team home = new Team(id * 2, $"Local {id}", 1500, false, Confederation.CONMEBOL);
+            Team away = new Team(id * 2 + 1, $"Visitante {id}", 1600, false, Confederation.UEFA);
+            Stadium stadium = new Stadium("Estadio Knockout", "Ciudad", null, 20000);
+            MatchElimination match = MatchElimination.CreateInitialRound(
+                id, new DateTime(2026, 7, 1, 14, 0, 0), home, away, stadium, _settingsRepository.GetById(1)!, Phase.RoundOf32, $"A{id}");
+            match.SetGoals(1, 0);
+            MatchRepository.Add(match);
+            EliminationRepository.Add(match);
+            return match;
+        }
+
+        public void SeedRoundOf16Match(MatchElimination homeSource, MatchElimination awaySource)
+        {
+            MatchElimination match = MatchElimination.CreateMatchWithConfig(
+                100, new DateTime(2026, 7, 8, 14, 0, 0), homeSource.HomeTeam!, awaySource.HomeTeam!,
+                homeSource.Stadium!, _settingsRepository.GetById(1)!, Phase.RoundOf16, "C1", homeSource, awaySource);
+            MatchRepository.Add(match);
+            EliminationRepository.Add(match);
         }
 
         public void SeedKnockout()

@@ -12,6 +12,7 @@ public sealed class MockNotificationService : INotificationService
     public List<string> JournalistMessages { get; } = new();
     public List<ResultLoadedCall> ResultLoadedCalls { get; } = new();
     public List<Match> MatchSimulatedCalls { get; } = new();
+    public List<IReadOnlyCollection<Match>> SimulatedBatches { get; } = new();
 
     public void NotifyJournalists(string message)
     {
@@ -26,6 +27,12 @@ public sealed class MockNotificationService : INotificationService
     public void NotifyMatchSimulated(Match match)
     {
         MatchSimulatedCalls.Add(match);
+    }
+
+    public void NotifyMatchesSimulated(IReadOnlyCollection<Match> matches)
+    {
+        SimulatedBatches.Add(matches);
+        MatchSimulatedCalls.AddRange(matches);
     }
 
     public IReadOnlyCollection<Notification> GetUnreadForUser(int userId)

@@ -8,6 +8,8 @@ public interface IKnockoutFixtureGenerator
     List<Match> GeneratePhase2(QualifiedTeams qualifiedTeams);
 
     bool IsBracketGenerated();
+    // Completo = final y tercer puesto creados y todos los partidos con resultado (simulado o a mano).
+    bool IsBracketComplete();
     void GenerateBracket(int? crossingsSeedOverride, string? performedByEmail);
     void SimulateNextRound(string? performedByEmail);
     void SimulateUntilFinal(string? performedByEmail);

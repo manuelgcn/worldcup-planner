@@ -46,6 +46,18 @@ public class EliminationMatchRepositoryTests
         Assert.AreEqual(0, _repository.GetAll().Count);
     }
 
+    [TestMethod]
+    public void AnyIgnoresGroupMatchesAndSeesStoredEliminationMatches()
+    {
+        MatchElimination elimination = SeedSourcesAndBuildElimination(20, Phase.RoundOf16, sourceIdBase: 100, "X", "Y");
+
+        Assert.IsFalse(_repository.Any(), "Group matches alone are not a knockout stage.");
+
+        _repository.Add(elimination);
+
+        Assert.IsTrue(_repository.Any());
+    }
+
     // Siembra dos partidos de grupo (fuentes) y devuelve un partido de eliminacion listo para Add.
     private MatchElimination SeedSourcesAndBuildElimination(int eliminationId, Phase phase, int sourceIdBase, string groupHome, string groupAway)
     {

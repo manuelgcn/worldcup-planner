@@ -839,12 +839,12 @@ INSERT [dbo].[UserRoles] ([Id], [UserId], [Role]) VALUES (6, 6, N'Periodista')
 SET IDENTITY_INSERT [dbo].[UserRoles] OFF
 SET IDENTITY_INSERT [dbo].[Users] ON 
 
-INSERT [dbo].[Users] ([idUser], [name], [lastname], [email], [password], [dateOfBirth]) VALUES (1, N'Ana', N'Admin', N'admin1@copa.com', N'6G94qKPK8LYNjnTllCqm2G3BUM08AzOK7yW30tfjrMc=', CAST(N'1988-02-10T00:00:00.0000000' AS DateTime2))
-INSERT [dbo].[Users] ([idUser], [name], [lastname], [email], [password], [dateOfBirth]) VALUES (2, N'Bruno', N'Admin', N'admin2@copa.com', N'f0hOaCyc9MQunLphG88EwY0TcruSB1bGV8jAIzomk64=', CAST(N'1990-07-22T00:00:00.0000000' AS DateTime2))
-INSERT [dbo].[Users] ([idUser], [name], [lastname], [email], [password], [dateOfBirth]) VALUES (3, N'Carla', N'Editor', N'editor1@copa.com', N'fOUkS6K6fl24ur376Jrx6YUuX3aXxpWgzQgYjJ3cLMg=', CAST(N'1992-04-05T00:00:00.0000000' AS DateTime2))
-INSERT [dbo].[Users] ([idUser], [name], [lastname], [email], [password], [dateOfBirth]) VALUES (4, N'Diego', N'Editor', N'editor2@copa.com', N'2zg883kY91qkLhjTgRHykSfi727HujtCb33rR+vYSV8=', CAST(N'1993-11-30T00:00:00.0000000' AS DateTime2))
-INSERT [dbo].[Users] ([idUser], [name], [lastname], [email], [password], [dateOfBirth]) VALUES (5, N'Elena', N'Prensa', N'periodista1@copa.com', N'XtqYENFtoPEcN78Bl1HU/8JOwWzaG2oDSyvyml0jL5I=', CAST(N'1995-06-18T00:00:00.0000000' AS DateTime2))
-INSERT [dbo].[Users] ([idUser], [name], [lastname], [email], [password], [dateOfBirth]) VALUES (6, N'Felipe', N'Prensa', N'periodista2@copa.com', N'GX97TuRkchWa1zXNjqDgt3DDr2vMnZXVVQ+Qvk3RSR8=', CAST(N'1996-09-03T00:00:00.0000000' AS DateTime2))
+INSERT [dbo].[Users] ([idUser], [name], [lastname], [email], [password], [dateOfBirth]) VALUES (1, N'Ana', N'Admin', N'admin1@copa.com', N'NayVITcSJcByRMrVNU74ug==:mbu4770CN/kEqP065+upgXhAC4zzKJ9smvFh25ZH5BU=', CAST(N'1988-02-10T00:00:00.0000000' AS DateTime2))
+INSERT [dbo].[Users] ([idUser], [name], [lastname], [email], [password], [dateOfBirth]) VALUES (2, N'Bruno', N'Admin', N'admin2@copa.com', N'Iaz3OUXq6gNg9ouIZreHaw==:PujOzyetnEYZf7SDY/Jqb2xfTI3+aFBGuDKXyM2X8dg=', CAST(N'1990-07-22T00:00:00.0000000' AS DateTime2))
+INSERT [dbo].[Users] ([idUser], [name], [lastname], [email], [password], [dateOfBirth]) VALUES (3, N'Carla', N'Editor', N'editor1@copa.com', N'og79LuOs2AVfjMwwLZ5eDQ==:Wjw4utF31I4jBYRFYKB3kLYaL/u24n7YCduRyqJG9gY=', CAST(N'1992-04-05T00:00:00.0000000' AS DateTime2))
+INSERT [dbo].[Users] ([idUser], [name], [lastname], [email], [password], [dateOfBirth]) VALUES (4, N'Diego', N'Editor', N'editor2@copa.com', N'Ysso6hoqbX/CmssIkLk/4A==:5+ZSsjQQSduSoE+SgCSRcSaY5W7g2ZPDX1bJnLD1iRA=', CAST(N'1993-11-30T00:00:00.0000000' AS DateTime2))
+INSERT [dbo].[Users] ([idUser], [name], [lastname], [email], [password], [dateOfBirth]) VALUES (5, N'Elena', N'Prensa', N'periodista1@copa.com', N'lfFxKRmCcvTS085MJYUNmQ==:MuMoDfBiRkE4VI6ZLp5QA7baQC+AdhEciP2F+C5T38w=', CAST(N'1995-06-18T00:00:00.0000000' AS DateTime2))
+INSERT [dbo].[Users] ([idUser], [name], [lastname], [email], [password], [dateOfBirth]) VALUES (6, N'Felipe', N'Prensa', N'periodista2@copa.com', N'L0TnkMYvZA4rWs0Bde7htQ==:e23TJPpzaq7I27ZlX6MHGyxKPztJEFe74IrB4IcT4j4=', CAST(N'1996-09-03T00:00:00.0000000' AS DateTime2))
 SET IDENTITY_INSERT [dbo].[Users] OFF
 /****** Object:  Index [IX_Matches_AwayTeamId]    Script Date: 14/6/2026 12:58:01 ******/
 CREATE NONCLUSTERED INDEX [IX_Matches_AwayTeamId] ON [dbo].[Matches]

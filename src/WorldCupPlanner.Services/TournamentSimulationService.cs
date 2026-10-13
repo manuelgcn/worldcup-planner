@@ -11,7 +11,6 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
     private readonly IGroupRepository groupRepository;
     private readonly IMatchRepository matchRepository;
     private readonly IEliminationMatchRepository eliminationMatchRepository;
-    private readonly IUnitOfWork unitOfWork;
     private readonly ISimulationEngineRegistry simulationEngineRegistry;
     private readonly IAuditLogService auditLogService;
     private readonly ITournamentSettingsRepository tournamentSettingsRepository;
@@ -26,7 +25,6 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
         IGroupRepository groupRepository,
         IMatchRepository matchRepository,
         IEliminationMatchRepository eliminationMatchRepository,
-        IUnitOfWork unitOfWork,
         ISimulationEngineRegistry simulationEngineRegistry,
         IAuditLogService auditLogService,
         ITournamentSettingsRepository tournamentSettingsRepository,
@@ -39,7 +37,6 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
         this.groupRepository = groupRepository;
         this.matchRepository = matchRepository;
         this.eliminationMatchRepository = eliminationMatchRepository;
-        this.unitOfWork = unitOfWork;
         this.simulationEngineRegistry = simulationEngineRegistry;
         this.auditLogService = auditLogService;
         this.tournamentSettingsRepository = tournamentSettingsRepository;
@@ -53,7 +50,6 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
         IMatchSimulationEngine engine = ResolveSelectedEngine(seed);
         RunGroupStageSimulation(seed, engine);
         LogGroupStageSimulation(seed, engine.Name, performedByEmail);
-        unitOfWork.Commit();
     }
 
     // Accion "todo en uno" deliberada y separada: simula la fase de grupos y genera
@@ -61,10 +57,10 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
     // (Simulator.razor), que avisa explicitamente al usuario. El flujo manual paso a
     // paso (Fixture.razor) NO la usa: alli se simula la fase de grupos con
     // SimulateGroupStage y la fase 2 se genera con un boton aparte.
-    public void SimulateGroupStageAndGenerateKnockout(int seed)
+    public void SimulateGroupStageAndGenerateKnockout(int seed, string? performedByEmail)
     {
-        // No re-simular una fase de grupos ya jugada: re-correr los 72 partidos pisaria resultados
-        // ya cargados. La regla vive en el servicio; la UI ofrece una primera barrera (Simulator.razor).
+        // No re-simular una fase de grupos ya jugada entera; si esta a medias, solo se simulan los
+        // partidos sin resultado. La regla vive en el servicio; la UI ofrece una primera barrera (Simulator.razor).
         EnsureGroupStageNotAlreadyPlayed();
 
         TournamentSettings settings = ResolveTournamentSettings(seed);
@@ -76,11 +72,10 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
 
         GenerateAndPersistKnockoutPhase(qualifiedTeams);
 
-        LogSimulation(engine.Name);
-        unitOfWork.Commit();
+        LogSimulation(seed, engine.Name, performedByEmail);
     }
 
-    // Simula los 72 partidos de la fase de grupos (sin generar la fase 2) y devuelve los grupos y
+    // Simula los partidos de grupos sin resultado (sin generar la fase 2) y devuelve los grupos y
     // sus partidos, para que el llamador pueda opcionalmente clasificar y armar el knockout.
     private (List<Group> Groups, List<Match> Matches) RunGroupStageSimulation(int seed, IMatchSimulationEngine engine)
     {
@@ -144,15 +139,18 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
         }
     }
 
+    // Solo los partidos sin resultado: lo que ya se cargo a mano (y su Elo) se respeta.
     private void SimulateMatches(List<Match> matches, int seed, IMatchSimulationEngine engine)
     {
-        foreach (Match match in matches)
+        List<Match> pending = matches.Where(match => !match.HasResult).ToList();
+        foreach (Match match in pending)
         {
             engine.Simulate(match, seed);
             ApplyRankingUpdate(match);
             matchRepository.Update(match);
-            notificationService.NotifyMatchSimulated(match);
         }
+
+        notificationService.NotifyMatchesSimulated(pending);
     }
 
     private void ApplyRankingUpdate(Match match)
@@ -194,11 +192,12 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
             completionSeed: seed);
     }
 
-    private void LogSimulation(string engineName)
+    private void LogSimulation(int seed, string engineName, string? performedByEmail)
     {
-        auditLogService.Log(
+        auditLogService.LogPerformedBy(
             AuditActions.SimulateGroupStageAndGenerateKnockout,
-            $"La fase de grupos fue simulada con el motor {engineName} y la fase 2 fue generada.",
+            $"Group stage simulated with engine {engineName} and seed {seed}; knockout stage generated.",
+            performedByEmail,
             affectedEntityType: nameof(TournamentSimulationService));
     }
 

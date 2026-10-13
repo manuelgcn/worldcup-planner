@@ -9,7 +9,6 @@ namespace WorldCupPlanner.Services;
 public class StadiumServices : IStadiumService
 {
     private readonly IStadiumRepository stadiumRepository;
-    private readonly IUnitOfWork unitOfWork;
     private readonly IAuditLogService auditLogService;
 
     private const string DuplicateStadiumNameMessage = "El nombre del estadio debe ser unico en el sistema.";
@@ -29,11 +28,10 @@ public class StadiumServices : IStadiumService
         ("Estadio BBVA", "Monterrey", 51000)
     };
 
-    public StadiumServices(IStadiumRepository stadiumRepository, IUnitOfWork unitOfWork, IAuditLogService auditLogService)
+    public StadiumServices(IStadiumRepository stadiumRepository, IAuditLogService auditLogService)
     {
         ArgumentNullException.ThrowIfNull(auditLogService);
         this.stadiumRepository = stadiumRepository;
-        this.unitOfWork = unitOfWork;
         this.auditLogService = auditLogService;
     }
 
@@ -77,8 +75,6 @@ public class StadiumServices : IStadiumService
             nextId++;
             addedSoFar++;
         }
-
-        unitOfWork.Commit();
     }
 
     public void AddStadium(Stadium stadium, string? performedByEmail = null)
@@ -106,7 +102,6 @@ public class StadiumServices : IStadiumService
             performedByEmail,
             nameof(Stadium),
             stadium.Id);
-        unitOfWork.Commit();
     }
     
     private int NextStadiumId()
@@ -146,7 +141,6 @@ public class StadiumServices : IStadiumService
             performedByEmail,
             nameof(Stadium),
             stadium.Id);
-        unitOfWork.Commit();
     }
 
     public void UpdateById(int id, string city, string? description, int capacity, string? performedByEmail = null)
@@ -160,7 +154,6 @@ public class StadiumServices : IStadiumService
             performedByEmail,
             nameof(Stadium),
             stadium.Id);
-        unitOfWork.Commit();
     }
     
 }

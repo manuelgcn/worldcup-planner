@@ -33,6 +33,12 @@ public class EliminationMatchRepository : IEliminationMatchRepository
             .ToList();
     }
 
+    public bool Any()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Matches.OfType<MatchElimination>().Any();
+    }
+
     public IReadOnlyCollection<Match> GetAll()
     {
         using AppDbContext context = _contextFactory.CreateDbContext();

@@ -116,7 +116,25 @@ public class UserServices : IUserService
         if (user == null || !user.PasswordMatches(password))
             throw new UserServicesException(InvalidCredentialsMessage);
 
+        if (user.HasLegacyPasswordHash)
+            UpgradeLegacyPasswordHash(user, password);
+
         return user;
+    }
+
+    // Unica oportunidad de migrar un hash viejo: solo en el login se conoce la contrasena.
+    private void UpgradeLegacyPasswordHash(User user, string password)
+    {
+        user.UpgradeLegacyPasswordHash(password);
+        _userRepository.Update(user);
+
+        _auditLogService.LogPerformedBy(
+            AuditActions.UpgradePasswordHash,
+            $"Password hash of UserId={user.idUser} upgraded to PBKDF2.",
+            user.email,
+            nameof(User),
+            user.idUser
+        );
     }
 
     public User GetUserByEmail(string email)

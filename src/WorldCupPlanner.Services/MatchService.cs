@@ -15,7 +15,6 @@ public class MatchService : IMatchService
     private readonly IAuditLogService auditLogService;
     private readonly IRankingService rankingService;
     private readonly INotificationService notificationService;
-    private readonly IUnitOfWork unitOfWork;
     private readonly IEliminationMatchRepository eliminationMatchRepository;
 
     private const int DefaultTournamentSettingsId = 1;
@@ -26,6 +25,8 @@ public class MatchService : IMatchService
     private const string ValueRequiredMessage = "El valor es obligatorio";
     private const string TournamentSettingsNotFoundMessage = "No se encontro la configuracion del torneo";
     private const string GroupMatchFrozenByKnockoutMessage = "No se pueden editar los partidos de fase de grupos una vez generada la fase eliminatoria.";
+    private const string KnockoutMatchFeedsNextRoundMessage = "No se puede editar este partido: la ronda siguiente ya se armo con su resultado.";
+    private const string KnockoutDrawMessage = "Un partido de eliminatoria necesita un ganador: no puede quedar empatado.";
     private const string IncidentNotFoundMessage = "Incidencia no encontrada";
     private const string IncidentTeamNotInMatchMessage = "El equipo de la incidencia debe ser uno de los dos que disputan el partido";
     private const string ResultRegisteredDetailTemplate = "MatchId={0} resultado registrado: {1}-{2}.";
@@ -38,7 +39,6 @@ public class MatchService : IMatchService
         IAuditLogService auditLogService,
         IRankingService rankingService,
         INotificationService notificationService,
-        IUnitOfWork unitOfWork,
         IEliminationMatchRepository eliminationMatchRepository)
     {
         ArgumentNullException.ThrowIfNull(notificationService);
@@ -50,7 +50,6 @@ public class MatchService : IMatchService
         this.auditLogService = auditLogService;
         this.rankingService = rankingService;
         this.notificationService = notificationService;
-        this.unitOfWork = unitOfWork;
         this.eliminationMatchRepository = eliminationMatchRepository;
     }
 
@@ -72,7 +71,6 @@ public class MatchService : IMatchService
             match.MatchId,
             request.TournamentSettingsId);
 
-        unitOfWork.Commit();
 
         return MapToDto(match);
     }
@@ -82,7 +80,7 @@ public class MatchService : IMatchService
         ValidateRequired(request);
 
         Match match = GetMatchOrThrow(matchId);
-        EnsureGroupMatchIsEditable(match);
+        EnsureMatchIsEditable(match);
 
         matchFactory.ApplyUpdate(match, request);
 
@@ -93,7 +91,6 @@ public class MatchService : IMatchService
             request.TournamentSettingsId);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
 
         return MapToDto(match);
     }
@@ -101,21 +98,19 @@ public class MatchService : IMatchService
     public void DeleteMatch(int matchId)
     {
         Match match = GetMatchOrThrow(matchId);
-        EnsureGroupMatchIsEditable(match);
+        EnsureMatchIsEditable(match);
         matchRepository.Delete(match);
 
         LogAuditAction(
             AuditActions.DeleteMatch,
             $"MatchId={matchId} deleted.",
             matchId);
-
-        unitOfWork.Commit();
     }
 
     public void AddGoal(int matchId, bool isHomeTeam)
     {
         Match match = GetMatchOrThrow(matchId);
-        EnsureGroupMatchIsEditable(match);
+        EnsureMatchIsEditable(match);
         if (isHomeTeam) match.AddHomeGoal();
         else match.AddAwayGoal();
 
@@ -126,13 +121,12 @@ public class MatchService : IMatchService
             matchId);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
     }
 
     public void RemoveGoal(int matchId, bool isHomeTeam)
     {
         Match match = GetMatchOrThrow(matchId);
-        EnsureGroupMatchIsEditable(match);
+        EnsureMatchIsEditable(match);
         if (isHomeTeam) match.RemoveHomeGoal();
         else match.RemoveAwayGoal();
 
@@ -143,7 +137,6 @@ public class MatchService : IMatchService
             matchId);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
     }
 
     public void PublishResult(int matchId)
@@ -157,13 +150,12 @@ public class MatchService : IMatchService
         ApplyRankingUpdate(match);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
     }
 
     public void SimulateMatch(int matchId)
     {
         Match match = GetMatchOrThrow(matchId);
-        EnsureGroupMatchIsEditable(match);
+        EnsureMatchIsEditable(match);
         TournamentSettings tournamentSettings = GetSimulationTournamentSettingsOrThrow();
         IMatchSimulationEngine engine = simulationEngineRegistry.Resolve(tournamentSettings.SelectedSimulationEngine);
 
@@ -177,7 +169,6 @@ public class MatchService : IMatchService
         notificationService.NotifyMatchSimulated(match);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
     }
 
     public void AddYellowCard(int matchId, int teamId, int minute, string? performedByEmail)
@@ -195,7 +186,7 @@ public class MatchService : IMatchService
     public void RemoveIncident(int matchId, int incidentId, string? performedByEmail)
     {
         Match match = GetMatchOrThrow(matchId);
-        EnsureGroupMatchIsEditable(match);
+        EnsureMatchIsEditable(match);
 
         MatchIncident incident = match.Incidents.FirstOrDefault(stored => stored.Id == incidentId)
                                  ?? throw new MatchServicesException(IncidentNotFoundMessage);
@@ -209,7 +200,6 @@ public class MatchService : IMatchService
             performedByEmail);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
     }
 
     public List<MatchIncidentDto> GetIncidents(int matchId)
@@ -221,7 +211,7 @@ public class MatchService : IMatchService
     private void AddIncident(int matchId, int teamId, string? performedByEmail, Func<int, Team, MatchIncident> factory)
     {
         Match match = GetMatchOrThrow(matchId);
-        EnsureGroupMatchIsEditable(match);
+        EnsureMatchIsEditable(match);
 
         Team team = ResolveMatchTeamOrThrow(match, teamId);
         MatchIncident incident = factory(matchRepository.NextIncidentId(), team);
@@ -234,7 +224,6 @@ public class MatchService : IMatchService
             performedByEmail);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
     }
 
     // Las incidencias exigen la misma referencia de Team que juega el partido
@@ -291,6 +280,15 @@ public class MatchService : IMatchService
         return GetMatchOrThrow(matchId);
     }
 
+    public IReadOnlySet<int> GetLockedKnockoutMatchIds()
+    {
+        return eliminationMatchRepository.GetAll()
+            .OfType<MatchElimination>()
+            .SelectMany(next => new[] { next.MatchHome?.MatchId, next.MatchAway?.MatchId })
+            .OfType<int>()
+            .ToHashSet();
+    }
+
     public List<MatchDto> GetByGroup(string groupName)
     {
         if (string.IsNullOrWhiteSpace(groupName))
@@ -319,14 +317,14 @@ public class MatchService : IMatchService
     public void SetGoals(int matchId, int homeGoals, int awayGoals)
     {
         Match match = GetMatchOrThrow(matchId);
-        EnsureGroupMatchIsEditable(match);
+        EnsureMatchIsEditable(match);
+        EnsureKnockoutResultHasWinner(match, homeGoals, awayGoals);
         match.SetGoals(homeGoals, awayGoals);
         LogAuditAction(
             AuditActions.UpdateMatch,
             $"MatchId={matchId} goals set to {homeGoals}-{awayGoals}.",
             matchId);
         matchRepository.Update(match);
-        unitOfWork.Commit();
     }
 
     // Controlador GRASP del caso de uso "registrar resultado": carga el partido, valida que
@@ -335,7 +333,8 @@ public class MatchService : IMatchService
     public MatchDto RegisterResult(int matchId, int homeGoals, int awayGoals, string? performedByEmail)
     {
         Match match = GetMatchOrThrow(matchId);
-        EnsureGroupMatchIsEditable(match);
+        EnsureMatchIsEditable(match);
+        EnsureKnockoutResultHasWinner(match, homeGoals, awayGoals);
 
         int previousHomeGoals = match.HomeGoals;
         int previousAwayGoals = match.AwayGoals;
@@ -348,7 +347,6 @@ public class MatchService : IMatchService
         notificationService.NotifyResultLoaded(match, previousHomeGoals, previousAwayGoals);
 
         matchRepository.Update(match);
-        unitOfWork.Commit();
 
         return MapToDto(match);
     }
@@ -404,16 +402,41 @@ public class MatchService : IMatchService
         return matchRepository.GetById(matchId) ?? throw new MatchServicesException(MatchNotFoundMessage);
     }
 
-    private void EnsureGroupMatchIsEditable(Match match)
+    // Un partido de grupos se congela al generarse la eliminatoria; uno de eliminatoria, cuando
+    // la ronda siguiente ya tomo su ganador (editarlo dejaria al equipo equivocado en el cuadro).
+    private void EnsureMatchIsEditable(Match match)
     {
-        if (match is not MatchGroup)
+        if (match is MatchGroup)
+        {
+            if (eliminationMatchRepository.Any())
+            {
+                throw new MatchServicesException(GroupMatchFrozenByKnockoutMessage);
+            }
+
+            return;
+        }
+
+        if (GetLockedKnockoutMatchIds().Contains(match.MatchId))
+        {
+            throw new MatchServicesException(KnockoutMatchFeedsNextRoundMessage);
+        }
+    }
+
+    // La carga manual no tiene penales: un empate solo vale si es el mismo marcador que ya se
+    // definio por penales (p. ej. al guardar otra vez un partido simulado sin cambiar el resultado).
+    private static void EnsureKnockoutResultHasWinner(Match match, int homeGoals, int awayGoals)
+    {
+        if (match is not MatchElimination elimination || homeGoals != awayGoals)
         {
             return;
         }
 
-        if (eliminationMatchRepository.GetAll().Count > 0)
+        bool keepsPenaltyDecision = elimination.WonByPenalties
+            && elimination.HomeGoals == homeGoals
+            && elimination.AwayGoals == awayGoals;
+        if (!keepsPenaltyDecision)
         {
-            throw new MatchServicesException(GroupMatchFrozenByKnockoutMessage);
+            throw new MatchServicesException(KnockoutDrawMessage);
         }
     }
 

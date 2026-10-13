@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using WorldCupPlanner.Domain;
 using WorldCupPlanner.Services;
 using WorldCupPlanner.Services.DTOs;
@@ -238,6 +240,22 @@ public class UserServicesTests
         User authenticated = service.Authenticate("juan@mail.com", "Pass123@");
 
         Assert.AreEqual(user.idUser, authenticated.idUser);
+    }
+
+    [TestMethod]
+    public void Authenticate_WithALegacyHash_UpgradesItAndAuditsTheUpgrade()
+    {
+        MockAuditLogService audit = new MockAuditLogService();
+        UserServices auditedService = new UserServices(repository, audit);
+        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string legacyHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes("Pass123@")));
+        typeof(User).GetProperty(nameof(User.password))!.SetValue(user, legacyHash);
+        repository.Add(user);
+
+        auditedService.Authenticate("juan@mail.com", "Pass123@");
+
+        Assert.IsFalse(user.HasLegacyPasswordHash);
+        Assert.IsTrue(audit.LoggedActions.Any(log => log.Action == AuditActions.UpgradePasswordHash && log.PerformedByEmail == "juan@mail.com"));
     }
 
     [TestMethod]

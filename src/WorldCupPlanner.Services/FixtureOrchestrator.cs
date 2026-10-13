@@ -26,9 +26,9 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     private readonly IJourneyRepository _journeyRepository;
     private readonly IMatchRepository _matchRepository;
     private readonly IEliminationMatchRepository _eliminationRepository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditLogService _auditLogService;
     private readonly ISimulationEngineRegistry _simulationEngineRegistry;
+    private readonly IRankingService _rankingService;
 
     public FixtureOrchestrator(
         ITeamRepository teamRepository,
@@ -38,9 +38,9 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         IJourneyRepository journeyRepository,
         IMatchRepository matchRepository,
         IEliminationMatchRepository eliminationRepository,
-        IUnitOfWork unitOfWork,
         IAuditLogService auditLogService,
-        ISimulationEngineRegistry simulationEngineRegistry)
+        ISimulationEngineRegistry simulationEngineRegistry,
+        IRankingService rankingService)
     {
         _teamRepository = teamRepository;
         _stadiumRepository = stadiumRepository;
@@ -49,19 +49,19 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         _journeyRepository = journeyRepository;
         _matchRepository = matchRepository;
         _eliminationRepository = eliminationRepository;
-        _unitOfWork = unitOfWork;
         _auditLogService = auditLogService;
         _simulationEngineRegistry = simulationEngineRegistry;
+        _rankingService = rankingService;
     }
 
     public bool IsFixtureGenerated()
     {
-        return _groupRepository.GetAll().Count > 0;
+        return _groupRepository.Any();
     }
 
     public bool IsKnockoutGenerated()
     {
-        return _eliminationRepository.GetAll().Count > 0;
+        return _eliminationRepository.Any();
     }
 
     public void GenerateGroupStage(int? fixtureSeedOverride, string? selectedEngineName, string? performedByEmail)
@@ -70,7 +70,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         GenerationPlan plan = PrepareGenerationPlan(fixtureSeedOverride);
         ApplySimulationEngineSelection(plan.Settings, selectedEngineName);
 
-        ExecuteAndCommit(plan);
+        BuildAndPersist(plan);
 
         AuditGenerated(plan.EffectiveSeed, plan.Settings.SelectedSimulationEngine, performedByEmail);
     }
@@ -82,16 +82,19 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         GenerationPlan plan = PrepareGenerationPlan(fixtureSeedOverride);
         ApplySimulationEngineSelection(plan.Settings, selectedEngineName);
 
+        RevertRankingOfPlayedMatches();
         ClearGroupStageStorage();
         AuditCleared(performedByEmail);
 
-        ExecuteAndCommit(plan);
+        // El plan se armo antes de revertir (para validar sin tocar nada); los bombos salen del
+        // ranking, asi que se arman con los equipos releidos tras la reversion.
+        BuildAndPersist(plan with { Teams = LoadTeams() });
 
         AuditRegenerated(plan.EffectiveSeed, plan.Settings.SelectedSimulationEngine, performedByEmail);
     }
 
     // Valida el motor contra el registry (fail-fast antes de tocar el storage), lo persiste en
-    // TournamentSettings y deja el Update dentro del mismo Commit que la generacion del fixture.
+    // TournamentSettings antes de generar el fixture.
     // Con null se mantiene el motor ya persistido.
     private void ApplySimulationEngineSelection(TournamentSettings settings, string? selectedEngineName)
     {
@@ -109,9 +112,9 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     {
         // Borrado total del torneo: se elimina la fase 2 (knockout) ANTES que los partidos de grupo
         // porque las eliminatorias referencian a los partidos de grupo como fuente (FK Matches->Matches).
+        RevertRankingOfPlayedMatches();
         _eliminationRepository.Clear();
         ClearGroupStageStorage();
-        _unitOfWork.Commit();
 
         AuditDeleted(performedByEmail);
     }
@@ -125,13 +128,12 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         return new GenerationPlan(teams, stadiums, settings, effectiveSeed);
     }
 
-    private void ExecuteAndCommit(GenerationPlan plan)
+    private void BuildAndPersist(GenerationPlan plan)
     {
         IReadOnlyCollection<Group> groups = BuildGroups(plan);
         PersistGroups(groups);
         PersistJourneys();
         PersistMatches(groups, plan.Stadiums, plan.Settings);
-        _unitOfWork.Commit();
     }
 
     private static IReadOnlyCollection<Group> BuildGroups(GenerationPlan plan)
@@ -172,6 +174,17 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         foreach (Match match in matches)
         {
             _matchRepository.Add(match);
+        }
+    }
+
+    // Cada resultado cambio el ranking guardado en los equipos y el sorteo arma los bombos por
+    // ranking: sin revertirlo, la misma semilla ya no daria los mismos grupos. GetAll trae grupos
+    // y eliminatorias (TPH) con los equipos compartidos, asi que las reversiones se acumulan bien.
+    private void RevertRankingOfPlayedMatches()
+    {
+        foreach (Match match in _matchRepository.GetAll().Where(match => match.RankingApplied))
+        {
+            _rankingService.RevertMatchResult(match);
         }
     }
 

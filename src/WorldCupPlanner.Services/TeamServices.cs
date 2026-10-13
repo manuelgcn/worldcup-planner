@@ -9,16 +9,9 @@ public class TeamServices : ITeamService
 {
     private readonly ITeamRepository teamRepository;
     private readonly IGroupRepository groupRepository;
-    private readonly IUnitOfWork unitOfWork;
     private readonly IAuditLogService auditLogService;
 
     private const int FixtureTeamCount = 48;
-    private const int AfcQuota = 8;
-    private const int CafQuota = 9;
-    private const int OfcQuota = 1;
-    private const int UefaQuota = 16;
-    private const int ConmebolQuota = 7;
-    private const int ConcacafQuota = 7;
 
     private const string TeamNotFoundMessage = "No se encontro el equipo.";
     private const string CannotDeleteTeamMessage = "No se puede eliminar el equipo porque no existe.";
@@ -26,17 +19,6 @@ public class TeamServices : ITeamService
     private const string DuplicateTeamNameMessage = "El nombre del equipo debe ser unico en el sistema.";
     private const string QuotaExceededMessage = "Se supero el cupo de equipos de {0}.";
     private const string FixtureRequires48TeamsMessage = "El ordenamiento del fixture requiere exactamente 48 equipos.";
-
-    private static readonly IReadOnlyDictionary<Confederation, int> QuotasByConfederation =
-        new Dictionary<Confederation, int>
-        {
-            { Confederation.AFC, AfcQuota },
-            { Confederation.CAF, CafQuota },
-            { Confederation.OFC, OfcQuota },
-            { Confederation.UEFA, UefaQuota },
-            { Confederation.CONMEBOL, ConmebolQuota },
-            { Confederation.CONCACAF, ConcacafQuota }
-        };
 
     // Orden fijo de recorrido de confederaciones. El orden de iteracion de un
     // Dictionary no esta garantizado por el lenguaje; fijarlo asegura que, a igual
@@ -55,17 +37,14 @@ public class TeamServices : ITeamService
     public TeamServices(
         ITeamRepository teamRepository,
         IGroupRepository groupRepository,
-        IUnitOfWork unitOfWork,
         IAuditLogService auditLogService)
     {
         ArgumentNullException.ThrowIfNull(teamRepository);
         ArgumentNullException.ThrowIfNull(groupRepository);
-        ArgumentNullException.ThrowIfNull(unitOfWork);
         ArgumentNullException.ThrowIfNull(auditLogService);
 
         this.teamRepository = teamRepository;
         this.groupRepository = groupRepository;
-        this.unitOfWork = unitOfWork;
         this.auditLogService = auditLogService;
     }
 
@@ -83,7 +62,7 @@ public class TeamServices : ITeamService
 
         foreach (Confederation confederation in ConfederationFillOrder)
         {
-            int quota = QuotasByConfederation[confederation];
+            int quota = ConfederationQuotas.ByConfederation[confederation];
             int existingForConfederation = teamRepository.CountByConfederation(confederation);
             int missing = quota - existingForConfederation;
 
@@ -107,8 +86,6 @@ public class TeamServices : ITeamService
                 nextId++;
             }
         }
-
-        unitOfWork.Commit();
     }
 
     private static int NextAvailableTeamId(IReadOnlyCollection<Team> existing)
@@ -142,8 +119,6 @@ public class TeamServices : ITeamService
             performedByEmail,
             nameof(Team),
             team.Id);
-
-        unitOfWork.Commit();
     }
 
     public IReadOnlyCollection<Team> GetTeams()
@@ -183,8 +158,6 @@ public class TeamServices : ITeamService
             performedByEmail,
             nameof(Team),
             team.Id);
-
-        unitOfWork.Commit();
     }
 
     public IReadOnlyList<Team> OrderForFixture(IReadOnlyCollection<Team> teams, int fixtureSeed)
@@ -206,7 +179,7 @@ public class TeamServices : ITeamService
 
     private void ValidateConfederationQuota(Confederation confederation)
     {
-        if (QuotasByConfederation.TryGetValue(confederation, out int quota) &&
+        if (ConfederationQuotas.ByConfederation.TryGetValue(confederation, out int quota) &&
             teamRepository.CountByConfederation(confederation) >= quota)
         {
             throw new TeamServicesException(string.Format(QuotaExceededMessage, confederation));

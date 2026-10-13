@@ -21,6 +21,17 @@ public class MockNotificationRepository : INotificationRepository
         notifications.Add(notification);
     }
 
+    public int AddRangeCalls { get; private set; }
+
+    public void AddRange(IReadOnlyCollection<Notification> notifications)
+    {
+        AddRangeCalls++;
+        foreach (Notification notification in notifications)
+        {
+            Add(notification);
+        }
+    }
+
     public Notification? GetById(int id)
     {
         return notifications.FirstOrDefault(n => n.Id == id);
