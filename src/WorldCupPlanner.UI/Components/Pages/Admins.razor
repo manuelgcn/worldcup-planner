@@ -4,19 +4,13 @@
 @using WorldCupPlanner.Services.Interfaces
 @inject SessionState Session
 @inject IUserService UserServices
-@inject NavigationManager Nav
 
-<PageTitle>Administración de Usuarios</PageTitle>
+<PageTitle>Administración de usuarios · Golazo</PageTitle>
 
 @if (!Session.IsLoggedIn)
 {
-    <section class="m26-card auth-card">
-        <h1 class="m26-page-title mb-2">Administración de Usuarios</h1>
-        <p class="mb-3">No estás logueado.</p>
-        <button class="btn btn-primary" @onclick="GoToLogin">
-            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Ir a Login
-        </button>
-    </section>
+    <h1 class="m26-page-title">Administración de usuarios</h1>
+    <LoginRequired />
 }
 else if (!IsAdmin)
 {
@@ -162,8 +156,4 @@ else
         }
     }
 
-    private void GoToLogin()
-    {
-        Nav.NavigateTo("/login");
-    }
 }

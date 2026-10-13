@@ -5,26 +5,19 @@
 @using WorldCupPlanner.Services.Interfaces
 @inject IUserService UserServices
 @inject SessionState Session
-@inject NavigationManager Nav
 
-<PageTitle>Usuarios</PageTitle>
+<PageTitle>Usuarios · Golazo</PageTitle>
 
 @if (!Session.IsLoggedIn)
 {
-    <section class="m26-card auth-card">
-        <h1 class="m26-page-title mb-2">Usuarios</h1>
-        <p class="mb-3">No estas logueado.</p>
-        <button class="btn btn-primary" @onclick="GoToLogin">
-            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
-            Ir a Login
-        </button>
-    </section>
+    <h1 class="m26-page-title">Usuarios</h1>
+    <LoginRequired />
 }
 else if (!IsAdmin)
 {
     <div class="alert alert-error" role="alert">
         <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
-        No tenes permisos para administrar usuarios.
+        No tenés permisos para administrar usuarios.
     </div>
 }
 else
@@ -100,11 +93,17 @@ else
             <div class="d-flex gap-2">
                 @if (editingUserId is null)
                 {
-                    <button class="btn btn-primary" @onclick="Create">Crear</button>
+                    <button class="btn btn-primary" @onclick="Create">
+                        <i class="bi bi-plus-circle-fill" aria-hidden="true"></i>
+                        Crear
+                    </button>
                 }
                 else
                 {
-                    <button class="btn btn-primary" @onclick="SaveEdit">Guardar</button>
+                    <button class="btn btn-primary" @onclick="SaveEdit">
+                        <i class="bi bi-check-lg" aria-hidden="true"></i>
+                        Guardar
+                    </button>
                     <button class="btn btn-outline-secondary" @onclick="CancelEdit">Cancelar</button>
                 }
             </div>
@@ -152,21 +151,27 @@ else
                                                 <i class="bi bi-pencil" aria-hidden="true"></i> Editar
                                             </button>
 
-                                            <button class="btn btn-outline-secondary btn-sm"
+                                            <button class="btn btn-sm @RoleButtonClass(u, UserRoles.Admin)"
+                                                    aria-pressed="@(u.HasRole(UserRoles.Admin) ? "true" : "false")"
+                                                    title="@(u.HasRole(UserRoles.Admin) ? "Quitar rol Admin" : "Asignar rol Admin")"
                                                     disabled="@(u.idUser == 1)"
                                                     @onclick="() => ToggleRole(u, UserRoles.Admin)">
                                                 <i class="bi bi-shield-fill" aria-hidden="true"></i>
                                                 Admin
                                             </button>
 
-                                            <button class="btn btn-outline-secondary btn-sm"
+                                            <button class="btn btn-sm @RoleButtonClass(u, UserRoles.Editor)"
+                                                    aria-pressed="@(u.HasRole(UserRoles.Editor) ? "true" : "false")"
+                                                    title="@(u.HasRole(UserRoles.Editor) ? "Quitar rol Editor" : "Asignar rol Editor")"
                                                     disabled="@(u.idUser == 1)"
                                                     @onclick="() => ToggleRole(u, UserRoles.Editor)">
                                                 <i class="bi bi-person-check-fill" aria-hidden="true"></i>
                                                 Editor
                                             </button>
 
-                                            <button class="btn btn-outline-secondary btn-sm"
+                                            <button class="btn btn-sm @RoleButtonClass(u, UserRoles.Periodista)"
+                                                    aria-pressed="@(u.HasRole(UserRoles.Periodista) ? "true" : "false")"
+                                                    title="@(u.HasRole(UserRoles.Periodista) ? "Quitar rol Periodista" : "Asignar rol Periodista")"
                                                     disabled="@(u.idUser == 1)"
                                                     @onclick="() => ToggleRole(u, UserRoles.Periodista)">
                                                 <i class="bi bi-newspaper" aria-hidden="true"></i>
@@ -191,6 +196,10 @@ else
 }
 
 @code {
+    // Los botones de rol son interruptores: el rol asignado se ve "encendido".
+    private static string RoleButtonClass(User user, UserRoles role) =>
+        user.HasRole(role) ? "btn-secondary role-on" : "btn-outline-secondary";
+
     private string name = "";
     private string lastname = "";
     private string email = "";
@@ -236,7 +245,7 @@ else
                 InitialRole = initialRole
             });
 
-            successMessage = "Usuario creado";
+            successMessage = "Usuario creado correctamente";
             ClearForm();
             LoadUsers();
         }
@@ -271,7 +280,7 @@ else
         try
         {
             UserServices.UpdateUser(editingUserId!.Value, name, lastname, email, Session.CurrentUser?.email);
-            successMessage = "Usuario actualizado";
+            successMessage = "Usuario actualizado correctamente";
             editingUserId = null;
             ClearForm();
             LoadUsers();
@@ -290,7 +299,7 @@ else
         try
         {
             UserServices.RemoveUser(id, Session.CurrentUser?.email);
-            successMessage = "Usuario eliminado";
+            successMessage = "Usuario eliminado correctamente";
             LoadUsers();
         }
         catch (Exception ex)
@@ -335,8 +344,4 @@ else
         initialRole = UserRoles.Editor;
     }
 
-    private void GoToLogin()
-    {
-        Nav.NavigateTo("/login");
-    }
 }

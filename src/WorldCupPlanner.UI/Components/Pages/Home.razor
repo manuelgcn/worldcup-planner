@@ -8,13 +8,17 @@
 @inject ITournamentDashboardService DashboardService
 @inject ILogger<Home> Logger
 
-<PageTitle>Inicio</PageTitle>
+<PageTitle>Inicio · Golazo</PageTitle>
 
 <section class="home-hero">
     <div class="hero-copy">
-        <p class="hero-kicker">TORNEO INTERNACIONAL</p>
-        <h1 class="hero-title">LA COPA</h1>
-        <p class="hero-subtitle">
+        <p class="hero-kicker">Mundial 2026 · 48 selecciones</p>
+        <h1 class="hero-title">Golazo</h1>
+        <p class="hero-lead">
+            Del sorteo de grupos a la final: planificá, simulá y seguí cada partido del Mundial.
+        </p>
+        <p class="hero-status" role="status">
+            <span class="hero-status-dot" aria-hidden="true"></span>
             @TournamentStatusText
         </p>
         <div class="hero-cta">
@@ -26,7 +30,7 @@
                 </a>
                 <a class="btn btn-outline-primary btn-lg" href="/matches">
                     <i class="bi bi-calendar-event-fill" aria-hidden="true"></i>
-                    Ver Partidos
+                    Ver partidos
                 </a>
             }
             else
@@ -37,7 +41,7 @@
                 </a>
                 <a class="btn btn-outline-primary btn-lg" href="/signup">
                     <i class="bi bi-person-plus-fill" aria-hidden="true"></i>
-                    Registrarme
+                    Crear cuenta
                 </a>
             }
         </div>
@@ -86,6 +90,32 @@
         <p class="stat-value stat-value-text">@TournamentStageLabel</p>
         <p class="stat-label">Estado del torneo</p>
     </article>
+</section>
+
+<section class="how-it-works" aria-labelledby="howItWorksTitle">
+    <h2 id="howItWorksTitle" class="how-title">Cómo funciona</h2>
+    <ol class="how-steps">
+        <li class="m26-card how-step">
+            <span class="how-icon"><i class="bi bi-people-fill" aria-hidden="true"></i></span>
+            <h3>Equipos y sedes</h3>
+            <p>Cargá las 48 selecciones a mano o por CSV, con bandera y ranking, y los estadios del torneo.</p>
+        </li>
+        <li class="m26-card how-step">
+            <span class="how-icon"><i class="bi bi-diagram-3-fill" aria-hidden="true"></i></span>
+            <h3>Sorteo y fixture</h3>
+            <p>12 grupos con cupos por confederación y un calendario reproducible gracias a la semilla.</p>
+        </li>
+        <li class="m26-card how-step">
+            <span class="how-icon"><i class="bi bi-dice-5-fill" aria-hidden="true"></i></span>
+            <h3>Simulación</h3>
+            <p>Motores intercambiables juegan los partidos; también podés cargar cada resultado a mano.</p>
+        </li>
+        <li class="m26-card how-step">
+            <span class="how-icon"><i class="bi bi-trophy-fill" aria-hidden="true"></i></span>
+            <h3>Hasta la final</h3>
+            <p>De 16avos a la final, con penales, ranking Elo actualizado y un campeón del mundo.</p>
+        </li>
+    </ol>
 </section>
 
 @code {
@@ -154,7 +184,7 @@
             {
                 return new CtaLink("Cargar resultados", "/fixture", "bi-pencil-square");
             }
-            return new CtaLink("Ver Fixture", "/fixture", "bi-diagram-3-fill");
+            return new CtaLink("Ver fixture", "/fixture", "bi-diagram-3-fill");
         }
     }
 

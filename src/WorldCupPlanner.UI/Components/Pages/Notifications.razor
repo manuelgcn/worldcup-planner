@@ -5,49 +5,63 @@
 @inject INotificationService NotificationService
 @inject NavigationManager Nav
 
-<PageTitle>Notificaciones</PageTitle>
+<PageTitle>Notificaciones · Golazo</PageTitle>
 
-@if (Session.IsLoggedIn && Session.IsJournalist)
+<h1 class="m26-page-title">Notificaciones</h1>
+
+@if (!Session.IsLoggedIn)
+{
+    <LoginRequired />
+}
+else if (!Session.IsJournalist)
+{
+    <div class="alert alert-info" role="status">
+        <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+        Las notificaciones de resultados son exclusivas para periodistas.
+    </div>
+}
+else
 {
     <section class="m26-card pane">
-        <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
-            <h1 class="pane-title mb-0">Notificaciones</h1>
+        @if (unreadNotifications.Any())
+        {
+            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                <p class="notification-count mb-0">
+                    @(unreadNotifications.Count == 1 ? "1 notificación sin leer" : $"{unreadNotifications.Count} notificaciones sin leer")
+                </p>
 
-            @if (unreadNotifications.Any())
-            {
                 <button class="btn btn-sm btn-outline-primary" @onclick="MarkAllNotificationsAsRead">
                     <i class="bi bi-check2-all" aria-hidden="true"></i>
-                    Marcar todas como leidas
+                    Marcar todas como leídas
                 </button>
-            }
-        </div>
+            </div>
+        }
 
         @if (!unreadNotifications.Any())
         {
-            <div class="m26-empty mt-3">
+            <div class="m26-empty">
                 <i class="bi bi-bell" aria-hidden="true"></i>
-                <p class="mb-0">No tenes notificaciones pendientes.</p>
+                <p class="mb-0">No tenés notificaciones pendientes.</p>
             </div>
         }
         else
         {
-            <ul class="list-group list-group-flush mt-3">
+            <ul class="notification-list">
                 @foreach (Notification notification in unreadNotifications)
                 {
-                    <li class="list-group-item">
-                        <div class="d-flex justify-content-between align-items-start gap-3">
-                            <div>
-                                <div>@notification.Message</div>
-                                <small class="text-muted">
-                                    @notification.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
-                                </small>
-                            </div>
-
-                            <button class="btn btn-sm btn-outline-primary"
-                                    @onclick="() => MarkNotificationAsRead(notification.Id)">
-                                Marcar como leida
-                            </button>
+                    <li class="notification-item">
+                        <span class="notification-icon" aria-hidden="true"><i class="bi bi-bell-fill"></i></span>
+                        <div class="notification-body">
+                            <p class="notification-message">@notification.Message</p>
+                            <time class="notification-time">
+                                @notification.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </time>
                         </div>
+
+                        <button class="btn btn-sm btn-outline-primary"
+                                @onclick="() => MarkNotificationAsRead(notification.Id)">
+                            Marcar como leída
+                        </button>
                     </li>
                 }
             </ul>

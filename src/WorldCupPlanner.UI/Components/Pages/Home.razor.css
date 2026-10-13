@@ -52,10 +52,11 @@
     font-size: .78rem;
     font-weight: 700;
     letter-spacing: .12em;
+    text-transform: uppercase;
 }
 
 .hero-title {
-    font-size: clamp(3.4rem, 11vw, 6.5rem);
+    font-size: clamp(3.6rem, 12vw, 7rem);
     line-height: .9;
     margin: .7rem 0 .75rem;
     text-transform: uppercase;
@@ -63,11 +64,33 @@
     text-shadow: 0 4px 24px rgba(0, 0, 0, .25);
 }
 
-.hero-subtitle {
-    max-width: 52ch;
-    font-size: clamp(1rem, 2.6vw, 1.15rem);
-    color: rgba(255, 255, 255, .85);
-    margin-bottom: 1.5rem;
+.hero-lead {
+    max-width: 48ch;
+    margin-bottom: 1rem;
+    font-size: clamp(1.05rem, 2.6vw, 1.25rem);
+    line-height: 1.45;
+    color: rgba(255, 255, 255, .92);
+}
+
+.hero-status {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    margin-bottom: 1.6rem;
+    padding: .4rem .85rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .1);
+    color: rgba(255, 255, 255, .92);
+    font-size: .92rem;
+}
+
+.hero-status-dot {
+    flex: none;
+    width: .55rem;
+    height: .55rem;
+    border-radius: 50%;
+    background: #3DDC97;
+    box-shadow: 0 0 0 4px rgba(61, 220, 151, .25);
 }
 
 .hero-cta {
@@ -83,7 +106,7 @@
 }
 
 .hero-cta .btn-primary:hover,
-.hero-cta .btn-primary:focus-visible {
+.hero-cta .btn-primary:focus {
     color: var(--m26-navy);
     background: #FFE45C;
 }
@@ -94,7 +117,7 @@
 }
 
 .hero-cta .btn-outline-primary:hover,
-.hero-cta .btn-outline-primary:focus-visible {
+.hero-cta .btn-outline-primary:focus {
     color: var(--m26-navy);
     background: var(--m26-white);
     border-color: var(--m26-white);
@@ -122,7 +145,7 @@
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 1rem;
 }
 
@@ -188,7 +211,67 @@
     display: block;
     height: 100%;
     border-radius: inherit;
-    background: var(--m26-gradient);
+    background: linear-gradient(90deg, var(--m26-blue) 0%, var(--m26-focus) 100%);
+}
+
+/* Cómo funciona */
+.how-it-works {
+    margin-top: 2.25rem;
+}
+
+.how-title {
+    margin-bottom: .9rem;
+    font-size: 1.9rem;
+}
+
+.how-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: how;
+}
+
+.how-step {
+    position: relative;
+    padding: 1.25rem;
+    counter-increment: how;
+}
+
+.how-step::after {
+    content: counter(how, decimal-leading-zero);
+    position: absolute;
+    top: 1rem;
+    right: 1.1rem;
+    font-family: "Bebas Neue", Oswald, sans-serif;
+    font-size: 2rem;
+    line-height: 1;
+    color: rgba(0, 40, 104, .12);
+}
+
+.how-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    margin-bottom: .8rem;
+    border-radius: 12px;
+    background: var(--m26-blue);
+    color: var(--m26-gold);
+    font-size: 1.15rem;
+}
+
+.how-step h3 {
+    margin-bottom: .35rem;
+    font-size: 1.35rem;
+}
+
+.how-step p {
+    margin: 0;
+    font-size: .92rem;
+    color: var(--m26-muted);
 }
 
 @media (max-width: 640.98px) {
@@ -199,4 +282,13 @@
     .hero-art {
         display: none;
     }
+
+    .hero-cta .btn {
+        flex: 1 1 100%;
+    }
+}
+
+/* Sobre el fondo azul del hero el anillo de foco va en blanco. */
+.hero-cta .btn:focus-visible {
+    outline-color: var(--m26-white);
 }

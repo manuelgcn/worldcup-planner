@@ -7,21 +7,15 @@
 @inject IMatchService MatchService
 @inject IKnockoutFixtureGenerator KnockoutGenerator
 @inject IStadiumService StadiumServices
+@inject ITeamService TeamServices
 @inject SessionState Session
-@inject NavigationManager Nav
 
-<PageTitle>Partidos</PageTitle>
+<PageTitle>Partidos · Golazo</PageTitle>
 
 @if (!Session.IsLoggedIn)
 {
-    <section class="m26-card auth-card">
-        <h1 class="m26-page-title mb-2">Partidos</h1>
-        <p class="mb-3">No estas logueado.</p>
-        <button class="btn btn-primary" @onclick="GoToLogin">
-            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
-            Ir a Login
-        </button>
-    </section>
+    <h1 class="m26-page-title">Partidos</h1>
+    <LoginRequired />
 }
 else
 {
@@ -52,16 +46,16 @@ else
     <section class="m26-card filters-card">
         <div class="filters-grid">
             <div class="filter-item">
-                <label class="form-label">Desde</label>
-                <input class="form-control" type="date" @bind="filterFrom" />
+                <label class="form-label" for="filterFrom">Desde</label>
+                <input id="filterFrom" class="form-control" type="date" @bind="filterFrom" />
             </div>
             <div class="filter-item">
-                <label class="form-label">Hasta</label>
-                <input class="form-control" type="date" @bind="filterTo" />
+                <label class="form-label" for="filterTo">Hasta</label>
+                <input id="filterTo" class="form-control" type="date" @bind="filterTo" />
             </div>
             <div class="filter-item">
-                <label class="form-label">Estadio</label>
-                <select class="form-select" @bind="filterStadiumId">
+                <label class="form-label" for="filterStadium">Estadio</label>
+                <select id="filterStadium" class="form-select" @bind="filterStadiumId">
                     <option value="0">-- Todos --</option>
                     @foreach (WorldCupPlanner.Domain.Stadium s in stadiums)
                     {
@@ -70,8 +64,8 @@ else
                 </select>
             </div>
             <div class="filter-item">
-                <label class="form-label">Grupo</label>
-                <select class="form-select" @bind="filterGroup">
+                <label class="form-label" for="filterGroup">Grupo</label>
+                <select id="filterGroup" class="form-select" @bind="filterGroup">
                     <option value="">-- Todos --</option>
                     @foreach (string g in groupOptions)
                     {
@@ -80,8 +74,8 @@ else
                 </select>
             </div>
             <div class="filter-item">
-                <label class="form-label">Fase</label>
-                <select class="form-select" @bind="FilterPhaseSelection">
+                <label class="form-label" for="filterPhase">Fase</label>
+                <select id="filterPhase" class="form-select" @bind="FilterPhaseSelection">
                     <option value="">-- Todas --</option>
                     @foreach (Phase p in Enum.GetValues<Phase>())
                     {
@@ -107,7 +101,7 @@ else
     @if (matches.Any())
     {
         <h2 class="section-title">Partidos filtrados</h2>
-        <div class="table-responsive m26-card table-wrap">
+        <div class="table-responsive m26-card table-wrap" tabindex="0" role="region" aria-label="Partidos filtrados">
             <table class="table table-hover m26-scoreboard mb-0">
                 <thead>
                     <tr>
@@ -126,7 +120,11 @@ else
                         <tr>
                             <td>@match.MatchDate.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>@StageLabel(match)</td>
-                            <td class="fw-semibold">@match.HomeTeamName vs @match.AwayTeamName</td>
+                            <td class="match-teams">
+                                <TeamFlag Team="TeamNamed(match.HomeTeamName)" />@match.HomeTeamName
+                                <span class="match-vs">vs</span>
+                                <TeamFlag Team="TeamNamed(match.AwayTeamName)" />@match.AwayTeamName
+                            </td>
                             <td>@match.StadiumName</td>
                             <td>
                                 <span class="m26-score @(IsPlayed(match) ? "" : "pending")">
@@ -152,6 +150,7 @@ else
                                 {
                                     <span class="text-muted" title="@LockReason(match)">
                                         <i class="bi bi-lock-fill" aria-hidden="true"></i>
+                                        <span class="visually-hidden">@LockReason(match)</span>
                                     </span>
                                 }
                             </td>
@@ -221,12 +220,19 @@ else
     private bool IsGroupStageLocked { get; set; }
     private IReadOnlySet<int> lockedKnockoutMatchIds = new HashSet<int>();
 
+    // El listado trae solo nombres; las banderas se resuelven una vez por carga de página.
+    private IReadOnlyDictionary<string, Team> teamsByName = new Dictionary<string, Team>();
+
     protected override void OnInitialized()
     {
         ApplyQueryParameters();
         LoadStadiums();
+        teamsByName = TeamServices.GetTeams().DistinctBy(team => team.Name).ToDictionary(team => team.Name);
         ApplyFilters();
     }
+
+    private Team? TeamNamed(string? name) =>
+        name is not null && teamsByName.TryGetValue(name, out Team? team) ? team : null;
 
     private void ApplyQueryParameters()
     {
@@ -365,8 +371,4 @@ else
         successMessage = message;
     }
 
-    private void GoToLogin()
-    {
-        Nav.NavigateTo("/login");
-    }
 }

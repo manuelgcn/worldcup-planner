@@ -2,12 +2,6 @@
     max-width: 1280px;
 }
 
-.fixture-page h3 {
-    margin: 0 0 1rem;
-    font-family: "Bebas Neue", Oswald, sans-serif;
-    letter-spacing: .04em;
-}
-
 /* Wizard banner: the most prominent element on the page */
 .wizard-banner {
     display: grid;
@@ -115,7 +109,7 @@
     box-shadow: var(--m26-shadow);
 }
 
-.step-section h4 {
+.step-section h2 {
     margin: 0 0 .4rem;
     font-size: 1.35rem;
     color: var(--m26-blue, #002868);
@@ -166,8 +160,8 @@
     box-shadow: var(--m26-shadow);
 }
 
-.groups-section h4,
-.bracket-section h4 {
+.groups-section h2,
+.bracket-section h2 {
     margin: 0 0 .6rem;
     font-size: 1.8rem;
     font-family: "Bebas Neue", Oswald, sans-serif;
@@ -238,6 +232,7 @@
 }
 
 ::deep .group-badge {
+    margin: 0;
     color: var(--m26-white);
     font-family: "Bebas Neue", Oswald, sans-serif;
     font-size: 1.35rem;
@@ -319,7 +314,11 @@
 }
 
 ::deep .standings-table tr.eliminated td {
-    color: rgba(0, 0, 0, .5);
+    color: var(--m26-muted);
+}
+
+::deep .standings-table tr.eliminated .team-flag {
+    opacity: .6;
 }
 
 ::deep .matches-table {
@@ -349,6 +348,17 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: .5rem;
+}
+
+::deep .group-detail-head h2 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+::deep .group-detail h3 {
+    margin: 1.1rem 0 .4rem;
+    font-size: 1.2rem;
+    color: var(--m26-blue);
 }
 
 ::deep .group-detail-actions {
@@ -424,7 +434,7 @@
     flex-direction: column;
 }
 
-::deep .bracket-compact-column h6 {
+::deep .bracket-compact-column h3 {
     margin: 0 0 .6rem;
     text-align: center;
     font-family: "Bebas Neue", Oswald, sans-serif;
@@ -466,12 +476,12 @@
     box-shadow: 0 6px 18px rgba(255, 215, 0, .3);
 }
 
-::deep .phase-Final h6 {
+::deep .phase-Final h3 {
     color: var(--m26-navy);
     background: var(--m26-gold);
 }
 
-::deep .phase-ThirdPlace h6 {
+::deep .phase-ThirdPlace h3 {
     background: #8C6239;
 }
 
@@ -488,9 +498,9 @@
 }
 
 ::deep .bracket-mini-code {
-    font-size: .58rem;
-    font-weight: bold;
-    color: rgba(0, 0, 0, .5);
+    font-size: .64rem;
+    font-weight: 700;
+    color: var(--m26-muted);
     letter-spacing: .04em;
     text-align: center;
 }
@@ -540,7 +550,12 @@
     color: var(--m26-green);
 }
 
-::deep .bracket-mini-row.loser {
+::deep .bracket-mini-row.loser .bracket-mini-name,
+::deep .bracket-mini-row.loser .bracket-mini-score {
+    color: var(--m26-muted);
+}
+
+::deep .bracket-mini-row.loser .team-flag {
     opacity: .45;
 }
 
@@ -551,7 +566,7 @@
     background: #FFF8F9;
 }
 
-.danger-zone h4 {
+.danger-zone h2 {
     color: var(--m26-red, #E4002B);
 }
 

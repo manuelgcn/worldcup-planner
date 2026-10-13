@@ -4,13 +4,13 @@
 @using WorldCupPlanner.Services.Interfaces
 @inject SessionState Session
 @inject IUserService UserServices
-@inject NavigationManager Nav
 
-<PageTitle>Editar Usuario</PageTitle>
+<PageTitle>Mi perfil · Golazo</PageTitle>
 
 <section class="auth-wrap">
     <div class="m26-card auth-card">
         <div class="m26-card-header auth-head">
+            <img class="auth-logo" src="img/golazo-mark.svg" alt="" width="56" height="56" />
             <h1 class="auth-title mb-0">Mi perfil</h1>
         </div>
         <div class="auth-body">
@@ -38,8 +38,8 @@
 
             @if (!Session.IsLoggedIn)
             {
-                <p>No estás logueado.</p>
-                <button class="btn btn-primary w-100" @onclick="GoToLogin">Ir a Login</button>
+                <p class="mb-3">Ingresá para editar tu perfil.</p>
+                <a class="btn btn-primary w-100" href="login">Ingresar</a>
             }
             else
             {
@@ -47,20 +47,25 @@
                     Email actual: <strong>@Session.CurrentUser!.email</strong>
                 </p>
 
-                <div class="mb-3">
-                    <label class="form-label" for="editName">Nombre</label>
-                    <input id="editName" class="form-control" placeholder="Nombre" @bind="name" />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="editLastName">Apellido</label>
-                    <input id="editLastName" class="form-control" placeholder="Apellido" @bind="lastname" />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="editEmail">Email</label>
-                    <input id="editEmail" class="form-control" placeholder="Email" @bind="email" />
-                </div>
+                <form @onsubmit="Save">
+                    <div class="mb-3">
+                        <label class="form-label" for="editName">Nombre</label>
+                        <input id="editName" class="form-control" autocomplete="given-name" placeholder="Nombre"
+                               @bind="name" @bind:event="oninput" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="editLastName">Apellido</label>
+                        <input id="editLastName" class="form-control" autocomplete="family-name" placeholder="Apellido"
+                               @bind="lastname" @bind:event="oninput" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="editEmail">Email</label>
+                        <input id="editEmail" class="form-control" type="email" autocomplete="email" placeholder="Email"
+                               @bind="email" @bind:event="oninput" />
+                    </div>
 
-                <button class="btn btn-primary w-100" @onclick="Save">Guardar cambios</button>
+                    <button class="btn btn-primary w-100" type="submit">Guardar cambios</button>
+                </form>
             }
         </div>
     </div>
@@ -106,6 +111,8 @@
                 Session.CurrentUser?.email
             );
 
+            // La sesión guarda una copia del usuario: se recarga para que el layout y "Email actual" reflejen el cambio.
+            Session.Login(UserServices.GetUserById(Session.CurrentUser!.idUser));
             successMessage = "Usuario actualizado correctamente";
         }
         catch (Exception ex)
@@ -117,21 +124,16 @@
     private bool ValidateInput()
     {
         if (string.IsNullOrWhiteSpace(name))
-            errors.Add("Nombre es obligatorio");
+            errors.Add("El nombre es obligatorio.");
 
         if (string.IsNullOrWhiteSpace(lastname))
-            errors.Add("Apellido es obligatorio");
+            errors.Add("El apellido es obligatorio.");
 
         if (string.IsNullOrWhiteSpace(email))
-            errors.Add("Email es obligatorio");
+            errors.Add("El email es obligatorio.");
         else if (!email.Contains("@") || !email.Contains("."))
-            errors.Add("Email invalido");
+            errors.Add("El email no es válido.");
 
         return !errors.Any();
-    }
-
-    private void GoToLogin()
-    {
-        Nav.NavigateTo("/login");
     }
 }

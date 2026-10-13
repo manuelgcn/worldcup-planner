@@ -8,18 +8,14 @@
 @inject IAuditLogService AuditLogService
 @inject IExportService ExportService
 @inject SessionState Session
-@inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<PageTitle>Log de auditoría</PageTitle>
+<PageTitle>Log de auditoría · Golazo</PageTitle>
 
 @if (!Session.IsLoggedIn)
 {
-    <section class="m26-card auth-card">
-        <h1 class="m26-page-title mb-2">Log de auditoría</h1>
-        <p class="mb-3">No estás logueado.</p>
-        <button class="btn btn-primary" @onclick="@(() => Nav.NavigateTo("/login"))">Ir a Login</button>
-    </section>
+    <h1 class="m26-page-title">Log de auditoría</h1>
+    <LoginRequired />
 }
 else if (!CanExport)
 {
@@ -70,7 +66,7 @@ else
         }
         else
         {
-            <div class="table-responsive">
+            <div class="table-responsive" tabindex="0" role="region" aria-label="Registros de auditoría">
                 <table class="table m26-scoreboard audit-table mb-0">
                     <thead>
                         <tr>

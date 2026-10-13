@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Oswald:wght@400;500;700&display=swap');
-
 :root {
     --m26-red: #E4002B;
     --m26-blue: #002868;
@@ -11,11 +9,17 @@
     --m26-line: #E5E7EB;
     --m26-navy: #001637;
     --m26-muted: #5B6475;
-    --m26-gradient: linear-gradient(135deg, var(--m26-blue) 0%, var(--m26-red) 100%);
     --m26-hosts: linear-gradient(90deg, var(--m26-green) 0 33.3%, var(--m26-gold) 33.3% 66.6%, var(--m26-red) 66.6%);
     --m26-shadow: 0 6px 20px rgba(0, 40, 104, .08);
     --m26-shadow-hover: 0 10px 28px rgba(0, 40, 104, .14);
     --m26-radius: 14px;
+    --m26-focus: #1A56DB;
+}
+
+/* Foco visible y consistente para teclado (WCAG 2.4.7). */
+:focus-visible {
+    outline: 3px solid var(--m26-focus);
+    outline-offset: 2px;
 }
 
 html,
@@ -47,6 +51,11 @@ a:hover {
 
 .content {
     padding-top: 1.25rem;
+}
+
+/* El gris de Bootstrap 5.1 (#6c757d) no llega a 4.5:1 sobre el fondo de la app. */
+.text-muted {
+    color: var(--m26-muted) !important;
 }
 
 h1:focus {
@@ -85,20 +94,20 @@ code {
 }
 
 .m26-card-header {
-    background: var(--m26-gradient);
+    background: linear-gradient(120deg, var(--m26-navy) 0%, var(--m26-blue) 100%);
     color: var(--m26-white);
     border-radius: var(--m26-radius) var(--m26-radius) 0 0;
     padding: .9rem 1.1rem;
 }
 
 .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
     border-radius: 10px;
     font-weight: 600;
     transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
-}
-
-.btn i {
-    margin-right: .35rem;
 }
 
 .btn:disabled,
@@ -114,57 +123,93 @@ code {
 }
 
 .btn-secondary:hover,
-.btn-secondary:focus-visible,
+.btn-secondary:focus,
 .btn-secondary:disabled {
     color: var(--m26-blue);
     background: #DCE3EE;
     border-color: #C7D0DF;
 }
 
-.btn-primary {
+.btn-primary,
+.btn-primary:disabled {
     color: var(--m26-white);
-    background: var(--m26-gradient);
-    border: none;
+    background: var(--m26-blue);
+    border: 1px solid var(--m26-blue);
 }
 
 .btn-primary:hover,
-.btn-primary:focus-visible {
-    color: var(--m26-blue);
-    background: var(--m26-gold);
+.btn-primary:focus,
+.btn-primary:active {
+    color: var(--m26-white);
+    background: #0B3A8A;
+    border-color: #0B3A8A;
 }
 
-.btn-outline-primary {
+.btn-outline-primary,
+.btn-outline-primary:disabled {
     color: var(--m26-blue);
     border-color: var(--m26-blue);
+    background: transparent;
 }
 
 .btn-outline-primary:hover,
-.btn-outline-primary:focus-visible {
-    color: var(--m26-blue);
-    border-color: var(--m26-gold);
-    background: rgba(255, 215, 0, .15);
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+    color: var(--m26-white);
+    border-color: var(--m26-blue);
+    background: var(--m26-blue);
 }
 
-.btn-danger {
+.btn-outline-secondary,
+.btn-outline-secondary:disabled {
+    color: var(--m26-muted);
+    border-color: #C5CCD8;
+    background: transparent;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus {
+    color: var(--m26-ink);
+    background: #EEF1F6;
+    border-color: #AEB7C6;
+}
+
+.btn-outline-danger,
+.btn-outline-danger:disabled {
+    color: #B0001F;
+    border-color: rgba(176, 0, 31, .45);
+    background: transparent;
+}
+
+.btn-outline-danger:hover,
+.btn-outline-danger:focus {
+    color: var(--m26-white);
+    background: #B0001F;
+    border-color: #B0001F;
+}
+
+.btn-danger,
+.btn-danger:disabled {
     color: var(--m26-white);
     background: var(--m26-red);
-    border: none;
+    border: 1px solid var(--m26-red);
 }
 
 .btn-danger:hover,
-.btn-danger:focus-visible {
+.btn-danger:focus {
     color: var(--m26-white);
     background: #C20025;
 }
 
-.btn-success {
+.btn-success,
+.btn-success:disabled {
     color: var(--m26-white);
     background: var(--m26-green);
     border-color: var(--m26-green);
 }
 
 .btn-success:hover,
-.btn-success:focus-visible {
+.btn-success:focus {
     color: var(--m26-white);
     background: #00563B;
     border-color: #00563B;
@@ -175,13 +220,27 @@ code {
 }
 
 .btn:focus,
-.btn:active:focus,
-.btn-link.nav-link:focus,
+.btn:active:focus {
+    box-shadow: none;
+}
+
+/* Bootstrap apaga el outline en .btn:focus-visible; se restituye el anillo de foco de la app. */
+.btn:focus-visible {
+    outline: 3px solid var(--m26-focus);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
 .form-control:focus,
 .form-check-input:focus,
 .form-select:focus {
-    box-shadow: 0 0 0 .2rem rgba(255, 215, 0, .35);
-    border-color: var(--m26-gold);
+    box-shadow: 0 0 0 .2rem rgba(26, 86, 219, .2);
+    border-color: var(--m26-focus);
+}
+
+.form-check-input:checked {
+    background-color: var(--m26-blue);
+    border-color: var(--m26-blue);
 }
 
 .form-control,
@@ -192,6 +251,11 @@ code {
 
 .table {
     border-color: var(--m26-line);
+}
+
+/* Contiene los .visually-hidden (position: absolute) dentro del scroll horizontal de la tabla. */
+.table-responsive {
+    position: relative;
 }
 
 .table thead th {
@@ -236,9 +300,9 @@ code {
 }
 
 .conf-CONMEBOL {
-    background: rgba(0, 40, 104, .12);
-    color: #002868;
-    border-color: rgba(0, 40, 104, .25);
+    background: rgba(14, 116, 144, .12);
+    color: #0B5566;
+    border-color: rgba(14, 116, 144, .3);
 }
 
 .conf-UEFA {
@@ -603,6 +667,24 @@ code {
     text-transform: uppercase;
 }
 
+.auth-logo {
+    display: block;
+    margin: 0 auto .7rem;
+    border-radius: 14px;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .15), 0 8px 18px rgba(0, 0, 0, .3);
+}
+
+.auth-switch {
+    margin: 1.1rem 0 0;
+    text-align: center;
+    font-size: .92rem;
+    color: var(--m26-muted);
+}
+
+.auth-switch a {
+    font-weight: 600;
+}
+
 .auth-body {
     padding: 1.4rem 1.4rem 1.6rem;
 }
@@ -663,4 +745,11 @@ code {
         transition: none !important;
         animation: none !important;
     }
+}
+
+/* Interruptor de rol encendido en la tabla de usuarios */
+.btn-secondary.role-on {
+    color: var(--m26-white);
+    background: var(--m26-blue);
+    border-color: var(--m26-blue);
 }

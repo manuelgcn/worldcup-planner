@@ -1,0 +1,20 @@
+.demo-credentials {
+    margin-bottom: 0;
+    font-size: .9rem;
+}
+
+.demo-credentials ul {
+    display: grid;
+    gap: .5rem;
+    margin: .75rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.demo-credentials li {
+    margin: 0 !important;
+    padding: .55rem .75rem;
+    border: 1px solid rgba(0, 40, 104, .12);
+    border-radius: 10px;
+    background: var(--m26-white);
+}

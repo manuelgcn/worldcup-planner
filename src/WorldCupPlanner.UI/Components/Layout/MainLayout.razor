@@ -1,30 +1,26 @@
 ﻿@inherits LayoutComponentBase
+@using WorldCupPlanner.Domain
+@implements IDisposable
 @inject SessionState Session
 
 <div class="page">
-    <div class="sidebar">
+    <header class="sidebar">
         <NavMenu/>
-    </div>
+    </header>
 
     <main>
         <div class="top-row px-4">
-            <a class="top-link" href="/">
-                <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
-                Acerca de la aplicación
-            </a>
-            <div class="session-chip" aria-label="Estado de sesión">
-                <span class="avatar-icon" aria-hidden="true">
-                    <i class="bi bi-person-circle"></i>
-                </span>
-                @if (Session.IsLoggedIn)
-                {
-                    <span>@Session.CurrentUser!.name</span>
-                }
-                else
-                {
-                    <span>Invitado</span>
-                }
-            </div>
+            <span class="top-tagline">Planificador del Mundial 2026</span>
+            @if (Session.IsLoggedIn)
+            {
+                <a class="session-chip" href="edit-user" title="Mi perfil">
+                    <span class="avatar" aria-hidden="true">@Initials</span>
+                    <span class="session-text">
+                        <span class="session-name">@Session.CurrentUser!.name @Session.CurrentUser.lastname</span>
+                        <span class="session-role">@RoleLabel</span>
+                    </span>
+                </a>
+            }
         </div>
 
         <article class="content px-4">
@@ -38,3 +34,22 @@
     <a href="" class="reload">Recargar</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code {
+    private string Initials =>
+        $"{FirstLetter(Session.CurrentUser!.name)}{FirstLetter(Session.CurrentUser.lastname)}";
+
+    private string RoleLabel =>
+        Session.CurrentUser!.HasRole(UserRoles.Admin) ? "Administrador"
+        : Session.CurrentUser.HasRole(UserRoles.Editor) ? "Editor"
+        : "Periodista";
+
+    private static string FirstLetter(string? text) =>
+        string.IsNullOrWhiteSpace(text) ? "" : char.ToUpperInvariant(text.Trim()[0]).ToString();
+
+    protected override void OnInitialized() => Session.OnChange += HandleSessionChanged;
+
+    private void HandleSessionChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Session.OnChange -= HandleSessionChanged;
+}

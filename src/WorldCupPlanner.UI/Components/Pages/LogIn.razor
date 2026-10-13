@@ -6,11 +6,12 @@
 @inject SessionState Session
 @inject NavigationManager Nav
 
-<PageTitle>Ingresar</PageTitle>
+<PageTitle>Ingresar · Golazo</PageTitle>
 
 <section class="auth-wrap">
     <div class="m26-card auth-card">
         <div class="m26-card-header auth-head">
+            <img class="auth-logo" src="img/golazo-mark.svg" alt="" width="56" height="56" />
             <h1 class="auth-title mb-0">Ingresar</h1>
         </div>
         <div class="auth-body">
@@ -29,26 +30,40 @@
                 </div>
             }
 
-            <div class="mb-3">
-                <label class="form-label" for="loginEmail">Email</label>
-                <input id="loginEmail" class="form-control" placeholder="tu@email.com" @bind="email" />
-            </div>
+            @if (Registered && errors.Count == 0)
+            {
+                <div class="alert alert-success" role="status">
+                    <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                    ¡Cuenta creada! Ingresá con tu email y contraseña.
+                </div>
+            }
 
-            <div class="mb-3">
-                <label class="form-label" for="loginPassword">Contraseña</label>
-                <input id="loginPassword" class="form-control" placeholder="••••••••" type="password" @bind="password" />
-            </div>
+            <form @onsubmit="Login">
+                <div class="mb-3">
+                    <label class="form-label" for="loginEmail">Email</label>
+                    <input id="loginEmail" class="form-control" type="email" autocomplete="username" placeholder="tu@email.com"
+                           @bind="email" @bind:event="oninput" />
+                </div>
 
-            <button class="btn btn-primary w-100" @onclick="Login">
-                Ingresar
-            </button>
+                <div class="mb-3">
+                    <label class="form-label" for="loginPassword">Contraseña</label>
+                    <input id="loginPassword" class="form-control" type="password" autocomplete="current-password" placeholder="••••••••"
+                           @bind="password" @bind:event="oninput" />
+                </div>
+
+                <button class="btn btn-primary w-100" type="submit">
+                    Ingresar
+                </button>
+            </form>
+
+            <p class="auth-switch">¿No tenés cuenta? <a href="signup">Creá una</a></p>
 
             <!-- ========================= -->
             <!-- TESTEO FUNCIONAL -->
             <!-- ========================= -->
             <hr />
 
-            <div class="alert alert-info" role="alert">
+            <div class="alert alert-info demo-credentials">
                 <strong>Credenciales de prueba (solo para testeo funcional) NO MODIFICAR:</strong>
                 <ul class="mb-0">
                     <li>
@@ -78,14 +93,21 @@
     private string password = "";
     private readonly List<string> errors = new();
 
+    // Signup redirige con ?registrado=true para confirmar que la cuenta se creó.
+    [SupplyParameterFromQuery(Name = "registrado")]
+    public bool Registered { get; set; }
+
     private void Login()
     {
         errors.Clear();
 
+        if (!IsInputValid())
+        {
+            return;
+        }
+
         try
         {
-            ValidateInput();
-
             User user = UserServices.Authenticate(email, password);
 
             Session.Login(user);
@@ -103,21 +125,18 @@
             ? "/notifications"
             : "/";
 
-    private void ValidateInput()
+    private bool IsInputValid()
     {
         if (string.IsNullOrWhiteSpace(email))
         {
-            errors.Add("Email es obligatorio");
+            errors.Add("Ingresá tu email.");
         }
 
         if (string.IsNullOrWhiteSpace(password))
         {
-            errors.Add("Password es obligatorio");
+            errors.Add("Ingresá tu contraseña.");
         }
 
-        if (errors.Count > 0)
-        {
-            throw new ArgumentException("Corrige los errores del formulario");
-        }
+        return errors.Count == 0;
     }
 }

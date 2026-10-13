@@ -6,7 +6,7 @@
 }
 else
 {
-    @* Vista única y compacta: árbol horizontal R32 → Final con SOLO las
+    @* Vista única y compacta: árbol horizontal 16avos → Final con SOLO las
        banderas y el marcador. Pasá el mouse para ver nombres y penales. *@
     <div class="bracket-compact-wrap">
         @if (Champion is not null)
@@ -19,11 +19,11 @@ else
             </div>
         }
         <p class="bracket-hint">Cada llave muestra las banderas de los dos equipos con su resultado. Pasá el mouse para ver nombres y penales.</p>
-        <div class="bracket-compact">
+        <div class="bracket-compact" tabindex="0" role="region" aria-label="Cuadro eliminatorio">
             @foreach (BracketColumn column in BuildColumns())
             {
                 <div class="bracket-compact-column @column.CssClass">
-                    <h6>@column.Title</h6>
+                    <h3>@column.Title</h3>
                     <div class="bracket-compact-cells">
                         @foreach (MatchElimination match in column.Matches)
                         {
@@ -63,7 +63,7 @@ else
 
     private static readonly (Phase Phase, string Title)[] PhasesInDisplayOrder =
     {
-        (Phase.RoundOf32, "R32"),
+        (Phase.RoundOf32, "16avos"),
         (Phase.RoundOf16, "Octavos"),
         (Phase.QuarterFinals, "Cuartos"),
         (Phase.SemiFinal, "Semis"),
@@ -109,12 +109,12 @@ else
         return goals.ToString();
     }
 
-    private static string TeamName(Team? team) => team?.Name ?? "TBD";
+    private static string TeamName(Team? team) => team?.Name ?? "A definir";
 
     private static string MatchTooltip(MatchElimination match)
     {
-        string home = match.HomeTeam?.Name ?? "TBD";
-        string away = match.AwayTeam?.Name ?? "TBD";
+        string home = match.HomeTeam?.Name ?? "A definir";
+        string away = match.AwayTeam?.Name ?? "A definir";
         if (!match.HasResult)
         {
             return $"{match.MatchCode}: {home} vs {away} (pendiente)";
