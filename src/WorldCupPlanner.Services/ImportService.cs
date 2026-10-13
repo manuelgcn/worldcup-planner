@@ -17,6 +17,7 @@ public sealed class ImportService : IImportService
     private const string InvalidConfederationMessage = "Confederacion invalida.";
     private const string InvalidRankingMessage = "Ranking invalido.";
     private const string DuplicateTeamMessage = "Nombre de equipo duplicado.";
+    private const string QuotaExceededMessage = "Se supero el cupo de equipos de {0}.";
     private const string MaxTeamsWarningMessage = "No se agregaron todos los equipos, max:48";
 
     private readonly ITeamRepository _teamRepository;
@@ -41,12 +42,15 @@ public sealed class ImportService : IImportService
         ArgumentNullException.ThrowIfNull(fileStream);
 
         List<TeamImportDto> rows = _teamParser.Parse(fileStream);
-        HashSet<string> importedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> importedNames = new HashSet<string>();
         List<Team> teamsToImport = new List<Team>();
 
         IReadOnlyCollection<Team> existingTeams = _teamRepository.GetAll();
         int currentTeamCount = existingTeams.Count;
         int nextTeamId = GetNextTeamId(existingTeams);
+        Dictionary<Confederation, int> teamsPerConfederation = existingTeams
+            .GroupBy(team => team.Confederation)
+            .ToDictionary(group => group.Key, group => group.Count());
 
         string? warningMessage = null;
 
@@ -75,8 +79,15 @@ public sealed class ImportService : IImportService
                 ThrowDuplicateTeam(row.RowNumber);
             }
 
+            int confederationCount = teamsPerConfederation.GetValueOrDefault(confederation);
+            if (confederationCount >= ConfederationQuotas.ByConfederation[confederation])
+            {
+                ThrowQuotaExceeded(confederation, row.RowNumber);
+            }
+
             teamsToImport.Add(new Team(nextTeamId, name, ranking, false, confederation));
-            importedNames.Add(name);
+            importedNames.Add(TextNormalizer.Normalize(name));
+            teamsPerConfederation[confederation] = confederationCount + 1;
 
             nextTeamId++;
             currentTeamCount++;
@@ -85,6 +96,15 @@ public sealed class ImportService : IImportService
         foreach (Team team in teamsToImport)
         {
             _teamRepository.Add(team);
+        }
+
+        if (teamsToImport.Count > 0)
+        {
+            _auditLogService.LogPerformedBy(
+                AuditActions.ImportTeams,
+                $"Imported {teamsToImport.Count} teams from CSV.",
+                performedByEmail,
+                nameof(Team));
         }
 
         return new ImportResult(teamsToImport, warningMessage);
@@ -110,7 +130,7 @@ public sealed class ImportService : IImportService
 
     private static Confederation ParseConfederation(string confederationText, int rowNumber)
     {
-        if (!Enum.TryParse(confederationText, ignoreCase: true, out Confederation confederation))
+        if (!Enum.TryParse(confederationText, ignoreCase: true, out Confederation confederation) || !Enum.IsDefined(confederation))
         {
             ThrowInvalidConfederation(rowNumber);
         }
@@ -135,7 +155,7 @@ public sealed class ImportService : IImportService
 
     private bool IsDuplicate(string name, HashSet<string> importedNames)
     {
-        return importedNames.Contains(name) || _teamRepository.ExistsByName(name);
+        return importedNames.Contains(TextNormalizer.Normalize(name)) || _teamRepository.ExistsByName(name);
     }
 
     private static void ThrowInvalidTeamName(int rowNumber) =>
@@ -149,4 +169,7 @@ public sealed class ImportService : IImportService
 
     private static void ThrowDuplicateTeam(int rowNumber) =>
         throw new ImportServiceException($"{DuplicateTeamMessage} Row: {rowNumber}.");
+
+    private static void ThrowQuotaExceeded(Confederation confederation, int rowNumber) =>
+        throw new ImportServiceException($"{string.Format(QuotaExceededMessage, confederation)} Row: {rowNumber}.");
 }
