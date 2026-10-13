@@ -15,6 +15,7 @@ public class ImportServiceTests
 {
     private MockTeamRepository _teamRepository = null!;
     private Mock<ITeamParser> _teamParserMock = null!;
+    private MockAuditLogService _auditLogService = null!;
     private ImportService _service = null!;
 
     [TestInitialize]
@@ -22,7 +23,8 @@ public class ImportServiceTests
     {
         _teamRepository = new MockTeamRepository();
         _teamParserMock = new Mock<ITeamParser>();
-        _service = CreateService(_teamRepository, _teamParserMock.Object);
+        _auditLogService = new MockAuditLogService();
+        _service = CreateService(_teamRepository, _teamParserMock.Object, _auditLogService);
     }
 
     [TestMethod]
@@ -213,9 +215,60 @@ public class ImportServiceTests
         Assert.AreEqual("No se agregaron todos los equipos, max:48", result.WarningMessage);
     }
 
-    private static ImportService CreateService(ITeamRepository teamRepository, ITeamParser teamParser)
+    [TestMethod]
+    public void ImportTeamsThrowsWhenConfederationQuotaWouldBeExceeded()
     {
-        return ImportService.CreateInstance(teamRepository, teamParser);
+        for (int i = 1; i <= 16; i++)
+        {
+            _teamRepository.Add(new Team(i, $"Europa{i}", 1000 + i, false, Confederation.UEFA));
+        }
+
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, new List<TeamImportDto> { Row(2, "Noruega", "UEFA", "1500") });
+
+        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.AreEqual(16, _teamRepository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void ImportTeamsThrowsWhenConfederationIsANumber()
+    {
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, new List<TeamImportDto> { Row(2, "Atlantida", "99", "1500") });
+
+        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+    }
+
+    [TestMethod]
+    public void ImportTeamsThrowsWhenTheSameNameAppearsWithAndWithoutAccents()
+    {
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, new List<TeamImportDto>
+        {
+            Row(2, "España", "UEFA", "1800"),
+            Row(3, "Espana", "UEFA", "1700")
+        });
+
+        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.AreEqual(0, _teamRepository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void ImportTeamsLogsOneAuditEntryWithThePerformer()
+    {
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, BuildValidRows());
+
+        _service.ImportTeams(stream, performedByEmail: "editor@copa.com");
+
+        MockAuditLogService.LoggedAction entry = _auditLogService.LoggedActions.Single();
+        Assert.AreEqual(AuditActions.ImportTeams, entry.Action);
+        Assert.AreEqual("editor@copa.com", entry.PerformedByEmail);
+    }
+
+    private static ImportService CreateService(ITeamRepository teamRepository, ITeamParser teamParser, IAuditLogService auditLogService)
+    {
+        return ImportService.CreateInstance(teamRepository, teamParser, auditLogService);
     }
 
     private static MemoryStream CreateImportStream()
@@ -386,4 +439,7 @@ public class ImportServiceTests
 
         return rows;
     }
+
+    private static TeamImportDto Row(int rowNumber, string name, string confederation, string ranking) =>
+        new TeamImportDto { RowNumber = rowNumber, Name = name, Confederation = confederation, Ranking = ranking };
 }

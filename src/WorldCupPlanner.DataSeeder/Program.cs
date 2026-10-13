@@ -111,7 +111,8 @@ public static class Program
         services.AddSingleton<IImportService>(sp =>
             ImportService.CreateInstance(
                 sp.GetRequiredService<ITeamRepository>(),
-                sp.GetRequiredService<ITeamParser>()));
+                sp.GetRequiredService<ITeamParser>(),
+                sp.GetRequiredService<IAuditLogService>()));
 
         string flagsDirectory = Path.Combine(AppContext.BaseDirectory, "flags-master");
         services.AddSingleton<IFlagAssignmentService>(sp =>
@@ -218,7 +219,7 @@ public static class Program
 
         using (FileStream stream = File.OpenRead(csvPath))
         {
-            var result = importService.ImportTeams(stream);
+            var result = importService.ImportTeams(stream, performedByEmail: "admin1@copa.com");
             Console.WriteLine($"- Equipos importados: {result.ImportedCount}.");
         }
 

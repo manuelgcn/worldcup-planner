@@ -21,19 +21,22 @@ public sealed class ImportService : IImportService
 
     private readonly ITeamRepository _teamRepository;
     private readonly ITeamParser _teamParser;
+    private readonly IAuditLogService _auditLogService;
 
-    private ImportService(ITeamRepository teamRepository, ITeamParser teamParser)
+    private ImportService(ITeamRepository teamRepository, ITeamParser teamParser, IAuditLogService auditLogService)
     {
+        ArgumentNullException.ThrowIfNull(auditLogService);
         _teamRepository = teamRepository;
         _teamParser = teamParser;
+        _auditLogService = auditLogService;
     }
 
-    public static ImportService CreateInstance(ITeamRepository teamRepository, ITeamParser teamParser)
+    public static ImportService CreateInstance(ITeamRepository teamRepository, ITeamParser teamParser, IAuditLogService auditLogService)
     {
-        return new ImportService(teamRepository, teamParser);
+        return new ImportService(teamRepository, teamParser, auditLogService);
     }
 
-    public ImportResult ImportTeams(Stream fileStream)
+    public ImportResult ImportTeams(Stream fileStream, string? performedByEmail = null)
     {
         ArgumentNullException.ThrowIfNull(fileStream);
 

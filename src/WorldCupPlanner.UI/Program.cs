@@ -84,7 +84,8 @@ builder.Services.AddSingleton<ITeamParser, CsvStreamTeamParser>();
 builder.Services.AddSingleton<IImportService>(sp =>
     ImportService.CreateInstance(
         sp.GetRequiredService<ITeamRepository>(),
-        sp.GetRequiredService<ITeamParser>()));
+        sp.GetRequiredService<ITeamParser>(),
+        sp.GetRequiredService<IAuditLogService>()));
 
 string flagsDirectory = Path.Combine(
     builder.Environment.ContentRootPath,
