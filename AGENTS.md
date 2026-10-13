@@ -11,6 +11,7 @@ bracket (Round of 32 → Final), Elo ranking, interchangeable simulation engines
 notifications, CSV/XLSX export and a global audit log. Draws and simulations are
 **deterministic**: every shuffle uses a configurable seed.
 
+- The UI brand is **Golazo** (logo: `src/WorldCupPlanner.UI/wwwroot/img/golazo-mark.svg`); the solution, projects and namespaces keep the WorldCupPlanner name.
 - C# / .NET 8, Blazor Server UI.
 - EF Core 8 (Code-First) on Azure SQL Edge (Docker). TPH for the `Match` and `MatchIncident` hierarchies.
 - MSTest. Unit tests use the EF InMemory provider; flows that need real foreign keys use SQLite in-memory (`DataAccessTest`).

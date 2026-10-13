@@ -1,6 +1,10 @@
-# ⚽ WorldCupPlanner
+<p align="center">
+  <img src="src/WorldCupPlanner.UI/wwwroot/img/golazo-mark.svg" width="96" alt="Golazo logo" />
+</p>
 
-> A web application to plan and run a **48-team World Cup** — group stage, knockouts, live standings, match simulation, notifications and audit — built with **.NET 8** and a clean, fully-tested layered architecture.
+# Golazo
+
+> **Golazo** (codebase: *WorldCupPlanner*) is a web application to plan and run a **48-team World Cup** — group stage, knockouts, live standings, match simulation, notifications and audit — built with **.NET 8** and a clean, fully-tested layered architecture.
 
 ![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
 ![Blazor](https://img.shields.io/badge/Blazor-Server-512BD4?logo=blazor&logoColor=white)
