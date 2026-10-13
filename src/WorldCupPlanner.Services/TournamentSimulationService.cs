@@ -142,13 +142,15 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
     // Solo los partidos sin resultado: lo que ya se cargo a mano (y su Elo) se respeta.
     private void SimulateMatches(List<Match> matches, int seed, IMatchSimulationEngine engine)
     {
-        foreach (Match match in matches.Where(match => !match.HasResult))
+        List<Match> pending = matches.Where(match => !match.HasResult).ToList();
+        foreach (Match match in pending)
         {
             engine.Simulate(match, seed);
             ApplyRankingUpdate(match);
             matchRepository.Update(match);
-            notificationService.NotifyMatchSimulated(match);
         }
+
+        notificationService.NotifyMatchesSimulated(pending);
     }
 
     private void ApplyRankingUpdate(Match match)

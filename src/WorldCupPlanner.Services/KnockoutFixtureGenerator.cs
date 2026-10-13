@@ -565,8 +565,9 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             engine.Simulate(match, seed);
             ApplyRankingUpdate(match);
             _eliminationRepository.Update(match);
-            NotifyJournalistsAboutSimulatedResult(match);
         }
+
+        _notificationService.NotifyMatchesSimulated(matches);
     }
 
     private void ApplyRankingUpdate(Match match)
@@ -708,10 +709,5 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
                 throw new KnockoutGeneratorException($"{MissingGroupForTeamMessagePrefix}{team.Id}.");
             }
         }
-    }
-
-    private void NotifyJournalistsAboutSimulatedResult(Match match)
-    {
-        _notificationService.NotifyMatchSimulated(match);
     }
 }

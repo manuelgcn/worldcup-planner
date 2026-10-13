@@ -33,13 +33,7 @@ public class NotificationService : INotificationService
 
     public void NotifyJournalists(string message)
     {
-        IEnumerable<User> journalists = userRepository.GetAll()
-            .Where(u => u.HasRole(UserRoles.Periodista));
-
-        foreach (User journalist in journalists)
-        {
-            notificationRepository.Add(new Notification(IdGeneratedByPersistence, journalist, message));
-        }
+        AddForEveryJournalist(new[] { message });
     }
 
     public void NotifyResultLoaded(Match match, int previousHomeGoals, int previousAwayGoals)
@@ -58,15 +52,16 @@ public class NotificationService : INotificationService
     {
         ArgumentNullException.ThrowIfNull(match);
 
-        NotifyJournalists(BuildMatchMessage(MatchSimulatedMessageTemplate, match));
+        NotifyMatchesSimulated(new[] { match });
     }
 
     public void NotifyMatchesSimulated(IReadOnlyCollection<Match> matches)
     {
-        foreach (Match match in matches)
-        {
-            NotifyMatchSimulated(match);
-        }
+        ArgumentNullException.ThrowIfNull(matches);
+
+        AddForEveryJournalist(matches
+            .Select(match => BuildMatchMessage(MatchSimulatedMessageTemplate, match))
+            .ToList());
     }
 
     public IReadOnlyCollection<Notification> GetUnreadForUser(int userId)
@@ -123,6 +118,27 @@ public class NotificationService : INotificationService
             $"Notification {notificationId} marked as read by user {userId}.",
             affectedEntityType: nameof(Notification),
             affectedEntityId: notificationId);
+    }
+
+    // Una lectura de usuarios y una escritura por tanda: simular la fase de grupos son 72 partidos.
+    private void AddForEveryJournalist(IReadOnlyCollection<string> messages)
+    {
+        if (messages.Count == 0)
+        {
+            return;
+        }
+
+        List<User> journalists = userRepository.GetAll()
+            .Where(u => u.HasRole(UserRoles.Periodista))
+            .ToList();
+        List<Notification> notifications = messages
+            .SelectMany(message => journalists.Select(journalist => new Notification(IdGeneratedByPersistence, journalist, message)))
+            .ToList();
+
+        if (notifications.Count > 0)
+        {
+            notificationRepository.AddRange(notifications);
+        }
     }
 
     private static string BuildMatchMessage(string template, Match match)
