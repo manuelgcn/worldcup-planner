@@ -282,7 +282,11 @@ public class MatchService : IMatchService
 
     public IReadOnlySet<int> GetLockedKnockoutMatchIds()
     {
-        return new HashSet<int>();
+        return eliminationMatchRepository.GetAll()
+            .OfType<MatchElimination>()
+            .SelectMany(next => new[] { next.MatchHome?.MatchId, next.MatchAway?.MatchId })
+            .OfType<int>()
+            .ToHashSet();
     }
 
     public List<MatchDto> GetByGroup(string groupName)
@@ -412,19 +416,25 @@ public class MatchService : IMatchService
             return;
         }
 
-        bool feedsNextRound = eliminationMatchRepository.GetAll()
-            .OfType<MatchElimination>()
-            .Any(next => next.MatchHome?.MatchId == match.MatchId || next.MatchAway?.MatchId == match.MatchId);
-        if (feedsNextRound)
+        if (GetLockedKnockoutMatchIds().Contains(match.MatchId))
         {
             throw new MatchServicesException(KnockoutMatchFeedsNextRoundMessage);
         }
     }
 
-    // La carga manual no tiene penales, asi que un empate dejaria la llave sin ganador.
+    // La carga manual no tiene penales: un empate solo vale si es el mismo marcador que ya se
+    // definio por penales (p. ej. al guardar otra vez un partido simulado sin cambiar el resultado).
     private static void EnsureKnockoutResultHasWinner(Match match, int homeGoals, int awayGoals)
     {
-        if (match is MatchElimination && homeGoals == awayGoals)
+        if (match is not MatchElimination elimination || homeGoals != awayGoals)
+        {
+            return;
+        }
+
+        bool keepsPenaltyDecision = elimination.WonByPenalties
+            && elimination.HomeGoals == homeGoals
+            && elimination.AwayGoals == awayGoals;
+        if (!keepsPenaltyDecision)
         {
             throw new MatchServicesException(KnockoutDrawMessage);
         }
