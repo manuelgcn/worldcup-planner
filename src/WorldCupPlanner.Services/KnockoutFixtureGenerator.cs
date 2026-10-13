@@ -243,7 +243,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
                 _eliminationRepository.Add(match);
             }
 
-            CommitAndAuditAdvance(Phase.Final, performedByEmail);
+            AuditAdvance(Phase.Final, performedByEmail);
             return;
         }
 
@@ -277,10 +277,10 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             _eliminationRepository.Add(match);
         }
 
-        CommitAndAuditAdvance(createdPhase, performedByEmail);
+        AuditAdvance(createdPhase, performedByEmail);
     }
 
-    private void CommitAndAuditAdvance(Phase createdPhase, string? performedByEmail)
+    private void AuditAdvance(Phase createdPhase, string? performedByEmail)
     {
         _auditLog.LogPerformedBy(
             AuditActions.AdvanceRound,

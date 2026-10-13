@@ -118,7 +118,7 @@ public sealed class MatchServiceTestContext
 
     /// <summary>
     /// Helper used by Phase 6 guard tests: seeds an arbitrary MatchElimination
-    /// into the elimination repository so MatchService.EnsureGroupMatchIsEditable
+    /// into the elimination repository so MatchService.EnsureMatchIsEditable
     /// trips its guard. The elimination match is a stub — only its presence
     /// in the repository matters.
     /// </summary>

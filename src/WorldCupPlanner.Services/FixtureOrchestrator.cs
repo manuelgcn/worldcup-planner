@@ -70,7 +70,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         GenerationPlan plan = PrepareGenerationPlan(fixtureSeedOverride);
         ApplySimulationEngineSelection(plan.Settings, selectedEngineName);
 
-        ExecuteAndCommit(plan);
+        BuildAndPersist(plan);
 
         AuditGenerated(plan.EffectiveSeed, plan.Settings.SelectedSimulationEngine, performedByEmail);
     }
@@ -88,13 +88,13 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
 
         // El plan se armo antes de revertir (para validar sin tocar nada); los bombos salen del
         // ranking, asi que se arman con los equipos releidos tras la reversion.
-        ExecuteAndCommit(plan with { Teams = LoadTeams() });
+        BuildAndPersist(plan with { Teams = LoadTeams() });
 
         AuditRegenerated(plan.EffectiveSeed, plan.Settings.SelectedSimulationEngine, performedByEmail);
     }
 
     // Valida el motor contra el registry (fail-fast antes de tocar el storage), lo persiste en
-    // TournamentSettings y deja el Update dentro del mismo Commit que la generacion del fixture.
+    // TournamentSettings antes de generar el fixture.
     // Con null se mantiene el motor ya persistido.
     private void ApplySimulationEngineSelection(TournamentSettings settings, string? selectedEngineName)
     {
@@ -128,7 +128,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         return new GenerationPlan(teams, stadiums, settings, effectiveSeed);
     }
 
-    private void ExecuteAndCommit(GenerationPlan plan)
+    private void BuildAndPersist(GenerationPlan plan)
     {
         IReadOnlyCollection<Group> groups = BuildGroups(plan);
         PersistGroups(groups);

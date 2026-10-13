@@ -45,7 +45,7 @@ orchestrate use cases, and the UI only presents.**
 |---|---|
 | Language | C# / .NET 8 |
 | UI | Blazor Server |
-| Data | Entity Framework Core (Code-First), Azure SQL Edge on Docker, TPH inheritance, Unit of Work |
+| Data | Entity Framework Core (Code-First), Azure SQL Edge on Docker, TPH inheritance |
 | Testing | MSTest + test doubles (EF InMemory provider; SQLite in-memory for FK behavior) |
 | Export | CsvHelper, ClosedXML |
 | Tooling | Git & Gitflow, GitHub Actions, Docker |

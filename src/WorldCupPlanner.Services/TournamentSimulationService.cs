@@ -59,8 +59,8 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
     // SimulateGroupStage y la fase 2 se genera con un boton aparte.
     public void SimulateGroupStageAndGenerateKnockout(int seed, string? performedByEmail)
     {
-        // No re-simular una fase de grupos ya jugada: re-correr los 72 partidos pisaria resultados
-        // ya cargados. La regla vive en el servicio; la UI ofrece una primera barrera (Simulator.razor).
+        // No re-simular una fase de grupos ya jugada entera; si esta a medias, solo se simulan los
+        // partidos sin resultado. La regla vive en el servicio; la UI ofrece una primera barrera (Simulator.razor).
         EnsureGroupStageNotAlreadyPlayed();
 
         TournamentSettings settings = ResolveTournamentSettings(seed);
@@ -75,7 +75,7 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
         LogSimulation(seed, engine.Name, performedByEmail);
     }
 
-    // Simula los 72 partidos de la fase de grupos (sin generar la fase 2) y devuelve los grupos y
+    // Simula los partidos de grupos sin resultado (sin generar la fase 2) y devuelve los grupos y
     // sus partidos, para que el llamador pueda opcionalmente clasificar y armar el knockout.
     private (List<Group> Groups, List<Match> Matches) RunGroupStageSimulation(int seed, IMatchSimulationEngine engine)
     {
