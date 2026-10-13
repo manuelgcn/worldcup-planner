@@ -134,6 +134,39 @@ public sealed class MatchServiceRegisterResultTests
             () => harness.Service.RegisterResult(MatchId, homeGoals: 2, awayGoals: 1, Email));
     }
 
+    [TestMethod]
+    public void RegisterResult_DrawOnKnockoutMatch_ThrowsMatchServicesException()
+    {
+        Harness harness = new Harness();
+        harness.SeedRoundOf32Match(MatchId);
+
+        Assert.ThrowsException<MatchServicesException>(
+            () => harness.Service.RegisterResult(MatchId, homeGoals: 1, awayGoals: 1, Email));
+    }
+
+    [TestMethod]
+    public void RegisterResult_OnKnockoutMatchBeforeNextRoundExists_SavesResult()
+    {
+        Harness harness = new Harness();
+        harness.SeedRoundOf32Match(MatchId);
+
+        harness.Service.RegisterResult(MatchId, homeGoals: 2, awayGoals: 0, Email);
+
+        Assert.AreEqual(2, harness.MatchRepository.GetById(MatchId)!.HomeGoals);
+    }
+
+    [TestMethod]
+    public void RegisterResult_OnKnockoutMatchThatFeedsNextRound_ThrowsMatchServicesException()
+    {
+        Harness harness = new Harness();
+        MatchElimination first = harness.SeedRoundOf32Match(MatchId);
+        MatchElimination second = harness.SeedRoundOf32Match(MatchId + 1);
+        harness.SeedRoundOf16Match(first, second);
+
+        Assert.ThrowsException<MatchServicesException>(
+            () => harness.Service.RegisterResult(MatchId, homeGoals: 2, awayGoals: 0, Email));
+    }
+
     // SimulateMatch ahora tambien notifica a periodistas (antes no colaboraba con
     // INotificationService). El motor del Harness simula 2-1.
     [TestMethod]
@@ -185,6 +218,28 @@ public sealed class MatchServiceRegisterResultTests
         public void SeedGroupMatch(int id)
         {
             MatchRepository.Add(BuildGroupMatch(id));
+        }
+
+        public MatchElimination SeedRoundOf32Match(int id)
+        {
+            Team home = new Team(id * 2, $"Local {id}", 1500, false, Confederation.CONMEBOL);
+            Team away = new Team(id * 2 + 1, $"Visitante {id}", 1600, false, Confederation.UEFA);
+            Stadium stadium = new Stadium("Estadio Knockout", "Ciudad", null, 20000);
+            MatchElimination match = MatchElimination.CreateInitialRound(
+                id, new DateTime(2026, 7, 1, 14, 0, 0), home, away, stadium, _settingsRepository.GetById(1)!, Phase.RoundOf32, $"A{id}");
+            match.SetGoals(1, 0);
+            MatchRepository.Add(match);
+            EliminationRepository.Add(match);
+            return match;
+        }
+
+        public void SeedRoundOf16Match(MatchElimination homeSource, MatchElimination awaySource)
+        {
+            MatchElimination match = MatchElimination.CreateMatchWithConfig(
+                100, new DateTime(2026, 7, 8, 14, 0, 0), homeSource.HomeTeam!, awaySource.HomeTeam!,
+                homeSource.Stadium!, _settingsRepository.GetById(1)!, Phase.RoundOf16, "C1", homeSource, awaySource);
+            MatchRepository.Add(match);
+            EliminationRepository.Add(match);
         }
 
         public void SeedKnockout()

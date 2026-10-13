@@ -311,6 +311,20 @@ public class KnockoutFixtureGeneratorExtensionTests
     }
 
     [TestMethod]
+    public void AdvanceToNextRound_WhenAMatchEndedInADrawWithoutPenalties_ThrowsAndCreatesNothing()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.RoundOf32);
+        MatchElimination drawn = _eliminationRepository.GetAll().OfType<MatchElimination>().First();
+        drawn.SetGoals(1, 1);
+
+        Assert.ThrowsException<MatchServicesException>(
+            () => _generator.AdvanceToNextRound(performedByEmail: AdminEmail));
+        Assert.IsFalse(_eliminationRepository.GetAll().OfType<MatchElimination>().Any(match => match.Phase == Phase.RoundOf16));
+    }
+
+    [TestMethod]
     public void AdvanceToNextRound_LeavesNextRoundPendingWithoutSimulating()
     {
         SeedPlayedGroupStageMatches();
