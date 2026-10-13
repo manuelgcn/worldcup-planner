@@ -155,6 +155,7 @@ public abstract class Match
         HomeGoals = homeGoals;
         AwayGoals = awayGoals;
         HasResult = true;
+        OnScoreChanged();
     }
 
     public void SetHomeGoals(int goals)
@@ -162,6 +163,7 @@ public abstract class Match
         EnsureNonNegativeGoal(goals);
         HomeGoals = goals;
         HasResult = true;
+        OnScoreChanged();
     }
 
     public void SetAwayGoals(int goals)
@@ -169,30 +171,40 @@ public abstract class Match
         EnsureNonNegativeGoal(goals);
         AwayGoals = goals;
         HasResult = true;
+        OnScoreChanged();
     }
 
     public void AddHomeGoal()
     {
         HomeGoals++;
         HasResult = true;
+        OnScoreChanged();
     }
 
     public void AddAwayGoal()
     {
         AwayGoals++;
         HasResult = true;
+        OnScoreChanged();
     }
 
     public void RemoveHomeGoal()
     {
         EnsureCanRemoveGoal(HomeGoals);
         HomeGoals--;
+        OnScoreChanged();
     }
 
     public void RemoveAwayGoal()
     {
         EnsureCanRemoveGoal(AwayGoals);
         AwayGoals--;
+        OnScoreChanged();
+    }
+
+    // Punto unico tras cualquier cambio de marcador: las subclases ajustan el estado que depende de el.
+    protected virtual void OnScoreChanged()
+    {
     }
 
     public bool HasHomeTeamWon()

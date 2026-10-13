@@ -234,7 +234,7 @@ else
 
         try
         {
-            UserServices.RegisterUser(new CreateUserRequestDto
+            UserServices.CreateUser(new CreateUserRequestDto
             {
                 Id = 0,
                 Name = name,
@@ -243,7 +243,7 @@ else
                 Password = password,
                 DateOfBirth = dateOfBirth,
                 InitialRole = initialRole
-            });
+            }, Session.CurrentUser?.email);
 
             successMessage = "Usuario creado correctamente";
             ClearForm();
