@@ -399,7 +399,7 @@ public class MatchService : IMatchService
     {
         if (match is MatchGroup)
         {
-            if (eliminationMatchRepository.GetAll().Count > 0)
+            if (eliminationMatchRepository.Any())
             {
                 throw new MatchServicesException(GroupMatchFrozenByKnockoutMessage);
             }

@@ -105,7 +105,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     public bool IsBracketGenerated()
     {
-        return _eliminationRepository.GetAll().Count > 0;
+        return _eliminationRepository.Any();
     }
 
     public bool IsBracketComplete()

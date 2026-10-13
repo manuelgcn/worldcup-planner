@@ -56,12 +56,12 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
 
     public bool IsFixtureGenerated()
     {
-        return _groupRepository.GetAll().Count > 0;
+        return _groupRepository.Any();
     }
 
     public bool IsKnockoutGenerated()
     {
-        return _eliminationRepository.GetAll().Count > 0;
+        return _eliminationRepository.Any();
     }
 
     public void GenerateGroupStage(int? fixtureSeedOverride, string? selectedEngineName, string? performedByEmail)

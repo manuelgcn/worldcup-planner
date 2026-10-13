@@ -30,6 +30,16 @@ public class GroupRepositoryTests
     }
 
     [TestMethod]
+    public void AnyIsFalseWhenEmptyAndTrueAfterAddingAGroup()
+    {
+        Assert.IsFalse(_repository.Any());
+
+        _repository.Add(new Group("A"));
+
+        Assert.IsTrue(_repository.Any());
+    }
+
+    [TestMethod]
     public void AddPersistsGroupRetrievableFromNewContext()
     {
         _repository.Add(new Group("B"));                // autosave por operacion

@@ -397,18 +397,16 @@
     private bool HasBaseData =>
         teamCount >= RequiredTeamCount && stadiumCount >= MinimumStadiumCount;
 
-    private bool IsFixtureGenerated => FixtureOrchestrator.IsFixtureGenerated();
-    private bool IsKnockoutGenerated => KnockoutGenerator.IsBracketGenerated();
-    private bool IsGroupStageComplete => StandingsService.IsGroupStageComplete();
+    // Estado del asistente: las reglas viven en los servicios y se consultan una vez por
+    // recarga (ReloadState), no en cada render; cada consulta lee la base.
+    private bool IsFixtureGenerated { get; set; }
+    private bool IsKnockoutGenerated { get; set; }
+    private bool IsGroupStageComplete { get; set; }
+    private bool CanAdvancePhase { get; set; }
+    private bool IsBracketComplete { get; set; }
 
     private bool CanGenerateKnockout =>
         IsFixtureGenerated && IsGroupStageComplete && !IsKnockoutGenerated;
-
-    // La regla de "se puede avanzar" vive en el servicio (no en la UI): solo se delega.
-    private bool CanAdvancePhase => KnockoutGenerator.CanAdvanceToNextRound();
-
-    // Completo tambien si la final se cargo a mano: la regla vive en el servicio.
-    private bool IsBracketComplete => KnockoutGenerator.IsBracketComplete();
 
     private WizardStep CurrentStep
     {
@@ -456,6 +454,11 @@
             groupMatches = snapshot.GroupMatches.ToList();
             eliminationMatches = snapshot.EliminationMatches.ToList();
             pendingGroupMatches = StandingsService.PendingGroupStageMatchCount();
+            IsFixtureGenerated = FixtureOrchestrator.IsFixtureGenerated();
+            IsKnockoutGenerated = KnockoutGenerator.IsBracketGenerated();
+            IsGroupStageComplete = StandingsService.IsGroupStageComplete();
+            CanAdvancePhase = KnockoutGenerator.CanAdvanceToNextRound();
+            IsBracketComplete = KnockoutGenerator.IsBracketComplete();
             exportFromDate ??= snapshot.EarliestMatchDate?.Date ?? settings?.StartDate.Date ?? DateTime.UtcNow.Date;
             exportToDate ??= snapshot.LatestMatchDate?.Date ?? exportFromDate;
         }
@@ -626,7 +629,6 @@
         {
             await Task.Run(action);
             successMessage = successText;
-            ReloadState();
         }
         catch (FixtureOrchestratorException ex) { errors.Add(ex.Message); }
         catch (MatchServicesException ex) { errors.Add(ex.Message); }
@@ -638,6 +640,8 @@
         catch (InvalidOperationException ex) { errors.Add(ex.Message); }
         finally
         {
+            // Tambien tras un error: una simulacion que falla a mitad ya pudo guardar rondas.
+            ReloadState();
             isBusy = false;
         }
     }

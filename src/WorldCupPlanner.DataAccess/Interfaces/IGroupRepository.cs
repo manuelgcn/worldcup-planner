@@ -10,5 +10,7 @@ public interface IGroupRepository
     Group? GetByName(string name);
     bool ExistsByName(string name);
     IReadOnlyCollection<Group> GetAll();
+    // Los repositorios EF lo resuelven con un EXISTS; el default sirve a los dobles de test.
+    bool Any() => GetAll().Count > 0;
     void Clear();
 }
