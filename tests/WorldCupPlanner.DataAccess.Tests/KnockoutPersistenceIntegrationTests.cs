@@ -188,6 +188,27 @@ public sealed class KnockoutPersistenceIntegrationTests
         Assert.AreEqual(0, new GroupRepository(_factory).GetAll().Count);
     }
 
+    [TestMethod]
+    public void RegenerateGroupStage_AfterPlayedMatches_DrawsTheSameGroupsAsTheFirstGeneration()
+    {
+        // Con EF cada GetAll devuelve instancias nuevas: los bombos tienen que salir del ranking ya
+        // revertido, no de los equipos leidos antes de revertir el Elo de los partidos jugados.
+        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
+        Dictionary<string, string> firstDraw = GroupComposition();
+        _simulationService.SimulateGroupStage(Seed, AdminEmail);
+
+        _fixtureOrchestrator.RegenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
+
+        CollectionAssert.AreEquivalent(firstDraw, GroupComposition());
+    }
+
+    private Dictionary<string, string> GroupComposition()
+    {
+        return new GroupRepository(_factory).GetAll().ToDictionary(
+            group => group.Name,
+            group => string.Join(",", group.Teams.Select(team => team.Id).OrderBy(id => id)));
+    }
+
     // Simula los 72 partidos de grupos (sin generar la fase 2), dejandolos marcados como jugados.
     private void SimulateGroupStageOnly()
     {
