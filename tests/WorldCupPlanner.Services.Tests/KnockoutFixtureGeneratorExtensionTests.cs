@@ -169,6 +169,19 @@ public class KnockoutFixtureGeneratorExtensionTests
     }
 
     [TestMethod]
+    public void SimulateNextRound_AuditsTheSimulationSeed()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+
+        _generator.SimulateNextRound(performedByEmail: AdminEmail);
+
+        AuditLog log = _auditRepository.GetAll().First(entry => entry.Action == AuditActions.SimulateRound);
+        Assert.IsTrue(log.Details.Contains($"seed {DefaultSeed}."), $"Expected seed in details, got '{log.Details}'");
+        Assert.AreEqual(AdminEmail, log.PerformedByEmail);
+    }
+
+    [TestMethod]
     public void SimulateUntilFinal_LeavesAllRoundsCompleteIncludingThirdPlace()
     {
         SeedPlayedGroupStageMatches();

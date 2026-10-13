@@ -112,7 +112,7 @@ public sealed class KnockoutPersistenceIntegrationTests
 
         // Camino del boton "Simular" (Simulator.razor): simula los 72 partidos de grupos y genera y
         // persiste los 16 partidos de R32. Antes del fix, esta linea rompia con una violacion de FK.
-        _simulationService.SimulateGroupStageAndGenerateKnockout(Seed);
+        _simulationService.SimulateGroupStageAndGenerateKnockout(Seed, AdminEmail);
 
         List<MatchElimination> roundOf32 = _eliminationRepository.GetAll().OfType<MatchElimination>().ToList();
         Assert.AreEqual(ExpectedRoundOf32Matches, roundOf32.Count);
@@ -147,7 +147,7 @@ public sealed class KnockoutPersistenceIntegrationTests
     public void SimulateUntilFinal_ProducesPersistedChampionAndBracketChainThatSurvivesReload()
     {
         _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
-        _simulationService.SimulateGroupStageAndGenerateKnockout(Seed);
+        _simulationService.SimulateGroupStageAndGenerateKnockout(Seed, AdminEmail);
 
         // Simula ronda a ronda hasta la Final. R16 en adelante SI tienen fuentes reales (los partidos
         // de la ronda previa, ya persistidos): el guard de MatchEf debe dejarlas pasar.
@@ -170,7 +170,7 @@ public sealed class KnockoutPersistenceIntegrationTests
     public void DeleteGroupStage_AfterKnockoutGenerated_RemovesEverythingAndSurvivesReload()
     {
         _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
-        _simulationService.SimulateGroupStageAndGenerateKnockout(Seed);
+        _simulationService.SimulateGroupStageAndGenerateKnockout(Seed, AdminEmail);
         Assert.AreEqual(ExpectedRoundOf32Matches, _eliminationRepository.GetAll().Count, "Precondicion: el knockout debe existir.");
 
         // Borrado total: en SQLite (provider relacional que SI valida FKs) debe borrar la fase 2 y la

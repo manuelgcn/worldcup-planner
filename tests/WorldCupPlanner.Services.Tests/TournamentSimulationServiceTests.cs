@@ -81,7 +81,7 @@ public sealed class TournamentSimulationServiceTests
     [TestMethod]
     public void SimulateGroupStageAndGenerateKnockout_SimulatesGroupMatchesAndPersistsKnockoutMatches()
     {
-        _service.SimulateGroupStageAndGenerateKnockout(Seed);
+        _service.SimulateGroupStageAndGenerateKnockout(Seed, AdminEmail);
 
         Assert.AreEqual(GroupCount * MatchesPerGroup, _matchSimulationEngine.SimulateCalls);
         Assert.AreEqual(GroupCount * MatchesPerGroup, _matchRepository.UpdateCalls);
@@ -119,7 +119,7 @@ public sealed class TournamentSimulationServiceTests
     {
         WorldCupPlanner.Domain.Match loaded = LoadResultByHand(homeGoals: 3, awayGoals: 0);
 
-        _service.SimulateGroupStageAndGenerateKnockout(Seed);
+        _service.SimulateGroupStageAndGenerateKnockout(Seed, AdminEmail);
 
         AssertResultKept(loaded.MatchId, homeGoals: 3, awayGoals: 0);
         Assert.AreEqual(GroupCount * MatchesPerGroup - 1, _matchSimulationEngine.SimulateCalls);
@@ -132,6 +132,16 @@ public sealed class TournamentSimulationServiceTests
 
         AuditLog log = _auditLogRepository.GetAll().First(entry => entry.Action == AuditActions.SimulateGroupStage);
         Assert.IsTrue(log.Details.Contains(Seed.ToString()), $"Expected seed in details, got '{log.Details}'");
+        Assert.AreEqual(AdminEmail, log.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void SimulateGroupStageAndGenerateKnockout_LogsSeedAndPerformer()
+    {
+        _service.SimulateGroupStageAndGenerateKnockout(Seed, AdminEmail);
+
+        AuditLog log = _auditLogRepository.GetAll().First(entry => entry.Action == AuditActions.SimulateGroupStageAndGenerateKnockout);
+        Assert.IsTrue(log.Details.Contains($"seed {Seed}"), $"Expected seed in details, got '{log.Details}'");
         Assert.AreEqual(AdminEmail, log.PerformedByEmail);
     }
 
@@ -159,7 +169,7 @@ public sealed class TournamentSimulationServiceTests
             _rankingServiceMock.Object);
 
         MatchServicesException exception = Assert.ThrowsException<MatchServicesException>(
-            () => service.SimulateGroupStageAndGenerateKnockout(Seed));
+            () => service.SimulateGroupStageAndGenerateKnockout(Seed, AdminEmail));
 
         Assert.AreEqual("El fixture aún no ha sido generado", exception.Message);
     }
@@ -174,7 +184,7 @@ public sealed class TournamentSimulationServiceTests
         }
 
         MatchServicesException exception = Assert.ThrowsException<MatchServicesException>(
-            () => _service.SimulateGroupStageAndGenerateKnockout(Seed));
+            () => _service.SimulateGroupStageAndGenerateKnockout(Seed, AdminEmail));
 
         Assert.AreEqual("La fase de grupos ya fue jugada", exception.Message);
         // No se simulo de nuevo ni se genero la fase 2.

@@ -160,7 +160,7 @@
         isBusy = true;
         try
         {
-            TournamentSimulationService.SimulateGroupStageAndGenerateKnockout(simulationSeed);
+            TournamentSimulationService.SimulateGroupStageAndGenerateKnockout(simulationSeed, Session.CurrentUser?.email);
             successMessage = successText;
             RefreshGroupStageState();
         }

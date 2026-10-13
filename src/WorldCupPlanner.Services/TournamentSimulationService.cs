@@ -57,7 +57,7 @@ public sealed class TournamentSimulationService : ITournamentSimulationService
     // (Simulator.razor), que avisa explicitamente al usuario. El flujo manual paso a
     // paso (Fixture.razor) NO la usa: alli se simula la fase de grupos con
     // SimulateGroupStage y la fase 2 se genera con un boton aparte.
-    public void SimulateGroupStageAndGenerateKnockout(int seed)
+    public void SimulateGroupStageAndGenerateKnockout(int seed, string? performedByEmail)
     {
         // No re-simular una fase de grupos ya jugada: re-correr los 72 partidos pisaria resultados
         // ya cargados. La regla vive en el servicio; la UI ofrece una primera barrera (Simulator.razor).
