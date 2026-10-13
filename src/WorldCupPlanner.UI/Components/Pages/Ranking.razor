@@ -6,20 +6,13 @@
 @inject ITeamService TeamServices
 @inject IGroupStandingsService StandingsService
 @inject SessionState Session
-@inject NavigationManager Nav
 
-<PageTitle>Ranking FIFA</PageTitle>
+<PageTitle>Ranking FIFA · Golazo</PageTitle>
 
 @if (!Session.IsLoggedIn)
 {
-    <section class="m26-card auth-card">
-        <h1 class="m26-page-title mb-2">Ranking FIFA</h1>
-        <p class="mb-3">No estas logueado.</p>
-        <button class="btn btn-primary" @onclick="GoToLogin">
-            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
-            Ir a Login
-        </button>
-    </section>
+    <h1 class="m26-page-title">Ranking FIFA</h1>
+    <LoginRequired />
 }
 else
 {
@@ -35,13 +28,13 @@ else
     }
     else
     {
-        <div class="table-responsive m26-card table-wrap">
+        <div class="table-responsive m26-card table-wrap" tabindex="0" role="region" aria-label="Ranking FIFA">
             <table class="table table-hover m26-scoreboard mb-0">
                 <thead>
                     <tr>
                         <th>#</th>
                         <th>Equipo</th>
-                        <th>Confederacion</th>
+                        <th>Confederación</th>
                         <th>Ranking FIFA</th>
                         <th title="Partidos jugados">PJ</th>
                         <th title="Ganados">G</th>
@@ -62,7 +55,7 @@ else
                         position++;
                         GroupStandingDto? stats = StatsFor(team);
                         <tr>
-                            <td>@position</td>
+                            <td><span class="rank-pos @PodiumClass(position)">@position</span></td>
                             <td>
                                 <TeamFlag Team="team" />
                                 @team.Name
@@ -112,11 +105,15 @@ else
             .ToDictionary(standing => standing.Team.Id);
     }
 
+    private static string PodiumClass(int position) => position switch
+    {
+        1 => "rank-gold",
+        2 => "rank-silver",
+        3 => "rank-bronze",
+        _ => ""
+    };
+
     private GroupStandingDto? StatsFor(Team team) =>
         statsByTeamId.GetValueOrDefault(team.Id);
 
-    private void GoToLogin()
-    {
-        Nav.NavigateTo("/login");
-    }
 }

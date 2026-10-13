@@ -37,6 +37,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Las rutas inexistentes muestran la página 404 de la app en vez de una respuesta vacía.
+app.UseStatusCodePagesWithReExecute("/not-found");
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();

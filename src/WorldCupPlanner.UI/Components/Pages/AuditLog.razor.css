@@ -1,7 +1,39 @@
+.audit-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+
 .filter-action {
+    flex: 1 1 220px;
     max-width: 280px;
 }
 
 .filter-date {
+    flex: 0 1 180px;
     max-width: 200px;
+}
+
+.audit-action {
+    display: inline-block;
+    padding: .2rem .55rem;
+    border-radius: 6px;
+    background: rgba(0, 40, 104, .08);
+    color: var(--m26-blue);
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    font-size: .74rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.audit-table {
+    font-size: .875rem;
+}
+
+.m26-scoreboard .audit-details {
+    min-width: 15rem;
+    white-space: normal;
+    color: #334155;
 }

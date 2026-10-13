@@ -9,23 +9,16 @@
 @inject ISimulationConfigurationService SimulationConfiguration
 @inject IGroupStandingsService GroupStandings
 @inject SessionState Session
-@inject NavigationManager Nav
 @inject ILogger<Simulator> Logger
 
-<PageTitle>Simulador de Torneo</PageTitle>
+<PageTitle>Simulador · Golazo</PageTitle>
 
 <div class="simulator-page">
-    <h1 class="m26-page-title">Simulador de Torneo</h1>
+    <h1 class="m26-page-title">Simulador de torneo</h1>
 
     @if (!Session.IsLoggedIn)
     {
-        <section class="m26-card auth-card">
-            <p>No estás logueado.</p>
-            <button class="btn btn-primary" @onclick="GoToLogin">
-                <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
-                Ir a Login
-            </button>
-        </section>
+        <LoginRequired />
     }
     else if (!CanSimulate)
     {
@@ -179,8 +172,4 @@
         }
     }
 
-    private void GoToLogin()
-    {
-        Nav.NavigateTo("/login");
-    }
 }

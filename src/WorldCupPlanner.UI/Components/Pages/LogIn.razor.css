@@ -1,23 +1,20 @@
-.auth-wrap {
-    min-height: calc(100vh - 9rem);
+.demo-credentials {
+    margin-bottom: 0;
+    font-size: .9rem;
+}
+
+.demo-credentials ul {
     display: grid;
-    place-items: center;
+    gap: .5rem;
+    margin: .75rem 0 0;
+    padding: 0;
+    list-style: none;
 }
 
-.auth-card {
-    width: 100%;
-    max-width: 420px;
-}
-
-.auth-head {
-    text-align: center;
-}
-
-.auth-title {
-    font-size: 2rem;
-    text-transform: uppercase;
-}
-
-.auth-body {
-    padding: 1.1rem;
+.demo-credentials li {
+    margin: 0 !important;
+    padding: .55rem .75rem;
+    border: 1px solid rgba(0, 40, 104, .12);
+    border-radius: 10px;
+    background: var(--m26-white);
 }

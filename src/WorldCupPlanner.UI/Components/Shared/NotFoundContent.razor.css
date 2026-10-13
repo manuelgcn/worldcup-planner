@@ -1,0 +1,30 @@
+.not-found {
+    max-width: 520px;
+    margin: 2rem auto;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+}
+
+.not-found-logo {
+    border-radius: 16px;
+    box-shadow: 0 8px 18px rgba(0, 22, 55, .25);
+}
+
+.not-found-code {
+    margin: 1rem 0 0;
+    font-family: "Bebas Neue", Oswald, sans-serif;
+    font-size: 4.5rem;
+    line-height: .9;
+    color: var(--m26-red);
+}
+
+.not-found-title {
+    margin-bottom: .4rem;
+    font-size: 2.2rem;
+    text-transform: uppercase;
+}
+
+.not-found-text {
+    margin-bottom: 1.5rem;
+    color: var(--m26-muted);
+}

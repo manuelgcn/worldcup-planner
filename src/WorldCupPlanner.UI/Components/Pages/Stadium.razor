@@ -4,20 +4,13 @@
 @using WorldCupPlanner.Services.Interfaces
 @inject IStadiumService StadiumServices
 @inject SessionState Session
-@inject NavigationManager Nav
 
-<PageTitle>Estadios</PageTitle>
+<PageTitle>Estadios · Golazo</PageTitle>
 
 @if (!Session.IsLoggedIn)
 {
-    <section class="m26-card auth-card">
-        <h1 class="m26-page-title mb-2">Estadios</h1>
-        <p class="mb-3">No estás logueado.</p>
-        <button class="btn btn-primary" @onclick="GoToLogin">
-            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
-            Ir a Login
-        </button>
-    </section>
+    <h1 class="m26-page-title">Estadios</h1>
+    <LoginRequired />
 }
 else if (!IsAdmin)
 {
@@ -78,7 +71,7 @@ else
                                 <th>Nombre</th>
                                 <th>Ciudad</th>
                                 <th>Capacidad</th>
-                                <th></th>
+                                <th><span class="visually-hidden">Acciones</span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -203,8 +196,4 @@ else
         capacity = 0;
     }
 
-    private void GoToLogin()
-    {
-        Nav.NavigateTo("/login");
-    }
 }

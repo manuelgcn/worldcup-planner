@@ -6,20 +6,33 @@
 }
 else
 {
-    @* Vista única y compacta: árbol horizontal R32 → Final con SOLO las
+    @* Vista única y compacta: árbol horizontal 16avos → Final con SOLO las
        banderas y el marcador. Pasá el mouse para ver nombres y penales. *@
     <div class="bracket-compact-wrap">
+        @if (Champion is not null)
+        {
+            <div class="bracket-champion">
+                <i class="bi bi-trophy-fill" aria-hidden="true"></i>
+                <span class="bracket-champion-label">Campeón del mundo</span>
+                <TeamFlag Team="Champion" Large="true" />
+                <strong>@Champion.Name</strong>
+            </div>
+        }
         <p class="bracket-hint">Cada llave muestra las banderas de los dos equipos con su resultado. Pasá el mouse para ver nombres y penales.</p>
-        <div class="bracket-compact">
+        <div class="bracket-compact" tabindex="0" role="region" aria-label="Cuadro eliminatorio">
             @foreach (BracketColumn column in BuildColumns())
             {
-                <div class="bracket-compact-column">
-                    <h6>@column.Title</h6>
+                <div class="bracket-compact-column @column.CssClass">
+                    <h3>@column.Title</h3>
                     <div class="bracket-compact-cells">
                         @foreach (MatchElimination match in column.Matches)
                         {
                             <div class="bracket-mini @PlayedClass(match)" title="@MatchTooltip(match)">
-                                <span class="bracket-mini-code">@match.MatchCode</span>
+                                @* Solo los 16avos tienen códigos legibles (A1…B8); el resto se ve en el tooltip. *@
+                                @if (match.Phase == Phase.RoundOf32)
+                                {
+                                    <span class="bracket-mini-code">@match.MatchCode</span>
+                                }
                                 <div class="bracket-mini-row @WinnerClass(match, true)">
                                     <TeamFlag Team="match.HomeTeam" />
                                     <span class="bracket-mini-name">@TeamName(match.HomeTeam)</span>
@@ -50,13 +63,16 @@ else
 
     private static readonly (Phase Phase, string Title)[] PhasesInDisplayOrder =
     {
-        (Phase.RoundOf32, "R32"),
+        (Phase.RoundOf32, "16avos"),
         (Phase.RoundOf16, "Octavos"),
         (Phase.QuarterFinals, "Cuartos"),
         (Phase.SemiFinal, "Semis"),
         (Phase.ThirdPlace, "3er puesto"),
         (Phase.Final, "Final")
     };
+
+    private Team? Champion =>
+        AllElimMatches.FirstOrDefault(match => match.Phase == Phase.Final && match.HasResult)?.GetWinner();
 
     private IEnumerable<BracketColumn> BuildColumns()
     {
@@ -66,7 +82,7 @@ else
                 .Where(match => match.Phase == phase)
                 .OrderBy(match => match.MatchId)
                 .ToList();
-            yield return new BracketColumn(title, matches);
+            yield return new BracketColumn(title, matches, $"phase-{phase}");
         }
     }
 
@@ -93,12 +109,12 @@ else
         return goals.ToString();
     }
 
-    private static string TeamName(Team? team) => team?.Name ?? "TBD";
+    private static string TeamName(Team? team) => team?.Name ?? "A definir";
 
     private static string MatchTooltip(MatchElimination match)
     {
-        string home = match.HomeTeam?.Name ?? "TBD";
-        string away = match.AwayTeam?.Name ?? "TBD";
+        string home = match.HomeTeam?.Name ?? "A definir";
+        string away = match.AwayTeam?.Name ?? "A definir";
         if (!match.HasResult)
         {
             return $"{match.MatchCode}: {home} vs {away} (pendiente)";
@@ -109,5 +125,5 @@ else
         return $"{match.MatchCode}: {home} {match.HomeGoals}-{match.AwayGoals} {away}{penalties}";
     }
 
-    private sealed record BracketColumn(string Title, List<MatchElimination> Matches);
+    private sealed record BracketColumn(string Title, List<MatchElimination> Matches, string CssClass);
 }

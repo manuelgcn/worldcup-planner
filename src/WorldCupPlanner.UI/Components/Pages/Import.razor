@@ -5,23 +5,19 @@
 @using WorldCupPlanner.Services.Interfaces
 @inject IImportService ImportService
 @inject SessionState Session
-@inject NavigationManager Nav
 
-<PageTitle>Importar equipos</PageTitle>
+<PageTitle>Importar equipos · Golazo</PageTitle>
 
 @if (!Session.IsLoggedIn)
 {
-    <section class="m26-card auth-card">
-        <h1 class="m26-page-title mb-2">Importar equipos</h1>
-        <p class="mb-3">No estas logueado.</p>
-        <button class="btn btn-primary" @onclick="@(() => Nav.NavigateTo("/login"))">Ir a Login</button>
-    </section>
+    <h1 class="m26-page-title">Importar equipos</h1>
+    <LoginRequired />
 }
 else if (!CanImport)
 {
     <div class="alert alert-error" role="alert">
         <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
-        No tenes permisos para importar.
+        No tenés permisos para importar equipos.
     </div>
 }
 else
@@ -29,19 +25,24 @@ else
     <h1 class="m26-page-title">Importar equipos (CSV)</h1>
 
     <article class="m26-card pane">
-        <p>
-            Subi un CSV con encabezados <code>Nombre, Confederacion, RankingFIFA</code>.
-            La importacion se aborta ante el primer error (nombre vacio o >60, confederacion
-            desconocida, ranking fuera de 300-2500, duplicado).
-        </p>
+        <label class="import-drop" for="importFile">
+            <i class="bi bi-filetype-csv import-drop-icon" aria-hidden="true"></i>
+            <span class="import-drop-title">Arrastrá tu archivo CSV acá</span>
+            <span class="import-drop-hint">o hacé clic para elegirlo</span>
+            <InputFile id="importFile" OnChange="OnFileSelected" accept=".csv" class="import-drop-input" />
+        </label>
 
-        <InputFile OnChange="OnFileSelected" accept=".csv" class="form-control mb-3" />
+        <p class="import-help">
+            El archivo necesita los encabezados <code>Nombre, Confederacion, RankingFIFA</code>.
+            La importación se cancela ante el primer error: nombre vacío o de más de 60 caracteres,
+            confederación desconocida, ranking fuera de 300–2500 o equipo duplicado.
+        </p>
 
         @if (result is not null)
         {
-            <div class="alert alert-success">
+            <div class="alert alert-success mt-3 mb-0" role="status">
                 <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-                <strong>@result.ImportedCount equipo(s) importado(s).</strong>
+                <strong>@result.ImportedCount @(result.ImportedCount == 1 ? "equipo importado" : "equipos importados").</strong>
 
                 @if (!string.IsNullOrWhiteSpace(result.WarningMessage))
                 {
@@ -64,7 +65,7 @@ else
 
         @if (!string.IsNullOrWhiteSpace(error))
         {
-            <div class="alert alert-error">
+            <div class="alert alert-error mt-3 mb-0" role="alert">
                 <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
                 @error
             </div>

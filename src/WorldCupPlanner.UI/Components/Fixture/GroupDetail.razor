@@ -3,7 +3,7 @@
 
 <div class="group-detail">
     <div class="group-detail-head">
-        <h4>Grupo @GroupName — Partidos</h4>
+        <h2>Grupo @GroupName — Partidos</h2>
         <div class="group-detail-actions">
             <button class="btn btn-secondary" @onclick="HandleBack">Volver</button>
             <button class="btn btn-link" @onclick="NavigateToMatchesPage">Ver en listado de partidos</button>
@@ -26,7 +26,7 @@
     {
         @foreach (IGrouping<int, MatchGroup> journey in GroupedByJourney)
         {
-            <h5>Jornada @journey.Key</h5>
+            <h3>Jornada @journey.Key</h3>
             <table class="matches-table">
                 <thead>
                     <tr>
@@ -48,7 +48,11 @@
                         <tr>
                             <td>@match.MatchDate.ToString("dd/MM HH:mm")</td>
                             <td><TeamFlag Team="match.HomeTeam" />@match.HomeTeam?.Name</td>
-                            <td>@match.HomeGoals - @match.AwayGoals</td>
+                            <td>
+                                <span class="m26-score @(IsPlayed(match) ? "" : "pending")">
+                                    @(IsPlayed(match) ? $"{match.HomeGoals} - {match.AwayGoals}" : "vs")
+                                </span>
+                            </td>
                             <td><TeamFlag Team="match.AwayTeam" />@match.AwayTeam?.Name</td>
                             <td>@match.Stadium?.Name</td>
                             <td>

@@ -11,6 +11,7 @@ bracket (Round of 32 → Final), Elo ranking, interchangeable simulation engines
 notifications, CSV/XLSX export and a global audit log. Draws and simulations are
 **deterministic**: every shuffle uses a configurable seed.
 
+- The UI brand is **Golazo** (logo: `src/WorldCupPlanner.UI/wwwroot/img/golazo-mark.svg`); the solution, projects and namespaces keep the WorldCupPlanner name.
 - C# / .NET 8, Blazor Server UI.
 - EF Core 8 (Code-First) on Azure SQL Edge (Docker). TPH for the `Match` and `MatchIncident` hierarchies.
 - MSTest. Unit tests use the EF InMemory provider; flows that need real foreign keys use SQLite in-memory (`DataAccessTest`).
@@ -71,6 +72,7 @@ Follow the neighbouring file. Good references: `Team.cs`, `FixtureOrchestrator.c
 - Properties are `{ get; }` by default; a private setter only behind a validating mutator (see `Stadium.Update`).
 - `User` keeps its lower-case members (`idUser`, `name`, `lastname`, `email`, `password`, `dateOfBirth`); tests depend on them.
 - `Match` is abstract and `MatchGroup`/`MatchElimination` use static factories. In tests use the factories or the doubles under `*/TestDoubles/`.
+- UI styles: design tokens (`--m26-*`) and classes shared by several pages (`.m26-card`, `.pane`, `.admin-grid`, `.auth-*`, buttons) live in `src/WorldCupPlanner.UI/wwwroot/app.css`; a page's `.razor.css` only holds what that page alone uses, since scoped CSS never reaches other components.
 - EF configuration goes in `IEntityTypeConfiguration<T>` classes under `src/WorldCupPlanner.DataAccess/Configurations/`. Filter with `IQueryable` in SQL instead of loading whole tables.
 - Audit actions are `SCREAMING_SNAKE` constants in `src/WorldCupPlanner.Services/AuditActions.cs`; log mutations through `AuditLogService` (ISO-8601 timestamp + actor).
 

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Golazo">
+  <defs>
+    <linearGradient id="golazo-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B3A8A"/>
+      <stop offset="1" stop-color="#001637"/>
+    </linearGradient>
+    <linearGradient id="golazo-gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE45C"/>
+      <stop offset="1" stop-color="#E0A800"/>
+    </linearGradient>
+    <clipPath id="golazo-clip">
+      <rect width="64" height="64" rx="15"/>
+    </clipPath>
+    <clipPath id="golazo-ball">
+      <circle cx="31.5" cy="30.5" r="7.6"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#golazo-clip)">
+    <rect width="64" height="64" fill="url(#golazo-bg)"/>
+    <rect y="57" width="22" height="7" fill="#006847"/>
+    <rect x="21" y="57" width="22" height="7" fill="#FFD700"/>
+    <rect x="42" y="57" width="22" height="7" fill="#E4002B"/>
+  </g>
+  <!-- La G es el arco y la pelota quedó adentro: gol. -->
+  <path d="M43.3 18.7 A16.5 16.5 0 1 0 48 30.5 H43" fill="none" stroke="url(#golazo-gold)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="31.5" cy="30.5" r="7.6" fill="#FFFFFF"/>
+  <g clip-path="url(#golazo-ball)" fill="#001637">
+    <polygon points="31.50,25.40 28.65,23.33 29.74,19.97 33.26,19.97 34.35,23.33"/><polygon points="36.35,28.92 37.44,25.57 40.97,25.57 42.06,28.92 39.20,31.00"/><polygon points="34.50,34.63 38.02,34.63 39.11,37.98 36.26,40.05 33.41,37.98"/><polygon points="28.50,34.63 29.59,37.98 26.74,40.05 23.89,37.98 24.98,34.63"/><polygon points="26.65,28.92 23.80,31.00 20.94,28.92 22.03,25.57 25.56,25.57"/>
+    <path d="M31.50 27.80L31.50 25.10M34.07 29.67L36.64 28.83M33.09 32.68L34.67 34.87M29.91 32.68L28.33 34.87M28.93 29.67L26.36 28.83" stroke="#001637" stroke-width="1" fill="none"/>
+    <polygon points="31.50,27.80 34.07,29.67 33.09,32.68 29.91,32.68 28.93,29.67"/>
+  </g>
+  <circle cx="31.5" cy="30.5" r="7.6" fill="none" stroke="#FFFFFF" stroke-width="0.9"/>
+</svg>

@@ -18,32 +18,49 @@
 
 .top-row {
     min-height: 4rem;
-    background-color: rgba(0, 0, 0, .18);
+    background-color: rgba(0, 0, 0, .22);
     border-bottom: 1px solid rgba(255, 255, 255, .12);
 }
 
 .brand-wrap {
     display: inline-flex;
-    align-items: baseline;
-    gap: .55rem;
+    align-items: center;
+    gap: .7rem;
+    text-decoration: none;
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+}
+
+.brand-sub {
+    margin-top: .2rem;
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--m26-gold);
 }
 
 .brand-mark {
-    font-family: "Bebas Neue", Oswald, sans-serif;
-    font-size: 2rem;
-    line-height: 1;
-    color: var(--m26-gold);
-    letter-spacing: .06em;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 10px;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .14), 0 6px 14px rgba(0, 0, 0, .3);
 }
 
 .navbar-brand {
+    margin: 0;
+    padding: 0;
     font-family: "Bebas Neue", Oswald, sans-serif;
-    font-size: 1.45rem;
-    letter-spacing: .07em;
+    font-size: 1.75rem;
+    letter-spacing: .08em;
     color: var(--m26-white);
 }
 
-.navbar-brand:hover {
+.brand-wrap:hover .navbar-brand {
     color: var(--m26-gold);
 }
 
@@ -73,7 +90,8 @@
 }
 
 .nav-item ::deep .nav-link {
-    color: #e2e8f0;
+    color: #CBD5E1;
+    transition: background-color .15s ease, color .15s ease;
     background: transparent;
     border: none;
     border-left: 4px solid transparent;
@@ -91,6 +109,18 @@
     background-color: rgba(255, 255, 255, .14);
     border-left-color: var(--m26-gold);
     color: var(--m26-white);
+    font-weight: 600;
+}
+
+.nav-item ::deep a.active i {
+    color: var(--m26-gold);
+}
+
+.brand-wrap:focus-visible,
+.navbar-toggler:focus-visible,
+.nav-item ::deep .nav-link:focus-visible {
+    outline: 2px solid var(--m26-gold);
+    outline-offset: 2px;
 }
 
 .nav-item ::deep .nav-link:hover {

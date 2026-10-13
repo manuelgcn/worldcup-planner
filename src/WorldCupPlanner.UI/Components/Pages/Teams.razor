@@ -8,26 +8,19 @@
 @inject ITeamService TeamServices
 @inject IFlagAssignmentService FlagAssignmentService
 @inject SessionState Session
-@inject NavigationManager Nav
 
-<PageTitle>Equipos</PageTitle>
+<PageTitle>Equipos · Golazo</PageTitle>
 
 @if (!Session.IsLoggedIn)
 {
-    <section class="m26-card auth-card">
-        <h1 class="m26-page-title mb-2">Equipos</h1>
-        <p class="mb-3">No estas logueado.</p>
-        <button class="btn btn-primary" @onclick="GoToLogin">
-            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
-            Ir a Login
-        </button>
-    </section>
+    <h1 class="m26-page-title">Equipos</h1>
+    <LoginRequired />
 }
 else if (!IsAdmin)
 {
     <div class="alert alert-error" role="alert">
         <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
-        No tenes permisos para administrar equipos.
+        No tenés permisos para administrar equipos.
     </div>
 }
 else
@@ -51,7 +44,7 @@ else
             </div>
 
             <div class="mb-3">
-                <label class="form-label" for="teamConfederation">Confederacion</label>
+                <label class="form-label" for="teamConfederation">Confederación</label>
                 <select id="teamConfederation" class="form-select" @bind="confederation">
                     @foreach (Confederation c in Enum.GetValues<Confederation>())
                     {
@@ -116,8 +109,8 @@ else
                                 <th>Bandera</th>
                                 <th>Nombre</th>
                                 <th>Ranking</th>
-                                <th>Confederacion</th>
-                                <th></th>
+                                <th>Confederación</th>
+                                <th><span class="visually-hidden">Acciones</span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -328,10 +321,6 @@ else
         flagContentType = null;
     }
 
-    private void GoToLogin()
-    {
-        Nav.NavigateTo("/login");
-    }
 
     private string GetPreviewDataUri()
     {
