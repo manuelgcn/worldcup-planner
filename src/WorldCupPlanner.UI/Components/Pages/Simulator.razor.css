@@ -12,7 +12,7 @@
 .sim-card-title {
     margin: 0;
     font-size: 1.3rem;
-    color: var(--m26-white);
+    color: var(--m26-ink);
     display: flex;
     align-items: center;
     gap: .5rem;
@@ -37,6 +37,6 @@
 
 .sim-help {
     margin: 0;
-    color: #576174;
+    color: var(--m26-muted);
     font-size: .9rem;
 }

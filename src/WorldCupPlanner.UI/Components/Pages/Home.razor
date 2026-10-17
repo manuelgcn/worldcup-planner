@@ -10,46 +10,42 @@
 
 <PageTitle>Inicio · Golazo</PageTitle>
 
-<section class="home-hero">
-    <div class="hero-copy">
-        <p class="hero-kicker">Mundial 2026 · 48 selecciones</p>
-        <h1 class="hero-title">Golazo</h1>
-        <p class="hero-lead">
-            Del sorteo de grupos a la final: planificá, simulá y seguí cada partido del Mundial.
-        </p>
-        <p class="hero-status" role="status">
-            <span class="hero-status-dot" aria-hidden="true"></span>
-            @TournamentStatusText
-        </p>
-        <div class="hero-cta">
+<section class="home-pitch" aria-labelledby="homeHeadline">
+    <div class="pitch-copy">
+        <p class="pitch-brand">Mundial 2026, 48 selecciones</p>
+        <h1 id="homeHeadline" class="pitch-headline">@Headline</h1>
+        <p class="pitch-lead" role="status">@TournamentStatusText</p>
+        <div class="pitch-cta">
             @if (Session.IsLoggedIn)
             {
-                <a class="btn btn-primary btn-lg" href="@PrimaryCta.Href">
+                <a class="btn btn-lg pitch-btn-main" href="@PrimaryCta.Href">
                     <i class="bi @PrimaryCta.Icon" aria-hidden="true"></i>
                     @PrimaryCta.Label
                 </a>
-                <a class="btn btn-outline-primary btn-lg" href="/matches">
-                    <i class="bi bi-calendar-event-fill" aria-hidden="true"></i>
-                    Ver partidos
-                </a>
+                <a class="btn btn-lg pitch-btn-alt" href="/matches">Ver partidos</a>
             }
             else
             {
-                <a class="btn btn-primary btn-lg" href="/login">
+                <a class="btn btn-lg pitch-btn-main" href="/login">
                     <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
                     Ingresar
                 </a>
-                <a class="btn btn-outline-primary btn-lg" href="/signup">
-                    <i class="bi bi-person-plus-fill" aria-hidden="true"></i>
-                    Crear cuenta
-                </a>
+                <a class="btn btn-lg pitch-btn-alt" href="/signup">Crear cuenta</a>
             }
         </div>
     </div>
-    <div class="hero-art" aria-hidden="true">
-        <i class="bi bi-trophy-fill"></i>
-    </div>
 </section>
+
+<ol class="stage-track" aria-label="Etapas del torneo">
+    @for (int i = 0; i < Stages.Length; i++)
+    {
+        int index = i;
+        <li class="stage @(index < CurrentStage ? "done" : index == CurrentStage ? "current" : "")"
+            aria-current="@(index == CurrentStage ? "step" : null)">
+            <span class="stage-name">@Stages[index]</span>
+        </li>
+    }
+</ol>
 
 @if (Session.IsLoggedIn && Session.IsJournalist && unreadCount > 0)
 {
@@ -67,51 +63,37 @@
     <div class="alert alert-error mt-4" role="alert">@loadError</div>
 }
 
-<section class="stats-grid">
-    <article class="m26-card stat-card">
-        <span class="stat-icon"><i class="bi bi-people-fill" aria-hidden="true"></i></span>
-        <p class="stat-value">@teamCount / @RequiredTeamCount</p>
-        <p class="stat-label">Equipos</p>
-        <div class="stat-progress" aria-hidden="true"><span style="width: @Percent(teamCount, RequiredTeamCount)%"></span></div>
-    </article>
-    <article class="m26-card stat-card">
-        <span class="stat-icon"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>
-        <p class="stat-value">@stadiumCount</p>
-        <p class="stat-label">Estadios</p>
-    </article>
-    <article class="m26-card stat-card">
-        <span class="stat-icon"><i class="bi bi-calendar-check-fill" aria-hidden="true"></i></span>
-        <p class="stat-value">@playedMatches / @totalMatches</p>
-        <p class="stat-label">Partidos jugados</p>
-        <div class="stat-progress" aria-hidden="true"><span style="width: @Percent(playedMatches, totalMatches)%"></span></div>
-    </article>
-    <article class="m26-card stat-card stat-card-stage">
-        <span class="stat-icon"><i class="bi bi-flag-fill" aria-hidden="true"></i></span>
-        <p class="stat-value stat-value-text">@TournamentStageLabel</p>
-        <p class="stat-label">Estado del torneo</p>
-    </article>
-</section>
+<dl class="tally">
+    <div class="tally-item">
+        <dt>Equipos</dt>
+        <dd>@teamCount<span class="tally-of">/@RequiredTeamCount</span></dd>
+    </div>
+    <div class="tally-item">
+        <dt>Estadios</dt>
+        <dd>@stadiumCount</dd>
+    </div>
+    <div class="tally-item">
+        <dt>Partidos jugados</dt>
+        <dd>@playedMatches<span class="tally-of">/@totalMatches</span></dd>
+    </div>
+</dl>
 
 <section class="how-it-works" aria-labelledby="howItWorksTitle">
-    <h2 id="howItWorksTitle" class="how-title">Cómo funciona</h2>
+    <h2 id="howItWorksTitle" class="how-title">Del sorteo a la final</h2>
     <ol class="how-steps">
-        <li class="m26-card how-step">
-            <span class="how-icon"><i class="bi bi-people-fill" aria-hidden="true"></i></span>
+        <li class="how-step">
             <h3>Equipos y sedes</h3>
             <p>Cargá las 48 selecciones a mano o por CSV, con bandera y ranking, y los estadios del torneo.</p>
         </li>
-        <li class="m26-card how-step">
-            <span class="how-icon"><i class="bi bi-diagram-3-fill" aria-hidden="true"></i></span>
+        <li class="how-step">
             <h3>Sorteo y fixture</h3>
             <p>12 grupos con cupos por confederación y un calendario reproducible gracias a la semilla.</p>
         </li>
-        <li class="m26-card how-step">
-            <span class="how-icon"><i class="bi bi-dice-5-fill" aria-hidden="true"></i></span>
+        <li class="how-step">
             <h3>Simulación</h3>
             <p>Motores intercambiables juegan los partidos; también podés cargar cada resultado a mano.</p>
         </li>
-        <li class="m26-card how-step">
-            <span class="how-icon"><i class="bi bi-trophy-fill" aria-hidden="true"></i></span>
+        <li class="how-step">
             <h3>Hasta la final</h3>
             <p>De 16avos a la final, con penales, ranking Elo actualizado y un campeón del mundo.</p>
         </li>
@@ -135,42 +117,33 @@
 
     private sealed record CtaLink(string Label, string Href, string Icon);
 
-    private static int Percent(int value, int total) => total == 0 ? 0 : Math.Min(100, value * 100 / total);
-
     private bool CanManageTournament =>
         Session.CurrentUser?.HasRole(UserRoles.Admin) == true ||
         Session.CurrentUser?.HasRole(UserRoles.Editor) == true;
 
-    private string TournamentStatusText
-    {
-        get
-        {
-            if (championName is not null)
-            {
-                return $"El torneo está completo: ¡{championName} es el campeón del mundo!";
-            }
-            if (isKnockoutGenerated)
-            {
-                return "El bracket eliminatorio está en curso.";
-            }
-            if (isFixtureGenerated)
-            {
-                return $"Fase de grupos en juego: {playedMatches} de {totalMatches} partidos disputados.";
-            }
-            return $"Preparando el torneo: {teamCount} de 48 equipos y {stadiumCount} estadios cargados.";
-        }
-    }
+    private static readonly string[] Stages = { "Preparación", "Fase de grupos", "Eliminatorias", "Campeón" };
 
-    private string TournamentStageLabel
+    private int CurrentStage =>
+        championName is not null ? 3
+        : isKnockoutGenerated ? 2
+        : isFixtureGenerated ? 1
+        : 0;
+
+    private string Headline => CurrentStage switch
     {
-        get
-        {
-            if (championName is not null) return "¡Hay campeón!";
-            if (isKnockoutGenerated) return "Bracket en curso";
-            if (isFixtureGenerated) return "Fase de grupos";
-            return "En preparación";
-        }
-    }
+        3 => $"{championName}, campeón del mundo.",
+        2 => "Se juegan las eliminatorias.",
+        1 => "La fase de grupos está en juego.",
+        _ => "El Mundial se está armando."
+    };
+
+    private string TournamentStatusText => CurrentStage switch
+    {
+        3 => $"Se jugaron los {totalMatches} partidos. El cuadro completo está en el fixture y el ranking Elo final, en Ranking.",
+        2 => "El cuadro eliminatorio ya está armado: de 16avos a la final, cada llave se define en un partido.",
+        1 => $"Van {playedMatches} de {totalMatches} partidos. Los dos primeros de cada grupo y los ocho mejores terceros pasan a 16avos.",
+        _ => $"Hay {teamCount} de {RequiredTeamCount} selecciones y {stadiumCount} estadios cargados. Con los 48 equipos se puede sortear el fixture."
+    };
 
     private CtaLink PrimaryCta
     {

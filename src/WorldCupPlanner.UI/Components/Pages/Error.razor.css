@@ -18,26 +18,27 @@
     border-radius: 50%;
     background:
         radial-gradient(circle at 30% 30%, rgba(255, 255, 255, .85), transparent 48%),
-        repeating-radial-gradient(circle, rgba(0, 40, 104, .14), rgba(0, 40, 104, .14) 7px, rgba(255, 255, 255, .82) 7px, rgba(255, 255, 255, .82) 14px);
-    border: 2px solid rgba(0, 40, 104, .25);
+        repeating-radial-gradient(circle, rgba(23, 37, 29, .14), rgba(23, 37, 29, .14) 7px, rgba(255, 255, 255, .82) 7px, rgba(255, 255, 255, .82) 14px);
+    border: 2px solid rgba(23, 37, 29, .25);
 }
 
 .code {
-    font-family: "Bebas Neue", Oswald, sans-serif;
+    font-stretch: 72%;
+    font-weight: 800;
     font-size: clamp(3rem, 10vw, 5.5rem);
     line-height: .9;
     color: var(--m26-red);
 }
 
 .error-title {
-    font-family: "Bebas Neue", Oswald, sans-serif;
+    font-stretch: 72%;
+    font-weight: 800;
     font-size: clamp(1.9rem, 6vw, 3rem);
-    text-transform: uppercase;
     margin-bottom: .3rem;
 }
 
 .error-subtitle {
-    color: #475569;
+    color: var(--m26-muted);
     margin-bottom: .8rem;
 }
 
@@ -46,11 +47,11 @@
     margin: 0 0 .8rem;
     padding: .45rem .7rem;
     border-radius: 10px;
-    background: #f8fafc;
+    background: var(--m26-chalk);
     border: 1px solid var(--m26-line);
 }
 
 .dev-note {
-    color: #475569;
+    color: var(--m26-muted);
     margin-bottom: 1rem;
 }

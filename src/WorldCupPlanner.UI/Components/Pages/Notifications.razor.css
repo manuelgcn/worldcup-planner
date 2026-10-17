@@ -24,8 +24,8 @@
     width: 2.25rem;
     height: 2.25rem;
     border-radius: 50%;
-    background: rgba(0, 40, 104, .08);
-    color: var(--m26-blue);
+    background: rgba(23, 37, 29, .08);
+    color: var(--m26-ink);
 }
 
 .notification-body {

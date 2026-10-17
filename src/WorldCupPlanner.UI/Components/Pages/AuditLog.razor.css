@@ -20,8 +20,8 @@
     display: inline-block;
     padding: .2rem .55rem;
     border-radius: 6px;
-    background: rgba(0, 40, 104, .08);
-    color: var(--m26-blue);
+    background: rgba(23, 37, 29, .08);
+    color: var(--m26-ink);
     font-family: SFMono-Regular, Consolas, "Liberation Mono", monospace;
     font-size: .74rem;
     font-weight: 600;
@@ -35,5 +35,5 @@
 .m26-scoreboard .audit-details {
     min-width: 15rem;
     white-space: normal;
-    color: #334155;
+    color: var(--m26-ink);
 }

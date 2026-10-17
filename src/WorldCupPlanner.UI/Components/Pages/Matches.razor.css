@@ -15,7 +15,7 @@
 
 .filter-item .form-label {
     font-size: .84rem;
-    color: #475569;
+    color: var(--m26-muted);
     margin-bottom: .35rem;
 }
 
@@ -31,8 +31,8 @@
 }
 
 .section-title {
-    font-family: "Bebas Neue", Oswald, sans-serif;
-    text-transform: uppercase;
+    font-stretch: 72%;
+    font-weight: 800;
     margin-bottom: .65rem;
 }
 
@@ -43,7 +43,7 @@
 }
 
 .row-editing {
-    background-color: rgba(255, 215, 0, .12);
+    background-color: rgba(242, 194, 0, .12);
 }
 
 @media (max-width: 640.98px) {

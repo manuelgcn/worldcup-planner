@@ -7,12 +7,13 @@
 
 .not-found-logo {
     border-radius: 16px;
-    box-shadow: 0 8px 18px rgba(0, 22, 55, .25);
+    box-shadow: 0 8px 18px rgba(23, 37, 29, .25);
 }
 
 .not-found-code {
     margin: 1rem 0 0;
-    font-family: "Bebas Neue", Oswald, sans-serif;
+    font-stretch: 72%;
+    font-weight: 800;
     font-size: 4.5rem;
     line-height: .9;
     color: var(--m26-red);
@@ -21,7 +22,6 @@
 .not-found-title {
     margin-bottom: .4rem;
     font-size: 2.2rem;
-    text-transform: uppercase;
 }
 
 .not-found-text {

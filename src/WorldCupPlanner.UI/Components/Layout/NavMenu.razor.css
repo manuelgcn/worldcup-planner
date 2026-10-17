@@ -1,25 +1,23 @@
 .navbar-toggler {
     appearance: none;
     cursor: pointer;
-    width: 3.2rem;
+    width: 3rem;
     height: 2.35rem;
     color: white;
     position: absolute;
-    top: .6rem;
+    top: 1rem;
     right: 1rem;
-    border: 1px solid rgba(255, 255, 255, .22);
-    border-radius: 8px;
-    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.88%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.55rem rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: var(--m26-radius-sm);
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.5rem transparent;
 }
 
 .navbar-toggler:checked {
-    background-color: rgba(255, 255, 255, .2);
+    background-color: rgba(255, 255, 255, .15);
 }
 
 .top-row {
-    min-height: 4rem;
-    background-color: rgba(0, 0, 0, .22);
-    border-bottom: 1px solid rgba(255, 255, 255, .12);
+    min-height: 4.5rem;
 }
 
 .brand-wrap {
@@ -36,53 +34,44 @@
 }
 
 .brand-sub {
-    margin-top: .2rem;
-    font-size: .68rem;
-    font-weight: 600;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--m26-gold);
+    margin-top: .25rem;
+    font-size: .78rem;
+    color: rgba(255, 255, 255, .7);
 }
 
 .brand-mark {
     width: 2.5rem;
     height: 2.5rem;
     border-radius: 10px;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, .14), 0 6px 14px rgba(0, 0, 0, .3);
 }
 
 .navbar-brand {
     margin: 0;
     padding: 0;
-    font-family: "Bebas Neue", Oswald, sans-serif;
-    font-size: 1.75rem;
-    letter-spacing: .08em;
-    color: var(--m26-white);
+    font-stretch: 72%;
+    font-weight: 800;
+    font-size: 1.7rem;
+    color: var(--m26-surface);
 }
 
 .brand-wrap:hover .navbar-brand {
-    color: var(--m26-gold);
+    color: var(--m26-yellow);
 }
 
 .nav-section {
-    padding: .9rem 1.25rem .3rem;
-    margin-top: .4rem;
-    font-family: "Bebas Neue", Oswald, sans-serif;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    font-size: .82rem;
-    color: var(--m26-gold);
-    opacity: .9;
-    border-top: 1px solid rgba(255, 255, 255, .12);
+    padding: 1.1rem 1.25rem .35rem;
+    font-size: .8rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, .6);
 }
 
 .nav-item {
     font-size: .95rem;
-    padding-bottom: .45rem;
+    padding-bottom: .15rem;
 }
 
 .nav-item:first-of-type {
-    padding-top: 1rem;
+    padding-top: .75rem;
 }
 
 .nav-item:last-of-type {
@@ -90,46 +79,46 @@
 }
 
 .nav-item ::deep .nav-link {
-    color: #CBD5E1;
-    transition: background-color .15s ease, color .15s ease;
+    color: rgba(255, 255, 255, .82);
     background: transparent;
     border: none;
-    border-left: 4px solid transparent;
-    border-radius: 10px;
-    min-height: 2.9rem;
+    border-radius: var(--m26-radius-sm);
+    min-height: 2.6rem;
     display: flex;
     align-items: center;
-    gap: .58rem;
+    gap: .65rem;
     width: 100%;
-    padding: .6rem .75rem;
+    padding: .5rem .75rem;
     font-weight: 500;
 }
 
-.nav-item ::deep a.active {
-    background-color: rgba(255, 255, 255, .14);
-    border-left-color: var(--m26-gold);
-    color: var(--m26-white);
+.nav-item ::deep .nav-link i {
+    font-size: 1rem;
+    opacity: .75;
+}
+
+.nav-item ::deep .nav-link:hover {
+    background-color: rgba(255, 255, 255, .08);
+    color: var(--m26-surface);
+}
+
+/* Activo: la fila se vuelve "tiza" sobre el verde. */
+.nav-item ::deep .nav-link.active {
+    background-color: var(--m26-chalk);
+    color: var(--m26-ink);
     font-weight: 600;
 }
 
-.nav-item ::deep a.active i {
-    color: var(--m26-gold);
+.nav-item ::deep .nav-link.active i {
+    opacity: 1;
+    color: var(--m26-pitch);
 }
 
 .brand-wrap:focus-visible,
 .navbar-toggler:focus-visible,
 .nav-item ::deep .nav-link:focus-visible {
-    outline: 2px solid var(--m26-gold);
+    outline: 2px solid var(--m26-yellow);
     outline-offset: 2px;
-}
-
-.nav-item ::deep .nav-link:hover {
-    background-color: rgba(255, 255, 255, .1);
-    color: var(--m26-white);
-}
-
-.nav-item ::deep .nav-link i {
-    font-size: 1rem;
 }
 
 .nav-scrollable {
@@ -147,7 +136,7 @@
 
     .nav-scrollable {
         display: block;
-        height: calc(100vh - 4rem);
+        height: calc(100vh - 4.5rem);
         overflow-y: auto;
     }
 }
