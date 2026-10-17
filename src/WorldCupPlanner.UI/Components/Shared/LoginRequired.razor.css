@@ -11,16 +11,16 @@
     height: 3.25rem;
     margin-bottom: .9rem;
     border-radius: 50%;
-    background: rgba(0, 40, 104, .08);
-    color: var(--m26-blue);
+    background: rgba(23, 37, 29, .08);
+    color: var(--m26-ink);
     font-size: 1.4rem;
 }
 
 .login-required-title {
     margin: 0 0 .3rem;
-    font-family: "Bebas Neue", Oswald, sans-serif;
+    font-stretch: 72%;
+    font-weight: 800;
     font-size: 1.7rem;
-    letter-spacing: .04em;
     line-height: 1.1;
 }
 
