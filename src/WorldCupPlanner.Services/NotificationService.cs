@@ -8,8 +8,8 @@ public class NotificationService : INotificationService
 {
     private const string NotificationNotFoundMessage = "No se encontro la notificacion.";
     private const string NotificationOwnershipMessage = "La notificacion no pertenece al usuario.";
-    private const string ResultLoadedMessageTemplate = "Se cargo resultado del partido {0}: {1} {2}-{3} {4}.";
-    private const string MatchSimulatedMessageTemplate = "Se simulo resultado del partido {0}: {1} {2}-{3} {4}.";
+    private const string ResultLoadedMessageTemplate = "Resultado cargado: {0} {1}-{2} {3}.";
+    private const string MatchSimulatedMessageTemplate = "Resultado simulado: {0} {1}-{2} {3}.";
     private const string DefaultHomeTeamName = "Equipo local";
     private const string DefaultAwayTeamName = "Equipo visitante";
     private const int IdGeneratedByPersistence = 0;
@@ -145,6 +145,6 @@ public class NotificationService : INotificationService
     {
         string home = match.HomeTeam?.Name ?? DefaultHomeTeamName;
         string away = match.AwayTeam?.Name ?? DefaultAwayTeamName;
-        return string.Format(template, match.MatchId, home, match.HomeGoals, match.AwayGoals, away);
+        return string.Format(template, home, match.HomeGoals, match.AwayGoals, away);
     }
 }
