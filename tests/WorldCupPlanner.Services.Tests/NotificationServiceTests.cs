@@ -273,6 +273,21 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
+    public void MarkAllAsReadMarksEveryUnreadInOneRepositoryCall()
+    {
+        User journalist = BuildJournalist(JournalistId, "ana@mail.com");
+        userRepository.Add(journalist);
+
+        notificationRepository.Add(new Notification(1, journalist, "Resultado 1"));
+        notificationRepository.Add(new Notification(2, journalist, "Resultado 2"));
+
+        service.MarkAllAsRead(JournalistId);
+
+        Assert.AreEqual(1, notificationRepository.MarkAllAsReadCalls);
+        Assert.AreEqual(0, notificationRepository.UpdateCalls);
+    }
+
+    [TestMethod]
     public void MarkAllAsReadDoesNotAffectOtherUsers()
     {
         User journalist = BuildJournalist(JournalistId, "ana@mail.com");

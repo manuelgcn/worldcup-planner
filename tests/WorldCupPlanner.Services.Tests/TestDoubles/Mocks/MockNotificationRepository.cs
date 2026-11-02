@@ -49,8 +49,12 @@ public class MockNotificationRepository : INotificationRepository
         return notifications.Count(n => n.UserId == userId && !n.IsRead);
     }
 
+    public int UpdateCalls { get; private set; }
+    public int MarkAllAsReadCalls { get; private set; }
+
     public void Update(Notification notification)
     {
+        UpdateCalls++;
         Notification existing = notifications.FirstOrDefault(n => n.Id == notification.Id)
             ?? throw new InvalidOperationException(NotificationNotFoundMessage);
 
@@ -62,7 +66,17 @@ public class MockNotificationRepository : INotificationRepository
 
     public int MarkAllAsRead(int userId)
     {
-        return 0;
+        MarkAllAsReadCalls++;
+        List<Notification> unread = notifications
+            .Where(n => n.UserId == userId && !n.IsRead)
+            .ToList();
+
+        foreach (Notification notification in unread)
+        {
+            notification.MarkAsRead();
+        }
+
+        return unread.Count;
     }
 
     public IReadOnlyCollection<Notification> GetAll()
