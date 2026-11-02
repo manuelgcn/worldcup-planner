@@ -65,6 +65,14 @@ else
 
     <p class="visually-hidden" role="status">@(logs.Count == 1 ? "1 registro" : $"{logs.Count} registros")</p>
 
+    @if (limitReached)
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+            Se muestran los @MaxRows registros más recientes. Usá los filtros o exportá para ver el resto.
+        </div>
+    }
+
     @if (!string.IsNullOrWhiteSpace(exportError))
     {
         <div class="alert alert-error" role="alert">@exportError</div>
@@ -115,6 +123,7 @@ else
 
 @code {
     private const string TimestampFormat = "dd/MM/yyyy HH:mm:ss";
+    private const int MaxRows = 500;
 
     private string actionFilter = "";
     private string emailFilter = "";
@@ -122,6 +131,7 @@ else
     private DateTime? toDate;
 
     private List<AuditLogDto> logs = new();
+    private bool limitReached;
 
     private ExportFormat exportFormat = ExportFormat.Csv;
     private bool isExporting;
@@ -139,12 +149,16 @@ else
         }
     }
 
-    // El filtrado corre en el servicio/repositorio (SQL); la vista solo ordena para presentar.
+    // Filtro, orden (más nuevo primero) y tope corren en SQL. Se pide una fila de más
+    // solo para saber si quedaron registros afuera de la pantalla.
     private void LoadLogs()
     {
-        logs = AuditLogService.GetFiltered(BuildFilter())
-            .OrderByDescending(l => l.Timestamp)
-            .ToList();
+        logs = AuditLogService.GetFiltered(BuildFilter(), MaxRows + 1);
+        limitReached = logs.Count > MaxRows;
+        if (limitReached)
+        {
+            logs.RemoveAt(MaxRows);
+        }
     }
 
     private AuditLogFilterDto BuildFilter()
@@ -176,7 +190,9 @@ else
         try
         {
             DateTime defaultDate = DateTime.UtcNow.Date;
-            DateTime exportFrom = fromDate?.Date ?? logs.Select(log => log.Timestamp.Date).DefaultIfEmpty(defaultDate).Min();
+            // Con el tope alcanzado la lista no trae los más viejos: sin "Desde", el archivo arranca desde el principio.
+            DateTime exportFrom = fromDate?.Date
+                ?? (limitReached ? DateTime.MinValue : logs.Select(log => log.Timestamp.Date).DefaultIfEmpty(defaultDate).Min());
             DateTime exportTo = toDate?.Date ?? logs.Select(log => log.Timestamp.Date).DefaultIfEmpty(defaultDate).Max();
             ExportFileDto file = ExportService.ExportAuditLog(
                 new DateRange(exportFrom, exportTo),
