@@ -12,9 +12,10 @@
 
 <PageTitle>Log de auditoría · Golazo</PageTitle>
 
+<h1 class="m26-page-title">Log de auditoría</h1>
+
 @if (!Session.IsLoggedIn)
 {
-    <h1 class="m26-page-title">Log de auditoría</h1>
     <LoginRequired />
 }
 else if (!CanExport)
@@ -26,30 +27,43 @@ else if (!CanExport)
 }
 else
 {
-    <h1 class="m26-page-title">Log de auditoría</h1>
-
     <div class="m26-card audit-filters">
-        <input class="form-control filter-action"
-               placeholder="Filtrar por acción (ej: CREATE_USER)"
-               aria-label="Filtrar por acción"
-               @bind="actionFilter" @bind:event="oninput" @bind:after="LoadLogs" />
-        <input class="form-control filter-action"
-               placeholder="Filtrar por usuario (email)"
-               aria-label="Filtrar por usuario"
-               @bind="emailFilter" @bind:event="oninput" @bind:after="LoadLogs" />
-        <input class="form-control filter-date" type="date" aria-label="Desde" @bind="fromDate" @bind:after="LoadLogs" />
-        <input class="form-control filter-date" type="date" aria-label="Hasta" @bind="toDate" @bind:after="LoadLogs" />
+        <div class="filter-action">
+            <label class="form-label" for="auditActionFilter">Acción</label>
+            <input id="auditActionFilter" class="form-control"
+                   placeholder="Ej: CREATE_USER"
+                   @bind="actionFilter" @bind:event="oninput" @bind:after="LoadLogs" />
+        </div>
+        <div class="filter-action">
+            <label class="form-label" for="auditEmailFilter">Usuario</label>
+            <input id="auditEmailFilter" class="form-control"
+                   placeholder="Email"
+                   @bind="emailFilter" @bind:event="oninput" @bind:after="LoadLogs" />
+        </div>
+        <div class="filter-date">
+            <label class="form-label" for="auditFromDate">Desde</label>
+            <input id="auditFromDate" class="form-control" type="date" @bind="fromDate" @bind:after="LoadLogs" />
+        </div>
+        <div class="filter-date">
+            <label class="form-label" for="auditToDate">Hasta</label>
+            <input id="auditToDate" class="form-control" type="date" @bind="toDate" @bind:after="LoadLogs" />
+        </div>
         <button class="btn btn-outline-secondary" @onclick="ClearFilters">
             <i class="bi bi-x-circle" aria-hidden="true"></i> Limpiar
         </button>
-        <select class="form-select filter-action" aria-label="Formato de exportación" @bind="exportFormat">
-            <option value="@ExportFormat.Csv">CSV</option>
-            <option value="@ExportFormat.Xlsx">XLSX</option>
-        </select>
+        <div class="filter-action">
+            <label class="form-label" for="auditExportFormat">Formato</label>
+            <select id="auditExportFormat" class="form-select" @bind="exportFormat">
+                <option value="@ExportFormat.Csv">CSV</option>
+                <option value="@ExportFormat.Xlsx">XLSX</option>
+            </select>
+        </div>
         <button class="btn btn-outline-primary" disabled="@isExporting" @onclick="ExportAsync">
             <i class="bi bi-download" aria-hidden="true"></i> Exportar log
         </button>
     </div>
+
+    <p class="visually-hidden" role="status">@(logs.Count == 1 ? "1 registro" : $"{logs.Count} registros")</p>
 
     @if (!string.IsNullOrWhiteSpace(exportError))
     {
@@ -70,7 +84,7 @@ else
                 <table class="table m26-scoreboard audit-table mb-0">
                     <thead>
                         <tr>
-                            <th>Timestamp</th>
+                            <th>Fecha y hora</th>
                             <th>Acción</th>
                             <th>Usuario</th>
                             <th>Torneo</th>
@@ -83,7 +97,7 @@ else
                         @foreach (AuditLogDto log in logs)
                         {
                             <tr>
-                                <td class="text-nowrap" title="@log.Timestamp.ToString("o")">@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td class="text-nowrap" title="@log.Timestamp.ToString("o")">@log.Timestamp.ToLocalTime().ToString(TimestampFormat)</td>
                                 <td><span class="audit-action">@log.Action</span></td>
                                 <td>@(log.PerformedByEmail ?? "—")</td>
                                 <td>@(log.TournamentSettingsId?.ToString() ?? "—")</td>
@@ -100,6 +114,8 @@ else
 }
 
 @code {
+    private const string TimestampFormat = "dd/MM/yyyy HH:mm:ss";
+
     private string actionFilter = "";
     private string emailFilter = "";
     private DateTime? fromDate;
@@ -133,10 +149,11 @@ else
 
     private AuditLogFilterDto BuildFilter()
     {
+        // Los timestamps se guardan en UTC: los limites del dia local se pasan a UTC antes de filtrar.
         return new AuditLogFilterDto
         {
-            From = fromDate?.Date,
-            To = toDate?.Date.AddDays(1).AddTicks(-1),
+            From = fromDate?.Date.ToUniversalTime(),
+            To = toDate?.Date.AddDays(1).AddTicks(-1).ToUniversalTime(),
             Action = string.IsNullOrWhiteSpace(actionFilter) ? null : actionFilter,
             PerformedByEmail = string.IsNullOrWhiteSpace(emailFilter) ? null : emailFilter
         };

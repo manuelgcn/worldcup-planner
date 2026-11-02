@@ -59,16 +59,25 @@
 </section>
 
 @code {
+    private const string MissingDateOfBirthMessage = "La fecha de nacimiento es obligatoria.";
+
     private string name = "";
     private string lastname = "";
     private string email = "";
     private string password = "";
-    private DateTime dateOfBirth = DateTime.Today;
+    // Vacía al inicio: con "hoy" por defecto, quien no la tocaba siempre chocaba con la mayoría de edad.
+    private DateTime? dateOfBirth;
     private string? error;
 
     private void Register()
     {
         error = null;
+
+        if (dateOfBirth is null)
+        {
+            error = MissingDateOfBirthMessage;
+            return;
+        }
 
         try
         {
@@ -79,7 +88,7 @@
                 Lastname = lastname.Trim(),
                 Email = email.Trim(),
                 Password = password,
-                DateOfBirth = dateOfBirth,
+                DateOfBirth = dateOfBirth.Value,
                 // El registro publico crea cuentas Periodista; el servicio lo fuerza de todos modos.
                 InitialRole = UserRoles.Periodista
             });

@@ -19,7 +19,9 @@
     margin-bottom: .35rem;
 }
 
+/* Fila propia: en la celda angosta de la grilla los dos botones quedaban apilados. */
 .filter-actions {
+    grid-column: 1 / -1;
     display: flex;
     gap: .5rem;
     flex-wrap: wrap;

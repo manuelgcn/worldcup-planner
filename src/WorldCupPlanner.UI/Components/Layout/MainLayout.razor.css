@@ -138,6 +138,9 @@ main {
 }
 
 #blazor-error-ui .dismiss {
+    border: 0;
+    background: none;
+    color: inherit;
     cursor: pointer;
     position: absolute;
     right: .8rem;

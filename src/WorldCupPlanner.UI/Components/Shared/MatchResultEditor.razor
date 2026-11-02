@@ -23,10 +23,10 @@
     @if (ShowDateAndStadium)
     {
         <div class="editor-row">
-            <label class="form-label">Fecha</label>
-            <input class="form-control" type="datetime-local" @bind="matchDate" />
-            <label class="form-label">Estadio</label>
-            <select class="form-select" @bind="stadiumId">
+            <label class="form-label" for="editDate-@Match.MatchId">Fecha</label>
+            <input id="editDate-@Match.MatchId" class="form-control" type="datetime-local" @bind="matchDate" />
+            <label class="form-label" for="editStadium-@Match.MatchId">Estadio</label>
+            <select id="editStadium-@Match.MatchId" class="form-select" @bind="stadiumId">
                 <option value="0">-- Seleccione estadio --</option>
                 @foreach (WorldCupPlanner.Domain.Stadium stadium in stadiums)
                 {
@@ -44,6 +44,16 @@
         <span class="editor-team">@AwayName</span>
     </div>
 
+    @if (AsksToRegisterPendingScore)
+    {
+        <div class="form-check">
+            <input id="registerScore-@Match.MatchId" class="form-check-input darker-border-checkbox" type="checkbox" @bind="registerPendingScore" />
+            <label class="form-check-label" for="registerScore-@Match.MatchId">
+                Registrar este marcador como resultado final
+            </label>
+        </div>
+    }
+
     @if (CanEditIncidents)
     {
         <details class="editor-incidents" open="@incidents.Any()">
@@ -57,22 +67,22 @@
 
             <div class="incidents-grid">
                 <div class="incident-item">
-                    <label class="form-label">Equipo</label>
-                    <select class="form-select" @bind="newIncidentTeamId">
+                    <label class="form-label" for="incTeam-@Match.MatchId">Equipo</label>
+                    <select id="incTeam-@Match.MatchId" class="form-select" @bind="newIncidentTeamId">
                         <option value="@Match.HomeTeam!.Id">@HomeName</option>
                         <option value="@Match.AwayTeam!.Id">@AwayName</option>
                     </select>
                 </div>
                 <div class="incident-item">
-                    <label class="form-label">Tipo</label>
-                    <select class="form-select" @bind="newIncidentType">
+                    <label class="form-label" for="incType-@Match.MatchId">Tipo</label>
+                    <select id="incType-@Match.MatchId" class="form-select" @bind="newIncidentType">
                         <option value="@MatchIncidentDto.YellowCardType">🟨 Amarilla</option>
                         <option value="@MatchIncidentDto.RedCardType">🟥 Roja</option>
                     </select>
                 </div>
                 <div class="incident-item">
-                    <label class="form-label">Minuto</label>
-                    <input class="form-control card-input" type="number" min="0" max="130" @bind="newIncidentMinute" />
+                    <label class="form-label" for="incMinute-@Match.MatchId">Minuto</label>
+                    <input id="incMinute-@Match.MatchId" class="form-control card-input" type="number" min="0" max="130" @bind="newIncidentMinute" />
                 </div>
                 <div class="incident-item incident-actions">
                     <button class="btn btn-outline-primary btn-sm" @onclick="AddIncident">
@@ -91,6 +101,7 @@
                             <span>@CardEmoji(incident.Type) @incident.TeamName — min @incident.Minute</span>
                             <button class="btn btn-outline-danger btn-sm"
                                     title="Eliminar incidencia"
+                                    aria-label="Eliminar incidencia"
                                     @onclick="() => RemoveIncident(incident.Id)">
                                 <i class="bi bi-trash" aria-hidden="true"></i>
                             </button>
@@ -114,6 +125,10 @@
 </div>
 
 @code {
+    private const string ResultSavedMessage = "Resultado guardado correctamente";
+    private const string MatchUpdatedMessage = "Partido actualizado correctamente";
+    private const string UndecidedTeamName = "A definir";
+
     [Parameter, EditorRequired] public Match Match { get; set; } = null!;
     [Parameter] public bool ShowDateAndStadium { get; set; }
     [Parameter] public EventCallback<string> OnSaved { get; set; }
@@ -132,8 +147,13 @@
     private IReadOnlyCollection<WorldCupPlanner.Domain.Stadium> stadiums = Array.Empty<WorldCupPlanner.Domain.Stadium>();
     private readonly List<string> editorErrors = new();
 
-    private string HomeName => Match.HomeTeam?.Name ?? "TBD";
-    private string AwayName => Match.AwayTeam?.Name ?? "TBD";
+    // Un partido de grupos pendiente muestra 0-0: guardar solo fecha o estadio no debe registrarlo
+    // como jugado (sumaba puntos y movía el Elo). Un 0-0 real se confirma con esta casilla.
+    private bool registerPendingScore;
+
+    private string HomeName => Match.HomeTeam?.Name ?? UndecidedTeamName;
+    private string AwayName => Match.AwayTeam?.Name ?? UndecidedTeamName;
+    private bool AsksToRegisterPendingScore => ShowDateAndStadium && Match is not MatchElimination && !Match.HasResult;
     private bool CanEditIncidents => Match.HomeTeam is not null && Match.AwayTeam is not null;
     private string? PerformedByEmail => Session.CurrentUser?.email;
 
@@ -226,7 +246,11 @@
             // nada guardado a medias. En eliminatoria un marcador sin cambios no se re-registra:
             // un 0-0 pendiente no es un resultado.
             bool scoreChanged = homeGoals != Match.HomeGoals || awayGoals != Match.AwayGoals;
-            if (Match is not MatchElimination || scoreChanged)
+            bool registersResult = Match is MatchElimination
+                ? scoreChanged
+                : !AsksToRegisterPendingScore || scoreChanged || registerPendingScore;
+
+            if (registersResult)
             {
                 MatchService.RegisterResult(Match.MatchId, homeGoals, awayGoals, PerformedByEmail);
             }
@@ -240,7 +264,7 @@
                 });
             }
 
-            await OnSaved.InvokeAsync("Resultado guardado correctamente");
+            await OnSaved.InvokeAsync(registersResult ? ResultSavedMessage : MatchUpdatedMessage);
         }
         catch (MatchException ex)
         {

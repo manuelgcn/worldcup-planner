@@ -8,9 +8,10 @@
 
 <PageTitle>Importar equipos · Golazo</PageTitle>
 
+<h1 class="m26-page-title">Importar equipos (CSV)</h1>
+
 @if (!Session.IsLoggedIn)
 {
-    <h1 class="m26-page-title">Importar equipos</h1>
     <LoginRequired />
 }
 else if (!CanImport)
@@ -22,8 +23,6 @@ else if (!CanImport)
 }
 else
 {
-    <h1 class="m26-page-title">Importar equipos (CSV)</h1>
-
     <article class="m26-card pane">
         <label class="import-drop" for="importFile">
             <i class="bi bi-filetype-csv import-drop-icon" aria-hidden="true"></i>
@@ -38,30 +37,33 @@ else
             confederación desconocida, ranking fuera de 300–2500 o equipo duplicado.
         </p>
 
-        @if (result is not null)
-        {
-            <div class="alert alert-success mt-3 mb-0" role="status">
-                <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-                <strong>@result.ImportedCount @(result.ImportedCount == 1 ? "equipo importado" : "equipos importados").</strong>
+        @* Region viva siempre presente: los lectores de pantalla no anuncian una region que se inserta junto con su texto. *@
+        <div role="status">
+            @if (result is not null)
+            {
+                <div class="alert alert-success mt-3 mb-0">
+                    <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                    <strong>@result.ImportedCount @(result.ImportedCount == 1 ? "equipo importado" : "equipos importados").</strong>
 
-                @if (!string.IsNullOrWhiteSpace(result.WarningMessage))
-                {
-                    <div class="mt-2">
-                        <strong>Advertencia:</strong> @result.WarningMessage
-                    </div>
-                }
+                    @if (!string.IsNullOrWhiteSpace(result.WarningMessage))
+                    {
+                        <div class="mt-2">
+                            <strong>Advertencia:</strong> @result.WarningMessage
+                        </div>
+                    }
 
-                @if (result.ImportedTeams.Any())
-                {
-                    <ul class="mb-0 mt-2">
-                        @foreach (Team team in result.ImportedTeams)
-                        {
-                            <li>@team.Name (@team.Confederation, ranking @team.FifaRanking)</li>
-                        }
-                    </ul>
-                }
-            </div>
-        }
+                    @if (result.ImportedTeams.Any())
+                    {
+                        <ul class="mb-0 mt-2">
+                            @foreach (Team team in result.ImportedTeams)
+                            {
+                                <li>@team.Name (@team.Confederation, ranking @team.FifaRanking)</li>
+                            }
+                        </ul>
+                    }
+                </div>
+            }
+        </div>
 
         @if (!string.IsNullOrWhiteSpace(error))
         {
@@ -74,6 +76,9 @@ else
 }
 
 @code {
+    private const long MaxImportFileSize = 5 * 1024 * 1024;
+    private const string FileTooLargeMessage = "El archivo no puede superar los 5 MB.";
+
     private ImportResult? result;
     private string? error;
 
@@ -88,12 +93,16 @@ else
 
         try
         {
-            await using Stream upload = e.File.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            await using Stream upload = e.File.OpenReadStream(maxAllowedSize: MaxImportFileSize);
             using MemoryStream buffer = new MemoryStream();
             await upload.CopyToAsync(buffer);
             buffer.Position = 0;
 
             result = ImportService.ImportTeams(buffer, Session.CurrentUser?.email);
+        }
+        catch (IOException) when (e.File.Size > MaxImportFileSize)
+        {
+            error = FileTooLargeMessage;
         }
         catch (Exception ex)
         {

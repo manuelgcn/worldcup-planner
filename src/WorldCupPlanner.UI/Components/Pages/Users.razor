@@ -8,9 +8,10 @@
 
 <PageTitle>Usuarios · Golazo</PageTitle>
 
+<h1 class="m26-page-title">Usuarios</h1>
+
 @if (!Session.IsLoggedIn)
 {
-    <h1 class="m26-page-title">Usuarios</h1>
     <LoginRequired />
 }
 else if (!IsAdmin)
@@ -22,29 +23,7 @@ else if (!IsAdmin)
 }
 else
 {
-    <h1 class="m26-page-title">Usuarios</h1>
-
-    @if (errors.Any())
-    {
-        <div class="alert alert-error" role="alert">
-            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
-            Se encontraron errores:
-            <ul>
-                @foreach (string error in errors)
-                {
-                    <li>@error</li>
-                }
-            </ul>
-        </div>
-    }
-
-    @if (!string.IsNullOrWhiteSpace(successMessage))
-    {
-        <div class="alert alert-success" role="alert">
-            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-            @successMessage
-        </div>
-    }
+    <FeedbackAlerts Errors="errors" SuccessMessage="@successMessage" />
 
     <section class="admin-stack">
         <article class="m26-card pane">
@@ -146,43 +125,57 @@ else
                                         }
                                     </td>
                                     <td>
-                                        <div class="d-flex flex-nowrap gap-1">
-                                            <button class="btn btn-outline-primary btn-sm" @onclick="() => StartEdit(u)">
-                                                <i class="bi bi-pencil" aria-hidden="true"></i> Editar
-                                            </button>
+                                        <div class="d-flex flex-nowrap align-items-center gap-1">
+                                            @* Mientras se confirma, la fila muestra solo la pregunta: al lado de los roles no entraba. *@
+                                            @if (confirmingDeleteId == u.idUser)
+                                            {
+                                                <span class="me-2">¿Eliminar <strong>@u.name @u.lastname</strong>?</span>
+                                                <button class="btn btn-danger btn-sm me-1" @onclick="() => Remove(u.idUser)">
+                                                    Sí, eliminar
+                                                </button>
+                                                <button class="btn btn-outline-secondary btn-sm" @onclick="CancelDelete">
+                                                    Cancelar
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-outline-primary btn-sm" @onclick="() => StartEdit(u)">
+                                                    <i class="bi bi-pencil" aria-hidden="true"></i> Editar
+                                                </button>
 
-                                            <button class="btn btn-sm @RoleButtonClass(u, UserRoles.Admin)"
-                                                    aria-pressed="@(u.HasRole(UserRoles.Admin) ? "true" : "false")"
-                                                    title="@(u.HasRole(UserRoles.Admin) ? "Quitar rol Admin" : "Asignar rol Admin")"
-                                                    disabled="@(u.idUser == 1)"
-                                                    @onclick="() => ToggleRole(u, UserRoles.Admin)">
-                                                <i class="bi bi-shield-fill" aria-hidden="true"></i>
-                                                Admin
-                                            </button>
+                                                <button class="btn btn-sm @RoleButtonClass(u, UserRoles.Admin)"
+                                                        aria-pressed="@(u.HasRole(UserRoles.Admin) ? "true" : "false")"
+                                                        title="@(u.HasRole(UserRoles.Admin) ? "Quitar rol Admin" : "Asignar rol Admin")"
+                                                        disabled="@(u.idUser == 1 || u.idUser == Session.CurrentUser!.idUser)"
+                                                        @onclick="() => ToggleRole(u, UserRoles.Admin)">
+                                                    <i class="bi bi-shield-fill" aria-hidden="true"></i>
+                                                    Admin
+                                                </button>
 
-                                            <button class="btn btn-sm @RoleButtonClass(u, UserRoles.Editor)"
-                                                    aria-pressed="@(u.HasRole(UserRoles.Editor) ? "true" : "false")"
-                                                    title="@(u.HasRole(UserRoles.Editor) ? "Quitar rol Editor" : "Asignar rol Editor")"
-                                                    disabled="@(u.idUser == 1)"
-                                                    @onclick="() => ToggleRole(u, UserRoles.Editor)">
-                                                <i class="bi bi-person-check-fill" aria-hidden="true"></i>
-                                                Editor
-                                            </button>
+                                                <button class="btn btn-sm @RoleButtonClass(u, UserRoles.Editor)"
+                                                        aria-pressed="@(u.HasRole(UserRoles.Editor) ? "true" : "false")"
+                                                        title="@(u.HasRole(UserRoles.Editor) ? "Quitar rol Editor" : "Asignar rol Editor")"
+                                                        disabled="@(u.idUser == 1)"
+                                                        @onclick="() => ToggleRole(u, UserRoles.Editor)">
+                                                    <i class="bi bi-person-check-fill" aria-hidden="true"></i>
+                                                    Editor
+                                                </button>
 
-                                            <button class="btn btn-sm @RoleButtonClass(u, UserRoles.Periodista)"
-                                                    aria-pressed="@(u.HasRole(UserRoles.Periodista) ? "true" : "false")"
-                                                    title="@(u.HasRole(UserRoles.Periodista) ? "Quitar rol Periodista" : "Asignar rol Periodista")"
-                                                    disabled="@(u.idUser == 1)"
-                                                    @onclick="() => ToggleRole(u, UserRoles.Periodista)">
-                                                <i class="bi bi-newspaper" aria-hidden="true"></i>
-                                                Periodista
-                                            </button>
+                                                <button class="btn btn-sm @RoleButtonClass(u, UserRoles.Periodista)"
+                                                        aria-pressed="@(u.HasRole(UserRoles.Periodista) ? "true" : "false")"
+                                                        title="@(u.HasRole(UserRoles.Periodista) ? "Quitar rol Periodista" : "Asignar rol Periodista")"
+                                                        disabled="@(u.idUser == 1)"
+                                                        @onclick="() => ToggleRole(u, UserRoles.Periodista)">
+                                                    <i class="bi bi-newspaper" aria-hidden="true"></i>
+                                                    Periodista
+                                                </button>
 
-                                            <button class="btn btn-outline-danger btn-sm"
-                                                    disabled="@(u.idUser == 1 || u.idUser == Session.CurrentUser!.idUser)"
-                                                    @onclick="() => Remove(u.idUser)">
-                                                <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
-                                            </button>
+                                                <button class="btn btn-outline-danger btn-sm"
+                                                        disabled="@(u.idUser == 1 || u.idUser == Session.CurrentUser!.idUser)"
+                                                        @onclick="() => StartDelete(u.idUser)">
+                                                    <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
+                                                </button>
+                                            }
                                         </div>
                                     </td>
                                 </tr>
@@ -196,6 +189,8 @@ else
 }
 
 @code {
+    private const string MissingDateOfBirthMessage = "La fecha de nacimiento es obligatoria.";
+
     // Los botones de rol son interruptores: el rol asignado se ve "encendido".
     private static string RoleButtonClass(User user, UserRoles role) =>
         user.HasRole(role) ? "btn-secondary role-on" : "btn-outline-secondary";
@@ -204,7 +199,8 @@ else
     private string lastname = "";
     private string email = "";
     private string password = "";
-    private DateTime dateOfBirth = DateTime.Today;
+    // Vacía al inicio: con "hoy" por defecto, quien no la tocaba siempre chocaba con la mayoría de edad.
+    private DateTime? dateOfBirth;
     private UserRoles initialRole = UserRoles.Editor;
 
     private int? editingUserId;
@@ -232,6 +228,12 @@ else
         errors.Clear();
         successMessage = null;
 
+        if (dateOfBirth is null)
+        {
+            errors.Add(MissingDateOfBirthMessage);
+            return;
+        }
+
         try
         {
             UserServices.CreateUser(new CreateUserRequestDto
@@ -241,7 +243,7 @@ else
                 Lastname = lastname,
                 Email = email,
                 Password = password,
-                DateOfBirth = dateOfBirth,
+                DateOfBirth = dateOfBirth.Value,
                 InitialRole = initialRole
             }, Session.CurrentUser?.email);
 
@@ -272,14 +274,20 @@ else
         ClearForm();
     }
 
-    private void SaveEdit()
+    private async Task SaveEdit()
     {
         errors.Clear();
         successMessage = null;
 
         try
         {
-            UserServices.UpdateUser(editingUserId!.Value, name, lastname, email, Session.CurrentUser?.email);
+            int id = editingUserId!.Value;
+            UserServices.UpdateUser(id, name, lastname, email, Session.CurrentUser?.email);
+
+            // La sesión guarda una copia del usuario: si se editó a sí mismo, se recarga como en EditUser.
+            if (id == Session.CurrentUser!.idUser)
+                await Session.LoginAsync(UserServices.GetUserById(id));
+
             successMessage = "Usuario actualizado correctamente";
             editingUserId = null;
             ClearForm();
@@ -291,10 +299,23 @@ else
         }
     }
 
+    private int? confirmingDeleteId;
+
+    private void StartDelete(int id)
+    {
+        confirmingDeleteId = id;
+    }
+
+    private void CancelDelete()
+    {
+        confirmingDeleteId = null;
+    }
+
     private void Remove(int id)
     {
         errors.Clear();
         successMessage = null;
+        confirmingDeleteId = null;
 
         try
         {
@@ -340,7 +361,7 @@ else
         lastname = "";
         email = "";
         password = "";
-        dateOfBirth = DateTime.Today;
+        dateOfBirth = null;
         initialRole = UserRoles.Editor;
     }
 

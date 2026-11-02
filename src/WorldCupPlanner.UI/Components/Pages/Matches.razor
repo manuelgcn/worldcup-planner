@@ -140,7 +140,7 @@ else
                                 @if (CanEditRow(match))
                                 {
                                     <button class="btn btn-outline-primary btn-sm"
-                                            disabled="@(editingMatchId == match.MatchId)"
+                                            aria-expanded="@(editingMatchId == match.MatchId ? "true" : "false")"
                                             @onclick="() => StartEdit(match)">
                                         <i class="bi bi-pencil" aria-hidden="true"></i>
                                         Editar

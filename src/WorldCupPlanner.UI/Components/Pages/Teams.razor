@@ -11,9 +11,10 @@
 
 <PageTitle>Equipos · Golazo</PageTitle>
 
+<h1 class="m26-page-title">Equipos</h1>
+
 @if (!Session.IsLoggedIn)
 {
-    <h1 class="m26-page-title">Equipos</h1>
     <LoginRequired />
 }
 else if (!IsAdmin)
@@ -25,8 +26,6 @@ else if (!IsAdmin)
 }
 else
 {
-    <h1 class="m26-page-title">Equipos</h1>
-
     <FeedbackAlerts Errors="errors" SuccessMessage="@successMessage" />
 
     <section class="admin-grid">
@@ -55,7 +54,8 @@ else
 
             <div class="mb-3">
                 <label class="form-label" for="teamFlag">Bandera</label>
-                <InputFile id="teamFlag"
+                <InputFile @key="flagInputKey"
+                           id="teamFlag"
                            OnChange="OnFlagSelected"
                            accept=".png,.jpg,.jpeg,.webp,.svg"
                            class="form-control" />
@@ -64,7 +64,7 @@ else
             @if (!string.IsNullOrWhiteSpace(flagBase64))
             {
                 <div class="mb-3">
-                    <label class="form-label">Preview</label>
+                    <label class="form-label">Vista previa</label>
                     <div>
                         <img src="@GetPreviewDataUri()"
                              alt="Bandera"
@@ -88,7 +88,7 @@ else
                     Asignar banderas
                 </button>
                 <div class="form-check mb-0">
-                    <input id="overwriteFlags" class="form-check-input" type="checkbox" @bind="overwriteFlags" />
+                    <input id="overwriteFlags" class="form-check-input darker-border-checkbox" type="checkbox" @bind="overwriteFlags" />
                     <label class="form-check-label" for="overwriteFlags">Sobrescribir existentes</label>
                 </div>
             </div>
@@ -160,9 +160,11 @@ else
     private Confederation confederation;
     private string? flagBase64;
     private string? flagContentType;
+    private int flagInputKey;
 
     private const long MaxFlagSize = 200 * 1024;
-    
+    private const string FlagTooLargeMessage = "La bandera no puede superar los 200 KB.";
+
     private readonly List<string> errors = new();
     private string? successMessage;
 
@@ -183,6 +185,11 @@ else
 
     private async Task OnFlagSelected(InputFileChangeEventArgs e)
     {
+        errors.Clear();
+        successMessage = null;
+        flagBase64 = null;
+        flagContentType = null;
+
         try
         {
             IBrowserFile file = e.File;
@@ -193,6 +200,10 @@ else
             await stream.CopyToAsync(ms);
 
             flagBase64 = Convert.ToBase64String(ms.ToArray());
+        }
+        catch (IOException) when (e.File.Size > MaxFlagSize)
+        {
+            errors.Add(FlagTooLargeMessage);
         }
         catch (Exception ex)
         {
@@ -319,6 +330,7 @@ else
         confederation = default;
         flagBase64 = null;
         flagContentType = null;
+        flagInputKey++;
     }
 
 
