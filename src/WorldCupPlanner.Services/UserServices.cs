@@ -130,7 +130,7 @@ public class UserServices : IUserService
 
     public User Authenticate(string email, string password)
     {
-        string loginKey = (email ?? string.Empty).Trim().ToLowerInvariant();
+        string loginKey = email.Trim().ToLowerInvariant();
         DateTimeOffset now = _timeProvider.GetUtcNow();
 
         if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.LockedUntil is { } lockedUntil)
