@@ -286,6 +286,22 @@ public class KnockoutFixtureGeneratorExtensionTests
     }
 
     [TestMethod]
+    public void GenerateBracket_WithSeedOverride_PersistsEffectiveCrossingsSeedAndKeepsEngine()
+    {
+        // La tabla de posiciones desempata con la CrossingsSeed guardada: si el override no se
+        // persiste, tabla y cuadro pueden no coincidir en un empate exacto.
+        const int OverrideSeed = 42;
+        _settingsRepository.GetAll().Single().SelectSimulationEngine(PureRandomSimulationEngine.EngineName);
+        SeedPlayedGroupStageMatches();
+
+        _generator.GenerateBracket(crossingsSeedOverride: OverrideSeed, performedByEmail: AdminEmail);
+
+        TournamentSettings persisted = _settingsRepository.GetAll().Single();
+        Assert.AreEqual(OverrideSeed, persisted.CrossingsSeed);
+        Assert.AreEqual(PureRandomSimulationEngine.EngineName, persisted.SelectedSimulationEngine);
+    }
+
+    [TestMethod]
     public void GenerateBracket_RoundOf32_UsesKickoffSlots()
     {
         SeedPlayedGroupStageMatches();
