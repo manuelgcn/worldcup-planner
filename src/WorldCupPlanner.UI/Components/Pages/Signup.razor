@@ -5,6 +5,7 @@
 @using WorldCupPlanner.Services.Interfaces
 @inject IUserService UserServices
 @inject NavigationManager Nav
+@inject ILogger<Signup> Logger
 
 <PageTitle>Crear cuenta · Golazo</PageTitle>
 
@@ -97,7 +98,7 @@
         }
         catch (Exception ex)
         {
-            error = ex.Message;
+            error = UserFacingError.MessageFor(ex, Logger);
         }
     }
     

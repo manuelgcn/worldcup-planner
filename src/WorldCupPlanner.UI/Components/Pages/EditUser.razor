@@ -4,6 +4,7 @@
 @using WorldCupPlanner.Services.Interfaces
 @inject SessionState Session
 @inject IUserService UserServices
+@inject ILogger<EditUser> Logger
 
 <PageTitle>Mi perfil · Golazo</PageTitle>
 
@@ -117,7 +118,7 @@
         }
         catch (Exception ex)
         {
-            errors.Add(ex.Message);
+            errors.Add(UserFacingError.MessageFor(ex, Logger));
         }
     }
 

@@ -5,6 +5,7 @@
 @using WorldCupPlanner.Services.Interfaces
 @inject IUserService UserServices
 @inject SessionState Session
+@inject ILogger<Users> Logger
 
 <PageTitle>Usuarios · Golazo</PageTitle>
 
@@ -267,7 +268,7 @@ else
         }
         catch (Exception ex)
         {
-            errors.Add(ex.Message);
+            errors.Add(UserFacingError.MessageFor(ex, Logger));
         }
     }
 
@@ -319,7 +320,7 @@ else
         }
         catch (Exception ex)
         {
-            errors.Add(ex.Message);
+            errors.Add(UserFacingError.MessageFor(ex, Logger));
         }
     }
 
@@ -352,7 +353,7 @@ else
         }
         catch (Exception ex)
         {
-            errors.Add(ex.Message);
+            errors.Add(UserFacingError.MessageFor(ex, Logger));
         }
     }
 
@@ -385,7 +386,7 @@ else
         }
         catch (Exception ex)
         {
-            errors.Add(ex.Message);
+            errors.Add(UserFacingError.MessageFor(ex, Logger));
         }
     }
 
