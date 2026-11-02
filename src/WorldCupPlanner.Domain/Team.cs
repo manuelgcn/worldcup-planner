@@ -104,7 +104,7 @@ public class Team
 
     private static bool IsNameInvalid(string name)
     {
-        return string.IsNullOrEmpty(name) || name.Length > MaxNameLength;
+        return string.IsNullOrWhiteSpace(name) || name.Length > MaxNameLength;
     }
 
     private static bool IsFifaRankingOutOfRange(int fifaRanking)
