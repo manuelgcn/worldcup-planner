@@ -10,6 +10,8 @@ public sealed class MockMatchRepository : IMatchRepository
     public int AddCalls { get; private set; }
     public int UpdateCalls { get; private set; }
     public int DeleteCalls { get; private set; }
+    // Lecturas de listas de partidos: en la base real, cada una es una consulta con el grafo completo.
+    public int ReadCalls { get; private set; }
 
     // Simula una base que rechaza el próximo guardado.
     public Exception? FailNextUpdate { get; set; }
@@ -19,6 +21,7 @@ public sealed class MockMatchRepository : IMatchRepository
         AddCalls = 0;
         UpdateCalls = 0;
         DeleteCalls = 0;
+        ReadCalls = 0;
     }
 
     public bool ExistsById(int matchId)
@@ -64,6 +67,7 @@ public sealed class MockMatchRepository : IMatchRepository
 
     public List<Match> GetByGroup(string groupName)
     {
+        ReadCalls++;
         List<Match> result = new List<Match>();
 
         foreach (Match item in _matches.Values)
@@ -79,6 +83,7 @@ public sealed class MockMatchRepository : IMatchRepository
 
     public List<Match> GetByJourney(int journeyNumber)
     {
+        ReadCalls++;
         List<Match> result = new List<Match>();
 
         foreach (Match item in _matches.Values)
@@ -94,6 +99,7 @@ public sealed class MockMatchRepository : IMatchRepository
 
     public List<Match> GetByDateRange(DateTime from, DateTime to)
     {
+        ReadCalls++;
         List<Match> result = new List<Match>();
 
         foreach (Match item in _matches.Values)
@@ -109,6 +115,7 @@ public sealed class MockMatchRepository : IMatchRepository
 
     public List<Match> GetByStadium(int stadiumId)
     {
+        ReadCalls++;
         List<Match> result = new List<Match>();
 
         foreach (Match item in _matches.Values)
@@ -124,6 +131,7 @@ public sealed class MockMatchRepository : IMatchRepository
 
     public List<Match> GetByPhase(Phase phase)
     {
+        ReadCalls++;
         List<Match> result = new List<Match>();
 
         foreach (Match item in _matches.Values)
@@ -140,6 +148,7 @@ public sealed class MockMatchRepository : IMatchRepository
 
     public List<Match> Search(MatchQueryCriteria criteria)
     {
+        ReadCalls++;
         IEnumerable<Match> query = _matches.Values;
 
         if (criteria.From.HasValue)
@@ -172,6 +181,7 @@ public sealed class MockMatchRepository : IMatchRepository
 
     public List<Match> GetAll()
     {
+        ReadCalls++;
         return _matches.Values.ToList();
     }
 
