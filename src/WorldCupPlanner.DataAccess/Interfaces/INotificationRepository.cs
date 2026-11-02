@@ -10,5 +10,7 @@ public interface INotificationRepository
     IReadOnlyCollection<Notification> GetUnreadByUserId(int userId);
     int CountUnreadByUserId(int userId);
     void Update(Notification notification);
+    // Marca leidas todas las no leidas del usuario en una sola escritura; devuelve cuantas marco.
+    int MarkAllAsRead(int userId);
     IReadOnlyCollection<Notification> GetAll();
 }

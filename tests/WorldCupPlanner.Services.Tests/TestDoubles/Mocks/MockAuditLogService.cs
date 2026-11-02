@@ -31,7 +31,7 @@ public sealed class MockAuditLogService : IAuditLogService
         return new List<AuditLogDto>();
     }
 
-    public List<AuditLogDto> GetFiltered(AuditLogFilterDto filter)
+    public List<AuditLogDto> GetFiltered(AuditLogFilterDto filter, int? take = null)
     {
         return new List<AuditLogDto>();
     }

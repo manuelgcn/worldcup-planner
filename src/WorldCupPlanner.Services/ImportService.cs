@@ -46,6 +46,7 @@ public sealed class ImportService : IImportService
         List<Team> teamsToImport = new List<Team>();
 
         IReadOnlyCollection<Team> existingTeams = _teamRepository.GetAll();
+        HashSet<string> existingNames = existingTeams.Select(team => TextNormalizer.Normalize(team.Name)).ToHashSet();
         int currentTeamCount = existingTeams.Count;
         int nextTeamId = GetNextTeamId(existingTeams);
         Dictionary<Confederation, int> teamsPerConfederation = existingTeams
@@ -74,7 +75,7 @@ public sealed class ImportService : IImportService
             Confederation confederation = ParseConfederation(confederationText, row.RowNumber);
             int ranking = ParseRanking(rankingText, row.RowNumber);
 
-            if (IsDuplicate(name, importedNames))
+            if (IsDuplicate(name, importedNames, existingNames))
             {
                 ThrowDuplicateTeam(row.RowNumber);
             }
@@ -153,9 +154,10 @@ public sealed class ImportService : IImportService
         return ranking < MinRanking || ranking > MaxRanking;
     }
 
-    private bool IsDuplicate(string name, HashSet<string> importedNames)
+    private static bool IsDuplicate(string name, HashSet<string> importedNames, HashSet<string> existingNames)
     {
-        return importedNames.Contains(TextNormalizer.Normalize(name)) || _teamRepository.ExistsByName(name);
+        string normalizedName = TextNormalizer.Normalize(name);
+        return importedNames.Contains(normalizedName) || existingNames.Contains(normalizedName);
     }
 
     private static void ThrowInvalidTeamName(int rowNumber) =>

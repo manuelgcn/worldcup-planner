@@ -62,6 +62,8 @@ public class NotificationRepository : INotificationRepository
         return context.Notifications
             .Include(n => n.User)
             .Where(n => n.UserId == userId && !n.IsRead)
+            .OrderByDescending(n => n.CreatedAt)
+            .ThenByDescending(n => n.Id)
             .ToList();
     }
 
@@ -86,6 +88,24 @@ public class NotificationRepository : INotificationRepository
         }
 
         context.SaveChanges();
+    }
+
+    // Un contexto y un SaveChanges para toda la tanda (no ExecuteUpdate: InMemory no lo soporta).
+    public int MarkAllAsRead(int userId)
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+
+        List<Notification> unread = context.Notifications
+            .Where(n => n.UserId == userId && !n.IsRead)
+            .ToList();
+
+        foreach (Notification notification in unread)
+        {
+            notification.MarkAsRead();
+        }
+
+        context.SaveChanges();
+        return unread.Count;
     }
 
     public IReadOnlyCollection<Notification> GetAll()

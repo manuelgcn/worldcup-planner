@@ -1,4 +1,5 @@
-﻿using WorldCupPlanner.Domain;
+﻿using System.Collections.Concurrent;
+using WorldCupPlanner.Domain;
 using WorldCupPlanner.Services.DTOs;
 using WorldCupPlanner.Services.Exceptions;
 using WorldCupPlanner.Services.Interfaces;
@@ -17,6 +18,9 @@ public class UserServices : IUserService
     private const UserRoles PublicRegistrationRole = UserRoles.Periodista;
 
     private const string InvalidCredentialsMessage = "Credenciales invalidas";
+    private const string TooManyFailedLoginsMessage = "Demasiados intentos fallidos. Probá de nuevo en unos minutos.";
+    private const int MaxFailedLogins = 5;
+    private const int LockoutMinutes = 5;
     private const string EmailAlreadyExistsMessage = "El email ya esta registrado";
     private const string UserIdAlreadyAssignedMessage = "El id de usuario ya esta asignado";
     private const string UserMustHaveOneRoleMessage = "El usuario debe tener al menos un rol";
@@ -27,13 +31,18 @@ public class UserServices : IUserService
 
     private readonly IAuditLogService _auditLogService;
     private readonly IUserRepository _userRepository;
+    private readonly TimeProvider _timeProvider;
 
-    public UserServices(IUserRepository userRepository, IAuditLogService auditLogService)
+    // Intentos fallidos por email normalizado. El servicio es singleton: el conteo vive mientras corre la app.
+    private readonly ConcurrentDictionary<string, FailedLogins> _failedLogins = new();
+
+    public UserServices(IUserRepository userRepository, IAuditLogService auditLogService, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(userRepository);
         ArgumentNullException.ThrowIfNull(auditLogService);
         _userRepository = userRepository;
         _auditLogService = auditLogService;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     public IReadOnlyCollection<User> GetAllUsers()
@@ -121,16 +130,45 @@ public class UserServices : IUserService
 
     public User Authenticate(string email, string password)
     {
+        string loginKey = email.Trim().ToLowerInvariant();
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+
+        if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.LockedUntil is { } lockedUntil)
+        {
+            if (now < lockedUntil)
+                throw new UserServicesException(TooManyFailedLoginsMessage);
+
+            _failedLogins.TryRemove(loginKey, out _);
+        }
+
         User? user = _userRepository.GetByEmail(email);
 
         if (user == null || !user.PasswordMatches(password))
+        {
+            RegisterFailedLogin(loginKey, now);
             throw new UserServicesException(InvalidCredentialsMessage);
+        }
+
+        _failedLogins.TryRemove(loginKey, out _);
 
         if (user.HasLegacyPasswordHash)
             UpgradeLegacyPasswordHash(user, password);
 
         return user;
     }
+
+    // Se cuenta también para emails inexistentes: si no, el bloqueo delataría cuáles están registrados.
+    private void RegisterFailedLogin(string loginKey, DateTimeOffset now)
+    {
+        _failedLogins.AddOrUpdate(
+            loginKey,
+            _ => new FailedLogins(1, null),
+            (_, current) => current.Count + 1 >= MaxFailedLogins
+                ? new FailedLogins(0, now.AddMinutes(LockoutMinutes))
+                : current with { Count = current.Count + 1 });
+    }
+
+    private sealed record FailedLogins(int Count, DateTimeOffset? LockedUntil);
 
     // Unica oportunidad de migrar un hash viejo: solo en el login se conoce la contrasena.
     private void UpgradeLegacyPasswordHash(User user, string password)

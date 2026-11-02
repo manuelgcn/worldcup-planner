@@ -6,7 +6,7 @@ namespace WorldCupPlanner.Services.Interfaces;
 public interface IMatchService
 {
     MatchDto CreateMatch(CreateMatchRequestDto request);
-    MatchDto UpdateMatch(int matchId, UpdateMatchRequestDto request);
+    MatchDto UpdateMatch(int matchId, UpdateMatchRequestDto request, string? performedByEmail = null);
     void DeleteMatch(int matchId);
     MatchDto GetById(int matchId);
     // Devuelve la entidad con su grafo (equipos/estadio) para alimentar el editor de

@@ -8,5 +8,6 @@ public interface IAuditLogRepository
 
     List<AuditLog> GetAll();
 
-    List<AuditLog> GetFiltered(DateTime? from, DateTime? to, string? action, string? performedByEmail);
+    // Sin take: todas las filas, de la mas vieja a la mas nueva. Con take: las 'take' mas nuevas primero.
+    List<AuditLog> GetFiltered(DateTime? from, DateTime? to, string? action, string? performedByEmail, int? take = null);
 }

@@ -505,4 +505,43 @@ public class UserTests
         typeof(User).GetProperty(nameof(User.password))!.SetValue(user, legacyHash);
         return user;
     }
+
+    // Límites de UserConfiguration: sin validarlos en el dominio, el error llegaba como DbUpdateException.
+    [TestMethod]
+    public void User_WithBlankName_Throws()
+    {
+        Assert.ThrowsException<ArgumentException>(
+            () => new User(1, "   ", "Perez", "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15)));
+    }
+
+    [TestMethod]
+    public void User_WithNameOver100Chars_Throws()
+    {
+        Assert.ThrowsException<ArgumentException>(
+            () => new User(1, new string('a', 101), "Perez", "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15)));
+    }
+
+    [TestMethod]
+    public void User_WithLastnameOver100Chars_Throws()
+    {
+        Assert.ThrowsException<ArgumentException>(
+            () => new User(1, "Juan", new string('a', 101), "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15)));
+    }
+
+    [TestMethod]
+    public void User_WithEmailOver254Chars_Throws()
+    {
+        string longEmail = new string('a', 60) + "@" + string.Concat(Enumerable.Repeat(new string('b', 60) + ".", 4)) + "com";
+
+        Assert.ThrowsException<ArgumentException>(
+            () => new User(1, "Juan", "Perez", longEmail, "Pass1234@", new DateTime(1990, 5, 15)));
+    }
+
+    [TestMethod]
+    public void UpdatePersonalData_WithBlankName_Throws()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15));
+
+        Assert.ThrowsException<ArgumentException>(() => user.UpdatePersonalData(" ", "Perez", "juan@mail.com"));
+    }
 }

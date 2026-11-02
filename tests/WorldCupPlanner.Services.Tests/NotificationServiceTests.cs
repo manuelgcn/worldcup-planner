@@ -193,6 +193,30 @@ public class NotificationServiceTests
     }
 
     [TestMethod]
+    public void NotifyMatchSimulatedMessageNamesTheTeamsWithoutTheInternalMatchId()
+    {
+        userRepository.Add(BuildJournalist(JournalistId, "ana@mail.com"));
+        Match match = BuildGroupMatch();
+        match.SetGoals(3, 0);
+
+        service.NotifyMatchSimulated(match);
+
+        Assert.AreEqual("Resultado simulado: Uruguay 3-0 Francia.", notificationRepository.GetAll().First().Message);
+    }
+
+    [TestMethod]
+    public void NotifyResultLoadedMessageNamesTheTeamsWithoutTheInternalMatchId()
+    {
+        userRepository.Add(BuildJournalist(JournalistId, "ana@mail.com"));
+        Match match = BuildGroupMatch();
+        match.SetGoals(2, 1);
+
+        service.NotifyResultLoaded(match, previousHomeGoals: 0, previousAwayGoals: 0);
+
+        Assert.AreEqual("Resultado cargado: Uruguay 2-1 Francia.", notificationRepository.GetAll().First().Message);
+    }
+
+    [TestMethod]
     public void NotifyMatchesSimulatedReadsUsersOnceAndWritesOneBatch()
     {
         userRepository.Add(BuildJournalist(1, "ana@mail.com"));
@@ -246,6 +270,21 @@ public class NotificationServiceTests
 
         Assert.AreEqual(0, service.CountUnreadForUser(JournalistId));
         Assert.IsTrue(notificationRepository.GetAll().All(n => n.IsRead));
+    }
+
+    [TestMethod]
+    public void MarkAllAsReadMarksEveryUnreadInOneRepositoryCall()
+    {
+        User journalist = BuildJournalist(JournalistId, "ana@mail.com");
+        userRepository.Add(journalist);
+
+        notificationRepository.Add(new Notification(1, journalist, "Resultado 1"));
+        notificationRepository.Add(new Notification(2, journalist, "Resultado 2"));
+
+        service.MarkAllAsRead(JournalistId);
+
+        Assert.AreEqual(1, notificationRepository.MarkAllAsReadCalls);
+        Assert.AreEqual(0, notificationRepository.UpdateCalls);
     }
 
     [TestMethod]

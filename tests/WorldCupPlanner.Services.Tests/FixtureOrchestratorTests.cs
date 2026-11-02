@@ -1,3 +1,4 @@
+using Moq;
 using WorldCupPlanner.DataAccess.Interfaces;
 using WorldCupPlanner.DataAccess.Repositories;
 using WorldCupPlanner.Domain;
@@ -5,6 +6,7 @@ using WorldCupPlanner.Services;
 using WorldCupPlanner.Services.Exceptions;
 using WorldCupPlanner.Services.Interfaces;
 using WorldCupPlanner.Services.Tests.TestDoubles.Mocks;
+using Match = WorldCupPlanner.Domain.Match;
 
 namespace WorldCupPlanner.Services.Tests;
 
@@ -331,11 +333,53 @@ public class FixtureOrchestratorTests
         Assert.IsTrue(atLeastOneDifference, "Different seeds should produce at least one different team in group A");
     }
 
-    private FixtureOrchestrator NewOrchestrator()
+    [TestMethod]
+    public void GenerateGroupStage_WhenScheduleDoesNotFit_PersistsNothing()
+    {
+        _orchestrator = NewOrchestrator(OneStadiumListedFourTimes());
+
+        Assert.ThrowsException<FixtureOrchestratorException>(
+            () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
+        Assert.AreEqual(0, _groupRepository.GetAll().Count);
+        Assert.AreEqual(0, _journeyRepository.GetAll().Count);
+        Assert.AreEqual(0, _matchRepository.GetAll().Count);
+        Assert.IsFalse(_orchestrator.IsFixtureGenerated());
+    }
+
+    [TestMethod]
+    public void RegenerateGroupStage_WhenScheduleDoesNotFit_KeepsPreviousFixture()
+    {
+        _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
+        PlayAllGroupMatches();
+        List<Group> previousGroups = _groupRepository.GetAll().ToList();
+        List<Match> previousMatches = _matchRepository.GetAll().ToList();
+        Dictionary<int, int> rankingsAfterPlaying = CurrentRankings();
+        _orchestrator = NewOrchestrator(OneStadiumListedFourTimes());
+
+        Assert.ThrowsException<FixtureOrchestratorException>(
+            () => _orchestrator.RegenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
+        CollectionAssert.AreEquivalent(previousGroups, _groupRepository.GetAll().ToList());
+        Assert.AreEqual(TotalExpectedJourneys, _journeyRepository.GetAll().Count);
+        CollectionAssert.AreEquivalent(previousMatches, _matchRepository.GetAll().ToList());
+        CollectionAssert.AreEquivalent(rankingsAfterPlaying, CurrentRankings());
+    }
+
+    // Cuatro entradas del mismo estadio pasan el control de "al menos 4", pero un solo estadio no puede
+    // alojar los dos partidos simultaneos de la jornada 3: el calendario no entra con ninguna configuracion.
+    private IStadiumRepository OneStadiumListedFourTimes()
+    {
+        Stadium onlyStadium = _stadiumRepository.GetAll().First();
+        Mock<IStadiumRepository> stadiumRepository = new Mock<IStadiumRepository>();
+        stadiumRepository.Setup(repository => repository.GetAll())
+            .Returns(new List<Stadium> { onlyStadium, onlyStadium, onlyStadium, onlyStadium });
+        return stadiumRepository.Object;
+    }
+
+    private FixtureOrchestrator NewOrchestrator(IStadiumRepository? stadiumRepository = null)
     {
         return new FixtureOrchestrator(
             _teamRepository,
-            _stadiumRepository,
+            stadiumRepository ?? _stadiumRepository,
             _settingsRepository,
             _groupRepository,
             _journeyRepository,

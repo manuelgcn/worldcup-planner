@@ -5,6 +5,7 @@
 @using WorldCupPlanner.Services.Interfaces
 @inject IUserService UserServices
 @inject SessionState Session
+@inject ILogger<Users> Logger
 
 <PageTitle>Usuarios · Golazo</PageTitle>
 
@@ -116,7 +117,18 @@ else
                             {
                                 <tr>
                                     <td>@u.idUser</td>
-                                    <td>@u.name @u.lastname</td>
+                                    <td>
+                                        @u.name @u.lastname
+                                        @* Explica en pantalla por qué sus botones están deshabilitados. *@
+                                        @if (u.idUser == 1)
+                                        {
+                                            <span class="d-block small text-muted">Administrador del sistema</span>
+                                        }
+                                        else if (u.idUser == Session.CurrentUser!.idUser)
+                                        {
+                                            <span class="d-block small text-muted">Tu usuario</span>
+                                        }
+                                    </td>
                                     <td>@u.email</td>
                                     <td>
                                         @foreach (var r in u.Roles)
@@ -223,10 +235,13 @@ else
         usuarios = UserServices.GetAllUsers().ToList();
     }
 
-    private void Create()
+    private async Task Create()
     {
         errors.Clear();
         successMessage = null;
+
+        if (!await IsStillAdminAsync())
+            return;
 
         if (dateOfBirth is null)
         {
@@ -253,8 +268,15 @@ else
         }
         catch (Exception ex)
         {
-            errors.Add(ex.Message);
+            errors.Add(UserFacingError.MessageFor(ex, Logger));
         }
+    }
+
+    // La página pudo quedar abierta después de que otro admin le quitara el rol o diera de baja a este usuario.
+    private async Task<bool> IsStillAdminAsync()
+    {
+        await Session.RevalidateAsync();
+        return IsAdmin;
     }
 
     private void StartEdit(User u)
@@ -279,6 +301,9 @@ else
         errors.Clear();
         successMessage = null;
 
+        if (!await IsStillAdminAsync())
+            return;
+
         try
         {
             int id = editingUserId!.Value;
@@ -295,7 +320,7 @@ else
         }
         catch (Exception ex)
         {
-            errors.Add(ex.Message);
+            errors.Add(UserFacingError.MessageFor(ex, Logger));
         }
     }
 
@@ -311,10 +336,13 @@ else
         confirmingDeleteId = null;
     }
 
-    private void Remove(int id)
+    private async Task Remove(int id)
     {
         errors.Clear();
         successMessage = null;
+
+        if (!await IsStillAdminAsync())
+            return;
         confirmingDeleteId = null;
 
         try
@@ -325,14 +353,17 @@ else
         }
         catch (Exception ex)
         {
-            errors.Add(ex.Message);
+            errors.Add(UserFacingError.MessageFor(ex, Logger));
         }
     }
 
-    private void ToggleRole(User user, UserRoles role)
+    private async Task ToggleRole(User user, UserRoles role)
     {
         errors.Clear();
         successMessage = null;
+
+        if (!await IsStillAdminAsync())
+            return;
 
         try
         {
@@ -348,10 +379,14 @@ else
             }
 
             LoadUsers();
+
+            // El menú y los permisos leen los roles de la copia en sesión: si cambió los propios, se recarga.
+            if (user.idUser == Session.CurrentUser!.idUser)
+                await Session.LoginAsync(UserServices.GetUserById(user.idUser));
         }
         catch (Exception ex)
         {
-            errors.Add(ex.Message);
+            errors.Add(UserFacingError.MessageFor(ex, Logger));
         }
     }
 

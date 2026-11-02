@@ -14,10 +14,12 @@ internal static class MatchEf
     // Carga el grafo completo de un partido con identity resolution, de modo que las cadenas
     // autorreferentes del bracket (Final -> Semis -> ...) apunten a las MISMAS instancias dentro
     // del resultado y GetWinner() resuelva a traves de la cadena. Un nivel de include para
-    // MatchHome/MatchAway alcanza porque GetAll trae la coleccion completa.
+    // MatchHome/MatchAway alcanza porque GetAll trae la coleccion completa. AsSplitQuery: Group.Teams
+    // e Incidents en un solo SELECT devolverian partidos x 4 x incidencias filas; asi va una consulta por coleccion.
     public static IQueryable<Match> WithGraph(IQueryable<Match> matches) =>
         matches
             .AsNoTrackingWithIdentityResolution()
+            .AsSplitQuery()
             .Include(match => match.HomeTeam)
             .Include(match => match.AwayTeam)
             .Include(match => match.Stadium)

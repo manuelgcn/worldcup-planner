@@ -1,5 +1,6 @@
 using WorldCupPlanner.DataAccess.Interfaces;
 using WorldCupPlanner.Domain;
+using WorldCupPlanner.Domain.Exceptions;
 using WorldCupPlanner.Services.Exceptions;
 using WorldCupPlanner.Services.Interfaces;
 
@@ -16,6 +17,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     private const string MissingSettingsMessage = "La configuracion del torneo no esta definida.";
     private const string MissingTeamsMessage = "El fixture requiere exactamente 48 equipos.";
     private const string MissingStadiumsMessage = "El fixture requiere al menos 4 estadios.";
+    private const string ScheduleDoesNotFitMessage = "El calendario de la fase de grupos no entra con los estadios y la configuracion actuales.";
     private const string ClearFixtureDetails = "Fixture anterior limpiado antes de la regeneracion.";
     private const string DeleteFixtureDetails = "Fixture eliminado: se removieron grupos, jornadas, partidos de grupo y fase eliminatoria.";
 
@@ -68,9 +70,12 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     {
         EnsureFixtureNotYetGenerated();
         GenerationPlan plan = PrepareGenerationPlan(fixtureSeedOverride);
+        // Grupos y calendario se arman antes de escribir nada: si el calendario no entra, no queda un
+        // fixture a medias (grupos y jornadas sin partidos) que bloquee la generacion.
+        GroupStage groupStage = BuildGroupStage(plan);
         ApplySimulationEngineSelection(plan.Settings, selectedEngineName);
 
-        BuildAndPersist(plan);
+        Persist(groupStage);
 
         AuditGenerated(plan.EffectiveSeed, plan.Settings.SelectedSimulationEngine, performedByEmail);
     }
@@ -80,6 +85,9 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         EnsureFixtureGenerated();
         EnsureKnockoutNotYetGenerated();
         GenerationPlan plan = PrepareGenerationPlan(fixtureSeedOverride);
+        // Se valida que el calendario entre antes de revertir el Elo y limpiar: si no entra, el fixture
+        // anterior queda intacto. Que entre depende de estadios y configuracion, no del sorteo.
+        BuildGroupStage(plan);
         ApplySimulationEngineSelection(plan.Settings, selectedEngineName);
 
         RevertRankingOfPlayedMatches();
@@ -88,7 +96,7 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
 
         // El plan se armo antes de revertir (para validar sin tocar nada); los bombos salen del
         // ranking, asi que se arman con los equipos releidos tras la reversion.
-        BuildAndPersist(plan with { Teams = LoadTeams() });
+        Persist(BuildGroupStage(plan with { Teams = LoadTeams() }));
 
         AuditRegenerated(plan.EffectiveSeed, plan.Settings.SelectedSimulationEngine, performedByEmail);
     }
@@ -128,12 +136,17 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         return new GenerationPlan(teams, stadiums, settings, effectiveSeed);
     }
 
-    private void BuildAndPersist(GenerationPlan plan)
+    private static GroupStage BuildGroupStage(GenerationPlan plan)
     {
         IReadOnlyCollection<Group> groups = BuildGroups(plan);
-        PersistGroups(groups);
+        return new GroupStage(groups, ScheduleMatches(groups, plan.Stadiums, plan.Settings));
+    }
+
+    private void Persist(GroupStage groupStage)
+    {
+        PersistGroups(groupStage.Groups);
         PersistJourneys();
-        PersistMatches(groups, plan.Stadiums, plan.Settings);
+        PersistMatches(groupStage.Matches);
     }
 
     private static IReadOnlyCollection<Group> BuildGroups(GenerationPlan plan)
@@ -158,19 +171,29 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         }
     }
 
-    private void PersistMatches(
+    private static List<Match> ScheduleMatches(
         IReadOnlyCollection<Group> groups,
         IReadOnlyCollection<Stadium> stadiums,
         TournamentSettings settings)
     {
         GroupFixtureGenerator matchGenerator = new GroupFixtureGenerator();
-        List<Match> matches = matchGenerator.GenerateMatches(
-            groups.ToList(),
-            stadiums.ToList(),
-            settings.StartDate,
-            settings.DaysBetweenJourneys,
-            settings.MaxMatchesPerDay);
+        try
+        {
+            return matchGenerator.GenerateMatches(
+                groups.ToList(),
+                stadiums.ToList(),
+                settings.StartDate,
+                settings.DaysBetweenJourneys,
+                settings.MaxMatchesPerDay);
+        }
+        catch (MatchException)
+        {
+            throw new FixtureOrchestratorException(ScheduleDoesNotFitMessage);
+        }
+    }
 
+    private void PersistMatches(List<Match> matches)
+    {
         foreach (Match match in matches)
         {
             _matchRepository.Add(match);
@@ -290,4 +313,6 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
         IReadOnlyCollection<Stadium> Stadiums,
         TournamentSettings Settings,
         int EffectiveSeed);
+
+    private sealed record GroupStage(IReadOnlyCollection<Group> Groups, List<Match> Matches);
 }

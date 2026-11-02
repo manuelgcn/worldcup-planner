@@ -51,11 +51,11 @@ public sealed class AuditLogService : IAuditLogService
             .ToList();
     }
 
-    public List<AuditLogDto> GetFiltered(AuditLogFilterDto filter)
+    public List<AuditLogDto> GetFiltered(AuditLogFilterDto filter, int? take = null)
     {
         ArgumentNullException.ThrowIfNull(filter);
 
-        List<AuditLog> logs = _repository.GetFiltered(filter.From, filter.To, filter.Action, filter.PerformedByEmail);
+        List<AuditLog> logs = _repository.GetFiltered(filter.From, filter.To, filter.Action, filter.PerformedByEmail, take);
         return logs
             .Select(MapToDto)
             .ToList();

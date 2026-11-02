@@ -8,6 +8,7 @@
 @inject ITeamService TeamServices
 @inject IFlagAssignmentService FlagAssignmentService
 @inject SessionState Session
+@inject ILogger<Teams> Logger
 
 <PageTitle>Equipos · Golazo</PageTitle>
 
@@ -207,7 +208,7 @@ else
         }
         catch (Exception ex)
         {
-            errors.Add("No se pudo cargar la bandera: " + ex.Message);
+            errors.Add("No se pudo cargar la bandera: " + UserFacingError.MessageFor(ex, Logger));
         }
     }
 
@@ -273,7 +274,7 @@ else
         }
         catch (Exception ex)
         {
-            errors.Add("No se pudieron asignar las banderas: " + ex.Message);
+            errors.Add("No se pudieron asignar las banderas: " + UserFacingError.MessageFor(ex, Logger));
         }
     }
 

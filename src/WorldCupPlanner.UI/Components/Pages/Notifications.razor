@@ -80,12 +80,10 @@ else
         }
     }
 
-    // Las más recientes primero: tras una simulación completa llegan más de cien.
+    // Las más recientes primero (el orden viene de SQL): tras una simulación completa llegan más de cien.
     private void LoadUnreadNotifications()
     {
-        unreadNotifications = NotificationService.GetUnreadForUser(Session.CurrentUser!.idUser)
-            .OrderByDescending(notification => notification.CreatedAt)
-            .ToList();
+        unreadNotifications = NotificationService.GetUnreadForUser(Session.CurrentUser!.idUser);
     }
 
     private void MarkNotificationAsRead(int notificationId)
