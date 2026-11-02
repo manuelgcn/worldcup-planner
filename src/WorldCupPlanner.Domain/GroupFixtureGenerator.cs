@@ -19,6 +19,7 @@ public sealed class GroupFixtureGenerator
     private const int TeamBIndex = 1;
     private const int TeamCIndex = 2;
     private const int TeamDIndex = 3;
+    private const string NoAvailableTimeslotMessage = "No hay horario disponible para la jornada {0} del grupo {1}.";
 
     // Configurables por TournamentSettings (H9). Se fijan al inicio de GenerateMatches y caen al
     // default cuando no se proveen, preservando el comportamiento previo.
@@ -102,7 +103,7 @@ public sealed class GroupFixtureGenerator
                 break;
             }
         }
-        if (!scheduled) throw new MatchException($"No available timeslot for Jornada 3 of group {group.Name}");
+        if (!scheduled) throw new MatchException(string.Format(NoAvailableTimeslotMessage, SimultaneousJornadaNumber, group.Name));
     }
 
     private void ScheduleStandard(Group group, List<Team> teams, List<(int home, int away)> pairs, int jornada, DateTime day, List<Stadium> orderedStadiums, StadiumScheduleTracker tracker, List<Match> matches, ref int matchNumber)
@@ -123,7 +124,7 @@ public sealed class GroupFixtureGenerator
                     break;
                 }
             }
-            if (!scheduledMatch) throw new MatchException($"No available timeslot for Jornada {jornada} of group {group.Name}");
+            if (!scheduledMatch) throw new MatchException(string.Format(NoAvailableTimeslotMessage, jornada, group.Name));
         }
     }
 
