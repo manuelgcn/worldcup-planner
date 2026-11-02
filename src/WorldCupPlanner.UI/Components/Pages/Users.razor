@@ -329,7 +329,7 @@ else
         }
     }
 
-    private void ToggleRole(User user, UserRoles role)
+    private async Task ToggleRole(User user, UserRoles role)
     {
         errors.Clear();
         successMessage = null;
@@ -348,6 +348,10 @@ else
             }
 
             LoadUsers();
+
+            // El menú y los permisos leen los roles de la copia en sesión: si cambió los propios, se recarga.
+            if (user.idUser == Session.CurrentUser!.idUser)
+                await Session.LoginAsync(UserServices.GetUserById(user.idUser));
         }
         catch (Exception ex)
         {
