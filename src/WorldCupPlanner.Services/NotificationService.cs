@@ -76,22 +76,16 @@ public class NotificationService : INotificationService
 
     public void MarkAllAsRead(int userId)
     {
-        IReadOnlyCollection<Notification> unread = notificationRepository.GetUnreadByUserId(userId);
+        int marked = notificationRepository.MarkAllAsRead(userId);
 
-        if (unread.Count == 0)
+        if (marked == 0)
         {
             return;
         }
 
-        foreach (Notification notification in unread)
-        {
-            notification.MarkAsRead();
-            notificationRepository.Update(notification);
-        }
-
         auditLogService.Log(
             AuditActions.NotificationReadAll,
-            $"All notifications ({unread.Count}) marked as read by user {userId}.",
+            $"All notifications ({marked}) marked as read by user {userId}.",
             affectedEntityType: nameof(Notification),
             affectedEntityId: userId);
     }
