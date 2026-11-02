@@ -127,6 +127,13 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         QualifiedTeams qualifiedTeams = ComputeQualifiedTeams(groups, settingsForBracket);
         List<Match> roundOf32 = BuildRoundOf32(qualifiedTeams, settingsForBracket);
 
+        // La tabla de posiciones desempata con la semilla guardada: se persiste la efectiva para que
+        // tabla y cuadro coincidan en un empate exacto.
+        if (!ReferenceEquals(settingsForBracket, settings))
+        {
+            _settingsRepository.Update(settingsForBracket);
+        }
+
         foreach (Match match in roundOf32)
         {
             _eliminationRepository.Add(match);
@@ -613,7 +620,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             return settings;
         }
 
-        return new TournamentSettings(
+        TournamentSettings withSeed = new TournamentSettings(
             settings.Id,
             settings.StartDate,
             settings.MaxMatchesPerDay,
@@ -622,6 +629,9 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             crossingsSeed,
             settings.SimulationSeed,
             settings.CompletionSeed);
+        // El constructor vuelve al motor por defecto: sin esto, persistir la copia perderia el elegido.
+        withSeed.SelectSimulationEngine(settings.SelectedSimulationEngine);
+        return withSeed;
     }
 
     private void EnsureBracketNotYetGenerated()
