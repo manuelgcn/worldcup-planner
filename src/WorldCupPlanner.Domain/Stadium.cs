@@ -6,6 +6,8 @@ public class Stadium
     private const string NameTooLongMessage = "El nombre es demasiado largo";
     private const string CityRequiredMessage = "La ciudad es obligatoria";
     private const string CityTooLongMessage = "La ciudad es demasiado larga";
+    private const string DescriptionTooLongMessage = "La descripción no puede superar los 400 caracteres";
+    private const int MaxDescriptionLength = 400;
     private const string CapacityTooLowMessage = "La capacidad debe ser de al menos 20000";
 
     public int Id { get; set; }
@@ -18,8 +20,9 @@ public class Stadium
     {
         ValidateName(name);
         ValidateCity(city);
+        ValidateDescription(description);
         ValidateCapacity(capacity);
-        
+
         Name = name;
         City = city;
         Description = description;
@@ -44,6 +47,12 @@ public class Stadium
             throw new ArgumentException(CityTooLongMessage);
     }
 
+    private void ValidateDescription(string? description)
+    {
+        if (description is not null && description.Length > MaxDescriptionLength)
+            throw new ArgumentException(DescriptionTooLongMessage);
+    }
+
     private void ValidateCapacity(int capacity)
     {
         if (capacity < 20000)
@@ -53,6 +62,7 @@ public class Stadium
     public void Update(string city, string? description, int capacity)
     {
         ValidateCity(city);
+        ValidateDescription(description);
         ValidateCapacity(capacity);
 
         City = city;
