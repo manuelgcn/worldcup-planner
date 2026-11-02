@@ -88,6 +88,11 @@ public class NotificationRepository : INotificationRepository
         context.SaveChanges();
     }
 
+    public int MarkAllAsRead(int userId)
+    {
+        return 0;
+    }
+
     public IReadOnlyCollection<Notification> GetAll()
     {
         using AppDbContext context = _contextFactory.CreateDbContext();

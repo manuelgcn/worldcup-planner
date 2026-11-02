@@ -60,6 +60,11 @@ public class MockNotificationRepository : INotificationRepository
         }
     }
 
+    public int MarkAllAsRead(int userId)
+    {
+        return 0;
+    }
+
     public IReadOnlyCollection<Notification> GetAll()
     {
         return notifications.ToList();
