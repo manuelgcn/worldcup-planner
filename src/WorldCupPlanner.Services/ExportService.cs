@@ -41,7 +41,8 @@ public sealed class ExportService(
         EnsureAuthorized(requestedBy);
         (DateTime from, DateTime to) = NormalizeRange(range);
 
-        List<AuditLogExportRow> rows = auditLogRepository.GetFiltered(from, to, filter?.Action, filter?.PerformedByEmail)
+        // Los límites exactos del filtro (día local de la pantalla, en UTC) ganan sobre los días del rango.
+        List<AuditLogExportRow> rows = auditLogRepository.GetFiltered(filter?.From ?? from, filter?.To ?? to, filter?.Action, filter?.PerformedByEmail)
             .Select(MapAuditLogRow)
             .ToList();
 
