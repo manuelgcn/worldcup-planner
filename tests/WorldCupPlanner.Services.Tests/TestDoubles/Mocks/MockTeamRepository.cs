@@ -10,6 +10,7 @@ public sealed class MockTeamRepository : ITeamRepository
     public int AddCalls { get; private set; }
     public int UpdateCalls { get; private set; }
     public int DeleteCalls { get; private set; }
+    public int ExistsByNameCalls { get; private set; }
 
     public void Add(Team team)
     {
@@ -42,6 +43,7 @@ public sealed class MockTeamRepository : ITeamRepository
 
     public bool ExistsByName(string name)
     {
+        ExistsByNameCalls++;
         string target = TextNormalizer.Normalize(name);
         return _teams.Values.Any(team => TextNormalizer.Normalize(team.Name) == target);
     }
