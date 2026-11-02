@@ -21,9 +21,9 @@
 </section>
 
 @code {
-    private void Logout()
+    private async Task Logout()
     {
-        Session.Logout();
+        await Session.LogoutAsync();
         Nav.NavigateTo("/");
     }
 }

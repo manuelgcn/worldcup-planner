@@ -1,12 +1,29 @@
-﻿<Router AppAssembly="typeof(Program).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)"/>
-        <FocusOnNavigate RouteData="routeData" Selector="h1"/>
-    </Found>
-    <NotFound>
-        <PageTitle>Página no encontrada · Golazo</PageTitle>
-        <LayoutView Layout="typeof(Layout.MainLayout)">
-            <NotFoundContent />
-        </LayoutView>
-    </NotFound>
-</Router>
+﻿@inject SessionState Session
+
+@* Las páginas leen la sesión en OnInitialized: el Router espera a que se restaure para no mostrar
+   "Ingresá para continuar" a quien ya estaba logueado y recargó. *@
+@if (sessionRestored)
+{
+    <Router AppAssembly="typeof(Program).Assembly">
+        <Found Context="routeData">
+            <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)"/>
+            <FocusOnNavigate RouteData="routeData" Selector="h1"/>
+        </Found>
+        <NotFound>
+            <PageTitle>Página no encontrada · Golazo</PageTitle>
+            <LayoutView Layout="typeof(Layout.MainLayout)">
+                <NotFoundContent />
+            </LayoutView>
+        </NotFound>
+    </Router>
+}
+
+@code {
+    private bool sessionRestored;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Session.RestoreAsync();
+        sessionRestored = true;
+    }
+}
