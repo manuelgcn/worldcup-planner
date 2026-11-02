@@ -80,8 +80,8 @@ public class RankingService : IRankingService
         int restoredHomeRank = previousHomeRank - match.AppliedHomeRankingDelta;
         int restoredAwayRank = previousAwayRank - match.AppliedAwayRankingDelta;
 
-        match.HomeTeam.UpdateFifaRanking(restoredHomeRank);
-        match.AwayTeam.UpdateFifaRanking(restoredAwayRank);
+        match.HomeTeam.RevertRankingDelta(match.AppliedHomeRankingDelta);
+        match.AwayTeam.RevertRankingDelta(match.AppliedAwayRankingDelta);
 
         _teamRepository.Update(match.HomeTeam);
         _teamRepository.Update(match.AwayTeam);
