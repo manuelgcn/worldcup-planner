@@ -6,7 +6,8 @@ services:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
     ports:
-      - "1433:1433"
+      # Solo loopback: la app corre en la misma maquina y la clave de sa es publica (.env.example).
+      - "127.0.0.1:1433:1433"
     volumes:
       - mssql-data:/var/opt/mssql
     restart: unless-stopped
