@@ -51,7 +51,7 @@ public sealed class AuditLogService : IAuditLogService
             .ToList();
     }
 
-    public List<AuditLogDto> GetFiltered(AuditLogFilterDto filter)
+    public List<AuditLogDto> GetFiltered(AuditLogFilterDto filter, int? take = null)
     {
         ArgumentNullException.ThrowIfNull(filter);
 

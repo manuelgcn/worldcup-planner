@@ -231,6 +231,18 @@ public class AuditLogServiceTests
     }
 
     [TestMethod]
+    public void GetFiltered_WithTake_ReturnsNewestFirst()
+    {
+        _repository.Seed(AuditLog.Create("FIRST", "Det 1"));
+        _repository.Seed(AuditLog.Create("SECOND", "Det 2"));
+        _repository.Seed(AuditLog.Create("THIRD", "Det 3"));
+
+        List<AuditLogDto> result = _service.GetFiltered(new AuditLogFilterDto(), take: 2);
+
+        CollectionAssert.AreEqual(new[] { "THIRD", "SECOND" }, result.Select(log => log.Action).ToArray());
+    }
+
+    [TestMethod]
     public void GetFiltered_ByAction_ReturnsPartialCaseInsensitiveMatches()
     {
         _repository.Seed(AuditLog.Create("CREATE_USER", "Det 1"));
