@@ -286,6 +286,44 @@ public class KnockoutFixtureGeneratorExtensionTests
     }
 
     [TestMethod]
+    public void GenerateBracket_RoundOf32_UsesKickoffSlots()
+    {
+        SeedPlayedGroupStageMatches();
+
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+
+        TimeSpan[] kickoffSlots = { new TimeSpan(14, 0, 0), new TimeSpan(18, 0, 0), new TimeSpan(22, 0, 0) };
+        Assert.IsTrue(
+            _eliminationRepository.GetAll().All(match => kickoffSlots.Contains(match.MatchDate.TimeOfDay)),
+            "Todo partido del R32 debe arrancar a las 14:00, 18:00 o 22:00.");
+    }
+
+    [TestMethod]
+    [DataRow(1)]
+    [DataRow(2)]
+    [DataRow(3)]
+    public void KnockoutRounds_EachRoundStartsAfterThePreviousRoundEnds(int maxMatchesPerDay)
+    {
+        _settingsRepository.Update(new TournamentSettings(
+            DefaultSettingsId, DefaultStartDate, maxMatchesPerDay, 3, DefaultSeed, DefaultSeed, DefaultSeed, DefaultSeed));
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        _generator.SimulateUntilFinal(performedByEmail: AdminEmail);
+
+        List<MatchElimination> all = _eliminationRepository.GetAll().OfType<MatchElimination>().ToList();
+        DateTime previousRoundEnd = _matchRepository.GetAll().Max(match => match.MatchDate.Date);
+        Phase[] chronologicalPhases = { Phase.RoundOf32, Phase.RoundOf16, Phase.QuarterFinals, Phase.SemiFinal, Phase.ThirdPlace, Phase.Final };
+        foreach (Phase phase in chronologicalPhases)
+        {
+            List<DateTime> roundDays = all.Where(match => match.Phase == phase).Select(match => match.MatchDate.Date).ToList();
+            Assert.IsTrue(
+                roundDays.Min() > previousRoundEnd,
+                $"{phase} arranca el {roundDays.Min():d}, sin esperar al fin de la ronda anterior ({previousRoundEnd:d}).");
+            previousRoundEnd = roundDays.Max();
+        }
+    }
+
+    [TestMethod]
     public void CanAdvanceToNextRound_WhenBracketNotGenerated_ReturnsFalse()
     {
         SeedPlayedGroupStageMatches();
