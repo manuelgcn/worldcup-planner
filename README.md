@@ -142,7 +142,7 @@ See [scripts/release/README.md](scripts/release/README.md) for how to start it a
 ## Contributing
 
 The project uses Gitflow (`feature/*` branches from `develop`) and TDD, with one commit per
-RED, GREEN and REFACTOR step. Conventions for code and for AI coding agents are in [AGENTS.md](AGENTS.md).
+RED, GREEN and REFACTOR step. Conventions for code and for AI coding agents are in [AGENTS.md](AGENTS.md). Known pending work is listed in [TODO.md](TODO.md).
 
 ## Authors
 
