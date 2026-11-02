@@ -32,16 +32,21 @@ public sealed class GroupStandingsService : IGroupStandingsService
             ?? throw new GroupServicesException(GroupNotFoundMessage);
 
         List<Match> matches = _matchRepository.GetByGroup(group.Name);
-        return GroupQualifier.RankGroup(group, matches, ResolveTieBreakerSeed(), ResolveGroupIndex(group.Name))
-            .Select(ToDto)
-            .ToList();
+        return Rank(group, matches, ResolveTieBreakerSeed(), GroupIndex(_groupRepository.GetAll(), group.Name));
     }
 
+    // Una lectura de grupos, una de settings y una de partidos para todas las tablas (antes eran ~4 por grupo).
     public List<GroupStandingDto> GetStandingsForAllGroups()
     {
-        return _groupRepository.GetAll()
+        IReadOnlyCollection<Group> groups = _groupRepository.GetAll();
+        int seed = ResolveTieBreakerSeed();
+        ILookup<string, MatchGroup> matchesByGroup = GetAllGroupMatches()
+            .Where(match => match.Group != null)
+            .ToLookup(match => match.Group!.Name);
+
+        return groups
             .OrderBy(group => group.Name)
-            .SelectMany(group => GetStandings(group.Name))
+            .SelectMany(group => Rank(group, matchesByGroup[group.Name], seed, GroupIndex(groups, group.Name)))
             .ToList();
     }
 
@@ -69,13 +74,20 @@ public sealed class GroupStandingsService : IGroupStandingsService
 
     // Indice del grupo en el orden alfabetico ordinal de todos los grupos, replicando el groupIndex
     // que usa GroupQualifier; es parte de la semilla por-equipo del desempate compartido (H8).
-    private int ResolveGroupIndex(string groupName)
+    private static int GroupIndex(IEnumerable<Group> groups, string groupName)
     {
-        List<string> orderedNames = _groupRepository.GetAll()
+        List<string> orderedNames = groups
             .Select(group => group.Name)
             .OrderBy(name => name, StringComparer.Ordinal)
             .ToList();
         return orderedNames.IndexOf(groupName);
+    }
+
+    private static List<GroupStandingDto> Rank(Group group, IEnumerable<Match> matches, int seed, int groupIndex)
+    {
+        return GroupQualifier.RankGroup(group, matches, seed, groupIndex)
+            .Select(ToDto)
+            .ToList();
     }
 
     private IReadOnlyCollection<MatchGroup> GetAllGroupMatches()
