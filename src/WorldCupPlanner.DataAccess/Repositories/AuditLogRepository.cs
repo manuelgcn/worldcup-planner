@@ -59,6 +59,16 @@ public sealed class AuditLogRepository : IAuditLogRepository
             query = query.Where(log => log.PerformedByEmail != null && log.PerformedByEmail.ToLower().Contains(actorPattern));
         }
 
+        // Con take (la pantalla): ORDER BY descendente + TOP en SQL. Sin take (export): todo, ascendente.
+        if (take.HasValue)
+        {
+            return query
+                .OrderByDescending(log => log.Timestamp)
+                .ThenByDescending(log => log.Id)
+                .Take(take.Value)
+                .ToList();
+        }
+
         return query
             .OrderBy(log => log.Timestamp)
             .ThenBy(log => log.Id)
