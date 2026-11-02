@@ -83,14 +83,18 @@ public class MatchService : IMatchService
         EnsureMatchIsEditable(match);
 
         matchFactory.ApplyUpdate(match, request);
-
-        LogAuditAction(
-            AuditActions.UpdateMatch,
-            $"Match updated for MatchId={match.MatchId}.",
-            match.MatchId,
-            request.TournamentSettingsId);
-
         matchRepository.Update(match);
+
+        // Después de guardar: si el guardado falla, no queda auditado un cambio que no ocurrió.
+        string details = $"Match updated for MatchId={match.MatchId}.";
+        if (request.TournamentSettingsId.HasValue)
+        {
+            LogAuditAction(AuditActions.UpdateMatch, details, match.MatchId, request.TournamentSettingsId);
+        }
+        else
+        {
+            auditLogService.LogPerformedBy(AuditActions.UpdateMatch, details, performedByEmail, nameof(Match), match.MatchId);
+        }
 
         return MapToDto(match);
     }

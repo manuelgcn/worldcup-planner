@@ -262,7 +262,7 @@
                 {
                     MatchDate = matchDate,
                     StadiumId = stadiumId
-                });
+                }, PerformedByEmail);
             }
 
             await OnSaved.InvokeAsync(registersResult ? ResultSavedMessage : MatchUpdatedMessage);
