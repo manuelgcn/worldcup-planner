@@ -234,10 +234,13 @@ else
         usuarios = UserServices.GetAllUsers().ToList();
     }
 
-    private void Create()
+    private async Task Create()
     {
         errors.Clear();
         successMessage = null;
+
+        if (!await IsStillAdminAsync())
+            return;
 
         if (dateOfBirth is null)
         {
@@ -268,6 +271,13 @@ else
         }
     }
 
+    // La página pudo quedar abierta después de que otro admin le quitara el rol o diera de baja a este usuario.
+    private async Task<bool> IsStillAdminAsync()
+    {
+        await Session.RevalidateAsync();
+        return IsAdmin;
+    }
+
     private void StartEdit(User u)
     {
         errors.Clear();
@@ -289,6 +299,9 @@ else
     {
         errors.Clear();
         successMessage = null;
+
+        if (!await IsStillAdminAsync())
+            return;
 
         try
         {
@@ -322,10 +335,13 @@ else
         confirmingDeleteId = null;
     }
 
-    private void Remove(int id)
+    private async Task Remove(int id)
     {
         errors.Clear();
         successMessage = null;
+
+        if (!await IsStillAdminAsync())
+            return;
         confirmingDeleteId = null;
 
         try
@@ -344,6 +360,9 @@ else
     {
         errors.Clear();
         successMessage = null;
+
+        if (!await IsStillAdminAsync())
+            return;
 
         try
         {

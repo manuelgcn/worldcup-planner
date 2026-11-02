@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text.Json;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using WorldCupPlanner.Domain;
 using WorldCupPlanner.Services.Exceptions;
@@ -51,18 +52,45 @@ public class SessionState
                 return;
             }
 
-            CurrentUser = userService.GetUserById(stored.Value.UserId);
+            // Restaurar un backup reasigna ids: el email confirma que el id sigue siendo la misma persona.
+            User user = userService.GetUserById(stored.Value.UserId);
+            if (!string.Equals(user.email, stored.Value.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                await storage.DeleteAsync(SessionKey);
+                return;
+            }
+
+            CurrentUser = user;
         }
-        catch (Exception ex) when (ex is CryptographicException or UserServicesException)
+        catch (Exception ex) when (ex is CryptographicException or UserServicesException or JsonException)
         {
             await storage.DeleteAsync(SessionKey);
+        }
+    }
+
+    // MainLayout lo llama en cada navegación y las acciones de administración antes de ejecutarse: si a
+    // este usuario lo borraron o le cambiaron los roles en otra pestaña, la copia en memoria se actualiza.
+    public async Task RevalidateAsync()
+    {
+        if (CurrentUser is null)
+        {
+            return;
+        }
+
+        try
+        {
+            CurrentUser = userService.GetUserById(CurrentUser.idUser);
+        }
+        catch (UserServicesException)
+        {
+            await LogoutAsync();
         }
     }
 
     public async Task LoginAsync(User user)
     {
         CurrentUser = user;
-        await storage.SetAsync(SessionKey, new StoredSession(user.idUser, DateTime.UtcNow.Add(SessionLifetime)));
+        await storage.SetAsync(SessionKey, new StoredSession(user.idUser, user.email, DateTime.UtcNow.Add(SessionLifetime)));
         NotifyStateChanged();
     }
 
@@ -79,7 +107,7 @@ public class SessionState
         NotifyStateChanged();
     }
 
-    private sealed record StoredSession(int UserId, DateTime ExpiresAtUtc);
+    private sealed record StoredSession(int UserId, string Email, DateTime ExpiresAtUtc);
 
     private void NotifyStateChanged()
     {
