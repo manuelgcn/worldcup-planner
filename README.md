@@ -22,6 +22,8 @@ University project for *Diseño de Aplicaciones 1*, Universidad ORT Uruguay (202
 - Two interchangeable simulation engines (probabilistic and pure random); results can also be entered by hand.
 - Elo ranking recalculated after every result.
 - Roles: Admin, Editor and Journalist. Journalists are notified of match results.
+- Sessions survive reloads within a browser tab for up to eight hours; five failed logins
+  lock an email for five minutes.
 - CSV and XLSX export of the fixture and of the audit log, which records every change with its author and time.
 
 ## Tournament rules
@@ -49,9 +51,9 @@ docker compose up -d sqlserver
 dotnet run --project src/WorldCupPlanner.UI
 ```
 
-The database is Azure SQL Edge, which also runs on ARM64. On startup the app applies pending
-migrations and creates the tournament settings and three default users. Open the URL printed
-in the console.
+The database is Azure SQL Edge, which also runs on ARM64. Its port is published on
+`127.0.0.1` only. On startup the app applies pending migrations and creates the tournament
+settings and the three default users if they are missing. Open the URL printed in the console.
 
 To load a demo tournament (48 teams with flags, 5 stadiums, 6 extra users and a simulated
 group stage), run the seeder. It resets the database first.
@@ -76,7 +78,8 @@ dotnet run --project src/WorldCupPlanner.DataSeeder
 Settings live in `src/WorldCupPlanner.UI/appsettings.json`:
 
 - `ConnectionStrings:Default`: the database. It can be overridden with the
-  `ConnectionStrings__Default` environment variable.
+  `ConnectionStrings__Default` environment variable. Use `127.0.0.1`, not `localhost`: on
+  Windows `localhost` resolves to `::1`, which Docker does not forward to SQL Edge.
 - `TournamentSettings`: start date, maximum matches per day, days between matchdays and the
   four seeds (`FixtureSeed`, `CrossingsSeed`, `SimulationSeed`, `CompletionSeed`). They are
   only read when the database has no settings yet.
