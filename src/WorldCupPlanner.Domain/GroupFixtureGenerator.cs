@@ -48,6 +48,11 @@ public sealed class GroupFixtureGenerator
         
         int matchNumber = 0;
         int groupIndex = 0;
+        int groupsPerDay = GroupsPerDay(orderedStadiums.Count);
+        // Una jornada completa ocupa ceil(grupos / gruposPorDia) dias: la siguiente no puede arrancar
+        // antes de que termine, aunque DaysBetweenJourneys sea menor (si no, los dias se pisan).
+        int blockDays = (orderedGroups.Count + groupsPerDay - 1) / groupsPerDay;
+        int journeySpacingDays = Math.Max(_daysBetweenJornadas, blockDays);
 
         foreach (Group group in orderedGroups)
         {
@@ -55,12 +60,11 @@ public sealed class GroupFixtureGenerator
                 throw new MatchException("Cada grupo debe contener exactamente 4 equipos.");
 
             List<Team> teams = new List<Team>(group.Teams);
-            int groupsPerDay = GroupsPerDay(orderedStadiums.Count);
             int dayOffset = groupIndex / groupsPerDay;
 
             for (int jornada = 1; jornada <= TotalJornadas; jornada++)
             {
-                DateTime day = startDate.AddDays(dayOffset + ((jornada - 1) * _daysBetweenJornadas));
+                DateTime day = startDate.AddDays(dayOffset + ((jornada - 1) * journeySpacingDays));
                 List<(int home, int away)> pairs = GetPairsForJornada(jornada);
 
                 if (jornada == SimultaneousJornadaNumber)
