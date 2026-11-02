@@ -11,6 +11,9 @@ public sealed class MockMatchRepository : IMatchRepository
     public int UpdateCalls { get; private set; }
     public int DeleteCalls { get; private set; }
 
+    // Simula una base que rechaza el próximo guardado.
+    public Exception? FailNextUpdate { get; set; }
+
     public void ResetCounters()
     {
         AddCalls = 0;
@@ -31,6 +34,12 @@ public sealed class MockMatchRepository : IMatchRepository
 
     public void Update(Match match)
     {
+        if (FailNextUpdate is { } failure)
+        {
+            FailNextUpdate = null;
+            throw failure;
+        }
+
         _matches[match.MatchId] = match;
         UpdateCalls++;
     }

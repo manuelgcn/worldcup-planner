@@ -75,7 +75,7 @@ public class MatchService : IMatchService
         return MapToDto(match);
     }
 
-    public MatchDto UpdateMatch(int matchId, UpdateMatchRequestDto request)
+    public MatchDto UpdateMatch(int matchId, UpdateMatchRequestDto request, string? performedByEmail = null)
     {
         ValidateRequired(request);
 
