@@ -116,7 +116,18 @@ else
                             {
                                 <tr>
                                     <td>@u.idUser</td>
-                                    <td>@u.name @u.lastname</td>
+                                    <td>
+                                        @u.name @u.lastname
+                                        @* Explica en pantalla por qué sus botones están deshabilitados. *@
+                                        @if (u.idUser == 1)
+                                        {
+                                            <span class="d-block small text-muted">Administrador del sistema</span>
+                                        }
+                                        else if (u.idUser == Session.CurrentUser!.idUser)
+                                        {
+                                            <span class="d-block small text-muted">Tu usuario</span>
+                                        }
+                                    </td>
                                     <td>@u.email</td>
                                     <td>
                                         @foreach (var r in u.Roles)

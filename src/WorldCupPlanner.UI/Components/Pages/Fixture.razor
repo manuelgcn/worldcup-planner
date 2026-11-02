@@ -270,6 +270,11 @@
                                 Avanzar de fase (sin simular)
                             </button>
                         </div>
+                        @* Un botón deshabilitado no recibe foco: el motivo va como texto visible, no solo en el title. *@
+                        @if (!CanAdvancePhase)
+                        {
+                            <p class="step-help mt-2 mb-0">@AdvancePhaseTooltip()</p>
+                        }
                     }
                 </section>
             }
