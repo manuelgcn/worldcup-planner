@@ -445,7 +445,7 @@ public class MatchTests
         _match = CreateMatchWithData();
         DateTime newDate = new DateTime(2022, 11, 25);
 
-        _match.ChangeDate(newDate);
+        _match.ChangeDate(newDate, new TournamentSettings(1, new DateTime(2022, 11, 21), 3, 3, 0, 0, 0, 0));
 
         Assert.AreEqual(newDate, _match.MatchDate);
     }
@@ -477,7 +477,8 @@ public class MatchTests
         _match = CreateMatchWithData();
         DateTime invalidDate = new DateTime(2022, 11, 19);
 
-        Assert.ThrowsException<MatchException>(() => _match.ChangeDate(invalidDate));
+        Assert.ThrowsException<MatchException>(
+            () => _match.ChangeDate(invalidDate, new TournamentSettings(1, new DateTime(2022, 11, 21), 3, 3, 0, 0, 0, 0)));
     }
 
     [TestMethod]
