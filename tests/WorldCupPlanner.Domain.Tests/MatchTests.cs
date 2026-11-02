@@ -451,6 +451,27 @@ public class MatchTests
     }
 
     [TestMethod]
+    public void ChangeDate_BeforeTheSettingsStartDate_Throws()
+    {
+        // Antes se validaba contra un 21/11/2022 fijo: con un torneo que arranca en 2026 se aceptaba 2023.
+        _match = CreateMatchWithData();
+        TournamentSettings settings = new TournamentSettings(1, new DateTime(2026, 6, 1), 3, 3, 0, 0, 0, 0);
+
+        Assert.ThrowsException<MatchException>(() => _match.ChangeDate(new DateTime(2023, 1, 1), settings));
+    }
+
+    [TestMethod]
+    public void ChangeDate_OnOrAfterTheSettingsStartDate_IsAccepted()
+    {
+        _match = CreateMatchWithData();
+        TournamentSettings settings = new TournamentSettings(1, new DateTime(2026, 6, 1), 3, 3, 0, 0, 0, 0);
+
+        _match.ChangeDate(new DateTime(2026, 6, 15, 14, 0, 0), settings);
+
+        Assert.AreEqual(new DateTime(2026, 6, 15, 14, 0, 0), _match.MatchDate);
+    }
+
+    [TestMethod]
     public void MatchRejectsChangeDateBeforeTournamentStart()
     {
         _match = CreateMatchWithData();

@@ -374,6 +374,11 @@ public abstract class Match
         }
     }
 
+    public void ChangeDate(DateTime newDate, TournamentSettings tournamentSettings)
+    {
+        ChangeDate(newDate);
+    }
+
     public void ChangeDate(DateTime newDate)
     {
         EnsureValidMatchDate(newDate, DefaultTournamentStartDate);
