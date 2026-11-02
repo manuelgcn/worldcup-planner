@@ -17,7 +17,7 @@ public class MockAuditLogRepository: IAuditLogRepository
         return _logs;
     }
 
-    public List<AuditLog> GetFiltered(DateTime? from, DateTime? to, string? action, string? performedByEmail)
+    public List<AuditLog> GetFiltered(DateTime? from, DateTime? to, string? action, string? performedByEmail, int? take = null)
     {
         return _logs
             .Where(log => !from.HasValue || log.Timestamp >= from.Value)

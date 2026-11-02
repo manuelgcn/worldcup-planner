@@ -32,7 +32,7 @@ public sealed class AuditLogRepository : IAuditLogRepository
     // nunca se materializa la tabla completa para filtrar en memoria.
     // ToLower().Contains se traduce a LOWER(...) LIKE para que accion y actor
     // matcheen parcial y case-insensitive en cualquier collation.
-    public List<AuditLog> GetFiltered(DateTime? from, DateTime? to, string? action, string? performedByEmail)
+    public List<AuditLog> GetFiltered(DateTime? from, DateTime? to, string? action, string? performedByEmail, int? take = null)
     {
         using AppDbContext context = _contextFactory.CreateDbContext();
         IQueryable<AuditLog> query = context.AuditLogs.AsNoTracking();

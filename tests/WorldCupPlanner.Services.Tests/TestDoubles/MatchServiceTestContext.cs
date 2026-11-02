@@ -349,7 +349,7 @@ public sealed class MatchServiceTestContext
             return auditLogs;
         }
 
-        public List<AuditLog> GetFiltered(DateTime? from, DateTime? to, string? action, string? performedByEmail)
+        public List<AuditLog> GetFiltered(DateTime? from, DateTime? to, string? action, string? performedByEmail, int? take = null)
         {
             return auditLogs
                 .Where(log => !from.HasValue || log.Timestamp >= from.Value)
