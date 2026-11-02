@@ -364,4 +364,12 @@ public sealed class TeamTests
 
         Assert.AreEqual(1800, team.FifaRanking);
     }
+
+    [TestMethod]
+    public void Team_WithWhitespaceOnlyName_Throws()
+    {
+        // Un nombre de solo espacios se normaliza a "" y choca con la unicidad por nombre normalizado.
+        Assert.ThrowsException<ArgumentException>(
+            () => new Team(1, name: "   ", fifaRanking: 1500, isFictitious: false, confederation: Confederation.CONMEBOL));
+    }
 }
