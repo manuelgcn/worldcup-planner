@@ -297,6 +297,52 @@ public class UserServicesTests
     }
 
     [TestMethod]
+    public void Authenticate_AfterFiveFailedAttempts_RejectsEvenTheRightPassword()
+    {
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), new ManualTimeProvider());
+        lockingService.AddUser(BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+        FailLogins(lockingService, "juan@mail.com", times: 5);
+
+        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.Authenticate("juan@mail.com", "Pass123@"));
+
+        StringAssert.Contains(locked.Message, "intentos");
+    }
+
+    [TestMethod]
+    public void Authenticate_AfterTheLockoutWindow_AcceptsTheRightPassword()
+    {
+        ManualTimeProvider clock = new ManualTimeProvider();
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), clock);
+        lockingService.AddUser(BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+        FailLogins(lockingService, "juan@mail.com", times: 5);
+
+        clock.Advance(TimeSpan.FromMinutes(5));
+
+        Assert.AreEqual(1, lockingService.Authenticate("juan@mail.com", "Pass123@").idUser);
+    }
+
+    [TestMethod]
+    public void Authenticate_SuccessResetsTheFailedAttempts()
+    {
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), new ManualTimeProvider());
+        lockingService.AddUser(BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+        FailLogins(lockingService, "juan@mail.com", times: 4);
+        lockingService.Authenticate("juan@mail.com", "Pass123@");
+        FailLogins(lockingService, "JUAN@mail.com ", times: 4);
+
+        Assert.AreEqual(1, lockingService.Authenticate("juan@mail.com", "Pass123@").idUser);
+    }
+
+    private static void FailLogins(UserServices target, string email, int times)
+    {
+        for (int attempt = 0; attempt < times; attempt++)
+        {
+            Assert.ThrowsException<UserServicesException>(() => target.Authenticate(email, "Wrong123@"));
+        }
+    }
+
+    [TestMethod]
     public void RemoveUser_LogsAuditEntry()
     {
         MockUserRepository userRepo = new MockUserRepository();

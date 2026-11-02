@@ -27,13 +27,15 @@ public class UserServices : IUserService
 
     private readonly IAuditLogService _auditLogService;
     private readonly IUserRepository _userRepository;
+    private readonly TimeProvider _timeProvider;
 
-    public UserServices(IUserRepository userRepository, IAuditLogService auditLogService)
+    public UserServices(IUserRepository userRepository, IAuditLogService auditLogService, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(userRepository);
         ArgumentNullException.ThrowIfNull(auditLogService);
         _userRepository = userRepository;
         _auditLogService = auditLogService;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     public IReadOnlyCollection<User> GetAllUsers()
