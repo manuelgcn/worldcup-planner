@@ -1,6 +1,7 @@
 .audit-filters {
     display: flex;
     flex-wrap: wrap;
+    align-items: end;
     gap: .6rem;
     margin-bottom: 1rem;
     padding: 1rem;

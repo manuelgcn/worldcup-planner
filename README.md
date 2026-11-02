@@ -1,118 +1,95 @@
-<p align="center">
-  <img src="src/WorldCupPlanner.UI/wwwroot/img/golazo-mark.svg" width="96" alt="Golazo logo" />
-</p>
-
 # Golazo
 
-> **Golazo** (codebase: *WorldCupPlanner*) is a web application to plan and run a **48-team World Cup** — group stage, knockouts, live standings, match simulation, notifications and audit — built with **.NET 8** and a clean, fully-tested layered architecture.
+[![.NET CI](https://github.com/manuelgcn/worldcup-planner/actions/workflows/dotnet-tests.yml/badge.svg)](https://github.com/manuelgcn/worldcup-planner/actions/workflows/dotnet-tests.yml)
 
-![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
-![Blazor](https://img.shields.io/badge/Blazor-Server-512BD4?logo=blazor&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-972%20passing-brightgreen)
-![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)
-![CI](https://github.com/manuelgcn/worldcup-planner/actions/workflows/dotnet-tests.yml/badge.svg)
-![License](https://img.shields.io/badge/license-MIT-blue)
+Golazo plans and runs a 48-team World Cup: team and stadium management, the group draw,
+the group-stage fixture, the knockout bracket from the round of 32 to the final, an Elo
+ranking and match simulation. It is a Blazor Server application on .NET 8 with EF Core.
 
-WorldCupPlanner manages an entire tournament of 48 teams (12 groups of 4): users and roles,
-teams with flags, stadiums, groups, matches and incidents, the full fixture (group stage →
-Round of 32 → Final), a dynamic **Elo** ranking, interchangeable simulation engines,
-journalist notifications, CSV/XLSX export and a global audit log.
+The codebase, solution and namespaces are named `WorldCupPlanner`; Golazo is the name of the UI.
 
-The design keeps a strict separation of concerns: **business logic lives in the domain, services
-orchestrate use cases, and the UI only presents.**
+University project for *Diseño de Aplicaciones 1*, Universidad ORT Uruguay (2026).
 
-> Built as a university project (team of 3) for *Diseño de Aplicaciones 1* at Universidad ORT del
-> Uruguay, following **Test-Driven Development** and **Gitflow**.
+![Home page with the tournament state and the champion](docs/screenshots/home.png)
 
----
+## Features
 
-## ✨ Engineering highlights
+- Teams with confederation, FIFA ranking and flag, entered by hand or imported from CSV
+  (a 48-team sample is in `samples/`).
+- Stadiums, and a group draw into 12 groups of 4 that respects confederation quotas.
+- Group-stage fixture with dates, kick-off times and stadium rotation.
+- Standings per group and the full knockout bracket, including penalties and the third-place match.
+- Two interchangeable simulation engines (probabilistic and pure random); results can also be entered by hand.
+- Elo ranking recalculated after every result.
+- Roles: Admin, Editor and Journalist. Journalists are notified of match results.
+- CSV and XLSX export of the fixture and of the audit log, which records every change with its author and time.
 
-- **972 automated tests · 97% line coverage** on the business layers (Domain / Services / DataAccess, excluding generated EF migrations).
-- **Clean layered architecture** with enforced dependency direction — the domain depends on nothing.
-- **TDD** throughout (red → green → refactor), with focused, incremental commits.
-- **CI/CD with GitHub Actions**: build + tests on every push and pull request, plus automated release packaging.
-- **Deterministic** ordering and simulation via configurable seeds — every seeded operation is audited (ISO-8601 timestamp + actor).
+## Tournament rules
 
-## 🧩 Features
+- **Quotas:** UEFA 16, CAF 9, AFC 8, CONMEBOL 7, CONCACAF 7, OFC 1. A group holds at most two
+  UEFA teams and at most one team from any other confederation.
+- **Group fixture:** six matches per group over three matchdays (1–4 and 2–3, then 1–3 and 2–4,
+  then 1–2 and 3–4). The last matchday of a group is played at the same day and time.
+- **Standings:** points, then goal difference, then goals scored, then a seeded draw.
+- **Round of 32:** the 12 group winners, the 12 runners-up and the 8 best third-placed teams,
+  avoiding same-group pairings when possible.
+- **Determinism:** every shuffle is a Fisher–Yates with a configurable seed, so the same seeds
+  always produce the same tournament. Each seeded operation is written to the audit log.
+- **Editing:** only the date, stadium and result of a match can change. Group matches lock once
+  the knockout stage exists; a knockout match locks once the next round is built from it, and
+  it cannot end in a draw.
 
-- Tournament setup: 48 teams, confederation quotas (UEFA 16, CONMEBOL 7, CONCACAF 7, CAF 9, AFC 8, OFC 1).
-- Group fixture (12 groups × 6 matches) with stadium rotation, plus the full knockout bracket (Round of 32 → Final).
-- Dynamic **Elo** ranking updated as results are entered.
-- **Interchangeable match simulation engines** (Strategy pattern).
-- Users and roles (Admin / Editor / Journalist) and journalist notifications.
-- CSV / XLSX export and a global audit log.
+## Getting started
 
-## 🛠️ Tech stack
-
-| Area | Technology |
-|---|---|
-| Language | C# / .NET 8 |
-| UI | Blazor Server |
-| Data | Entity Framework Core (Code-First), Azure SQL Edge on Docker, TPH inheritance |
-| Testing | MSTest + test doubles (EF InMemory provider; SQLite in-memory for FK behavior) |
-| Export | CsvHelper, ClosedXML |
-| Tooling | Git & Gitflow, GitHub Actions, Docker |
-
-## 🏗️ Architecture
-
-```
-UI  ──▶  Services  ──▶  Domain
-              │
-              ▼
-          DataAccess  ──▶  Domain
-```
-
-`Domain` has no dependencies. Single solution: `WorldCupPlanner.sln`, with projects under `src/` and tests under `tests/`.
-
-| Layer | Project | Responsibility |
-|---|---|---|
-| Domain | `WorldCupPlanner.Domain` | Entities, invariants, enums and business exceptions |
-| Services | `WorldCupPlanner.Services` | Use cases, orchestration, DTOs, auditing and simulation engines |
-| Data | `WorldCupPlanner.DataAccess` | `AppDbContext`, EF repositories, configurations, migrations |
-| UI | `WorldCupPlanner.UI` | Blazor Server — presentation only |
-| Seeder | `WorldCupPlanner.DataSeeder` | Console app that resets the database and loads a full demo tournament |
-| Tests | `WorldCupPlanner.*.Tests` | One MSTest suite per layer |
-
-See [docs/architecture.md](docs/architecture.md) for the domain model, key mechanisms and external dependencies.
-
-## 🚀 Getting started
-
-**Prerequisites:** [.NET 8 SDK](https://dotnet.microsoft.com/download) and [Docker](https://www.docker.com/).
+Requirements: [.NET 8 SDK](https://dotnet.microsoft.com/download) and [Docker](https://www.docker.com/).
 
 ```bash
-# 1. Start the database (Azure SQL Edge, runs natively on ARM64 too)
 cp .env.example .env
 docker compose up -d sqlserver
-
-# 2. Run the app — it applies migrations and creates the default users on startup
 dotnet run --project src/WorldCupPlanner.UI
+```
 
-# 3. (Optional) Load a full demo: 48 teams with flags, 5 stadiums, simulated group stage
+The database is Azure SQL Edge, which also runs on ARM64. On startup the app applies pending
+migrations and creates the tournament settings and three default users. Open the URL printed
+in the console.
+
+To load a demo tournament (48 teams with flags, 5 stadiums, 6 extra users and a simulated
+group stage), run the seeder. It resets the database first.
+
+```bash
 dotnet run --project src/WorldCupPlanner.DataSeeder
 ```
 
-Then open the URL shown in the console. The connection string lives in
-`src/WorldCupPlanner.UI/appsettings.json` and can be overridden with the
-`ConnectionStrings__Default` environment variable.
+### Accounts
 
-**Default accounts** (the demo seeder also creates `admin1@copa.com` / `Admin@123`)
+| Role | Email | Password | Created by |
+|---|---|---|---|
+| Admin | admin@copa.com | Admin@123 | App startup |
+| Editor | editor@copa.com | Editor@123 | App startup |
+| Journalist | periodista@copa.com | Periodista@123 | App startup |
+| Admin | admin1@copa.com | Admin@123 | Demo seeder |
+| Editor | editor1@copa.com | Editor@123 | Demo seeder |
+| Journalist | periodista1@copa.com | Prensa@123 | Demo seeder |
 
-| Role | Email | Password |
-|---|---|---|
-| Admin | admin@copa.com | Admin@123 |
-| Editor | editor@copa.com | Editor@123 |
-| Journalist | periodista@copa.com | Periodista@123 |
+### Configuration
 
-## 🧪 Running the tests
+Settings live in `src/WorldCupPlanner.UI/appsettings.json`:
 
-The tests need no database: they use the EF Core InMemory provider and SQLite in-memory.
+- `ConnectionStrings:Default`: the database. It can be overridden with the
+  `ConnectionStrings__Default` environment variable.
+- `TournamentSettings`: start date, maximum matches per day, days between matchdays and the
+  four seeds (`FixtureSeed`, `CrossingsSeed`, `SimulationSeed`, `CompletionSeed`). They are
+  only read when the database has no settings yet.
+- `Flags:Directory`: the folder with the flag images, relative to the UI project.
+
+## Tests
 
 ```bash
 dotnet test
 ```
 
-Or per layer:
+The suites need no database: unit tests use the EF Core InMemory provider, and tests that
+need real foreign keys use SQLite in memory. One suite per layer:
 
 ```bash
 dotnet test tests/WorldCupPlanner.Domain.Tests
@@ -120,43 +97,56 @@ dotnet test tests/WorldCupPlanner.Services.Tests
 dotnet test tests/WorldCupPlanner.DataAccess.Tests
 ```
 
-## 📸 Screenshots
+CI runs build, tests and a coverage report on every push and pull request to `main` and `develop`.
 
-![Tournament dashboard with live progress and the champion](docs/screenshots/home.png)
+## Architecture
 
-| Group stage | Knockout bracket |
+```
+UI ──▶ Services ──▶ Domain
+          │
+          ▼
+      DataAccess ──▶ Domain
+```
+
+| Project | Responsibility |
 |---|---|
-| ![Group stage standings with flags](docs/screenshots/group-stage.png) | ![Knockout bracket from Round of 32 to the final](docs/screenshots/bracket.png) |
+| `WorldCupPlanner.Domain` | Entities, enums, invariants and domain exceptions. No dependencies. |
+| `WorldCupPlanner.Services` | Use cases, orchestration, DTOs, auditing and simulation engines. |
+| `WorldCupPlanner.DataAccess` | `AppDbContext`, repositories, EF configurations and migrations. TPH for `Match` and `MatchIncident`. |
+| `WorldCupPlanner.UI` | Blazor Server pages. Presentation only. |
+| `WorldCupPlanner.DataSeeder` | Console app that resets the database and loads the demo tournament. |
 
-## 📁 Project structure
+[docs/architecture.md](docs/architecture.md) covers the domain model, the main mechanisms and the external dependencies.
+
+Main libraries: EF Core 8 (SQL Server provider), CsvHelper for CSV and ClosedXML for XLSX.
+
+## Repository layout
 
 ```
-├── src/
-│   ├── WorldCupPlanner.Domain/            # Entities, business rules and invariants
-│   ├── WorldCupPlanner.Services/          # Use cases, DTOs, auditing, simulation engines
-│   ├── WorldCupPlanner.DataAccess/        # EF Core DbContext, repositories, migrations
-│   ├── WorldCupPlanner.UI/                # Blazor Server presentation layer
-│   └── WorldCupPlanner.DataSeeder/        # Demo data loader
-├── tests/
-│   ├── WorldCupPlanner.Domain.Tests/      # Unit tests — domain
-│   ├── WorldCupPlanner.Services.Tests/    # Unit tests — services
-│   └── WorldCupPlanner.DataAccess.Tests/  # Integration tests — data access
-├── db/                                    # SQL seed scripts and database backups used by the release
-├── docs/                                  # Architecture notes and screenshots
-├── samples/                               # Sample CSV with the 48 teams (for the Import page)
-├── scripts/                               # Release packaging and Windows start/seed scripts
-├── .github/                               # CI/CD workflows and AI agent skills
-└── WorldCupPlanner.sln
+src/        application projects
+tests/      one MSTest project per layer
+docs/       architecture notes and screenshots
+samples/    sample CSV with the 48 teams
+db/         SQL seed scripts and database backups used by the release package
+scripts/    release packaging and the Windows start/seed scripts
 ```
 
-## 👥 Authors
+## Release package
 
-Developed by a team of 3 for *Diseño de Aplicaciones 1*, Universidad ORT del Uruguay (2026).
+Pushing a `v*` tag builds a self-contained Windows x64 package that only needs Docker.
+See [scripts/release/README.md](scripts/release/README.md) for how to start it and load the demo.
 
-- Manuel García Conde Neira — [manu10.garciaconde@gmail.com](mailto:manu10.garciaconde@gmail.com) · [@manuelgcn](https://github.com/manuelgcn)
-- Joaquín Costa — [@CostaJoacoORT](https://github.com/CostaJoacoORT)
-- Tomás Dotta — [@Toto829](https://github.com/Toto829)
+## Contributing
 
-## 📄 License
+The project uses Gitflow (`feature/*` branches from `develop`) and TDD, with one commit per
+RED, GREEN and REFACTOR step. Conventions for code and for AI coding agents are in [AGENTS.md](AGENTS.md).
 
-Released under the [MIT License](LICENSE). Flag images from [ashleedawg/flags](https://github.com/ashleedawg/flags).
+## Authors
+
+- Manuel García Conde Neira ([@manuelgcn](https://github.com/manuelgcn), manu10.garciaconde@gmail.com)
+- Joaquín Costa ([@CostaJoacoORT](https://github.com/CostaJoacoORT))
+- Tomás Dotta ([@Toto829](https://github.com/Toto829))
+
+## License
+
+[MIT](LICENSE). Flag images come from [ashleedawg/flags](https://github.com/ashleedawg/flags).

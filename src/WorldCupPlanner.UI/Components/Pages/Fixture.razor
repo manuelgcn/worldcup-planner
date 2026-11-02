@@ -40,23 +40,7 @@
     }
     else
     {
-        @if (errors.Any())
-        {
-            <div class="alert alert-error">
-                <strong>Error:</strong>
-                <ul>
-                    @foreach (string error in errors)
-                    {
-                        <li>@error</li>
-                    }
-                </ul>
-            </div>
-        }
-
-        @if (!string.IsNullOrWhiteSpace(successMessage))
-        {
-            <div class="alert alert-success">@successMessage</div>
-        }
+        <FeedbackAlerts Errors="errors" SuccessMessage="@successMessage" />
 
         @if (settings is null)
         {
@@ -89,7 +73,7 @@
                     </div>
                     <div><strong>Partidos de grupos:</strong> @groupMatches.Count / @GroupStageMatchCount</div>
                     <div><strong>Pendientes (sin simular):</strong> @pendingGroupMatches</div>
-                    <div><strong>Knockout generado:</strong> @(IsKnockoutGenerated ? "sí" : "no")</div>
+                    <div><strong>Eliminatorias generadas:</strong> @(IsKnockoutGenerated ? "sí" : "no")</div>
                     <div><strong>Motor de simulación:</strong> @settings.SelectedSimulationEngine</div>
                 </div>
                 <details class="status-advanced">
@@ -110,15 +94,21 @@
                     <h2>Exportar fixture</h2>
                     <p class="step-help">Descargá los partidos de grupos y eliminatorias dentro del rango seleccionado.</p>
                     <div class="step-actions">
-                        <label for="exportFixtureFrom">Desde:</label>
-                        <input id="exportFixtureFrom" class="form-control" type="date" @bind="exportFromDate" />
-                        <label for="exportFixtureTo">Hasta:</label>
-                        <input id="exportFixtureTo" class="form-control" type="date" @bind="exportToDate" />
-                        <label for="exportFixtureFormat">Formato:</label>
-                        <select id="exportFixtureFormat" class="form-select" @bind="exportFormat">
-                            <option value="@ExportFormat.Csv">CSV</option>
-                            <option value="@ExportFormat.Xlsx">XLSX</option>
-                        </select>
+                        <span class="step-field">
+                            <label for="exportFixtureFrom">Desde:</label>
+                            <input id="exportFixtureFrom" class="form-control" type="date" @bind="exportFromDate" />
+                        </span>
+                        <span class="step-field">
+                            <label for="exportFixtureTo">Hasta:</label>
+                            <input id="exportFixtureTo" class="form-control" type="date" @bind="exportToDate" />
+                        </span>
+                        <span class="step-field">
+                            <label for="exportFixtureFormat">Formato:</label>
+                            <select id="exportFixtureFormat" class="form-select" @bind="exportFormat">
+                                <option value="@ExportFormat.Csv">CSV</option>
+                                <option value="@ExportFormat.Xlsx">XLSX</option>
+                            </select>
+                        </span>
                         <button class="btn btn-outline-primary" disabled="@isExporting" @onclick="HandleExportFixtureAsync">
                             <i class="bi bi-download" aria-hidden="true"></i>
                             Exportar fixture
@@ -155,15 +145,19 @@
                     <h2>2. Generar fixture de fase de grupos</h2>
                     <p class="step-help">Reparte los 48 equipos en 12 grupos y crea los 72 partidos.</p>
                     <div class="step-actions">
-                        <label for="engineSelect">Motor de simulación:</label>
-                        <select id="engineSelect" class="form-select" @bind="selectedEngine">
-                            @foreach (string engineName in EngineRegistry.AvailableEngineNames)
-                            {
-                                <option value="@engineName">@engineName</option>
-                            }
-                        </select>
-                        <label for="fixtureSeedInput">Semilla del sorteo (opcional):</label>
-                        <input id="fixtureSeedInput" class="form-control" type="number" @bind="fixtureSeedInput" placeholder="@settings.FixtureSeed.ToString()" />
+                        <span class="step-field">
+                            <label for="engineSelect">Motor de simulación:</label>
+                            <select id="engineSelect" class="form-select" @bind="selectedEngine">
+                                @foreach (string engineName in EngineRegistry.AvailableEngineNames)
+                                {
+                                    <option value="@engineName">@engineName</option>
+                                }
+                            </select>
+                        </span>
+                        <span class="step-field">
+                            <label for="fixtureSeedInput">Semilla del sorteo (opcional):</label>
+                            <input id="fixtureSeedInput" class="form-control" type="number" @bind="fixtureSeedInput" placeholder="@settings.FixtureSeed.ToString()" />
+                        </span>
                         <button class="btn btn-primary" disabled="@isBusy" @onclick="HandleGenerateFixtureAsync">
                             Generar fixture
                         </button>
@@ -191,16 +185,20 @@
                         @if (!IsGroupStageComplete)
                         {
                             <div class="step-actions">
-                                <label for="simSeedInput">Semilla de simulación (opcional):</label>
-                                <input id="simSeedInput" class="form-control" type="number" @bind="simulationSeedInput" placeholder="@settings.SimulationSeed.ToString()" />
+                                <span class="step-field">
+                                    <label for="simSeedInput">Semilla de simulación (opcional):</label>
+                                    <input id="simSeedInput" class="form-control" type="number" @bind="simulationSeedInput" placeholder="@settings.SimulationSeed.ToString()" />
+                                </span>
                                 <button class="btn btn-primary" disabled="@isBusy" @onclick="HandleSimulateGroupStageAsync">
                                     Simular fase de grupos
                                 </button>
                             </div>
                         }
                         <div class="step-actions">
-                            <label for="crossSeedInput">Semilla de cruces (opcional):</label>
-                            <input id="crossSeedInput" class="form-control" type="number" @bind="crossingsSeedInput" placeholder="@settings.CrossingsSeed.ToString()" />
+                            <span class="step-field">
+                                <label for="crossSeedInput">Semilla de cruces (opcional):</label>
+                                <input id="crossSeedInput" class="form-control" type="number" @bind="crossingsSeedInput" placeholder="@settings.CrossingsSeed.ToString()" />
+                            </span>
                             <button class="btn btn-primary"
                                     disabled="@(!CanGenerateKnockout || isBusy)"
                                     @onclick="HandleGenerateKnockoutAsync"
@@ -209,11 +207,28 @@
                             </button>
                             <button class="btn btn-secondary"
                                     disabled="@(IsKnockoutGenerated || isBusy)"
-                                    @onclick="HandleRegenerateFixtureAsync"
+                                    @onclick="StartRegenerateConfirmation"
                                     title="@RegenerateFixtureTooltip()">
                                 Regenerar fixture
                             </button>
                         </div>
+                        @if (confirmingRegenerate)
+                        {
+                            <div class="confirm-panel mt-3" role="group" aria-label="Confirmar regeneración del fixture">
+                                <p class="confirm-text">
+                                    <strong>¿Regenerar el fixture?</strong>
+                                    Se borran los partidos de grupos y sus resultados, también los cargados a mano. Esta acción no se puede deshacer.
+                                </p>
+                                <div class="step-actions">
+                                    <button class="btn btn-secondary" disabled="@isBusy" @onclick="CancelRegenerateConfirmation">
+                                        Cancelar
+                                    </button>
+                                    <button class="btn btn-danger" disabled="@isBusy" @onclick="HandleRegenerateFixtureAsync">
+                                        Sí, regenerar
+                                    </button>
+                                </div>
+                            </div>
+                        }
                     }
                 </section>
             }
@@ -234,16 +249,17 @@
                             sin simular para cargar los resultados a mano en <a href="/matches">Partidos</a>.</text>
                         }
                     </p>
-                    @if (CanManageFixture)
+                    @* Con campeón no queda nada por simular: tres botones apagados solo serían ruido. *@
+                    @if (CanManageFixture && !IsBracketComplete)
                     {
                         <div class="step-actions">
                             <button class="btn btn-secondary"
-                                    disabled="@(IsBracketComplete || isBusy)"
+                                    disabled="@isBusy"
                                     @onclick="HandleSimulateNextRoundAsync">
                                 Simular siguiente ronda
                             </button>
                             <button class="btn btn-primary"
-                                    disabled="@(IsBracketComplete || isBusy)"
+                                    disabled="@isBusy"
                                     @onclick="HandleSimulateUntilFinalAsync">
                                 Simular hasta el final
                             </button>
@@ -255,6 +271,59 @@
                             </button>
                         </div>
                     }
+                </section>
+            }
+
+            @* SECCIÓN GRUPOS — visible una vez generado el fixture *@
+            @if (IsFixtureGenerated)
+            {
+                <section class="groups-section">
+                    <h2>Grupos</h2>
+                    <div class="group-chips" role="group" aria-label="Elegir grupo">
+                        @foreach (Group group in groups)
+                        {
+                            <button type="button" class="group-chip @(selectedGroupName == group.Name ? "active" : "")"
+                                    aria-label="Grupo @group.Name"
+                                    aria-pressed="@(selectedGroupName == group.Name ? "true" : "false")"
+                                    @onclick="() => HandleSelectGroup(group.Name)">
+                                @group.Name
+                            </button>
+                        }
+                    </div>
+                    <div class="groups-grid">
+                        @foreach (Group group in groups)
+                        {
+                            <GroupCard Group="group"
+                                       Standings="@standingsByGroup[group.Name]"
+                                       OnSelect="HandleSelectGroup" />
+                        }
+                    </div>
+                    <ul class="groups-legend">
+                        <li class="legend-qualified">Clasificados (1.º y 2.º)</li>
+                        <li class="legend-third">Tercero: compite por los 8 mejores terceros</li>
+                    </ul>
+                </section>
+
+                @if (selectedGroupName != null)
+                {
+                    <section class="group-detail-section">
+                        <GroupDetail @key="selectedGroupName"
+                                     GroupName="@selectedGroupName"
+                                     Matches="@MatchesForSelectedGroup()"
+                                     OnBack="HandleClearSelection"
+                                     CanEdit="@CanEditResults"
+                                     IsLocked="@IsKnockoutGenerated"
+                                     OnResultSaved="HandleResultSaved" />
+                    </section>
+                }
+            }
+
+            @* SECCIÓN BRACKET — visible una vez sorteados los cruces *@
+            @if (IsKnockoutGenerated)
+            {
+                <section class="bracket-section">
+                    <h2>Bracket eliminatorio</h2>
+                    <KnockoutBracket AllElimMatches="@eliminationMatches" />
                 </section>
             }
 
@@ -278,7 +347,7 @@
                     }
                     else
                     {
-                        <div class="confirm-panel" role="alertdialog" aria-label="Confirmar borrado del fixture">
+                        <div class="confirm-panel" role="group" aria-label="Confirmar borrado del fixture">
                             <p class="confirm-text">
                                 <strong>¿Seguro que querés borrar el fixture?</strong>
                                 Se eliminan los grupos, los partidos y los cruces de fase 2. Esta acción no se puede deshacer.
@@ -295,61 +364,13 @@
                     }
                 </section>
             }
-
-            @* SECCIÓN GRUPOS — visible una vez generado el fixture *@
-            @if (IsFixtureGenerated)
-            {
-                <section class="groups-section">
-                    <h2>Grupos</h2>
-                    <div class="group-chips" role="navigation" aria-label="Ir a grupo">
-                        @foreach (Group group in groups)
-                        {
-                            <button class="group-chip @(selectedGroupName == group.Name ? "active" : "")"
-                                    @onclick="() => HandleSelectGroup(group.Name)">
-                                @group.Name
-                            </button>
-                        }
-                    </div>
-                    <div class="groups-grid">
-                        @foreach (Group group in groups)
-                        {
-                            <GroupCard Group="group"
-                                       Standings="@StandingsFor(group.Name)"
-                                       OnSelect="HandleSelectGroup" />
-                        }
-                    </div>
-                    <ul class="groups-legend">
-                        <li class="legend-qualified">Clasificados (1.º y 2.º)</li>
-                        <li class="legend-third">Tercero: compite por los 8 mejores terceros</li>
-                    </ul>
-                </section>
-
-                @if (selectedGroupName != null)
-                {
-                    <section class="group-detail-section">
-                        <GroupDetail GroupName="@selectedGroupName"
-                                     Matches="@MatchesForSelectedGroup()"
-                                     OnBack="HandleClearSelection"
-                                     CanEdit="@CanEditResults"
-                                     IsLocked="@IsKnockoutGenerated"
-                                     OnResultSaved="HandleResultSaved" />
-                    </section>
-                }
-            }
-
-            @* SECCIÓN BRACKET — visible una vez sorteados los cruces *@
-            @if (IsKnockoutGenerated)
-            {
-                <section class="bracket-section">
-                    <h2>Bracket eliminatorio</h2>
-                    <KnockoutBracket AllElimMatches="@eliminationMatches" />
-                </section>
-            }
         }
     }
 </div>
 
 @code {
+    private const string UnexpectedErrorMessage =
+        "Ocurrió un error inesperado. Revisá el estado del torneo e intentá nuevamente.";
     private const string StandingsLoadErrorMessage =
         "No se pudo cargar la tabla de posiciones del grupo. Intentá nuevamente.";
     // Mismos umbrales que validan FixtureService y StadiumServices; aca solo guian el asistente.
@@ -370,6 +391,8 @@
     private int? simulationSeedInput;
     private string? selectedEngine;
     private bool confirmingDelete;
+    private bool confirmingRegenerate;
+    private Dictionary<string, List<GroupStandingDto>> standingsByGroup = new();
     private DateTime? exportFromDate;
     private DateTime? exportToDate;
     private ExportFormat exportFormat = ExportFormat.Csv;
@@ -405,29 +428,40 @@
     private bool CanGenerateKnockout =>
         IsFixtureGenerated && IsGroupStageComplete && !IsKnockoutGenerated;
 
+    // Las pistas hablan según el rol: a quien no tiene el botón no se le pide que lo toque.
     private WizardStep CurrentStep
     {
         get
         {
             if (!HasBaseData)
             {
-                return new WizardStep(1, "Cargar datos base", "Necesitás 48 equipos y al menos 4 estadios antes de generar el fixture.", "step-1");
+                return new WizardStep(1, "Cargar datos base", IsAdmin
+                    ? "Necesitás 48 equipos y al menos 4 estadios antes de generar el fixture."
+                    : "Un administrador tiene que cargar los 48 equipos y al menos 4 estadios.", "step-1");
             }
             if (!IsFixtureGenerated)
             {
-                return new WizardStep(2, "Generar fixture", "Hacé clic en Generar fixture para crear los 12 grupos y los 72 partidos.", "step-2");
+                return new WizardStep(2, "Generar fixture", CanManageFixture
+                    ? "Hacé clic en Generar fixture para crear los 12 grupos y los 72 partidos."
+                    : "Falta que un administrador o editor genere el fixture.", "step-2");
             }
             if (!IsKnockoutGenerated)
             {
                 if (IsGroupStageComplete)
                 {
-                    return new WizardStep(3, "Sortear cruces de fase 2", "La fase de grupos terminó. Sorteá los cruces de 16avos de final.", "step-3");
+                    return new WizardStep(3, "Sortear cruces de fase 2", CanManageFixture
+                        ? "La fase de grupos terminó. Sorteá los cruces de 16avos de final."
+                        : "La fase de grupos terminó. Falta sortear los cruces de 16avos de final.", "step-3");
                 }
-                return new WizardStep(3, "Jugar fase de grupos", $"Faltan {pendingGroupMatches} partidos. Simulalos desde el Simulador o cargalos en Partidos.", "step-3");
+                return new WizardStep(3, "Jugar fase de grupos", CanManageFixture
+                    ? $"Faltan {pendingGroupMatches} partidos. Simulalos desde el Simulador o cargalos en Partidos."
+                    : $"Faltan {pendingGroupMatches} partidos de la fase de grupos.", "step-3");
             }
             if (!IsBracketComplete)
             {
-                return new WizardStep(4, "Simular bracket", "Avanzá las rondas eliminatorias hasta el final.", "step-4");
+                return new WizardStep(4, "Simular bracket", CanManageFixture
+                    ? "Avanzá las rondas eliminatorias hasta el final."
+                    : "Se están jugando las rondas eliminatorias.", "step-4");
             }
             return new WizardStep(4, "Torneo completo", "El bracket está simulado de punta a punta.", "step-done");
         }
@@ -447,7 +481,11 @@
             selectedEngine ??= settings?.SelectedSimulationEngine;
             teamCount = snapshot.TeamCount;
             stadiumCount = StadiumService.GetAllStadiums().Count;
-            groups = snapshot.Groups.ToList();
+            // Una vez por recarga, no en cada render: cada tabla consulta la base. Grupos y tablas
+            // se asignan juntos para que el markup nunca busque un grupo que el diccionario no tiene.
+            List<Group> loadedGroups = snapshot.Groups.ToList();
+            standingsByGroup = loadedGroups.ToDictionary(group => group.Name, group => StandingsFor(group.Name));
+            groups = loadedGroups;
             groupMatches = snapshot.GroupMatches.ToList();
             eliminationMatches = snapshot.EliminationMatches.ToList();
             pendingGroupMatches = StandingsService.PendingGroupStageMatchCount();
@@ -514,8 +552,19 @@
             "Fixture generado correctamente.");
     }
 
+    private void StartRegenerateConfirmation()
+    {
+        confirmingRegenerate = true;
+    }
+
+    private void CancelRegenerateConfirmation()
+    {
+        confirmingRegenerate = false;
+    }
+
     private async Task HandleRegenerateFixtureAsync()
     {
+        confirmingRegenerate = false;
         await RunAdminActionAsync(
             () => FixtureOrchestrator.RegenerateGroupStage(fixtureSeedInput, selectedEngineName: null, Session.CurrentUser?.email),
             "Fixture regenerado correctamente.");
@@ -604,6 +653,11 @@
         {
             errors.Add(ex.Message);
         }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while exporting the fixture.");
+            errors.Add(UnexpectedErrorMessage);
+        }
         finally
         {
             isExporting = false;
@@ -635,6 +689,12 @@
         catch (SettingsException ex) { errors.Add(ex.Message); }
         catch (ArgumentException ex) { errors.Add(ex.Message); }
         catch (InvalidOperationException ex) { errors.Add(ex.Message); }
+        catch (KnockoutGeneratorException ex) { errors.Add(ex.Message); }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while running a fixture action.");
+            errors.Add(UnexpectedErrorMessage);
+        }
         finally
         {
             // Tambien tras un error: una simulacion que falla a mitad ya pudo guardar rondas.
@@ -660,7 +720,7 @@
     {
         if (!IsGroupStageComplete) return $"Faltan {pendingGroupMatches} partidos de fase de grupos por simular.";
         if (IsKnockoutGenerated) return "Los cruces ya están generados.";
-        return "Sortea los 16 cruces de Round of 32.";
+        return "Sortea los 16 cruces de 16avos de final.";
     }
 
 

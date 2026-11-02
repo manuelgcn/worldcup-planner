@@ -93,7 +93,7 @@
         email = Session.CurrentUser.email;
     }
 
-    private void Save()
+    private async Task Save()
     {
         errors.Clear();
         successMessage = null;
@@ -112,7 +112,7 @@
             );
 
             // La sesión guarda una copia del usuario: se recarga para que el layout y "Email actual" reflejen el cambio.
-            Session.Login(UserServices.GetUserById(Session.CurrentUser!.idUser));
+            await Session.LoginAsync(UserServices.GetUserById(Session.CurrentUser!.idUser));
             successMessage = "Usuario actualizado correctamente";
         }
         catch (Exception ex)

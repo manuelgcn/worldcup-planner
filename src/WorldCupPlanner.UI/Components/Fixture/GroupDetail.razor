@@ -3,7 +3,7 @@
 
 <div class="group-detail">
     <div class="group-detail-head">
-        <h2>Grupo @GroupName — Partidos</h2>
+        <h2 tabindex="-1" @ref="heading">Grupo @GroupName — Partidos</h2>
         <div class="group-detail-actions">
             <button class="btn btn-secondary" @onclick="HandleBack">Volver</button>
             <button class="btn btn-link" @onclick="NavigateToMatchesPage">Ver en listado de partidos</button>
@@ -38,7 +38,7 @@
                         <th>Estado</th>
                         @if (ShowEditColumn)
                         {
-                            <th></th>
+                            <th><span class="visually-hidden">Acciones</span></th>
                         }
                     </tr>
                 </thead>
@@ -64,7 +64,7 @@
                             {
                                 <td class="text-end">
                                     <button class="btn btn-outline-primary btn-sm"
-                                            disabled="@(editingMatchId == match.MatchId)"
+                                            aria-expanded="@(editingMatchId == match.MatchId ? "true" : "false")"
                                             @onclick="() => StartEdit(match)">
                                         <i class="bi bi-pencil" aria-hidden="true"></i>
                                         Cargar resultado
@@ -98,6 +98,7 @@
     [Parameter] public EventCallback<string> OnResultSaved { get; set; }
 
     private int? editingMatchId;
+    private ElementReference heading;
 
     private bool ShowEditColumn => CanEdit && !IsLocked;
 
@@ -110,6 +111,15 @@
             .GroupBy(match => match.Journey?.Number ?? 0);
 
     private static bool IsPlayed(MatchGroup match) => match.HasResult;
+
+    // El detalle aparece debajo de las 12 tarjetas: sin mover el foco, "Ver partidos" parecía no hacer nada.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await heading.FocusAsync();
+        }
+    }
 
     private Task HandleBack() => OnBack.InvokeAsync();
 

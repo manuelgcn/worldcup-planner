@@ -24,18 +24,20 @@ with the code:
    - `docker-compose.yml` and `src/WorldCupPlanner.UI/appsettings.json` (how it runs and is configured).
    - `.github/workflows/` (CI and release).
 2. **Write `README.md`** with these sections, in order:
-   - Summary: what the system does and for whom.
-   - Engineering highlights and features.
-   - Tech stack.
+   - Summary: what the system does, the stack in one sentence, the CI badge and the home screenshot.
+   - Features, then the tournament rules (from the business rules in `AGENTS.md`).
+   - Getting started: Docker, running the app, demo data, accounts per role and configuration.
+   - Tests.
    - Architecture: layer → project → responsibility, respecting `UI → Services → Domain` and `Services → DataAccess → Domain`.
-   - Getting started: Docker, migrations, run the app, demo data, seed credentials per role.
-   - Running the tests.
-   - Project structure, authors and license.
+   - Repository layout, release package, contributing, authors and license.
 3. **Update `AGENTS.md`**: layout, commands, business rules, conventions and workflow.
 
 ## Style
 
-- Concise and actionable, in English.
+- Concise and actionable, in English. Plain prose: no emoji headings, no marketing adjectives,
+  bold only where a term needs it.
+- No badges with hand-written numbers (test count, coverage): they go stale. Only badges that
+  CI keeps up to date.
 - Every command must run as-is from the repository root.
 - Do not invent sections or dependencies: if it is not in the code, it does not go in.
 - Test and coverage numbers come from an actual `dotnet test` run, never from memory.

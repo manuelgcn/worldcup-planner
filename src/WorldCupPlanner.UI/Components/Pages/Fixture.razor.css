@@ -124,6 +124,13 @@
     width: 8rem;
 }
 
+/* Etiqueta y control saltan de línea juntos: un "Hasta:" nunca queda separado de su fecha. */
+.step-field {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+}
+
 /* Groups and bracket sections */
 .groups-section,
 .group-detail-section,

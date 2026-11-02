@@ -3,7 +3,6 @@
 @using WorldCupPlanner.Services.Interfaces
 @inject SessionState Session
 @inject INotificationService NotificationService
-@inject NavigationManager Nav
 
 <PageTitle>Notificaciones · Golazo</PageTitle>
 
@@ -72,31 +71,34 @@ else
 @code {
     private IReadOnlyCollection<Notification> unreadNotifications = Array.Empty<Notification>();
 
+    // Sin redirección: quien no es periodista ve el aviso de arriba en vez de volver al inicio sin explicación.
     protected override void OnInitialized()
     {
-        if (!Session.IsLoggedIn || !Session.IsJournalist)
+        if (Session.IsJournalist)
         {
-            Nav.NavigateTo("/");
-            return;
+            LoadUnreadNotifications();
         }
-
-        LoadUnreadNotifications();
     }
 
+    // Las más recientes primero: tras una simulación completa llegan más de cien.
     private void LoadUnreadNotifications()
     {
-        unreadNotifications = NotificationService.GetUnreadForUser(Session.CurrentUser!.idUser);
+        unreadNotifications = NotificationService.GetUnreadForUser(Session.CurrentUser!.idUser)
+            .OrderByDescending(notification => notification.CreatedAt)
+            .ToList();
     }
 
     private void MarkNotificationAsRead(int notificationId)
     {
         NotificationService.MarkAsRead(notificationId, Session.CurrentUser!.idUser);
         LoadUnreadNotifications();
+        Session.Refresh();
     }
 
     private void MarkAllNotificationsAsRead()
     {
         NotificationService.MarkAllAsRead(Session.CurrentUser!.idUser);
         LoadUnreadNotifications();
+        Session.Refresh();
     }
 }

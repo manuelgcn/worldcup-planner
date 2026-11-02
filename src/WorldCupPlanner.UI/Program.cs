@@ -41,7 +41,12 @@ if (!app.Environment.IsDevelopment())
 app.UseStatusCodePagesWithReExecute("/not-found");
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+// Sin Cache-Control el navegador reusa por heurística el CSS de una versión anterior; "no-cache"
+// lo obliga a revalidar con el ETag (un 304 barato) y cada entrega se ve con sus estilos.
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = context => context.Context.Response.Headers.CacheControl = "no-cache"
+});
 app.UseAntiforgery();
 
 var settingsRepository = app.Services.GetRequiredService<ITournamentSettingsRepository>();

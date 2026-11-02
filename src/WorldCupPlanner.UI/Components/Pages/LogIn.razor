@@ -97,7 +97,7 @@
     [SupplyParameterFromQuery(Name = "registrado")]
     public bool Registered { get; set; }
 
-    private void Login()
+    private async Task Login()
     {
         errors.Clear();
 
@@ -110,7 +110,7 @@
         {
             User user = UserServices.Authenticate(email, password);
 
-            Session.Login(user);
+            await Session.LoginAsync(user);
             Nav.NavigateTo(HomeRouteFor(user));
         }
         catch (Exception ex)

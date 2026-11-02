@@ -18,9 +18,11 @@
     </div>
 </div>
 
-<input type="checkbox" title="Menú de navegación" aria-label="Menú de navegación" class="navbar-toggler" />
+@* Botón de divulgación (no checkbox): se anuncia como botón y expone si el menú está abierto. *@
+<button type="button" class="navbar-toggler" aria-label="Menú de navegación" aria-controls="main-nav"
+        aria-expanded="@(navOpen ? "true" : "false")" @onclick="ToggleNav"></button>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+<div id="main-nav" class="nav-scrollable @(navOpen ? "open" : "")" @onclick="CloseNav">
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
@@ -136,6 +138,7 @@
 
 @code {
     private int unreadCount;
+    private bool navOpen;
 
     private bool IsAdmin =>
         Session.CurrentUser?.HasRole(UserRoles.Admin) == true;
@@ -161,6 +164,10 @@
         LoadUnreadCount();
         InvokeAsync(StateHasChanged);
     }
+
+    private void ToggleNav() => navOpen = !navOpen;
+
+    private void CloseNav() => navOpen = false;
 
     private void LoadUnreadCount()
     {
