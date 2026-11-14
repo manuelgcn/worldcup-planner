@@ -11,7 +11,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private const int RequiredGroupCount = 12;
     private const int RequiredGroupStageMatchCount = 72;
     private const int FirstNewMatchIdSeed = 3000;
-    private const int DaysFromStartToFirstKnockoutRound = 60;
+    private const int DaysBetweenRounds = 1;
+    private const int DaysFromSemiFinalsToFinal = 2;
     private const string TournamentSettingsRequiredMessage = "La configuracion del torneo es obligatoria para generar la fase 2.";
     private const string StadiumsRequiredMessage = "Se requiere al menos un estadio para generar la fase 2.";
     private const string GroupsRequiredMessage = "Deben existir los 12 grupos antes de generar el cuadro eliminatorio.";
@@ -85,11 +86,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         EnsureEveryQualifiedTeamHasGroup(qualifiedTeams);
 
         EliminationBuilder builder = new EliminationBuilder();
-        int maxPerDay = settings.MaxMatchesPerDay;
         // El R32 arranca al terminar la fase de grupos (H3): nunca se solapa con ella.
-        DateTime roundStart = settings.StartDate.AddDays(KnockoutPhaseOffsetDays(Phase.RoundOf32));
-        Func<int, Stadium> stadiumProvider = matchIndex => stadiums[matchIndex % stadiums.Count];
-        Func<int, DateTime> dateProvider = matchIndex => roundStart.AddDays(matchIndex / maxPerDay);
+        KnockoutRoundScheduler scheduler = CreateRoundScheduler(settings, Phase.RoundOf32, LastGroupMatchDate(settings));
 
         // H2: se pasa QualifiedTeams (no la lista aplanada) para respetar las categorias A1..B8.
         List<MatchElimination> roundOf32 = builder.CreateRoundOf32(
@@ -97,8 +95,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             stadiums,
             settings,
             settings.CrossingsSeed,
-            stadiumProvider,
-            dateProvider);
+            scheduler.StadiumProvider,
+            scheduler.DateProvider);
 
         return roundOf32.Cast<Match>().ToList();
     }
@@ -128,6 +126,13 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
         QualifiedTeams qualifiedTeams = ComputeQualifiedTeams(groups, settingsForBracket);
         List<Match> roundOf32 = BuildRoundOf32(qualifiedTeams, settingsForBracket);
+
+        // La tabla de posiciones desempata con la semilla guardada: se persiste la efectiva para que
+        // tabla y cuadro coincidan en un empate exacto.
+        if (!ReferenceEquals(settingsForBracket, settings))
+        {
+            _settingsRepository.Update(settingsForBracket);
+        }
 
         foreach (Match match in roundOf32)
         {
@@ -436,7 +441,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         // Calendario por ronda (igual que BuildRoundOf32): rota estadio y franja horaria por indice
         // de partido para que ningun par comparta (estadio, dia, hora). Antes todos los partidos de
         // la ronda compartian estadio y fecha fijos, colisionando en octavos (8) y cuartos (4).
-        KnockoutRoundScheduler scheduler = CreateRoundScheduler(settings, nextPhase);
+        KnockoutRoundScheduler scheduler = CreateRoundScheduler(settings, nextPhase, previousRound.Max(match => match.MatchDate));
         List<MatchElimination> created = new();
 
         // El emparejamiento por adyacencia depende del orden: se ordena por MatchId para que el
@@ -483,8 +488,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
         int nextId = NextMatchId();
         // El tercer puesto es un unico partido: el calendario por ronda le asigna el primer slot
-        // (14:00) de la fecha base de la fase, en un estadio segun la rotacion.
-        KnockoutRoundScheduler scheduler = CreateRoundScheduler(settings, phase);
+        // (14:00) del dia siguiente a las semis, en un estadio segun la rotacion.
+        KnockoutRoundScheduler scheduler = CreateRoundScheduler(settings, phase, semiFinals.Max(match => match.MatchDate));
 
         MatchElimination first = semiFinals[0];
         MatchElimination second = semiFinals[1];
@@ -506,14 +511,10 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         return new List<MatchElimination> { thirdPlace };
     }
 
-    private static DateTime KnockoutPhaseDate(TournamentSettings settings, Phase phase)
-    {
-        return settings.StartDate.AddDays(KnockoutPhaseOffsetDays(phase));
-    }
-
-    // Arma el calendario de una ronda usando la fecha base por fase (offset cronologico) como dia
-    // de arranque. Mantener el offset por fase evita que rondas distintas se solapen entre si.
-    private KnockoutRoundScheduler CreateRoundScheduler(TournamentSettings settings, Phase phase)
+    // Cada ronda arranca el dia siguiente al ultimo partido de la anterior: una ronda de n partidos
+    // ocupa ceil(n / MaxMatchesPerDay) dias, asi que un offset fijo por fase se solapaba con 1 o 2
+    // partidos por dia. La Final espera ademas al tercer puesto, que se juega el dia despues de semis.
+    private KnockoutRoundScheduler CreateRoundScheduler(TournamentSettings settings, Phase phase, DateTime previousRoundLastMatch)
     {
         List<Stadium> stadiums = _stadiumRepository.GetAll().ToList();
         if (stadiums.Count == 0)
@@ -521,25 +522,18 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             throw new KnockoutGeneratorException(StadiumsRequiredMessage);
         }
 
-        return new KnockoutRoundScheduler(stadiums, settings.MaxMatchesPerDay, KnockoutPhaseDate(settings, phase));
+        int daysAfterPreviousRound = phase == Phase.Final ? DaysFromSemiFinalsToFinal : DaysBetweenRounds;
+        return new KnockoutRoundScheduler(stadiums, settings.MaxMatchesPerDay, previousRoundLastMatch.Date.AddDays(daysAfterPreviousRound));
     }
 
-    // Offset cronologico explicito (en dias desde StartDate) por fase eliminatoria.
-    // El enum Phase NO esta en orden cronologico (Final=0 ... RoundOf32=4), por eso no se
-    // puede derivar de (int)phase: hacerlo dejaba la Final antes de las rondas previas (H3).
-    // Las separaciones dejan margen para el spread multi-dia del R32 (16 partidos / dia).
-    private static int KnockoutPhaseOffsetDays(Phase phase)
+    // Sin partidos de grupo cargados (GeneratePhase2 suelto) el R32 arranca tras StartDate.
+    private DateTime LastGroupMatchDate(TournamentSettings settings)
     {
-        return phase switch
-        {
-            Phase.RoundOf32 => DaysFromStartToFirstKnockoutRound,
-            Phase.RoundOf16 => DaysFromStartToFirstKnockoutRound + 6,
-            Phase.QuarterFinals => DaysFromStartToFirstKnockoutRound + 12,
-            Phase.SemiFinal => DaysFromStartToFirstKnockoutRound + 18,
-            Phase.ThirdPlace => DaysFromStartToFirstKnockoutRound + 22,
-            Phase.Final => DaysFromStartToFirstKnockoutRound + 24,
-            _ => throw new ArgumentOutOfRangeException(nameof(phase), phase, "Fase eliminatoria sin offset definido."),
-        };
+        return _matchRepository.GetAll()
+            .OfType<MatchGroup>()
+            .Select(match => match.MatchDate)
+            .DefaultIfEmpty(settings.StartDate)
+            .Max();
     }
 
     private static Team WinnerOf(MatchElimination match)
@@ -626,7 +620,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             return settings;
         }
 
-        return new TournamentSettings(
+        TournamentSettings withSeed = new TournamentSettings(
             settings.Id,
             settings.StartDate,
             settings.MaxMatchesPerDay,
@@ -635,6 +629,9 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             crossingsSeed,
             settings.SimulationSeed,
             settings.CompletionSeed);
+        // El constructor vuelve al motor por defecto: sin esto, persistir la copia perderia el elegido.
+        withSeed.SelectSimulationEngine(settings.SelectedSimulationEngine);
+        return withSeed;
     }
 
     private void EnsureBracketNotYetGenerated()

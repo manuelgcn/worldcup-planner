@@ -144,6 +144,25 @@ public sealed class ExportServiceTests
     }
 
     [TestMethod]
+    public void ExportAuditLogUsesTheExactFilterBoundsInsteadOfWholeUtcDays()
+    {
+        // La pantalla filtra por día local y manda esos límites ya pasados a UTC: el archivo
+        // tiene que traer las mismas filas aunque el rango de días (UTC) diga otra cosa.
+        _auditRepository.Seed(AuditLog.Create("ON_SCREEN", "visible in the filtered list", 1));
+        User admin = BuildUser(UserRoles.Admin);
+        DateTime now = DateTime.UtcNow;
+
+        ExportFileDto result = _service.ExportAuditLog(
+            new DateRange(Date(1), Date(2)),
+            ExportFormat.Csv,
+            admin,
+            new AuditLogFilterDto { From = now.AddHours(-1), To = now.AddHours(1) });
+        string csv = System.Text.Encoding.UTF8.GetString(result.Content);
+
+        Assert.IsTrue(csv.Contains("visible in the filtered list"));
+    }
+
+    [TestMethod]
     public void ExportRecordsRequesterAsStructuredActor()
     {
         User admin = BuildUser(UserRoles.Admin);

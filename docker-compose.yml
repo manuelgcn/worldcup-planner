@@ -6,7 +6,9 @@ services:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
     ports:
-      - "1433:1433"
+      # Solo loopback IPv4 (la clave de sa es publica en .env.example). El mapeo IPv6 de Docker no reenvia
+      # bien a SQL Edge, por eso las cadenas de conexion usan 127.0.0.1 y no localhost.
+      - "127.0.0.1:1433:1433"
     volumes:
       - mssql-data:/var/opt/mssql
     restart: unless-stopped

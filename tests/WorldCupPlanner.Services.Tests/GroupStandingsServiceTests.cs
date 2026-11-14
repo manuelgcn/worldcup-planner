@@ -191,6 +191,34 @@ public class GroupStandingsServiceTests
     }
 
     [TestMethod]
+    public void GetStandingsForAllGroups_ReadsMatchesOnce()
+    {
+        _groupRepository.Add(BuildGroup("B", firstTeamId: 5));
+        _groupRepository.Add(BuildGroup("C", firstTeamId: 9));
+        AddPlayedMatch(matchId: 1, home: _teamAlpha, away: _teamBravo, homeGoals: 2, awayGoals: 0);
+
+        _service.GetStandingsForAllGroups();
+
+        Assert.AreEqual(1, _matchRepository.ReadCalls);
+    }
+
+    [TestMethod]
+    public void GetStandingsForAllGroups_ReturnsTheSameStandingsAsEachGroupOnItsOwn()
+    {
+        // B no tiene partidos: sus equipos empatan en todo y los ordena el desempate sembrado,
+        // que depende del indice del grupo; un indice mal calculado cambiaria ese orden.
+        _groupRepository.Add(BuildGroup("B", firstTeamId: 5));
+        AddPlayedMatch(matchId: 1, home: _teamAlpha, away: _teamBravo, homeGoals: 2, awayGoals: 0);
+        AddPlayedMatch(matchId: 2, home: _teamCharlie, away: _teamDelta, homeGoals: 1, awayGoals: 1);
+
+        List<GroupStandingDto> expected = _service.GetStandings(GroupName)
+            .Concat(_service.GetStandings("B"))
+            .ToList();
+
+        CollectionAssert.AreEqual(expected, _service.GetStandingsForAllGroups());
+    }
+
+    [TestMethod]
     public void IsGroupStageComplete_WithoutAnyMatches_ReturnsFalse()
     {
         Assert.IsFalse(_service.IsGroupStageComplete());
@@ -257,6 +285,16 @@ public class GroupStandingsServiceTests
         Assert.AreEqual(1, alpha.Points);
         Assert.AreEqual(1, bravo.GamesPlayed);
         Assert.AreEqual(1, bravo.Points);
+    }
+
+    private static Group BuildGroup(string name, int firstTeamId)
+    {
+        Group group = new Group(name);
+        for (int teamId = firstTeamId; teamId < firstTeamId + 4; teamId++)
+        {
+            group.AddTeam(new Team(teamId, $"Team {teamId}", 1500, false, Confederation.UEFA));
+        }
+        return group;
     }
 
     private void AddPlayedMatch(int matchId, Team home, Team away, int homeGoals, int awayGoals)

@@ -35,6 +35,27 @@ public sealed class ExporterTests
     }
 
     [TestMethod]
+    public void ExportCsvNeutralisesCellsThatASpreadsheetWouldRunAsFormulas()
+    {
+        // Un email de usuario o un nombre de equipo como "=HYPERLINK(...)" se ejecutaba al abrir el CSV en Excel.
+        AuditLogExportRow[] rows =
+        [
+            new AuditLogExportRow
+            {
+                Timestamp = new DateTime(2026, 6, 11, 18, 0, 0, DateTimeKind.Utc),
+                Action = "LOGIN",
+                Details = "=1+1",
+                PerformedByEmail = "@SUM(A1)@x.com"
+            }
+        ];
+
+        string csv = System.Text.Encoding.UTF8.GetString(_exporter.Export(rows, ExportFormat.Csv, "AuditLog"));
+
+        Assert.IsFalse(csv.Contains(",=1+1"));
+        Assert.IsFalse(csv.Contains(",@SUM(A1)@x.com"));
+    }
+
+    [TestMethod]
     public void ExportCsvWithNoRowsStillWritesHeaders()
     {
         byte[] result = _exporter.Export(Array.Empty<AuditLogExportRow>(), ExportFormat.Csv, "AuditLog");

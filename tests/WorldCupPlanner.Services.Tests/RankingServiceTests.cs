@@ -118,6 +118,32 @@ public class RankingServiceTests
         Assert.AreEqual(awayAfterFirst, away.FifaRanking);
     }
 
+    [TestMethod]
+    public void RevertingEveryResult_NearTheUpperBound_RestoresTheOriginalRankings()
+    {
+        // Cerca del tope de 2500, revertir pasando por el clamp perdía puntos en el camino:
+        // borrar o regenerar el fixture no devolvía los rankings originales.
+        Team strong = new Team(1, "Strong", 2495, false, Confederation.UEFA);
+        Team rival = new Team(2, "Rival", 2495, false, Confederation.CONMEBOL);
+        List<MatchGroup> played = new List<MatchGroup>();
+        foreach ((int homeGoals, int awayGoals) in new[] { (1, 0), (0, 1), (1, 0) })
+        {
+            MatchGroup match = BuildGroupMatch(strong, rival);
+            match.SetGoals(homeGoals, awayGoals);
+            _rankingService.ApplyMatchResult(match, MatchPhase.GroupStage);
+            match.MarkRankingApplied();
+            played.Add(match);
+        }
+
+        foreach (MatchGroup match in played)
+        {
+            _rankingService.RevertMatchResult(match);
+        }
+
+        Assert.AreEqual(2495, strong.FifaRanking);
+        Assert.AreEqual(2495, rival.FifaRanking);
+    }
+
     private static MatchGroup BuildGroupMatch(Team homeTeam, Team awayTeam)
     {
         Stadium stadium = new Stadium("Test Stadium", "City", null, 30000);

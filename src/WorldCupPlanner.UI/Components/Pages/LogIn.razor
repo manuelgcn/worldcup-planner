@@ -5,6 +5,7 @@
 @inject IUserService UserServices
 @inject SessionState Session
 @inject NavigationManager Nav
+@inject ILogger<LogIn> Logger
 
 <PageTitle>Ingresar · Golazo</PageTitle>
 
@@ -115,7 +116,7 @@
         }
         catch (Exception ex)
         {
-            errors.Add(ex.Message);
+            errors.Add(UserFacingError.MessageFor(ex, Logger));
         }
     }
 

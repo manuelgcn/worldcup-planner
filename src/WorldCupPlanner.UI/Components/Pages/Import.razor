@@ -5,6 +5,7 @@
 @using WorldCupPlanner.Services.Interfaces
 @inject IImportService ImportService
 @inject SessionState Session
+@inject ILogger<Import> Logger
 
 <PageTitle>Importar equipos · Golazo</PageTitle>
 
@@ -106,7 +107,7 @@ else
         }
         catch (Exception ex)
         {
-            error = ex.Message;
+            error = UserFacingError.MessageFor(ex, Logger);
         }
     }
 }

@@ -238,6 +238,55 @@ public class GroupFixtureGeneratorTests
         Assert.IsFalse(hours.Contains(22), "Con MaxMatchesPerDay=2 no debe usarse el horario de 22:00.");
     }
 
+    // MaxMatchesPerDay es la cantidad de horarios por estadio y dia (14:00, 18:00, 22:00), no el total del dia.
+    [TestMethod]
+    [DataRow(4, 1, 1)]
+    [DataRow(4, 1, 2)]
+    [DataRow(4, 1, 3)]
+    [DataRow(4, 2, 1)]
+    [DataRow(4, 2, 2)]
+    [DataRow(4, 2, 3)]
+    [DataRow(4, 3, 1)]
+    [DataRow(4, 3, 2)]
+    [DataRow(4, 3, 3)]
+    [DataRow(5, 1, 1)]
+    [DataRow(5, 1, 2)]
+    [DataRow(5, 1, 3)]
+    [DataRow(5, 2, 1)]
+    [DataRow(5, 2, 2)]
+    [DataRow(5, 2, 3)]
+    [DataRow(5, 3, 1)]
+    [DataRow(5, 3, 2)]
+    [DataRow(5, 3, 3)]
+    [DataRow(8, 1, 1)]
+    [DataRow(8, 1, 2)]
+    [DataRow(8, 1, 3)]
+    [DataRow(8, 2, 1)]
+    [DataRow(8, 2, 2)]
+    [DataRow(8, 2, 3)]
+    [DataRow(8, 3, 1)]
+    [DataRow(8, 3, 2)]
+    [DataRow(8, 3, 3)]
+    public void GenerateMatches_WithAnyValidSettings_SchedulesAllMatchesWithoutClashes(int stadiumCount, int maxMatchesPerDay, int daysBetweenJourneys)
+    {
+        List<Group> groups = CreateGroups(TotalGroups);
+        List<Stadium> stadiums = CreateStadiums(stadiumCount);
+        GroupFixtureGenerator generator = new GroupFixtureGenerator();
+
+        List<Match> matches = generator.GenerateMatches(groups, stadiums, DefaultStartDate, daysBetweenJourneys, maxMatchesPerDay);
+
+        Assert.AreEqual(ExpectedTotalMatches, matches.Count);
+        Assert.AreEqual(ExpectedTotalMatches, matches.Select(match => (match.Stadium!.Name, match.MatchDate)).Distinct().Count(),
+            "Dos partidos comparten estadio, dia y hora.");
+        Assert.IsTrue(matches.GroupBy(match => (match.Stadium!.Name, match.MatchDate.Date)).All(day => day.Count() <= maxMatchesPerDay),
+            "Un estadio supera MaxMatchesPerDay en un dia.");
+        Assert.IsTrue(matches
+                .SelectMany(match => new[] { (match.HomeTeam!.Id, match.MatchDate.Date), (match.AwayTeam!.Id, match.MatchDate.Date) })
+                .GroupBy(teamDay => teamDay)
+                .All(teamDay => teamDay.Count() == 1),
+            "Un equipo juega dos veces el mismo dia.");
+    }
+
     private static DateTime JourneyDate(List<Match> matches, int journeyNumber)
     {
         return matches.OfType<MatchGroup>()

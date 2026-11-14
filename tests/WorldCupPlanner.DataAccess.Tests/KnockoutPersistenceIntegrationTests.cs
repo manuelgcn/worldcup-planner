@@ -202,6 +202,54 @@ public sealed class KnockoutPersistenceIntegrationTests
         CollectionAssert.AreEquivalent(firstDraw, GroupComposition());
     }
 
+    [TestMethod]
+    public void RegenerateGroupStage_AfterPlayedMatches_StoresTheSeededRankingsAgain()
+    {
+        Dictionary<int, int> seededRankings = StoredRankings();
+        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
+        _simulationService.SimulateGroupStage(Seed, AdminEmail);
+        CollectionAssert.AreNotEquivalent(seededRankings, StoredRankings(), "Precondicion: la simulacion cambia rankings.");
+
+        _fixtureOrchestrator.RegenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
+
+        CollectionAssert.AreEquivalent(seededRankings, StoredRankings());
+    }
+
+    [TestMethod]
+    public void RegenerateGroupStage_WithATeamNearTheUpperBound_StoresItsOriginalRanking()
+    {
+        // Pierde y despues gana dos: al revertir primero la derrota pasa por ~2504. Si ese valor se
+        // guardara, la siguiente lectura del equipo fallaria en el constructor de Team.
+        const int nearUpperBound = 2495;
+        Team leader = _teamRepository.GetById(1)!;
+        leader.UpdateFifaRanking(nearUpperBound);
+        _teamRepository.Update(leader);
+        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
+
+        RankingService rankingService = new RankingService(_auditService, _teamRepository);
+        List<Match> leaderMatches = _matchRepository.GetAll()
+            .Where(match => match.HomeTeam!.Id == leader.Id || match.AwayTeam!.Id == leader.Id)
+            .ToList();
+        for (int index = 0; index < leaderMatches.Count; index++)
+        {
+            Match match = leaderMatches[index];
+            bool leaderWins = index > 0;
+            bool leaderIsHome = match.HomeTeam!.Id == leader.Id;
+            match.SetGoals(leaderWins == leaderIsHome ? 1 : 0, leaderWins == leaderIsHome ? 0 : 1);
+            rankingService.ApplyMatchResultOnce(match);
+            _matchRepository.Update(match);
+        }
+
+        _fixtureOrchestrator.RegenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
+
+        Assert.AreEqual(nearUpperBound, new TeamRepository(_factory).GetById(leader.Id)!.FifaRanking);
+    }
+
+    private Dictionary<int, int> StoredRankings()
+    {
+        return new TeamRepository(_factory).GetAll().ToDictionary(team => team.Id, team => team.FifaRanking);
+    }
+
     private Dictionary<string, string> GroupComposition()
     {
         return new GroupRepository(_factory).GetAll().ToDictionary(

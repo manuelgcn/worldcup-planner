@@ -6,6 +6,7 @@
 @inject IMatchService MatchService
 @inject IStadiumService StadiumService
 @inject SessionState Session
+@inject ILogger<MatchResultEditor> Logger
 
 <div class="match-result-editor">
     @if (editorErrors.Any())
@@ -261,7 +262,7 @@
                 {
                     MatchDate = matchDate,
                     StadiumId = stadiumId
-                });
+                }, PerformedByEmail);
             }
 
             await OnSaved.InvokeAsync(registersResult ? ResultSavedMessage : MatchUpdatedMessage);
@@ -280,7 +281,7 @@
         }
         catch (Exception ex)
         {
-            editorErrors.Add("Error al guardar el partido: " + ex.Message);
+            editorErrors.Add("Error al guardar el partido: " + UserFacingError.MessageFor(ex, Logger));
         }
     }
 

@@ -171,4 +171,16 @@ public class AuditLogRepositoryTests
         Assert.AreEqual("FIRST", result[0].Action);
         Assert.AreEqual("SECOND", result[1].Action);
     }
+
+    [TestMethod]
+    public void GetFiltered_WithTake_ReturnsNewestFirst()
+    {
+        _repository.Add(AuditLog.Create("FIRST", "first"));
+        _repository.Add(AuditLog.Create("SECOND", "second"));
+        _repository.Add(AuditLog.Create("THIRD", "third"));
+
+        List<AuditLog> result = _repository.GetFiltered(null, null, null, null, take: 2);
+
+        CollectionAssert.AreEqual(new[] { "THIRD", "SECOND" }, result.Select(log => log.Action).ToArray());
+    }
 }

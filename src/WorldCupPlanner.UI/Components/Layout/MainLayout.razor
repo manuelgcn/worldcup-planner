@@ -48,6 +48,10 @@
 
     protected override void OnInitialized() => Session.OnChange += HandleSessionChanged;
 
+    // Cada navegación cambia el Body: se relee el usuario para que un rol quitado o una baja hecha en
+    // otra pestaña se apliquen ya, no recién al recargar.
+    protected override Task OnParametersSetAsync() => Session.RevalidateAsync();
+
     private void HandleSessionChanged() => InvokeAsync(StateHasChanged);
 
     public void Dispose() => Session.OnChange -= HandleSessionChanged;

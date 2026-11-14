@@ -31,7 +31,9 @@ public sealed class Exporter : IExporter
         using StreamWriter writer = new StreamWriter(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true), leaveOpen: true);
         CsvConfiguration configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
-            HasHeaderRecord = true
+            HasHeaderRecord = true,
+            // Emails y nombres los cargan los usuarios: una celda con = + - @ al inicio se escapa con ' para que no corra como fórmula.
+            InjectionOptions = InjectionOptions.Escape
         };
         using CsvWriter csv = new CsvWriter(writer, configuration);
         TypeConverterOptions dateOptions = new TypeConverterOptions { Formats = ["O"] };

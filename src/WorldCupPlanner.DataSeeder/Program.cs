@@ -15,11 +15,11 @@ namespace WorldCupPlanner.DataSeeder;
 //
 // Uso:
 //   dotnet run --project DataSeeder -- "<connection string>"
-// Si no se pasa cadena, usa la de desarrollo (SQL Edge en localhost,1433).
+// Si no se pasa cadena, usa la de desarrollo (SQL Edge en 127.0.0.1,1433).
 public static class Program
 {
     private const string DefaultConnectionString =
-        "Server=localhost,1433;Database=WorldCupPlanner;User Id=sa;Password=WorldCup2026!Dev;TrustServerCertificate=True;";
+        "Server=127.0.0.1,1433;Database=WorldCupPlanner;User Id=sa;Password=WorldCup2026!Dev;TrustServerCertificate=True;";
 
     private const int SettingsId = 1;
     private const int SimulationSeed = 2026;

@@ -69,69 +69,27 @@ if (settingsRepository.GetById(settingsId) is null)
 }
 
 
-// funcion implementada con IA para la correcta asignacion de roles en la base de datos
+// Cuentas de demo: se crean solo si faltan y nunca se tocan las existentes. Antes se les reasignaba
+// el rol en cada arranque, así que quien registrara uno de estos emails quedaba como Admin o Editor.
 using (var scope = app.Services.CreateScope())
 {
     var userServices = scope.ServiceProvider.GetRequiredService<IUserService>();
+    HashSet<string> existingEmails = userServices.GetAllUsers()
+        .Select(user => user.email)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-    var admin = userServices.GetAllUsers().FirstOrDefault(u => u.email == "admin@copa.com");
+    (string Name, string Email, string Password, DateTime BirthDate, UserRoles Role)[] demoAccounts =
+    {
+        ("Admin", "admin@copa.com", "Admin@123", new DateTime(1990, 1, 1), UserRoles.Admin),
+        ("Editor", "editor@copa.com", "Editor@123", new DateTime(1995, 5, 15), UserRoles.Editor),
+        ("Periodista", "periodista@copa.com", "Periodista@123", new DateTime(1998, 3, 10), UserRoles.Periodista)
+    };
 
-    if (admin == null)
+    foreach (var account in demoAccounts.Where(account => !existingEmails.Contains(account.Email)))
     {
-        admin = new User(
-            0,
-            "Admin",
-            "Sistema",
-            "admin@copa.com",
-            "Admin@123",
-            new DateTime(1990, 1, 1)
-        );
-        admin.AddRole(UserRoles.Admin);
-        userServices.AddUser(admin);
-    }
-    else if (!admin.HasRole(UserRoles.Admin))
-    {
-        userServices.AssignRole(admin.idUser, UserRoles.Admin);
-    }
-
-    var editor = userServices.GetAllUsers().FirstOrDefault(u => u.email == "editor@copa.com");
-
-    if (editor == null)
-    {
-        editor = new User(
-            0,
-            "Editor",
-            "Sistema",
-            "editor@copa.com",
-            "Editor@123",
-            new DateTime(1995, 5, 15)
-        );
-        editor.AddRole(UserRoles.Editor);
-        userServices.AddUser(editor);
-    }
-    else if (!editor.HasRole(UserRoles.Editor))
-    {
-        userServices.AssignRole(editor.idUser, UserRoles.Editor);
-    }
-
-    var journalist = userServices.GetAllUsers().FirstOrDefault(u => u.email == "periodista@copa.com");
-
-    if (journalist == null)
-    {
-        journalist = new User(
-            0,
-            "Periodista",
-            "Sistema",
-            "periodista@copa.com",
-            "Periodista@123",
-            new DateTime(1998, 3, 10)
-        );
-        journalist.AddRole(UserRoles.Periodista);
-        userServices.AddUser(journalist);
-    }
-    else if (!journalist.HasRole(UserRoles.Periodista))
-    {
-        userServices.AssignRole(journalist.idUser, UserRoles.Periodista);
+        var user = new User(0, account.Name, "Sistema", account.Email, account.Password, account.BirthDate);
+        user.AddRole(account.Role);
+        userServices.AddUser(user);
     }
 }
 

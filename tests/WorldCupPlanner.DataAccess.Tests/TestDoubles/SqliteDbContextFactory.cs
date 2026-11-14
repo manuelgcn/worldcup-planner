@@ -1,6 +1,7 @@
 using WorldCupPlanner.DataAccess;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace WorldCupPlanner.DataAccess.Tests.TestDoubles;
 
@@ -26,8 +27,11 @@ public sealed class SqliteDbContextFactory : IDbContextFactory<AppDbContext>, ID
         _connection = new SqliteConnection("DataSource=:memory:;Foreign Keys=True");
         _connection.Open();
 
+        // Dos colecciones incluidas en una sola consulta multiplican las filas (cartesiano):
+        // el warning de EF que lo delata pasa a ser error para que ningun test lo deje pasar.
         _options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(_connection)
+            .ConfigureWarnings(warnings => warnings.Throw(RelationalEventId.MultipleCollectionIncludeWarning))
             .Options;
 
         using AppDbContext context = new AppDbContext(_options);

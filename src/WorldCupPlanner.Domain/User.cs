@@ -16,6 +16,14 @@ public class User
     private const string FutureDateOfBirthMessage = "La fecha de nacimiento no puede ser futura";
     private const string UnderageUserMessage = "El usuario debe tener al menos 18 anos";
     private const string PasswordMismatchMessage = "La contrasena no coincide";
+    private const string NameRequiredMessage = "El nombre es obligatorio";
+    private const string NameTooLongMessage = "El nombre no puede superar los 100 caracteres";
+    private const string LastnameTooLongMessage = "El apellido no puede superar los 100 caracteres";
+    private const string EmailTooLongMessage = "El email no puede superar los 254 caracteres";
+    // Mismos límites que UserConfiguration: validarlos acá evita que fallen recién al guardar.
+    private const int NameMaxLength = 100;
+    private const int LastnameMaxLength = 100;
+    private const int EmailMaxLength = 254;
     private const int PasswordSaltSize = 16;
     private const int PasswordHashSize = 32;
     private const int PasswordHashIterations = 100_000;
@@ -40,6 +48,7 @@ public class User
 
     public User(int id, string name, string lastname, string email, string password, DateTime dateOfBirth)
     {
+        ValidateNames(name, lastname);
         ValidateEmail(email);
         ValidatePassword(password);
         ValidateDateOfBirth(dateOfBirth);
@@ -53,10 +62,25 @@ public class User
     }
 
    
+    private static void ValidateNames(string name, string? lastname)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException(NameRequiredMessage);
+
+        if (name.Length > NameMaxLength)
+            throw new ArgumentException(NameTooLongMessage);
+
+        if (lastname?.Length > LastnameMaxLength)
+            throw new ArgumentException(LastnameTooLongMessage);
+    }
+
     private void ValidateEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException(EmailRequiredMessage);
+
+        if (email.Length > EmailMaxLength)
+            throw new ArgumentException(EmailTooLongMessage);
 
         if (HasWhitespace(email) || !HasExactlyOneAt(email))
             throw new ArgumentException(EmailInvalidMessage);
@@ -229,6 +253,7 @@ public class User
 
     public void UpdatePersonalData(string name, string lastname, string email)
     {
+        ValidateNames(name, lastname);
         ValidateEmail(email);
 
         this.name = name;

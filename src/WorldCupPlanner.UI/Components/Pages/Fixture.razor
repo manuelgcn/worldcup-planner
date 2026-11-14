@@ -270,6 +270,11 @@
                                 Avanzar de fase (sin simular)
                             </button>
                         </div>
+                        @* Un botón deshabilitado no recibe foco: el motivo va como texto visible, no solo en el title. *@
+                        @if (!CanAdvancePhase)
+                        {
+                            <p class="step-help mt-2 mb-0">@AdvancePhaseTooltip()</p>
+                        }
                     }
                 </section>
             }
@@ -484,7 +489,7 @@
             // Una vez por recarga, no en cada render: cada tabla consulta la base. Grupos y tablas
             // se asignan juntos para que el markup nunca busque un grupo que el diccionario no tiene.
             List<Group> loadedGroups = snapshot.Groups.ToList();
-            standingsByGroup = loadedGroups.ToDictionary(group => group.Name, group => StandingsFor(group.Name));
+            standingsByGroup = StandingsByGroup(loadedGroups);
             groups = loadedGroups;
             groupMatches = snapshot.GroupMatches.ToList();
             eliminationMatches = snapshot.EliminationMatches.ToList();
@@ -503,21 +508,28 @@
         }
     }
 
-    private List<GroupStandingDto> StandingsFor(string groupName)
+    // Una sola llamada trae las tablas de todos los grupos; se reparten por los equipos de cada grupo.
+    // Todo grupo queda con su entrada (vacía si falló) porque el markup la indexa por nombre.
+    private Dictionary<string, List<GroupStandingDto>> StandingsByGroup(List<Group> loadedGroups)
     {
+        List<GroupStandingDto> allStandings;
         try
         {
-            return StandingsService.GetStandings(groupName);
+            allStandings = StandingsService.GetStandingsForAllGroups();
         }
         catch (GroupServicesException ex)
         {
-            Logger.LogError(ex, "Unexpected error while loading standings for group {GroupName}.", groupName);
+            Logger.LogError(ex, "Unexpected error while loading the group standings.");
             if (!errors.Contains(StandingsLoadErrorMessage))
             {
                 errors.Add(StandingsLoadErrorMessage);
             }
-            return new List<GroupStandingDto>();
+            allStandings = new List<GroupStandingDto>();
         }
+
+        return loadedGroups.ToDictionary(
+            group => group.Name,
+            group => allStandings.Where(standing => group.Teams.Any(team => team.Id == standing.Team.Id)).ToList());
     }
 
     private List<MatchGroup> MatchesForSelectedGroup()

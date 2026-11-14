@@ -51,6 +51,13 @@ public class Team
         FifaRanking = Math.Clamp(newFifaRanking, MinFifaRanking, MaxFifaRanking);
     }
 
+    // Deshace un delta que ya pasó por el clamp al aplicarse. Sin volver a acotar, revertir todos
+    // los resultados devuelve el ranking original en cualquier orden.
+    public void RevertRankingDelta(int appliedDelta)
+    {
+        FifaRanking -= appliedDelta;
+    }
+
     private static void ValidateId(int id)
     {
         if (id <= 0)
@@ -104,7 +111,7 @@ public class Team
 
     private static bool IsNameInvalid(string name)
     {
-        return string.IsNullOrEmpty(name) || name.Length > MaxNameLength;
+        return string.IsNullOrWhiteSpace(name) || name.Length > MaxNameLength;
     }
 
     private static bool IsFifaRankingOutOfRange(int fifaRanking)

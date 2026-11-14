@@ -79,7 +79,10 @@ public class MatchFactory(
     {
         if (request.MatchDate.HasValue)
         {
-            match.ChangeDate(request.MatchDate.Value);
+            // Sin id explícito se usa la configuración del torneo, como el resto de los servicios.
+            TournamentSettings? settings = GetTournamentSettingsOrNull(request.TournamentSettingsId)
+                ?? tournamentSettingsRepository.GetAll().FirstOrDefault();
+            match.ChangeDate(request.MatchDate.Value, settings!);
         }
 
         if (request.StadiumId.HasValue)

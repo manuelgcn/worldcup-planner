@@ -209,6 +209,51 @@ public class NotificationRepositoryTest
         Assert.AreEqual(0, _repository.CountUnreadByUserId(1));
     }
 
+    [TestMethod]
+    public void MarkAllAsRead_MarksOnlyThatUsersUnread()
+    {
+        User firstUser = SeedUser(1, "juan@mail.com");
+        User secondUser = SeedUser(2, "ana@mail.com");
+
+        Notification alreadyRead = new Notification(3, firstUser, "Resultado 3");
+        alreadyRead.MarkAsRead();
+        _repository.Add(new Notification(1, firstUser, "Resultado 1"));
+        _repository.Add(new Notification(2, firstUser, "Resultado 2"));
+        _repository.Add(alreadyRead);
+        _repository.Add(new Notification(4, secondUser, "Resultado 4"));
+
+        int marked = _repository.MarkAllAsRead(1);
+
+        Assert.AreEqual(2, marked);
+        Assert.AreEqual(0, _repository.CountUnreadByUserId(1));
+        Assert.AreEqual(1, _repository.CountUnreadByUserId(2));
+    }
+
+    [TestMethod]
+    public void GetUnreadByUserId_ReturnsNewestFirst()
+    {
+        User user = SeedUser(1, "juan@mail.com");
+        DateTime noon = new DateTime(2026, 6, 1, 12, 0, 0, DateTimeKind.Utc);
+        AddNotificationCreatedAt(1, user, noon.AddHours(-2));
+        AddNotificationCreatedAt(2, user, noon);
+        AddNotificationCreatedAt(3, user, noon.AddHours(-1));
+
+        List<int> ids = _repository.GetUnreadByUserId(1).Select(n => n.Id).ToList();
+
+        CollectionAssert.AreEqual(new List<int> { 2, 3, 1 }, ids);
+    }
+
+    // CreatedAt lo fija el constructor con la hora actual: se pisa en la base para controlar el orden.
+    private void AddNotificationCreatedAt(int id, User user, DateTime createdAt)
+    {
+        _repository.Add(new Notification(id, user, $"Resultado {id}"));
+
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        Notification stored = context.Notifications.Single(n => n.Id == id);
+        context.Entry(stored).Property(n => n.CreatedAt).CurrentValue = createdAt;
+        context.SaveChanges();
+    }
+
     private User SeedUser(int id, string email)
     {
         User user = new User(

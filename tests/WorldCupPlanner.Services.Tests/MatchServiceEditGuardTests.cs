@@ -35,6 +35,25 @@ public sealed class MatchServiceEditGuardTests
     }
 
     [TestMethod]
+    public void UpdateMatch_RecordsWhoMadeTheChange()
+    {
+        _context.Service.UpdateMatch(GroupMatchId, new UpdateMatchRequestDto { StadiumId = StadiumId }, "editor@copa.com");
+
+        AuditLog entry = _context.AuditLogs.Single(log => log.Action == AuditActions.UpdateMatch);
+        Assert.AreEqual("editor@copa.com", entry.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void UpdateMatch_WhenTheSaveFails_WritesNoAuditEntry()
+    {
+        _context.MatchRepository.FailNextUpdate = new InvalidOperationException("database unavailable");
+
+        Assert.ThrowsException<InvalidOperationException>(
+            () => _context.Service.UpdateMatch(GroupMatchId, new UpdateMatchRequestDto { StadiumId = StadiumId }, "editor@copa.com"));
+        Assert.IsFalse(_context.AuditLogs.Any(log => log.Action == AuditActions.UpdateMatch));
+    }
+
+    [TestMethod]
     public void UpdateMatch_OnGroupMatch_WhenKnockoutDoesNotExist_Succeeds()
     {
         MatchDto result = _context.Service.UpdateMatch(GroupMatchId, new UpdateMatchRequestDto { StadiumId = StadiumId });

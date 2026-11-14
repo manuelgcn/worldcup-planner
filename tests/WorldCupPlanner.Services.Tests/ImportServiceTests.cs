@@ -28,6 +28,18 @@ public class ImportServiceTests
     }
 
     [TestMethod]
+    public void ImportTeams_ChecksDuplicatesAgainstTheTeamsAlreadyRead()
+    {
+        // ExistsByName carga la tabla Teams entera: llamarlo por fila eran 48 lecturas completas.
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, BuildValidRows());
+
+        _service.ImportTeams(stream);
+
+        Assert.AreEqual(0, _teamRepository.ExistsByNameCalls);
+    }
+
+    [TestMethod]
     public void ImportTeamsCreatesTeams()
     {
         // Arrange
