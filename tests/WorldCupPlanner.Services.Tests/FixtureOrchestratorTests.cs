@@ -2,6 +2,7 @@ using Moq;
 using WorldCupPlanner.DataAccess.Interfaces;
 using WorldCupPlanner.DataAccess.Repositories;
 using WorldCupPlanner.Domain;
+using WorldCupPlanner.Domain.Exceptions;
 using WorldCupPlanner.Services;
 using WorldCupPlanner.Services.Exceptions;
 using WorldCupPlanner.Services.Interfaces;
@@ -344,6 +345,18 @@ public class FixtureOrchestratorTests
         Assert.AreEqual(0, _journeyRepository.GetAll().Count);
         Assert.AreEqual(0, _matchRepository.GetAll().Count);
         Assert.IsFalse(_orchestrator.IsFixtureGenerated());
+    }
+
+    [TestMethod]
+    public void GenerateGroupStage_WhenScheduleDoesNotFit_KeepsTheSchedulerErrorAsInnerException()
+    {
+        // El mensaje para la pantalla es generico; el log necesita el grupo y la jornada que fallaron.
+        _orchestrator = NewOrchestrator(OneStadiumListedFourTimes());
+
+        FixtureOrchestratorException exception = Assert.ThrowsException<FixtureOrchestratorException>(
+            () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
+
+        Assert.IsInstanceOfType(exception.InnerException, typeof(MatchException));
     }
 
     [TestMethod]
