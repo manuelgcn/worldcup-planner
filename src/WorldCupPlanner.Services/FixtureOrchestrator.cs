@@ -203,11 +203,19 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
     // Cada resultado cambio el ranking guardado en los equipos y el sorteo arma los bombos por
     // ranking: sin revertirlo, la misma semilla ya no daria los mismos grupos. GetAll trae grupos
     // y eliminatorias (TPH) con los equipos compartidos, asi que las reversiones se acumulan bien.
+    // RevertMatchResult no guarda: cada equipo se guarda una vez al final, ya con su ranking original.
     private void RevertRankingOfPlayedMatches()
     {
+        List<Team> revertedTeams = new List<Team>();
         foreach (Match match in _matchRepository.GetAll().Where(match => match.RankingApplied))
         {
             _rankingService.RevertMatchResult(match);
+            revertedTeams.AddRange(new[] { match.HomeTeam, match.AwayTeam }.OfType<Team>());
+        }
+
+        foreach (Team team in revertedTeams.DistinctBy(team => team.Id))
+        {
+            _teamRepository.Update(team);
         }
     }
 

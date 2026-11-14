@@ -80,11 +80,10 @@ public class RankingService : IRankingService
         int restoredHomeRank = previousHomeRank - match.AppliedHomeRankingDelta;
         int restoredAwayRank = previousAwayRank - match.AppliedAwayRankingDelta;
 
+        // Solo en memoria: el valor intermedio puede salir de 300-2500 y, guardado, ya no se podria
+        // leer el equipo. Quien revierte guarda despues el valor final (ApplyMatchResult o el orquestador).
         match.HomeTeam.RevertRankingDelta(match.AppliedHomeRankingDelta);
         match.AwayTeam.RevertRankingDelta(match.AppliedAwayRankingDelta);
-
-        _teamRepository.Update(match.HomeTeam);
-        _teamRepository.Update(match.AwayTeam);
 
         _auditLogService.Log(
             AuditActions.RankingUpdated,
