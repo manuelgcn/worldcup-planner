@@ -186,9 +186,9 @@ public sealed class FixtureOrchestrator : IFixtureOrchestrator
                 settings.DaysBetweenJourneys,
                 settings.MaxMatchesPerDay);
         }
-        catch (MatchException)
+        catch (MatchException ex)
         {
-            throw new FixtureOrchestratorException(ScheduleDoesNotFitMessage);
+            throw new FixtureOrchestratorException(ScheduleDoesNotFitMessage, ex);
         }
     }
 
