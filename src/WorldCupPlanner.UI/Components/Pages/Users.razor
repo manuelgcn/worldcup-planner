@@ -120,7 +120,7 @@ else
                                     <td>
                                         @u.name @u.lastname
                                         @* Explica en pantalla por qué sus botones están deshabilitados. *@
-                                        @if (u.idUser == 1)
+                                        @if (u.idUser == SystemAdminUserId)
                                         {
                                             <span class="d-block small text-muted">Administrador del sistema</span>
                                         }
@@ -158,7 +158,7 @@ else
                                                 <button class="btn btn-sm @RoleButtonClass(u, UserRoles.Admin)"
                                                         aria-pressed="@(u.HasRole(UserRoles.Admin) ? "true" : "false")"
                                                         title="@(u.HasRole(UserRoles.Admin) ? "Quitar rol Admin" : "Asignar rol Admin")"
-                                                        disabled="@(u.idUser == 1 || u.idUser == Session.CurrentUser!.idUser)"
+                                                        disabled="@(u.idUser == SystemAdminUserId || u.idUser == Session.CurrentUser!.idUser)"
                                                         @onclick="() => ToggleRole(u, UserRoles.Admin)">
                                                     <i class="bi bi-shield-fill" aria-hidden="true"></i>
                                                     Admin
@@ -167,7 +167,7 @@ else
                                                 <button class="btn btn-sm @RoleButtonClass(u, UserRoles.Editor)"
                                                         aria-pressed="@(u.HasRole(UserRoles.Editor) ? "true" : "false")"
                                                         title="@(u.HasRole(UserRoles.Editor) ? "Quitar rol Editor" : "Asignar rol Editor")"
-                                                        disabled="@(u.idUser == 1)"
+                                                        disabled="@(u.idUser == SystemAdminUserId)"
                                                         @onclick="() => ToggleRole(u, UserRoles.Editor)">
                                                     <i class="bi bi-person-check-fill" aria-hidden="true"></i>
                                                     Editor
@@ -176,14 +176,14 @@ else
                                                 <button class="btn btn-sm @RoleButtonClass(u, UserRoles.Periodista)"
                                                         aria-pressed="@(u.HasRole(UserRoles.Periodista) ? "true" : "false")"
                                                         title="@(u.HasRole(UserRoles.Periodista) ? "Quitar rol Periodista" : "Asignar rol Periodista")"
-                                                        disabled="@(u.idUser == 1)"
+                                                        disabled="@(u.idUser == SystemAdminUserId)"
                                                         @onclick="() => ToggleRole(u, UserRoles.Periodista)">
                                                     <i class="bi bi-newspaper" aria-hidden="true"></i>
                                                     Periodista
                                                 </button>
 
                                                 <button class="btn btn-outline-danger btn-sm"
-                                                        disabled="@(u.idUser == 1 || u.idUser == Session.CurrentUser!.idUser)"
+                                                        disabled="@(u.idUser == SystemAdminUserId || u.idUser == Session.CurrentUser!.idUser)"
                                                         @onclick="() => StartDelete(u.idUser)">
                                                     <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
                                                 </button>
@@ -202,6 +202,8 @@ else
 
 @code {
     private const string MissingDateOfBirthMessage = "La fecha de nacimiento es obligatoria.";
+    // Mismo id que protege UserServices: el admin creado al iniciar la app no se puede modificar.
+    private const int SystemAdminUserId = 1;
 
     // Los botones de rol son interruptores: el rol asignado se ve "encendido".
     private static string RoleButtonClass(User user, UserRoles role) =>
@@ -343,6 +345,7 @@ else
 
         if (!await IsStillAdminAsync())
             return;
+
         confirmingDeleteId = null;
 
         try
