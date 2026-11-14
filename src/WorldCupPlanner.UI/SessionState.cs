@@ -79,7 +79,15 @@ public class SessionState
 
         try
         {
-            CurrentUser = userService.GetUserById(CurrentUser.idUser);
+            User user = userService.GetUserById(CurrentUser.idUser);
+            // Los ids se reusan si se resetea la base: con otro email es otra persona, no esta sesión.
+            if (!string.Equals(user.email, CurrentUser.email, StringComparison.OrdinalIgnoreCase))
+            {
+                await LogoutAsync();
+                return;
+            }
+
+            CurrentUser = user;
         }
         catch (UserServicesException)
         {
