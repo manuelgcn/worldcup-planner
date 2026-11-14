@@ -202,6 +202,24 @@ public sealed class KnockoutPersistenceIntegrationTests
         CollectionAssert.AreEquivalent(firstDraw, GroupComposition());
     }
 
+    [TestMethod]
+    public void RegenerateGroupStage_AfterPlayedMatches_StoresTheSeededRankingsAgain()
+    {
+        Dictionary<int, int> seededRankings = StoredRankings();
+        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
+        _simulationService.SimulateGroupStage(Seed, AdminEmail);
+        CollectionAssert.AreNotEquivalent(seededRankings, StoredRankings(), "Precondicion: la simulacion cambia rankings.");
+
+        _fixtureOrchestrator.RegenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
+
+        CollectionAssert.AreEquivalent(seededRankings, StoredRankings());
+    }
+
+    private Dictionary<int, int> StoredRankings()
+    {
+        return new TeamRepository(_factory).GetAll().ToDictionary(team => team.Id, team => team.FifaRanking);
+    }
+
     private Dictionary<string, string> GroupComposition()
     {
         return new GroupRepository(_factory).GetAll().ToDictionary(
