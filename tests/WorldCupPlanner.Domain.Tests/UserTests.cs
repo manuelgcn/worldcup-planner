@@ -267,7 +267,80 @@ public class UserTests
         Assert.IsFalse(usuario.PasswordMatches("Other123@"));
     }
 
-    
+    [TestMethod]
+    public void PasswordIsStoredAsAVersionedHashWith600000Iterations()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        string[] parts = user.password.Split(':');
+        Assert.AreEqual(4, parts.Length);
+        Assert.AreEqual("v2", parts[0]);
+        Assert.AreEqual("600000", parts[1]);
+        Assert.AreEqual(ZeroSalt.Length, parts[2].Length);
+        Assert.AreEqual(ZeroHash.Length, parts[3].Length);
+    }
+
+    [TestMethod]
+    public void PasswordMatchesUsesTheIterationCountStoredWithTheHash()
+    {
+        byte[] salt = Convert.FromBase64String(ZeroSalt);
+        byte[] hash = Rfc2898DeriveBytes.Pbkdf2("Pass123@", salt, 1000, HashAlgorithmName.SHA256, 32);
+        User user = WithStoredPassword(new User(), $"v2:1000:{ZeroSalt}:{Convert.ToBase64String(hash)}");
+
+        Assert.IsTrue(user.PasswordMatches("Pass123@"));
+        Assert.IsFalse(user.PasswordMatches("Other123@"));
+    }
+
+    // Los "sal:hash" (PBKDF2, 100.000 iteraciones) de db/scripts/seed-full.sql, con las contrasenas del README.
+    [DataTestMethod]
+    [DataRow("Admin@123", "NayVITcSJcByRMrVNU74ug==:mbu4770CN/kEqP065+upgXhAC4zzKJ9smvFh25ZH5BU=")]
+    [DataRow("Admin@456", "Iaz3OUXq6gNg9ouIZreHaw==:PujOzyetnEYZf7SDY/Jqb2xfTI3+aFBGuDKXyM2X8dg=")]
+    [DataRow("Editor@123", "og79LuOs2AVfjMwwLZ5eDQ==:Wjw4utF31I4jBYRFYKB3kLYaL/u24n7YCduRyqJG9gY=")]
+    [DataRow("Editor@456", "Ysso6hoqbX/CmssIkLk/4A==:5+ZSsjQQSduSoE+SgCSRcSaY5W7g2ZPDX1bJnLD1iRA=")]
+    [DataRow("Prensa@123", "lfFxKRmCcvTS085MJYUNmQ==:MuMoDfBiRkE4VI6ZLp5QA7baQC+AdhEciP2F+C5T38w=")]
+    [DataRow("Prensa@456", "L0TnkMYvZA4rWs0Bde7htQ==:e23TJPpzaq7I27ZlX6MHGyxKPztJEFe74IrB4IcT4j4=")]
+    public void PasswordMatchesAcceptsTheSaltedHashesOfTheSeedScript(string plainTextPassword, string stored)
+    {
+        User user = WithStoredPassword(new User(), stored);
+
+        Assert.IsTrue(user.PasswordMatches(plainTextPassword));
+        Assert.IsFalse(user.PasswordMatches("Other123@"));
+    }
+
+    // Un valor guardado que no se puede leer nunca coincide, y tampoco rompe el login con una excepcion.
+    [DataTestMethod]
+    [DataRow(":")]
+    [DataRow("no-es-base64:no-es-base64")]
+    [DataRow(ZeroSalt + ":")]
+    [DataRow("v2:600000::")]
+    [DataRow("v2:600000:" + ZeroSalt + ":")]
+    [DataRow("v2:600000:" + ZeroSalt)]
+    [DataRow("v2:600000:" + ZeroSalt + ":" + ZeroHash + ":sobra")]
+    [DataRow("v2:600000:no-es-base64:" + ZeroHash)]
+    [DataRow("v3:600000:" + ZeroSalt + ":" + ZeroHash)]
+    [DataRow("v2::" + ZeroSalt + ":" + ZeroHash)]
+    [DataRow("v2:muchas:" + ZeroSalt + ":" + ZeroHash)]
+    [DataRow("v2:0:" + ZeroSalt + ":" + ZeroHash)]
+    [DataRow("v2:-1:" + ZeroSalt + ":" + ZeroHash)]
+    [DataRow("v2:99999999999:" + ZeroSalt + ":" + ZeroHash)]
+    public void PasswordMatchesReturnsFalseForAMalformedStoredValue(string stored)
+    {
+        User user = WithStoredPassword(new User(), stored);
+
+        Assert.IsFalse(user.PasswordMatches("Pass123@"));
+    }
+
+    // Con el maximo de un int derivar llevaria minutos: tiene que rechazarse sin llegar a PBKDF2.
+    [TestMethod]
+    [Timeout(5000)]
+    public void PasswordMatchesRejectsAnAbsurdIterationCountWithoutDerivingIt()
+    {
+        User user = WithStoredPassword(new User(), $"v2:{int.MaxValue}:{ZeroSalt}:{ZeroHash}");
+
+        Assert.IsFalse(user.PasswordMatches("Pass123@"));
+    }
+
+
     [TestMethod]
     public void UserStartsWithoutRoles()
     {
@@ -502,7 +575,16 @@ public class UserTests
     private static User WithLegacyHash(User user, string plainTextPassword)
     {
         string legacyHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(plainTextPassword)));
-        typeof(User).GetProperty(nameof(User.password))!.SetValue(user, legacyHash);
+        return WithStoredPassword(user, legacyHash);
+    }
+
+    // Una sal de 16 bytes y un hash de 32, todos en cero, en base64: partes bien formadas para armar valores guardados.
+    private const string ZeroSalt = "AAAAAAAAAAAAAAAAAAAAAA==";
+    private const string ZeroHash = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+
+    private static User WithStoredPassword(User user, string stored)
+    {
+        typeof(User).GetProperty(nameof(User.password))!.SetValue(user, stored);
         return user;
     }
 

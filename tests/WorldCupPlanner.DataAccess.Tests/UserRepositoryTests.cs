@@ -56,6 +56,16 @@ public class UserRepositoryTests
         Assert.IsTrue(stored.PasswordMatches("Pass123@"));
     }
 
+    // InMemory y SQLite no cortan por largo: se compara contra el largo que UserConfiguration le da a la columna.
+    [TestMethod]
+    public void ANewPasswordHashFitsThePasswordColumn()
+    {
+        using AppDbContext context = _factory.CreateDbContext();
+        int? columnLength = context.Model.FindEntityType(typeof(User))!.FindProperty(nameof(User.password))!.GetMaxLength();
+
+        Assert.IsTrue(CreateUser("juan@mail.com").password.Length <= columnLength);
+    }
+
     [TestMethod]
     public void AddPersistsUserWithRolesRetrievableFromNewContext()
     {
