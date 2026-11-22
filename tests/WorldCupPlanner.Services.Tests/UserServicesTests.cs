@@ -334,6 +334,38 @@ public class UserServicesTests
         Assert.AreEqual(1, lockingService.Authenticate("juan@mail.com", "Pass123@").idUser);
     }
 
+    [TestMethod]
+    public void Authenticate_FailuresOlderThanTheWindow_DoNotCountTowardsTheLock()
+    {
+        ManualTimeProvider clock = new ManualTimeProvider();
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), clock);
+        lockingService.AddUser(BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+        FailLogins(lockingService, "juan@mail.com", times: 4);
+
+        clock.Advance(TimeSpan.FromDays(7));
+        FailLogins(lockingService, "juan@mail.com", times: 1);
+
+        Assert.AreEqual(1, lockingService.Authenticate("juan@mail.com", "Pass123@").idUser);
+    }
+
+    // Guarda: el bloqueo dura cinco minutos desde el quinto fallo, no desde el primero.
+    [TestMethod]
+    public void Authenticate_LockLastsFiveMinutesFromTheFifthFailure()
+    {
+        ManualTimeProvider clock = new ManualTimeProvider();
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), clock);
+        lockingService.AddUser(BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+        FailLogins(lockingService, "juan@mail.com", times: 4);
+        clock.Advance(TimeSpan.FromMinutes(4));
+        FailLogins(lockingService, "juan@mail.com", times: 1);
+
+        clock.Advance(TimeSpan.FromMinutes(4));
+
+        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.Authenticate("juan@mail.com", "Pass123@"));
+        StringAssert.Contains(locked.Message, "intentos");
+    }
+
     private static void FailLogins(UserServices target, string email, int times)
     {
         for (int attempt = 0; attempt < times; attempt++)
