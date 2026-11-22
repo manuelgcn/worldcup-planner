@@ -10,6 +10,7 @@ public class User
     private const string EmailRequiredMessage = "Email es obligatorio";
     private const string EmailInvalidMessage = "Email invalido";
     private const string PasswordTooShortMessage = "La contrasena debe tener al menos 8 caracteres";
+    private const string PasswordTooLongMessage = "La contrasena no puede superar los 128 caracteres";
     private const string PasswordMissingUppercaseMessage = "La contrasena debe contener al menos una mayuscula";
     private const string PasswordMissingLowercaseMessage = "La contrasena debe contener al menos una minuscula";
     private const string PasswordMissingDigitMessage = "La contrasena debe contener al menos un numero";
@@ -25,6 +26,8 @@ public class User
     private const int NameMaxLength = 100;
     private const int LastnameMaxLength = 100;
     private const int EmailMaxLength = 254;
+    // Acota lo que una contrasena nueva le da de trabajo a las regex y a PBKDF2.
+    private const int PasswordMaxLength = 128;
     private const int PasswordSaltSize = 16;
     private const int PasswordHashSize = 32;
     private const int PasswordHashIterations = 600_000;
@@ -150,6 +153,9 @@ public class User
     {
         if (password == null || password.Length < 8)
             throw new ArgumentException(PasswordTooShortMessage);
+
+        if (password.Length > PasswordMaxLength)
+            throw new ArgumentException(PasswordTooLongMessage);
 
         if (!Regex.IsMatch(password, "[A-Z]"))
             throw new ArgumentException(PasswordMissingUppercaseMessage);
