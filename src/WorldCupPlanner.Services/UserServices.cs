@@ -21,6 +21,7 @@ public class UserServices : IUserService
     private const string TooManyFailedLoginsMessage = "Demasiados intentos fallidos. Probá de nuevo en unos minutos.";
     private const int MaxFailedLogins = 5;
     private const int LockoutMinutes = 5;
+    private const int MaxTrackedLogins = 10_000;
     private const string EmailAlreadyExistsMessage = "El email ya esta registrado";
     private const string UserIdAlreadyAssignedMessage = "El id de usuario ya esta asignado";
     private const string UserMustHaveOneRoleMessage = "El usuario debe tener al menos un rol";
@@ -158,6 +159,9 @@ public class UserServices : IUserService
     // Se cuenta también para emails inexistentes: si no, el bloqueo delataría cuáles están registrados.
     private void RegisterFailedLogin(string loginKey, DateTimeOffset now)
     {
+        if (_failedLogins.Count >= MaxTrackedLogins && !_failedLogins.ContainsKey(loginKey))
+            FreeTrackedLogin(now);
+
         DateTimeOffset expiresAt = now.AddMinutes(LockoutMinutes);
 
         _failedLogins.AddOrUpdate(
@@ -167,6 +171,23 @@ public class UserServices : IUserService
                 current.ExpiresAt <= now ? new FailedLogins(1, expiresAt)
                 : current.Count + 1 >= MaxFailedLogins ? new FailedLogins(MaxFailedLogins, expiresAt)
                 : current with { Count = current.Count + 1 });
+    }
+
+    // Sin tope, probar emails al azar haria crecer el diccionario sin limite. TryRemove compara tambien
+    // el valor, asi no se pierde una entrada que otro hilo acaba de renovar; entre hilos el tope es aproximado.
+    // shortcut: con el tope lleno de entradas vigentes se descarta la mas proxima a vencer (un bloqueo vence
+    // ultimo), asi que MaxTrackedLogins emails nuevos pueden borrar un contador real, y cada clave nueva
+    // recorre todo el diccionario; si eso llega a importar, limitar los intentos por IP antes de este servicio.
+    private void FreeTrackedLogin(DateTimeOffset now)
+    {
+        foreach (KeyValuePair<string, FailedLogins> entry in _failedLogins)
+        {
+            if (entry.Value.ExpiresAt <= now)
+                _failedLogins.TryRemove(entry);
+        }
+
+        if (_failedLogins.Count >= MaxTrackedLogins)
+            _failedLogins.TryRemove(_failedLogins.MinBy(entry => entry.Value.ExpiresAt));
     }
 
     // Vence a los LockoutMinutes del primer fallo mientras cuenta, y a los LockoutMinutes del ultimo una vez bloqueado.
