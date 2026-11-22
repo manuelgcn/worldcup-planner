@@ -389,7 +389,7 @@ public class UserServicesTests
     {
         ManualTimeProvider clock = new ManualTimeProvider();
         UserServices lockingService = new UserServices(repository, new MockAuditLogService(), clock);
-        FailLogins(lockingService, "oldest@mail.com", times: 1);
+        FailLogins(lockingService, "oldest@mail.com", times: 4);
         clock.Advance(TimeSpan.FromMinutes(1));
         FailLogins(lockingService, "locked@mail.com", times: 5);
         FailLoginOnDistinctEmails(lockingService, "random", MaxTrackedLogins - 2);
@@ -400,6 +400,12 @@ public class UserServicesTests
         UserServicesException locked = Assert.ThrowsException<UserServicesException>(
             () => lockingService.Authenticate("locked@mail.com", "Pass123@"));
         StringAssert.Contains(locked.Message, "intentos");
+
+        // Si "oldest" siguiera en memoria, este seria su quinto fallo y el intento siguiente quedaria bloqueado.
+        FailLogins(lockingService, "oldest@mail.com", times: 1);
+        UserServicesException forgotten = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.Authenticate("oldest@mail.com", "Pass123@"));
+        StringAssert.Contains(forgotten.Message, "Credenciales");
     }
 
     // La base puede resolver a la misma cuenta un email escrito distinto (aca, con una "j" de ancho completo).
