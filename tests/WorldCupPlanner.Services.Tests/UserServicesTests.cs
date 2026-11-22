@@ -375,7 +375,7 @@ public class UserServicesTests
     public void Authenticate_WhenTrackedEmailsReachTheCap_ForgetsTheExpiredOnes()
     {
         ManualTimeProvider clock = new ManualTimeProvider();
-        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), clock);
+        UserServices lockingService = new UserServices(AccountsThatFailFast("random"), new MockAuditLogService(), clock);
         FailLoginOnDistinctEmails(lockingService, "random", MaxTrackedLogins);
 
         clock.Advance(TimeSpan.FromMinutes(5));
@@ -388,7 +388,7 @@ public class UserServicesTests
     public void Authenticate_WhenTheCapIsFullOfLiveEntries_DropsTheOneClosestToExpiry()
     {
         ManualTimeProvider clock = new ManualTimeProvider();
-        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), clock);
+        UserServices lockingService = new UserServices(AccountsThatFailFast("random"), new MockAuditLogService(), clock);
         FailLogins(lockingService, "oldest@mail.com", times: 4);
         clock.Advance(TimeSpan.FromMinutes(1));
         FailLogins(lockingService, "locked@mail.com", times: 5);
@@ -439,6 +439,16 @@ public class UserServicesTests
         FailLogins(service, sharedStart + "2@mail.com", times: 1);
 
         Assert.AreEqual(1, service.TrackedLoginCount);
+    }
+
+    // Los emails que empiezan con el prefijo son cuentas con el hash vacio, que nunca coincide ni pasa por PBKDF2:
+    // asi llenar el tope con miles de emails no depende de cuanto cueste verificar una contrasena.
+    private static IUserRepository AccountsThatFailFast(string prefix)
+    {
+        Mock<IUserRepository> accounts = new Mock<IUserRepository>();
+        accounts.Setup(users => users.GetByEmail(It.Is<string>(email => email.StartsWith(prefix))))
+            .Returns((string email) => new User { email = email });
+        return accounts.Object;
     }
 
     private static void FailLoginOnDistinctEmails(UserServices target, string prefix, int emails)
