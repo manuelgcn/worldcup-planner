@@ -14,7 +14,7 @@ notifications, CSV/XLSX export and a global audit log. Draws and simulations are
 - The UI brand is **Golazo** (logo: `src/WorldCupPlanner.UI/wwwroot/img/golazo-mark.svg`); the solution, projects and namespaces keep the WorldCupPlanner name.
 - C# / .NET 8, Blazor Server UI.
 - EF Core 8 (Code-First) on Azure SQL Edge (Docker). TPH for the `Match` and `MatchIncident` hierarchies.
-- MSTest. Unit tests use the EF InMemory provider; flows that need real foreign keys use SQLite in-memory (`DataAccessTest`).
+- MSTest. Unit tests use the EF InMemory provider; flows that need real foreign keys use SQLite in-memory (`tests/WorldCupPlanner.DataAccess.Tests`, `TestDoubles/SqliteDbContextFactory.cs`).
 
 ## Solution layout
 
@@ -81,7 +81,7 @@ Follow the neighbouring file. Good references: `Team.cs`, `FixtureOrchestrator.c
 
 - Gitflow: `feature/*` from `develop`, PR to `develop`; `main` only receives releases.
 - TDD for all non-UI code: RED → GREEN → REFACTOR, one commit per step with that prefix. Other commits use `feat:`, `fix:`, `docs:`, `chore:`.
-- Before a PR: build plus all three test suites green. CI (`.github/workflows/dotnet-tests.yml`) runs them on every push and PR.
+- Before a PR: build plus all three test suites green. CI (`.github/workflows/dotnet-tests.yml`) runs them on pushes and pull requests to `main` and `develop`.
 - Never edit a committed migration; when adding a column to a seeded table, give it a `defaultValue`.
 - Do not add NuGet packages, reformat whole files or change line endings without being asked.
 
