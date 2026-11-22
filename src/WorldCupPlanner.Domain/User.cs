@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 using System.Text;
@@ -26,7 +27,12 @@ public class User
     private const int EmailMaxLength = 254;
     private const int PasswordSaltSize = 16;
     private const int PasswordHashSize = 32;
-    private const int PasswordHashIterations = 100_000;
+    private const int PasswordHashIterations = 600_000;
+    // Los "sal:hash" de antes de guardar la version se derivaron con esta cantidad.
+    private const int UnversionedHashIterations = 100_000;
+    // Tope al leer un hash guardado: con una cantidad disparatada el login quedaria derivando durante minutos.
+    private const int MaxPasswordHashIterations = 10_000_000;
+    private const string PasswordHashVersion = "v2";
     private const char PasswordSaltSeparator = ':';
     public int idUser { get; set; }
 
@@ -176,17 +182,19 @@ public class User
 
 
     
-    // Se guarda "sal:hash" en base64. La sal es aleatoria a proposito (no es un sorteo): dos
-    // usuarios con la misma contrasena no comparten hash y no sirven tablas precalculadas.
+    // Se guarda "v2:iteraciones:sal:hash", con la sal y el hash en base64; las iteraciones van en el valor
+    // para poder subirlas sin invalidar los hashes ya guardados. La sal es aleatoria a proposito (no es un
+    // sorteo): dos usuarios con la misma contrasena no comparten hash y no sirven tablas precalculadas.
     private static string HashPassword(string password)
     {
         byte[] salt = RandomNumberGenerator.GetBytes(PasswordSaltSize);
-        return Convert.ToBase64String(salt) + PasswordSaltSeparator + Convert.ToBase64String(DeriveHash(password, salt));
+        byte[] hash = DeriveHash(password, salt, PasswordHashIterations);
+        return string.Join(PasswordSaltSeparator, PasswordHashVersion, PasswordHashIterations, Convert.ToBase64String(salt), Convert.ToBase64String(hash));
     }
 
-    private static byte[] DeriveHash(string password, byte[] salt)
+    private static byte[] DeriveHash(string password, byte[] salt, int iterations)
     {
-        return Rfc2898DeriveBytes.Pbkdf2(password, salt, PasswordHashIterations, HashAlgorithmName.SHA256, PasswordHashSize);
+        return Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, PasswordHashSize);
     }
 
     // Antes se guardaba un SHA-256 sin sal (nunca contiene ':'). Se sigue aceptando para no dejar
@@ -209,13 +217,39 @@ public class User
         if (HasLegacyPasswordHash)
             return LegacyPasswordMatches(plainTextPassword);
 
-        string[] parts = password.Split(PasswordSaltSeparator);
-        if (parts.Length != 2)
-            return false;
+        return TryReadSaltedHash(out int iterations, out byte[] salt, out byte[] expectedHash)
+               && CryptographicOperations.FixedTimeEquals(expectedHash, DeriveHash(plainTextPassword, salt, iterations));
+    }
 
-        byte[] salt = Convert.FromBase64String(parts[0]);
-        byte[] expectedHash = Convert.FromBase64String(parts[1]);
-        return CryptographicOperations.FixedTimeEquals(expectedHash, DeriveHash(plainTextPassword, salt));
+    // Lee "v2:iteraciones:sal:hash" o el "sal:hash" anterior. Un valor que no se puede leer no es de nadie:
+    // devuelve false en vez de lanzar, para que el login responda credenciales invalidas.
+    private bool TryReadSaltedHash(out int iterations, out byte[] salt, out byte[] hash)
+    {
+        iterations = UnversionedHashIterations;
+        salt = new byte[PasswordSaltSize];
+        hash = new byte[PasswordHashSize];
+        string[] parts = password.Split(PasswordSaltSeparator);
+
+        if (parts.Length == 4)
+        {
+            if (parts[0] != PasswordHashVersion
+                || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out iterations)
+                || iterations < 1
+                || iterations > MaxPasswordHashIterations)
+                return false;
+        }
+        else if (parts.Length != 2)
+        {
+            return false;
+        }
+
+        return TryDecodeExactly(parts[^2], salt) && TryDecodeExactly(parts[^1], hash);
+    }
+
+    // Exige el largo exacto: con un hash vacio o mas corto la comparacion no puede darle la razon a nadie.
+    private static bool TryDecodeExactly(string base64, byte[] bytes)
+    {
+        return Convert.TryFromBase64String(base64, bytes, out int written) && written == bytes.Length;
     }
 
     private bool LegacyPasswordMatches(string plainTextPassword)
