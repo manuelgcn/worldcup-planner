@@ -146,7 +146,10 @@ public class UserServices : IUserService
         if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.IsLockedAt(now))
             throw new UserServicesException(TooManyFailedLoginsMessage);
 
-        if (user == null || !user.PasswordMatches(password))
+        // Con un email desconocido se verifica igual una contrasena: si no, la respuesta rapida delataria cuales estan registrados.
+        bool passwordMatches = user?.PasswordMatches(password) ?? User.PasswordMatchesNoAccount(password);
+
+        if (user == null || !passwordMatches)
         {
             RegisterFailedLogin(loginKey, now);
             throw new UserServicesException(InvalidCredentialsMessage);

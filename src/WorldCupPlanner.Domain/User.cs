@@ -194,7 +194,11 @@ public class User
     private static string HashPassword(string password)
     {
         byte[] salt = RandomNumberGenerator.GetBytes(PasswordSaltSize);
-        byte[] hash = DeriveHash(password, salt, PasswordHashIterations);
+        return FormatHash(salt, DeriveHash(password, salt, PasswordHashIterations));
+    }
+
+    private static string FormatHash(byte[] salt, byte[] hash)
+    {
         return string.Join(PasswordSaltSeparator, PasswordHashVersion, PasswordHashIterations, Convert.ToBase64String(salt), Convert.ToBase64String(hash));
     }
 
@@ -260,9 +264,14 @@ public class User
         return Convert.TryFromBase64String(base64, bytes, out int written) && written == bytes.Length;
     }
 
+    // Cuenta que no existe: un hash con el formato y las iteraciones de hoy, en cero, que ninguna contrasena produce.
+    private static readonly User NoAccount = new User { password = FormatHash(new byte[PasswordSaltSize], new byte[PasswordHashSize]) };
+
+    // Cuesta lo mismo que verificar la contrasena de una cuenta real y nunca coincide: es lo que el login
+    // verifica cuando el email no existe.
     public static bool PasswordMatchesNoAccount(string plainTextPassword)
     {
-        return true;
+        return NoAccount.PasswordMatches(plainTextPassword);
     }
 
     private bool UnsaltedPasswordMatches(string plainTextPassword)
