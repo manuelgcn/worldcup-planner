@@ -12,6 +12,7 @@ namespace WorldCupPlanner.Services.Tests;
 public class UserServicesTests
 {
     private const int MaxTrackedLogins = 10_000;
+    private const int MaxEmailLength = 254;
 
     private UserServices service;
     private MockUserRepository repository;
@@ -397,6 +398,17 @@ public class UserServicesTests
         UserServicesException locked = Assert.ThrowsException<UserServicesException>(
             () => lockingService.Authenticate("locked@mail.com", "Pass123@"));
         StringAssert.Contains(locked.Message, "intentos");
+    }
+
+    // Un email mas largo que el de cualquier cuenta no puede ocupar memoria sin limite como clave.
+    [TestMethod]
+    public void Authenticate_WithEmailsLongerThanAnyAccount_TracksOnlyTheirFirstCharacters()
+    {
+        string sharedStart = new string('a', MaxEmailLength);
+        FailLogins(service, sharedStart + "1@mail.com", times: 1);
+        FailLogins(service, sharedStart + "2@mail.com", times: 1);
+
+        Assert.AreEqual(1, service.TrackedLoginCount);
     }
 
     private static void FailLoginOnDistinctEmails(UserServices target, string prefix, int emails)
