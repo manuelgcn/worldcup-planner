@@ -1,6 +1,6 @@
 # TODO
 
-Work found by the backend, security, accessibility and UX audits and the PR #8 code review of November 2026 that is not done yet.
+Work found by the backend, security, accessibility and UX audits, the PR #8 code review and the authorization and input-handling audits of November 2026 that is not done yet.
 Each item says where it is and what the fix looks like. Remove an item in the same commit that fixes it.
 
 ## Correctness
@@ -26,6 +26,24 @@ Each item says where it is and what the fix looks like. Remove an item in the sa
 - **The 8-hour session expiry is only checked on restore** (`SessionState.RestoreAsync`). A tab whose circuit stays open never expires, and `LoginAsync`, which `EditUser.razor` and `Users.razor` also call after an edit, restarts the window. Fix: keep the expiry in memory, check it in `RevalidateAsync`, and add a refresh that keeps it.
 - **`RevalidateAsync` only catches `UserServicesException`.** A brief database error on any navigation now breaks the circuit. Fix: log it and keep the current user.
 - **`UserFacingError` shows every `ArgumentException` message**, so English framework messages and the "(Parameter 'name')" suffix from the domain reach users. Fix: show the message only when it was thrown from `WorldCupPlanner` code, or move the domain to its own exceptions.
+- **Mutating handlers act on the roles the page was rendered with.** Only navigation (`MainLayout`) and `Users.razor` call `Session.RevalidateAsync`, and the services check no role. A user whose role was removed, or who was deleted, in another tab can still act from a page left open: `Fixture.razor` `RunAdminActionAsync`, `Simulator.razor` `RunSimulationAsync`, `MatchResultEditor.razor` `SaveAsync`/`AddIncident`/`RemoveIncident`, `Teams.razor` `Create`/`AssignFlags`/`Remove`, `Stadium.razor` `Create`/`Remove`, `Import.razor` `OnFileSelected`, and the loads and exports of `AuditLog.razor` and `Fixture.razor` `HandleExportFixtureAsync`. Fix: one `SessionState.StillHasAnyRoleAsync(params UserRoles[])` that revalidates and checks, called first in each handler (do not reuse `IsAdmin` there: it dereferences `CurrentUser!`). Fix the `RevalidateAsync` item above in the same change, because every click will then read the user.
+- **`UserServices.AssignRole` has no system-admin guard**, unlike `RemoveRole`, `UpdateUser`, `RemoveUser` and `ToggleRole`. In `Users.razor` the rules "not the system admin" and "not your own Admin role" are only `disabled` attributes, which the browser's dev tools can remove. Fix: the same guard in `AssignRole` with a test, and an early return in `Users.razor` `ToggleRole` for one's own Admin role.
+- **Logging out does not end the user's other tabs.** `StoredSession` has no session id, so a duplicated tab (the browser copies `sessionStorage`) stays signed in after "Cerrar sesión". Fix: a session id in `StoredSession` and an in-memory set of revoked ids checked in `RestoreAsync` and `RevalidateAsync`.
+- **Notification audit rows have no actor.** `NotificationService.MarkAsRead` and `MarkAllAsRead` log through `Log`. Fix: take `performedByEmail` and use `LogPerformedBy`.
+- **`Fixture.razor` shows raw exception messages** (`ReloadState`, and the `InvalidOperationException` catch in `RunAdminActionAsync`) instead of going through `UserFacingError`: a database outage shows the SQL client text to any signed-in user.
+- **The `sa` connection string is in the base `appsettings.json`**, so a run outside Development without `ConnectionStrings__Default` connects as sysadmin with the public password instead of failing. Fix: move it to `appsettings.Development.json` and say so in the README.
+- **`DataSeeder` `Mask` only hides `Password=`.** `Pwd=`, `Password =` or a quoted password containing `;` are printed. Fix: print only `DataSource` and `InitialCatalog` from a `SqlConnectionStringBuilder`.
+- **The audit-log export has no row limit** (`ExportService.ExportAuditLog`), and any journalist can request it. Fix: cap the rows and ask for a narrower date range.
+
+## Import and validation
+
+- **The CSV import decodes invalid UTF-8 silently** (`CsvStreamTeamParser`): a Windows-1252 file saved from Excel stores "M?xico" and reports success. Fix: a strict `UTF8Encoding(false, throwOnInvalidBytes: true)` and an `ImportServiceException` ("El archivo debe estar guardado en UTF-8.") on `DecoderFallbackException`.
+- **The CSV parser is `line.Split(',')`** and always skips the first line: no quoted fields, no header check, no `;` separator. A file without a header loses its first team silently. Fix: CsvHelper's `CsvParser` (already referenced) with `DetectDelimiter`, and reject a file whose first row is data.
+- **`ImportService` accepts a number as confederation** (`Enum.TryParse` reads "3" as CONMEBOL). Fix: accept names only.
+- **The import cap is 5 MB** for a file that needs under 5 KB (`Import.razor`); a file of commas allocates millions of DTOs before the first row is validated. Fix: 256 KB.
+- **A flag upload accepts any file** (`Teams.razor` `OnFlagSelected`), and there is no screen to change a flag afterwards. Fix: check the image signature before storing it. `ImageHelper.GuessImageMimeType` also decodes the whole flag on every render to read 12 bytes: decode a 256-character prefix.
+- **Names accept control and invisible characters and punctuation-only values**, and the admin forms store them untrimmed (`Team`, `Stadium`, `User`; `Teams.razor`, `Stadium.razor`, `Users.razor`, `EditUser.razor`). Fix: reject `char.IsControl` and names that normalize to empty, and trim at the call sites as `Signup.razor` does.
+- **`Teams.razor` and `Stadium.razor` compute the id as max + 1.** Two simultaneous creates collide and the `DbUpdateException` breaks the circuit. Fix: catch `Exception` and show it through `UserFacingError`, as `Users.razor` does.
 
 ## Performance
 
