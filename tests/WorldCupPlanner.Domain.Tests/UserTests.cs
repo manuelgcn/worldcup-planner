@@ -387,6 +387,15 @@ public class UserTests
         Assert.IsFalse(user.HasLegacyPasswordHash);
     }
 
+    // Lo que el login verifica cuando el email no existe: tiene que fallar siempre, sea cual sea la contrasena.
+    [DataTestMethod]
+    [DataRow("Pass123@")]
+    [DataRow("")]
+    public void NoPasswordMatchesTheAccountThatDoesNotExist(string plainTextPassword)
+    {
+        Assert.IsFalse(User.PasswordMatchesNoAccount(plainTextPassword));
+    }
+
     // Un valor guardado que no se puede leer nunca coincide, y tampoco rompe el login con una excepcion.
     [DataTestMethod]
     [DataRow(":")]

@@ -333,6 +333,33 @@ public class UserServicesTests
         Assert.ThrowsException<UserServicesException>(() => service.Authenticate("nobody@mail.com", "Pass123@"));
     }
 
+    // Un email desconocido tiene que verse igual que una contrasena equivocada: mismo mensaje y mismo conteo.
+    [TestMethod]
+    public void Authenticate_WithUnknownEmail_FailsWithTheMessageOfAWrongPassword()
+    {
+        service.AddUser(BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+
+        UserServicesException wrongPassword = Assert.ThrowsException<UserServicesException>(
+            () => service.Authenticate("juan@mail.com", "Wrong123@"));
+        UserServicesException unknownEmail = Assert.ThrowsException<UserServicesException>(
+            () => service.Authenticate("nobody@mail.com", "Wrong123@"));
+
+        Assert.AreEqual(wrongPassword.Message, unknownEmail.Message);
+    }
+
+    [TestMethod]
+    public void Authenticate_WithUnknownEmail_CountsTheFailuresAndLocksIt()
+    {
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), new ManualTimeProvider());
+        FailLogins(lockingService, "nobody@mail.com", times: 5);
+
+        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.Authenticate("nobody@mail.com", "Pass123@"));
+
+        StringAssert.Contains(locked.Message, "intentos");
+        Assert.AreEqual(1, lockingService.TrackedLoginCount);
+    }
+
     [TestMethod]
     public void Authenticate_AfterFiveFailedAttempts_RejectsEvenTheRightPassword()
     {

@@ -260,6 +260,11 @@ public class User
         return Convert.TryFromBase64String(base64, bytes, out int written) && written == bytes.Length;
     }
 
+    public static bool PasswordMatchesNoAccount(string plainTextPassword)
+    {
+        return true;
+    }
+
     private bool UnsaltedPasswordMatches(string plainTextPassword)
     {
         string legacyHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(plainTextPassword)));
