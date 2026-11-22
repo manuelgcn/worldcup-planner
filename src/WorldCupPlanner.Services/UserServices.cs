@@ -133,13 +133,8 @@ public class UserServices : IUserService
         string loginKey = email.Trim().ToLowerInvariant();
         DateTimeOffset now = _timeProvider.GetUtcNow();
 
-        if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.LockedUntil is { } lockedUntil)
-        {
-            if (now < lockedUntil)
-                throw new UserServicesException(TooManyFailedLoginsMessage);
-
-            _failedLogins.TryRemove(loginKey, out _);
-        }
+        if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.IsLockedAt(now))
+            throw new UserServicesException(TooManyFailedLoginsMessage);
 
         User? user = _userRepository.GetByEmail(email);
 
@@ -160,15 +155,22 @@ public class UserServices : IUserService
     // Se cuenta también para emails inexistentes: si no, el bloqueo delataría cuáles están registrados.
     private void RegisterFailedLogin(string loginKey, DateTimeOffset now)
     {
+        DateTimeOffset expiresAt = now.AddMinutes(LockoutMinutes);
+
         _failedLogins.AddOrUpdate(
             loginKey,
-            _ => new FailedLogins(1, null),
-            (_, current) => current.Count + 1 >= MaxFailedLogins
-                ? new FailedLogins(0, now.AddMinutes(LockoutMinutes))
+            _ => new FailedLogins(1, expiresAt),
+            (_, current) =>
+                current.ExpiresAt <= now ? new FailedLogins(1, expiresAt)
+                : current.Count + 1 >= MaxFailedLogins ? new FailedLogins(MaxFailedLogins, expiresAt)
                 : current with { Count = current.Count + 1 });
     }
 
-    private sealed record FailedLogins(int Count, DateTimeOffset? LockedUntil);
+    // Vence a los LockoutMinutes del primer fallo mientras cuenta, y a los LockoutMinutes del ultimo una vez bloqueado.
+    private sealed record FailedLogins(int Count, DateTimeOffset ExpiresAt)
+    {
+        public bool IsLockedAt(DateTimeOffset now) => Count >= MaxFailedLogins && now < ExpiresAt;
+    }
 
     // Unica oportunidad de migrar un hash viejo: solo en el login se conoce la contrasena.
     private void UpgradeLegacyPasswordHash(User user, string password)

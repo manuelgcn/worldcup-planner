@@ -23,10 +23,9 @@ Each item says where it is and what the fix looks like. Remove an item in the sa
 - **The audit actor is an email the user can change.** Store the user id as well.
 - **The login lockout is in memory.** It resets when the app restarts and is per server; acceptable for one instance. It also has gaps (`UserServices`):
   - emails that never got locked are never removed, so trying random emails grows the dictionary without limit;
-  - failures have no time window: four last week and one today lock the account;
   - the key is `Trim().ToLowerInvariant()`, but SQL Server compares emails with its collation, so a differently written email (full-width characters, for example) may reach the account with a fresh counter. Not tested on SQL Edge.
 
-  Fix: store the time of the first failure, reset after `LockoutMinutes`, prune expired entries, and key by the stored email when the user exists.
+  Fix: prune expired entries, and key by the stored email when the user exists.
 - **The 8-hour session expiry is only checked on restore** (`SessionState.RestoreAsync`). A tab whose circuit stays open never expires, and `LoginAsync`, which `EditUser.razor` and `Users.razor` also call after an edit, restarts the window. Fix: keep the expiry in memory, check it in `RevalidateAsync`, and add a refresh that keeps it.
 - **`RevalidateAsync` only catches `UserServicesException`.** A brief database error on any navigation now breaks the circuit. Fix: log it and keep the current user.
 - **`UserFacingError` shows every `ArgumentException` message**, so English framework messages and the "(Parameter 'name')" suffix from the domain reach users. Fix: show the message only when it was thrown from `WorldCupPlanner` code, or move the domain to its own exceptions.

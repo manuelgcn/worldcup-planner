@@ -23,7 +23,7 @@ University project for *Diseño de Aplicaciones 1*, Universidad ORT Uruguay (202
 - Elo ranking recalculated after every result.
 - Roles: Admin, Editor and Journalist. Journalists are notified of match results.
 - Sessions survive reloads within a browser tab for up to eight hours; five failed logins
-  lock an email for five minutes.
+  within five minutes lock an email for five minutes.
 - CSV and XLSX export of the fixture and of the audit log, which records every change with its author and time.
 
 ## Tournament rules
