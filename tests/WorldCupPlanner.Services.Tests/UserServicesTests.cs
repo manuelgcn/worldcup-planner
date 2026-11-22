@@ -286,6 +286,38 @@ public class UserServicesTests
         Assert.IsTrue(audit.LoggedActions.Any(log => log.Action == AuditActions.UpgradePasswordHash && log.PerformedByEmail == "juan@mail.com"));
     }
 
+    // El "sal:hash" de 100.000 iteraciones de admin1@copa.com en db/scripts/seed-full.sql.
+    [TestMethod]
+    public void Authenticate_WithASaltedHashWeakerThanTheCurrentOne_UpgradesItAndAuditsTheUpgrade()
+    {
+        MockAuditLogService audit = new MockAuditLogService();
+        UserServices auditedService = new UserServices(repository, audit);
+        User user = new User { idUser = 1, email = "admin1@copa.com" };
+        typeof(User).GetProperty(nameof(User.password))!.SetValue(user, "NayVITcSJcByRMrVNU74ug==:mbu4770CN/kEqP065+upgXhAC4zzKJ9smvFh25ZH5BU=");
+        repository.Add(user);
+
+        auditedService.Authenticate("admin1@copa.com", "Admin@123");
+
+        StringAssert.StartsWith(user.password, "v2:600000:");
+        Assert.IsTrue(user.PasswordMatches("Admin@123"));
+        Assert.IsTrue(audit.LoggedActions.Any(log => log.Action == AuditActions.UpgradePasswordHash && log.PerformedByEmail == "admin1@copa.com"));
+    }
+
+    [TestMethod]
+    public void Authenticate_WithACurrentHash_LeavesItAsItIs()
+    {
+        MockAuditLogService audit = new MockAuditLogService();
+        UserServices auditedService = new UserServices(repository, audit);
+        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+        repository.Add(user);
+
+        auditedService.Authenticate("juan@mail.com", "Pass123@");
+
+        Assert.AreEqual(stored, user.password);
+        Assert.IsFalse(audit.LoggedActions.Any(log => log.Action == AuditActions.UpgradePasswordHash));
+    }
+
     [TestMethod]
     public void Authenticate_WithWrongPassword_Throws()
     {

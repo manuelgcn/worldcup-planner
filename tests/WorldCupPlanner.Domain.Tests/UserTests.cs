@@ -293,7 +293,7 @@ public class UserTests
 
     // Los "sal:hash" (PBKDF2, 100.000 iteraciones) de db/scripts/seed-full.sql, con las contrasenas del README.
     [DataTestMethod]
-    [DataRow("Admin@123", "NayVITcSJcByRMrVNU74ug==:mbu4770CN/kEqP065+upgXhAC4zzKJ9smvFh25ZH5BU=")]
+    [DataRow(SeedScriptPassword, SeedScriptHash)]
     [DataRow("Admin@456", "Iaz3OUXq6gNg9ouIZreHaw==:PujOzyetnEYZf7SDY/Jqb2xfTI3+aFBGuDKXyM2X8dg=")]
     [DataRow("Editor@123", "og79LuOs2AVfjMwwLZ5eDQ==:Wjw4utF31I4jBYRFYKB3kLYaL/u24n7YCduRyqJG9gY=")]
     [DataRow("Editor@456", "Ysso6hoqbX/CmssIkLk/4A==:5+ZSsjQQSduSoE+SgCSRcSaY5W7g2ZPDX1bJnLD1iRA=")]
@@ -305,6 +305,64 @@ public class UserTests
 
         Assert.IsTrue(user.PasswordMatches(plainTextPassword));
         Assert.IsFalse(user.PasswordMatches("Other123@"));
+    }
+
+    // Legado es todo hash mas debil que el actual, no solo el SHA-256 sin sal.
+    [TestMethod]
+    public void UpgradeLegacyPasswordHashReplacesAnUnversionedSaltedHash()
+    {
+        User user = WithStoredPassword(new User(), SeedScriptHash);
+        Assert.IsTrue(user.HasLegacyPasswordHash);
+
+        user.UpgradeLegacyPasswordHash(SeedScriptPassword);
+
+        Assert.IsFalse(user.HasLegacyPasswordHash);
+        StringAssert.StartsWith(user.password, "v2:600000:");
+        Assert.IsTrue(user.PasswordMatches(SeedScriptPassword));
+    }
+
+    [TestMethod]
+    public void UpgradeLegacyPasswordHashReplacesAVersionedHashWithFewerIterations()
+    {
+        byte[] salt = Convert.FromBase64String(ZeroSalt);
+        byte[] hash = Rfc2898DeriveBytes.Pbkdf2("Pass123@", salt, 1000, HashAlgorithmName.SHA256, 32);
+        User user = WithStoredPassword(new User(), $"v2:1000:{ZeroSalt}:{Convert.ToBase64String(hash)}");
+        Assert.IsTrue(user.HasLegacyPasswordHash);
+
+        user.UpgradeLegacyPasswordHash("Pass123@");
+
+        StringAssert.StartsWith(user.password, "v2:600000:");
+        Assert.IsTrue(user.PasswordMatches("Pass123@"));
+    }
+
+    [TestMethod]
+    public void UpgradeLegacyPasswordHashRejectsAWrongPasswordForASaltedHash()
+    {
+        User user = WithStoredPassword(new User(), SeedScriptHash);
+
+        Assert.ThrowsException<ArgumentException>(() => user.UpgradeLegacyPasswordHash("Other123@"));
+        Assert.AreEqual(SeedScriptHash, user.password);
+    }
+
+    [TestMethod]
+    public void UpgradeLegacyPasswordHashLeavesACurrentHashAsItIs()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+        Assert.IsFalse(user.HasLegacyPasswordHash);
+
+        user.UpgradeLegacyPasswordHash("Pass123@");
+
+        Assert.AreEqual(stored, user.password);
+    }
+
+    // Mas iteraciones que las actuales no es mas debil: no hay nada que mejorar.
+    [TestMethod]
+    public void AHashWithMoreIterationsThanTheCurrentOnesIsNotLegacy()
+    {
+        User user = WithStoredPassword(new User(), $"v2:700000:{ZeroSalt}:{ZeroHash}");
+
+        Assert.IsFalse(user.HasLegacyPasswordHash);
     }
 
     // Un valor guardado que no se puede leer nunca coincide, y tampoco rompe el login con una excepcion.
@@ -577,6 +635,10 @@ public class UserTests
         string legacyHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(plainTextPassword)));
         return WithStoredPassword(user, legacyHash);
     }
+
+    // admin1@copa.com en db/scripts/seed-full.sql.
+    private const string SeedScriptPassword = "Admin@123";
+    private const string SeedScriptHash = "NayVITcSJcByRMrVNU74ug==:mbu4770CN/kEqP065+upgXhAC4zzKJ9smvFh25ZH5BU=";
 
     // Una sal de 16 bytes y un hash de 32, todos en cero, en base64: partes bien formadas para armar valores guardados.
     private const string ZeroSalt = "AAAAAAAAAAAAAAAAAAAAAA==";
