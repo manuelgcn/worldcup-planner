@@ -36,6 +36,9 @@ public class UserServices : IUserService
     // Intentos fallidos por email normalizado. El servicio es singleton: el conteo vive mientras corre la app.
     private readonly ConcurrentDictionary<string, FailedLogins> _failedLogins = new();
 
+    // Cuantas claves de login se estan recordando: deja comprobar que esa memoria esta acotada.
+    public int TrackedLoginCount => _failedLogins.Count;
+
     public UserServices(IUserRepository userRepository, IAuditLogService auditLogService, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(userRepository);

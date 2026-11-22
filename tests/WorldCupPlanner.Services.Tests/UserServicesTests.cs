@@ -11,6 +11,8 @@ namespace WorldCupPlanner.Services.Tests;
 [TestClass]
 public class UserServicesTests
 {
+    private const int MaxTrackedLogins = 10_000;
+
     private UserServices service;
     private MockUserRepository repository;
 
@@ -364,6 +366,45 @@ public class UserServicesTests
         UserServicesException locked = Assert.ThrowsException<UserServicesException>(
             () => lockingService.Authenticate("juan@mail.com", "Pass123@"));
         StringAssert.Contains(locked.Message, "intentos");
+    }
+
+    [TestMethod]
+    public void Authenticate_WhenTrackedEmailsReachTheCap_ForgetsTheExpiredOnes()
+    {
+        ManualTimeProvider clock = new ManualTimeProvider();
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), clock);
+        FailLoginOnDistinctEmails(lockingService, "random", MaxTrackedLogins);
+
+        clock.Advance(TimeSpan.FromMinutes(5));
+        FailLogins(lockingService, "nobody@mail.com", times: 1);
+
+        Assert.AreEqual(1, lockingService.TrackedLoginCount);
+    }
+
+    [TestMethod]
+    public void Authenticate_WhenTheCapIsFullOfLiveEntries_DropsTheOneClosestToExpiry()
+    {
+        ManualTimeProvider clock = new ManualTimeProvider();
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), clock);
+        FailLogins(lockingService, "oldest@mail.com", times: 1);
+        clock.Advance(TimeSpan.FromMinutes(1));
+        FailLogins(lockingService, "locked@mail.com", times: 5);
+        FailLoginOnDistinctEmails(lockingService, "random", MaxTrackedLogins - 2);
+
+        FailLogins(lockingService, "nobody@mail.com", times: 1);
+
+        Assert.AreEqual(MaxTrackedLogins, lockingService.TrackedLoginCount);
+        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.Authenticate("locked@mail.com", "Pass123@"));
+        StringAssert.Contains(locked.Message, "intentos");
+    }
+
+    private static void FailLoginOnDistinctEmails(UserServices target, string prefix, int emails)
+    {
+        for (int index = 0; index < emails; index++)
+        {
+            FailLogins(target, $"{prefix}{index}@mail.com", times: 1);
+        }
     }
 
     private static void FailLogins(UserServices target, string email, int times)
