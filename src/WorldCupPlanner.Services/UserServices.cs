@@ -35,7 +35,7 @@ public class UserServices : IUserService
     private readonly IUserRepository _userRepository;
     private readonly TimeProvider _timeProvider;
 
-    // Intentos fallidos por email normalizado. El servicio es singleton: el conteo vive mientras corre la app.
+    // Intentos fallidos por clave de login (ver LoginKeyFor). El servicio es singleton: el conteo vive mientras corre la app.
     private readonly ConcurrentDictionary<string, FailedLogins> _failedLogins = new();
 
     // Cuantas claves de login se estan recordando: deja comprobar que esa memoria esta acotada.
@@ -135,13 +135,16 @@ public class UserServices : IUserService
 
     public User Authenticate(string email, string password)
     {
-        string loginKey = LoginKeyFor(email);
         DateTimeOffset now = _timeProvider.GetUtcNow();
+        User? user = _userRepository.GetByEmail(email);
+
+        // Si el email es de una cuenta se cuenta bajo su email guardado: la base puede resolver a la misma
+        // cuenta un email escrito distinto, y con la clave tipeada cada forma tendria su propio contador.
+        // Por eso la lectura va antes del bloqueo; la verificacion de la contrasena, que es lo caro, sigue despues.
+        string loginKey = LoginKeyFor(user?.email ?? email);
 
         if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.IsLockedAt(now))
             throw new UserServicesException(TooManyFailedLoginsMessage);
-
-        User? user = _userRepository.GetByEmail(email);
 
         if (user == null || !user.PasswordMatches(password))
         {
