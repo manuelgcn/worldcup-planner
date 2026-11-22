@@ -208,7 +208,7 @@ public class UserServices : IUserService
         public bool IsLockedAt(DateTimeOffset now) => Count >= MaxFailedLogins && now < ExpiresAt;
     }
 
-    // Unica oportunidad de migrar un hash viejo: solo en el login se conoce la contrasena.
+    // Unica oportunidad de reemplazar un hash mas debil que el actual: solo en el login se conoce la contrasena.
     private void UpgradeLegacyPasswordHash(User user, string password)
     {
         user.UpgradeLegacyPasswordHash(password);
@@ -216,7 +216,7 @@ public class UserServices : IUserService
 
         _auditLogService.LogPerformedBy(
             AuditActions.UpgradePasswordHash,
-            $"Password hash of UserId={user.idUser} upgraded to PBKDF2.",
+            $"Password hash of UserId={user.idUser} upgraded to the current format.",
             user.email,
             nameof(User),
             user.idUser

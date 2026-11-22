@@ -197,16 +197,18 @@ public class User
         return Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, PasswordHashSize);
     }
 
-    // Antes se guardaba un SHA-256 sin sal (nunca contiene ':'). Se sigue aceptando para no dejar
-    // afuera a las bases existentes; UserServices lo reemplaza por PBKDF2 en el primer login.
-    public bool HasLegacyPasswordHash => !password.Contains(PasswordSaltSeparator);
+    // Legado es todo hash mas debil que el actual: el SHA-256 sin sal de la primera version (nunca contiene ':'),
+    // el "sal:hash" de 100.000 iteraciones y un v2 con menos iteraciones que las de hoy. Se siguen aceptando para
+    // no dejar afuera a las bases existentes; UserServices los reemplaza en el siguiente login correcto.
+    public bool HasLegacyPasswordHash =>
+        !TryReadSaltedHash(out int iterations, out _, out _) || iterations < PasswordHashIterations;
 
     public void UpgradeLegacyPasswordHash(string plainTextPassword)
     {
         if (!HasLegacyPasswordHash)
             return;
 
-        if (!LegacyPasswordMatches(plainTextPassword))
+        if (!PasswordMatches(plainTextPassword))
             throw new ArgumentException(PasswordMismatchMessage);
 
         password = HashPassword(plainTextPassword);
@@ -214,8 +216,8 @@ public class User
 
     public bool PasswordMatches(string plainTextPassword)
     {
-        if (HasLegacyPasswordHash)
-            return LegacyPasswordMatches(plainTextPassword);
+        if (!password.Contains(PasswordSaltSeparator))
+            return UnsaltedPasswordMatches(plainTextPassword);
 
         return TryReadSaltedHash(out int iterations, out byte[] salt, out byte[] expectedHash)
                && CryptographicOperations.FixedTimeEquals(expectedHash, DeriveHash(plainTextPassword, salt, iterations));
@@ -252,7 +254,7 @@ public class User
         return Convert.TryFromBase64String(base64, bytes, out int written) && written == bytes.Length;
     }
 
-    private bool LegacyPasswordMatches(string plainTextPassword)
+    private bool UnsaltedPasswordMatches(string plainTextPassword)
     {
         string legacyHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(plainTextPassword)));
         return CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(password), Encoding.UTF8.GetBytes(legacyHash));
