@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
+using Moq;
+using WorldCupPlanner.DataAccess.Interfaces;
 using WorldCupPlanner.Domain;
 using WorldCupPlanner.Services;
 using WorldCupPlanner.Services.DTOs;
@@ -398,6 +400,28 @@ public class UserServicesTests
         UserServicesException locked = Assert.ThrowsException<UserServicesException>(
             () => lockingService.Authenticate("locked@mail.com", "Pass123@"));
         StringAssert.Contains(locked.Message, "intentos");
+    }
+
+    // La base puede resolver a la misma cuenta un email escrito distinto (aca, con una "j" de ancho completo).
+    [TestMethod]
+    public void Authenticate_WithSpellingsTheDatabaseMapsToOneAccount_SharesOneCounter()
+    {
+        const string storedEmail = "juan@mail.com";
+        const string fullWidthSpelling = "ｊuan@mail.com";
+        User user = BuildUser(1, "Juan", "Perez", storedEmail, "Pass123@", new DateTime(1990, 5, 15));
+        Mock<IUserRepository> collatingRepository = new Mock<IUserRepository>();
+        collatingRepository.Setup(users => users.GetByEmail(It.IsIn(storedEmail, fullWidthSpelling))).Returns(user);
+        UserServices lockingService = new UserServices(
+            collatingRepository.Object, new MockAuditLogService(), new ManualTimeProvider());
+        FailLogins(lockingService, storedEmail, times: 3);
+        FailLogins(lockingService, fullWidthSpelling, times: 2);
+
+        foreach (string spelling in new[] { storedEmail, fullWidthSpelling })
+        {
+            UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+                () => lockingService.Authenticate(spelling, "Pass123@"));
+            StringAssert.Contains(locked.Message, "intentos");
+        }
     }
 
     // Un email mas largo que el de cualquier cuenta no puede ocupar memoria sin limite como clave.
