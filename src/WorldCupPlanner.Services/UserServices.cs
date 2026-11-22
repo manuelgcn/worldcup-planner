@@ -187,8 +187,8 @@ public class UserServices : IUserService
 
     // Sin tope, probar emails al azar haria crecer el diccionario sin limite. TryRemove compara tambien
     // el valor, asi no se pierde una entrada que otro hilo acaba de renovar; entre hilos el tope es aproximado.
-    // shortcut: con el tope lleno de entradas vigentes se descarta la mas proxima a vencer (un bloqueo vence
-    // ultimo), asi que MaxTrackedLogins emails nuevos pueden borrar un contador real, y cada clave nueva
+    // shortcut: con el tope lleno de entradas vigentes se descarta la mas proxima a vencer, asi que
+    // MaxTrackedLogins emails nuevos pueden borrar un contador o un bloqueo real, y cada clave nueva
     // recorre todo el diccionario; si eso llega a importar, limitar los intentos por IP antes de este servicio.
     private void FreeTrackedLogin(DateTimeOffset now)
     {
