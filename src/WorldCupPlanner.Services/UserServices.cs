@@ -22,6 +22,7 @@ public class UserServices : IUserService
     private const int MaxFailedLogins = 5;
     private const int LockoutMinutes = 5;
     private const int MaxTrackedLogins = 10_000;
+    private const int MaxLoginKeyLength = 254;
     private const string EmailAlreadyExistsMessage = "El email ya esta registrado";
     private const string UserIdAlreadyAssignedMessage = "El id de usuario ya esta asignado";
     private const string UserMustHaveOneRoleMessage = "El usuario debe tener al menos un rol";
@@ -134,7 +135,7 @@ public class UserServices : IUserService
 
     public User Authenticate(string email, string password)
     {
-        string loginKey = email.Trim().ToLowerInvariant();
+        string loginKey = LoginKeyFor(email);
         DateTimeOffset now = _timeProvider.GetUtcNow();
 
         if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.IsLockedAt(now))
@@ -154,6 +155,14 @@ public class UserServices : IUserService
             UpgradeLegacyPasswordHash(user, password);
 
         return user;
+    }
+
+    // Se recorta al largo maximo de un email de cuenta: lo que sobra no puede ser de ningun usuario
+    // y, sin recortar, cada clave ocuparia tanto como el texto que mande el cliente.
+    private static string LoginKeyFor(string email)
+    {
+        string key = email.Trim().ToLowerInvariant();
+        return key.Length > MaxLoginKeyLength ? key[..MaxLoginKeyLength] : key;
     }
 
     // Se cuenta también para emails inexistentes: si no, el bloqueo delataría cuáles están registrados.
