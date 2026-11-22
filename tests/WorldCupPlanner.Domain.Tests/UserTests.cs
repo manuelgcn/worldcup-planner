@@ -202,6 +202,28 @@ public class UserTests
     }
 
     
+    // Sin tope, una contrasena enorme iria entera a PBKDF2.
+    [TestMethod]
+    public void PasswordCannotHaveMoreThan128Characters()
+    {
+        string tooLong = "Aa1@" + new string('a', 125);
+
+        ArgumentException error = Assert.ThrowsException<ArgumentException>(() =>
+            new User(1, "Juan", "Perez", "juan@mail.com", tooLong, new DateTime(1990, 5, 15)));
+
+        StringAssert.Contains(error.Message, "128");
+    }
+
+    [TestMethod]
+    public void PasswordCanHaveExactly128Characters()
+    {
+        string longest = "Aa1@" + new string('a', 124);
+
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", longest, new DateTime(1990, 5, 15));
+
+        Assert.IsTrue(user.PasswordMatches(longest));
+    }
+
     [TestMethod]
     public void PasswordIsNotStoredInPlainText()
     {
