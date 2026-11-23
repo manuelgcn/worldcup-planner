@@ -9,9 +9,7 @@ namespace WorldCupPlanner.Services;
 public class MatchService : IMatchService
 {
     private readonly IMatchRepository matchRepository;
-    private readonly ITournamentSettingsRepository tournamentSettingsRepository;
     private readonly IMatchFactory matchFactory;
-    private readonly ISimulationEngineRegistry simulationEngineRegistry;
     private readonly IAuditLogService auditLogService;
     private readonly IRankingService rankingService;
     private readonly INotificationService notificationService;
@@ -31,9 +29,7 @@ public class MatchService : IMatchService
 
     public MatchService(
         IMatchRepository matchRepository,
-        ITournamentSettingsRepository tournamentSettingsRepository,
         IMatchFactory matchFactory,
-        ISimulationEngineRegistry simulationEngineRegistry,
         IAuditLogService auditLogService,
         IRankingService rankingService,
         INotificationService notificationService,
@@ -42,9 +38,7 @@ public class MatchService : IMatchService
         ArgumentNullException.ThrowIfNull(notificationService);
         ArgumentNullException.ThrowIfNull(eliminationMatchRepository);
         this.matchRepository = matchRepository;
-        this.tournamentSettingsRepository = tournamentSettingsRepository;
         this.matchFactory = matchFactory;
-        this.simulationEngineRegistry = simulationEngineRegistry;
         this.auditLogService = auditLogService;
         this.rankingService = rankingService;
         this.notificationService = notificationService;

@@ -29,7 +29,6 @@ public sealed class MatchServiceTestContext
     
     public MockMatchRepository MatchRepository { get; } = new MockMatchRepository();
     public MockEliminationMatchRepository EliminationMatchRepository { get; } = new MockEliminationMatchRepository();
-    public MockMatchSimulationEngine SimulationEngine { get; } = new MockMatchSimulationEngine();
     public Mock<IRankingService> RankingServiceMock { get; } = new Mock<IRankingService>();
     public MockNotificationRepository NotificationRepository { get; } = new MockNotificationRepository();
     public MockUserRepository UserRepository { get; } = new MockUserRepository();
@@ -107,9 +106,7 @@ public sealed class MatchServiceTestContext
         // 2. Construimos el servicio core limpio, inyectando la fábrica y el log directamente
         Service = new MatchService(
             MatchRepository,
-            TournamentSettingsRepository,
             MatchFactory,
-            new SimulationEngineRegistry([SimulationEngine]),
             AuditLogService, // <-- Inyectado directamente en el servicio
             RankingServiceMock.Object,
             NotificationService,

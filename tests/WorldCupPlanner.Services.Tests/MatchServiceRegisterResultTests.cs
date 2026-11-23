@@ -226,7 +226,6 @@ public sealed class MatchServiceRegisterResultTests
         public MockAuditLogRepository AuditRepository { get; } = new MockAuditLogRepository();
         public MatchService Service { get; }
 
-        private readonly MockMatchSimulationEngine _engine = new MockMatchSimulationEngine();
         private readonly MockTournamentSettingsRepository _settingsRepository = new MockTournamentSettingsRepository();
 
         public Harness()
@@ -243,9 +242,7 @@ public sealed class MatchServiceRegisterResultTests
 
             Service = new MatchService(
                 MatchRepository,
-                _settingsRepository,
                 new StubMatchFactory(),
-                new SimulationEngineRegistry(new IMatchSimulationEngine[] { _engine }),
                 AuditLogService.CreateInstance(AuditRepository),
                 RankingMock.Object,
                 Notifications,
