@@ -15,6 +15,7 @@ public sealed class ExportService(
     private const string InvalidDateRangeMessage = "'desde' debe ser menor o igual que 'hasta'.";
     private const string UnauthorizedMessage = "Solo los usuarios Admin y Periodista pueden exportar datos.";
     private const string FixtureWorksheetName = "Fixture";
+    private const string IcsContentType = "text/calendar; charset=utf-8";
     private const string AuditLogWorksheetName = "AuditLog";
     private const string CsvContentType = "text/csv; charset=utf-8";
     private const string XlsxContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -38,7 +39,26 @@ public sealed class ExportService(
 
     public ExportFileDto ExportFixtureIcs(DateRange range, User requestedBy)
     {
-        return new ExportFileDto { Content = [], ContentType = string.Empty, FileName = string.Empty };
+        EnsureAuthorized(requestedBy);
+        (DateTime from, DateTime to) = NormalizeRange(range);
+
+        IEnumerable<FixtureExportRow> rows = matchRepository.GetByDateRange(from, to)
+            .OrderBy(match => match.MatchDate)
+            .ThenBy(match => match.MatchId)
+            .Select(MapFixtureRow);
+
+        // DTSTAMP es metadato del archivo (cuándo se generó), igual que la marca de tiempo de la auditoría.
+        string calendar = FixtureCalendarWriter.Write(rows, TimeProvider.System.GetUtcNow().UtcDateTime);
+        string fileName = $"fixture_{range.From:yyyyMMdd}_{range.To:yyyyMMdd}.ics";
+        ExportFileDto file = new ExportFileDto
+        {
+            // GetBytes no antepone BOM (el CSV sí lo lleva): un .ics tiene que empezar con BEGIN:VCALENDAR.
+            Content = System.Text.Encoding.UTF8.GetBytes(calendar),
+            ContentType = IcsContentType,
+            FileName = fileName
+        };
+        LogExport(AuditActions.ExportFixtureIcs, fileName, requestedBy);
+        return file;
     }
 
     public ExportFileDto ExportAuditLog(DateRange range, ExportFormat format, User requestedBy, AuditLogFilterDto? filter = null)
