@@ -130,6 +130,8 @@ public class SessionState
         CurrentUser = user;
     }
 
+    public Task<bool> StillHasAnyRoleAsync(params UserRoles[] roles) => Task.FromResult(false);
+
     public async Task LoginAsync(User user)
     {
         CurrentUser = user;

@@ -348,4 +348,73 @@ public class SessionStateTests
 
         Assert.AreEqual(0, revokedSessions.Count);
     }
+
+    [TestMethod]
+    public async Task StillHasAnyRoleAsync_WhenTheUserHasOneOfTheRoles_IsTrue()
+    {
+        SessionState session = await LoginAsync();
+
+        bool allowed = await session.StillHasAnyRoleAsync(UserRoles.Admin, UserRoles.Editor);
+
+        Assert.IsTrue(allowed);
+    }
+
+    [TestMethod]
+    public async Task StillHasAnyRoleAsync_WhenTheRoleWasRemovedSinceThePageLoaded_IsFalse()
+    {
+        SessionState session = await LoginAsync();
+        userService.Setup(service => service.GetUserById(UserId)).Returns(() => BuildUser(role: UserRoles.Periodista));
+
+        bool allowed = await session.StillHasAnyRoleAsync(UserRoles.Admin, UserRoles.Editor);
+
+        Assert.IsFalse(allowed);
+        Assert.IsTrue(session.IsLoggedIn);
+    }
+
+    [TestMethod]
+    public async Task StillHasAnyRoleAsync_WhenTheUserWasRemoved_IsFalseAndLogsOut()
+    {
+        SessionState session = await LoginAsync();
+        userService.Setup(service => service.GetUserById(UserId)).Throws(new UserServicesException("Usuario no encontrado"));
+
+        bool allowed = await session.StillHasAnyRoleAsync(UserRoles.Editor);
+
+        Assert.IsFalse(allowed);
+        Assert.IsFalse(session.IsLoggedIn);
+    }
+
+    [TestMethod]
+    public async Task StillHasAnyRoleAsync_WhenTheSessionExpired_IsFalseAndLogsOut()
+    {
+        SessionState session = await LoginAsync();
+        clock.Advance(SessionLifetime);
+
+        bool allowed = await session.StillHasAnyRoleAsync(UserRoles.Editor);
+
+        Assert.IsFalse(allowed);
+        Assert.IsFalse(session.IsLoggedIn);
+    }
+
+    [TestMethod]
+    public async Task StillHasAnyRoleAsync_WhenNobodyIsLoggedIn_IsFalse()
+    {
+        SessionState session = OpenCircuit(tab);
+
+        bool allowed = await session.StillHasAnyRoleAsync(UserRoles.Admin, UserRoles.Editor, UserRoles.Periodista);
+
+        Assert.IsFalse(allowed);
+    }
+
+    // El rol no se pudo confirmar: la sesión sigue, pero una acción protegida no se da por permitida.
+    [TestMethod]
+    public async Task StillHasAnyRoleAsync_WhenReadingTheUserFails_IsFalseAndKeepsTheSession()
+    {
+        SessionState session = await LoginAsync();
+        userService.Setup(service => service.GetUserById(UserId)).Throws(new InvalidOperationException("database unavailable"));
+
+        bool allowed = await session.StillHasAnyRoleAsync(UserRoles.Editor);
+
+        Assert.IsFalse(allowed);
+        Assert.IsTrue(session.IsLoggedIn);
+    }
 }
