@@ -855,6 +855,22 @@ public class UserServicesTests
         StringAssert.Contains(locked.Message, "intentos");
     }
 
+    [TestMethod]
+    public void ChangePassword_WhenTheAccountIsLocked_RefusesEvenTheRightPassword()
+    {
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), new ManualTimeProvider());
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+        lockingService.AddUser(user);
+        FailLogins(lockingService, "juan@mail.com", times: 5);
+
+        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.ChangePassword(2, "Pass123@", "Nueva456#"));
+
+        StringAssert.Contains(locked.Message, "intentos");
+        Assert.AreEqual(stored, user.password);
+    }
+
     private static void FailPasswordChanges(UserServices target, int userId, int times)
     {
         for (int attempt = 0; attempt < times; attempt++)
