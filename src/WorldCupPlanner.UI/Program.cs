@@ -84,6 +84,8 @@ if (settingsRepository.GetById(settingsId) is null)
 
 // Cuentas de demo: se crean solo si faltan y nunca se tocan las existentes. Antes se les reasignaba
 // el rol en cada arranque, así que quien registrara uno de estos emails quedaba como Admin o Editor.
+// Con Demo:Enabled en false no se crean (y /login no muestra sus credenciales).
+if (builder.Configuration.GetValue("Demo:Enabled", true))
 using (var scope = app.Services.CreateScope())
 {
     var userServices = scope.ServiceProvider.GetRequiredService<IUserService>();

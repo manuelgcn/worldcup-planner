@@ -6,6 +6,7 @@
 @inject SessionState Session
 @inject NavigationManager Nav
 @inject ILogger<LogIn> Logger
+@inject IConfiguration Configuration
 
 <PageTitle>Ingresar · Golazo</PageTitle>
 
@@ -62,6 +63,8 @@
             <!-- ========================= -->
             <!-- TESTEO FUNCIONAL -->
             <!-- ========================= -->
+            @if (Configuration.GetValue("Demo:Enabled", true))
+            {
             <hr />
 
             <div class="alert alert-info demo-credentials">
@@ -84,6 +87,7 @@
                     </li>
                 </ul>
             </div>
+            }
 
         </div>
     </div>
