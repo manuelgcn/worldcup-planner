@@ -122,9 +122,7 @@ public class NotificationService : INotificationService
             return;
         }
 
-        List<User> journalists = userRepository.GetAll()
-            .Where(u => u.HasRole(UserRoles.Periodista))
-            .ToList();
+        IReadOnlyCollection<User> journalists = userRepository.GetByRole(UserRoles.Periodista);
         List<Notification> notifications = messages
             .SelectMany(message => journalists.Select(journalist => new Notification(IdGeneratedByPersistence, journalist, message)))
             .ToList();

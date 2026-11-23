@@ -214,11 +214,7 @@ public class MatchService : IMatchService
 
     public IReadOnlySet<int> GetLockedKnockoutMatchIds()
     {
-        return eliminationMatchRepository.GetAll()
-            .OfType<MatchElimination>()
-            .SelectMany(next => new[] { next.MatchHome?.MatchId, next.MatchAway?.MatchId })
-            .OfType<int>()
-            .ToHashSet();
+        return eliminationMatchRepository.GetSourceMatchIds();
     }
 
     public List<MatchDto> GetByGroup(string groupName)

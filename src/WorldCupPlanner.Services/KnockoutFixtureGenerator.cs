@@ -532,11 +532,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     // Sin partidos de grupo cargados (GeneratePhase2 suelto) el R32 arranca tras StartDate.
     private DateTime LastGroupMatchDate(TournamentSettings settings)
     {
-        return _matchRepository.GetAll()
-            .OfType<MatchGroup>()
-            .Select(match => match.MatchDate)
-            .DefaultIfEmpty(settings.StartDate)
-            .Max();
+        return _matchRepository.LatestGroupMatchDate() ?? settings.StartDate;
     }
 
     private static Team WinnerOf(MatchElimination match)
@@ -677,8 +673,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
     private int NextMatchId()
     {
-        int max = _eliminationRepository.GetAll().Select(match => match.MatchId).DefaultIfEmpty(FirstNewMatchIdSeed - 1).Max();
-        return max + 1;
+        return (_eliminationRepository.MaxMatchId() ?? FirstNewMatchIdSeed - 1) + 1;
     }
 
     private static Phase PreviousPhase(Phase phase)

@@ -23,7 +23,7 @@ public class FixtureViewService(
         return new FixtureSnapshotDto
         {
             Settings = tournamentSettingsRepository.GetAll().FirstOrDefault(),
-            TeamCount = teamRepository.GetAll().Count,
+            TeamCount = teamRepository.Count(),
             Groups = groupRepository.GetAll().OrderBy(group => group.Name).ToList(),
             GroupMatches = matches.OfType<MatchGroup>().ToList(),
             EliminationMatches = matches.OfType<MatchElimination>().ToList(),
