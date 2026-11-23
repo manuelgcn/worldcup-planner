@@ -88,11 +88,12 @@ public class SessionState
 
     // MainLayout lo llama en cada navegación y las acciones de administración antes de ejecutarse: si a
     // este usuario lo borraron o le cambiaron los roles en otra pestaña, la copia en memoria se actualiza.
-    public async Task RevalidateAsync()
+    // Devuelve si se lo pudo releer y la sesión sigue siendo suya.
+    public async Task<bool> RevalidateAsync()
     {
         if (CurrentUser is null)
         {
-            return;
+            return false;
         }
 
         // Sin esto una pestaña que nunca se recarga seguiría con sesión pasadas las 8 horas, o después
@@ -100,7 +101,7 @@ public class SessionState
         if (HasEnded(session!))
         {
             await LogoutAsync();
-            return;
+            return false;
         }
 
         User user;
@@ -111,26 +112,32 @@ public class SessionState
         catch (UserServicesException)
         {
             await LogoutAsync();
-            return;
+            return false;
         }
         // Un corte breve de la base no es una baja: romper el circuito por eso dejaría la página inutilizable.
         catch (Exception ex)
         {
             logger.LogError(ex, "Could not read user {UserId} again; the session keeps its current copy.", CurrentUser.idUser);
-            return;
+            return false;
         }
 
         // Los ids se reusan si se resetea la base: con otro email es otra persona, no esta sesión.
         if (!string.Equals(user.email, CurrentUser.email, StringComparison.OrdinalIgnoreCase))
         {
             await LogoutAsync();
-            return;
+            return false;
         }
 
         CurrentUser = user;
+        return true;
     }
 
-    public Task<bool> StillHasAnyRoleAsync(params UserRoles[] roles) => Task.FromResult(false);
+    // Para las acciones que una página dejada abierta todavía ofrece: el rol pudo cambiar desde que se
+    // mostró. Si no se pudo releer al usuario, el rol que tenía no se da por vigente.
+    public async Task<bool> StillHasAnyRoleAsync(params UserRoles[] roles)
+    {
+        return await RevalidateAsync() && roles.Any(CurrentUser!.HasRole);
+    }
 
     public async Task LoginAsync(User user)
     {
