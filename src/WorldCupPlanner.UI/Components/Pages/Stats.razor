@@ -1,0 +1,246 @@
+@page "/stats"
+@using WorldCupPlanner.Domain
+@using WorldCupPlanner.Services.DTOs
+@using WorldCupPlanner.Services.Interfaces
+@inject ITournamentStatsService StatsService
+@inject SessionState Session
+@inject ILogger<Stats> Logger
+
+<PageTitle>Estadísticas · Golazo</PageTitle>
+
+<h1 class="m26-page-title">Estadísticas</h1>
+
+@if (!Session.IsLoggedIn)
+{
+    <LoginRequired />
+}
+else if (loadError is not null)
+{
+    <div class="alert alert-error" role="alert">@loadError</div>
+}
+else if (stats is null || stats.MatchesPlayed == 0)
+{
+    <div class="m26-empty">
+        <i class="bi bi-pie-chart" aria-hidden="true"></i>
+        @if (CanManageTournament)
+        {
+            <p class="mb-0">
+                Todavía no hay partidos con resultado. Cargá uno en el <a href="fixture">fixture</a>
+                o corré el <a href="simulator">simulador</a> y volvé a esta página.
+            </p>
+        }
+        else
+        {
+            <p class="mb-0">
+                Todavía no hay partidos con resultado. Las estadísticas aparecen acá apenas se juegue el primero;
+                mientras tanto podés ver el calendario en el <a href="fixture">fixture</a>.
+            </p>
+        }
+    </div>
+}
+else
+{
+    <p class="text-muted">Los números del torneo, calculados con los partidos que ya tienen resultado.</p>
+
+    <dl class="stat-tally">
+        <div class="stat-item">
+            <dt>Partidos jugados</dt>
+            <dd>@stats.MatchesPlayed</dd>
+        </div>
+        <div class="stat-item">
+            <dt>Goles</dt>
+            <dd>@stats.Goals</dd>
+        </div>
+        <div class="stat-item">
+            <dt>Goles por partido</dt>
+            <dd>@stats.GoalsPerMatch.ToString(AverageFormat)</dd>
+        </div>
+        <div class="stat-item">
+            <dt>Empates</dt>
+            <dd>@stats.Draws</dd>
+        </div>
+        <div class="stat-item">
+            <dt>Definiciones por penales</dt>
+            <dd>@stats.PenaltyShootouts</dd>
+        </div>
+        <div class="stat-item">
+            <dt>Tarjetas amarillas</dt>
+            <dd>@stats.YellowCards</dd>
+        </div>
+        <div class="stat-item">
+            <dt>Tarjetas rojas</dt>
+            <dd>@stats.RedCards</dd>
+        </div>
+    </dl>
+    <p class="text-muted stat-note">Un partido que se define por penales cuenta como empate.</p>
+
+    @if (stats.BiggestWin is not null || stats.HighestScoringMatch is not null)
+    {
+        <dl class="stat-highlights">
+            @if (stats.BiggestWin is not null)
+            {
+                <div>
+                    <dt>Mayor goleada</dt>
+                    <dd>
+                        @stats.BiggestWin.HomeTeamName
+                        <span class="m26-score">@stats.BiggestWin.HomeGoals - @stats.BiggestWin.AwayGoals</span>
+                        @stats.BiggestWin.AwayTeamName
+                    </dd>
+                </div>
+            }
+            @if (stats.HighestScoringMatch is not null)
+            {
+                <div>
+                    <dt>Partido con más goles</dt>
+                    <dd>
+                        @stats.HighestScoringMatch.HomeTeamName
+                        <span class="m26-score">@stats.HighestScoringMatch.HomeGoals - @stats.HighestScoringMatch.AwayGoals</span>
+                        @stats.HighestScoringMatch.AwayTeamName
+                    </dd>
+                </div>
+            }
+        </dl>
+    }
+
+    <div class="stat-columns">
+        @foreach (LeaderTable table in LeaderTables(stats))
+        {
+            <section class="stat-section" aria-labelledby="@table.HeadingId">
+                <h2 id="@table.HeadingId" class="pane-title">@table.Title</h2>
+                <div class="table-responsive m26-card" tabindex="0" role="region" aria-labelledby="@table.HeadingId">
+                    <table class="table m26-scoreboard mb-0">
+                        <thead>
+                            <tr>
+                                <th>Equipo</th>
+                                <th>Confederación</th>
+                                <th>Partidos</th>
+                                <th>@table.GoalsHeader</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (TeamGoalsDto team in table.Rows)
+                            {
+                                <tr>
+                                    <td>@team.TeamName</td>
+                                    <td><span class="m26-conf-badge conf-@team.Confederation">@team.Confederation</span></td>
+                                    <td>@team.MatchesPlayed</td>
+                                    <td><strong>@table.Goals(team)</strong></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
+    </div>
+
+    <section class="stat-section" aria-labelledby="confederationsTitle">
+        <h2 id="confederationsTitle" class="pane-title">Confederaciones</h2>
+        <div class="table-responsive m26-card" tabindex="0" role="region" aria-labelledby="confederationsTitle">
+            <table class="table m26-scoreboard mb-0">
+                <thead>
+                    <tr>
+                        <th>Confederación</th>
+                        <th>Equipos</th>
+                        <th>Ganados</th>
+                        <th>Empatados</th>
+                        <th>Perdidos</th>
+                        <th>Puntos por partido</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (ConfederationRecordDto record in stats.Confederations)
+                    {
+                        <tr>
+                            <td><span class="m26-conf-badge conf-@record.Confederation">@record.Confederation</span></td>
+                            <td>@record.Teams</td>
+                            <td>@record.Wins</td>
+                            <td>@record.Draws</td>
+                            <td>@record.Losses</td>
+                            <td><strong>@record.PointsPerMatch.ToString(AverageFormat)</strong></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <p class="text-muted stat-note">
+            Cuenta los equipos que ya jugaron. Un partido entre dos equipos de la misma confederación
+            suma un resultado para cada uno.
+        </p>
+    </section>
+
+    <section class="stat-section" aria-labelledby="stadiumsTitle">
+        <h2 id="stadiumsTitle" class="pane-title">Goles por estadio</h2>
+        <ul class="bar-list">
+            @foreach (StadiumStatsDto stadium in stats.Stadiums)
+            {
+                <li class="bar-row">
+                    <span class="bar-label">@stadium.StadiumName</span>
+                    <span class="bar-track" aria-hidden="true">
+                        <span class="bar-fill" style="width: @(BarPercent(stadium.Goals))%"></span>
+                    </span>
+                    <span class="bar-value">
+                        @Count(stadium.Goals, "gol", "goles") en @Count(stadium.MatchesPlayed, "partido", "partidos")
+                    </span>
+                </li>
+            }
+        </ul>
+    </section>
+}
+
+@code {
+    private const string LoadErrorMessage =
+        "No se pudieron cargar las estadísticas. Probá de nuevo en unos minutos.";
+    private const string AverageFormat = "0.00";
+    private const string AttackTitle = "Más goles a favor";
+    private const string AttackGoalsHeader = "Goles a favor";
+    private const string DefenceTitle = "Menos goles en contra";
+    private const string DefenceGoalsHeader = "Goles en contra";
+
+    private TournamentStatsDto? stats;
+    private string? loadError;
+    private int maxStadiumGoals;
+
+    private sealed record LeaderTable(
+        string HeadingId,
+        string Title,
+        string GoalsHeader,
+        IReadOnlyList<TeamGoalsDto> Rows,
+        Func<TeamGoalsDto, int> Goals);
+
+    private bool CanManageTournament =>
+        Session.CurrentUser?.HasRole(UserRoles.Admin) == true ||
+        Session.CurrentUser?.HasRole(UserRoles.Editor) == true;
+
+    protected override void OnInitialized()
+    {
+        if (!Session.IsLoggedIn)
+        {
+            return;
+        }
+
+        try
+        {
+            stats = StatsService.GetStats();
+            maxStadiumGoals = stats.Stadiums.Select(stadium => stadium.Goals).DefaultIfEmpty().Max();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while loading the tournament statistics.");
+            loadError = LoadErrorMessage;
+        }
+    }
+
+    private static LeaderTable[] LeaderTables(TournamentStatsDto stats) =>
+    [
+        new("attackTitle", AttackTitle, AttackGoalsHeader, stats.AttackLeaders, team => team.GoalsFor),
+        new("defenceTitle", DefenceTitle, DefenceGoalsHeader, stats.DefenceLeaders, team => team.GoalsAgainst)
+    ];
+
+    // Entero a proposito: un decimal con coma (cultura es) daria un width invalido en CSS.
+    private int BarPercent(int goals) =>
+        maxStadiumGoals == 0 ? 0 : (int)Math.Round(100.0 * goals / maxStadiumGoals);
+
+    private static string Count(int value, string singular, string plural) =>
+        $"{value} {(value == 1 ? singular : plural)}";
+}
