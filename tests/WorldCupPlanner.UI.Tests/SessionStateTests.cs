@@ -260,6 +260,64 @@ public class SessionStateTests
         Assert.IsTrue(reloaded.IsLoggedIn);
     }
 
+    // El hash guardado cambia con cada cambio de clave (sal nueva): es lo que distingue a las sesiones anteriores.
+    private static User BuildUserWithNewPassword()
+    {
+        User user = new User(UserId, "Ana", "Pérez", Email, "Clave@1234", new DateTime(1990, 1, 1));
+        user.AddRole(UserRoles.Editor);
+        return user;
+    }
+
+    // El cambio de contraseña existe para cortar una sesión que quedó abierta en otra máquina.
+    [TestMethod]
+    public async Task RevalidateAsync_InAnotherLoginAfterAPasswordChange_LogsOut()
+    {
+        SessionState session = await LoginAsync();
+        SessionState otherLogin = OpenCircuit(new InMemorySessionStorageJsRuntime());
+        await otherLogin.LoginAsync(BuildUser());
+        User changed = BuildUserWithNewPassword();
+        userService.Setup(service => service.GetUserById(UserId)).Returns(changed);
+
+        await session.RefreshUserAsync();
+        await session.RevalidateAsync();
+        await otherLogin.RevalidateAsync();
+
+        Assert.IsTrue(session.IsLoggedIn);
+        Assert.IsFalse(otherLogin.IsLoggedIn);
+    }
+
+    [TestMethod]
+    public async Task RestoreAsync_AfterAPasswordChangeInAnotherLogin_DiscardsTheSession()
+    {
+        await LoginAsync();
+        User changed = BuildUserWithNewPassword();
+        userService.Setup(service => service.GetUserById(UserId)).Returns(changed);
+
+        SessionState reloaded = OpenCircuit(tab);
+        await reloaded.RestoreAsync();
+
+        Assert.IsFalse(reloaded.IsLoggedIn);
+        Assert.IsTrue(tab.IsEmpty);
+    }
+
+    // La pestaña duplicada comparte el id de sesión con la que cambió la contraseña: revocarlo cerraría también esa.
+    [TestMethod]
+    public async Task RevalidateAsync_InADuplicatedTabAfterAPasswordChange_DoesNotEndTheTabThatChangedIt()
+    {
+        SessionState session = await LoginAsync();
+        SessionState duplicate = OpenCircuit(tab.CopyTab());
+        await duplicate.RestoreAsync();
+        User changed = BuildUserWithNewPassword();
+        userService.Setup(service => service.GetUserById(UserId)).Returns(changed);
+
+        await session.RefreshUserAsync();
+        await duplicate.RevalidateAsync();
+        await session.RevalidateAsync();
+
+        Assert.IsFalse(duplicate.IsLoggedIn);
+        Assert.IsTrue(session.IsLoggedIn);
+    }
+
     // La pestaña duplicada comparte el id de sesión y todavía tiene el email viejo: al descartar su copia
     // no puede cerrar la sesión de la pestaña donde el usuario se cambió el email.
     [TestMethod]
