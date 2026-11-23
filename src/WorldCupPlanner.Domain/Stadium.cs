@@ -11,6 +11,9 @@ public class Stadium
     private const string CityHasControlCharactersMessage = "La ciudad no puede tener saltos de línea ni otros caracteres de control";
     private const string DescriptionTooLongMessage = "La descripción no puede superar los 400 caracteres";
     private const int MaxDescriptionLength = 400;
+    private const int MaxNameLength = 80;
+    private const int MaxCityLength = 60;
+    private const int MinCapacity = 20000;
     private const string CapacityTooLowMessage = "La capacidad debe ser de al menos 20000";
 
     public int Id { get; set; }
@@ -37,7 +40,7 @@ public class Stadium
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException(NameRequiredMessage);
 
-        if (name.Length > 80)
+        if (name.Length > MaxNameLength)
             throw new ArgumentException(NameTooLongMessage);
 
         if (name.Any(char.IsControl))
@@ -53,7 +56,7 @@ public class Stadium
         if (string.IsNullOrWhiteSpace(city))
             throw new ArgumentException(CityRequiredMessage);
 
-        if (city.Length > 60)
+        if (city.Length > MaxCityLength)
             throw new ArgumentException(CityTooLongMessage);
 
         if (city.Any(char.IsControl))
@@ -68,7 +71,7 @@ public class Stadium
 
     private void ValidateCapacity(int capacity)
     {
-        if (capacity < 20000)
+        if (capacity < MinCapacity)
             throw new ArgumentException(CapacityTooLowMessage);
     }
 
