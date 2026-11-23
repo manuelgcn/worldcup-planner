@@ -12,8 +12,12 @@ public sealed class ExportService(
     IExporter exporter,
     IAuditLogService auditLogService) : IExportService
 {
+    // Tope de filas del export de auditoría; público para que los tests no repitan el número.
+    public const int MaxAuditLogRows = 10_000;
+
     private const string InvalidDateRangeMessage = "'desde' debe ser menor o igual que 'hasta'.";
     private const string UnauthorizedMessage = "Solo los usuarios Admin y Periodista pueden exportar datos.";
+    private const string TooManyAuditLogRowsMessage = "El registro de auditoría tiene más de {0} filas en ese rango. Elegí un rango de fechas más corto.";
     private const string FixtureWorksheetName = "Fixture";
     private const string AuditLogWorksheetName = "AuditLog";
     private const string CsvContentType = "text/csv; charset=utf-8";
@@ -42,11 +46,26 @@ public sealed class ExportService(
         (DateTime from, DateTime to) = NormalizeRange(range);
 
         // Los límites exactos del filtro (día local de la pantalla, en UTC) ganan sobre los días del rango.
-        List<AuditLogExportRow> rows = auditLogRepository.GetFiltered(filter?.From ?? from, filter?.To ?? to, filter?.Action, filter?.PerformedByEmail)
-            .Select(MapAuditLogRow)
-            .ToList();
+        // Se pide una fila de más solo para saber si el rango supera el tope: así SQL nunca devuelve el registro entero.
+        List<AuditLog> logs = auditLogRepository.GetFiltered(
+            filter?.From ?? from, filter?.To ?? to, filter?.Action, filter?.PerformedByEmail, MaxAuditLogRows + 1);
 
-        string fileName = BuildFileName("audit-log", range, format);
+        if (logs.Count > MaxAuditLogRows)
+        {
+            throw new ExportServiceException(string.Format(TooManyAuditLogRowsMessage, MaxAuditLogRows));
+        }
+
+        // Con tope el repositorio devuelve de la más nueva a la más vieja; el archivo va de la más vieja a la más nueva.
+        logs.Reverse();
+        List<AuditLogExportRow> rows = logs.Select(MapAuditLogRow).ToList();
+
+        // Sin "desde" la pantalla manda DateTime.MinValue: el nombre arranca en la fila más vieja exportada, no en 00010101.
+        // Esa fila está en UTC y "hasta" es un día local: si cae después, el nombre arranca en "hasta" para no quedar al revés.
+        DateRange namedRange = range.From.Date == DateTime.MinValue
+            ? range with { From = rows.Count > 0 && rows[0].Timestamp.Date <= range.To.Date ? rows[0].Timestamp : range.To }
+            : range;
+
+        string fileName = BuildFileName("audit-log", namedRange, format);
         ExportFileDto file = BuildFile(rows, format, AuditLogWorksheetName, fileName);
         LogExport(GetAuditLogAuditAction(format), fileName, requestedBy);
         return file;

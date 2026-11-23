@@ -19,6 +19,7 @@ public class UserServices : IUserService
 
     private const string InvalidCredentialsMessage = "Credenciales invalidas";
     private const string TooManyFailedLoginsMessage = "Demasiados intentos fallidos. Probá de nuevo en unos minutos.";
+    private const string WrongCurrentPasswordMessage = "La contraseña actual no es correcta.";
     private const int MaxFailedLogins = 5;
     private const int LockoutMinutes = 5;
     private const int MaxTrackedLogins = 10_000;
@@ -143,8 +144,7 @@ public class UserServices : IUserService
         // Por eso la lectura va antes del bloqueo; la verificacion de la contrasena, que es lo caro, sigue despues.
         string loginKey = LoginKeyFor(user?.email ?? email);
 
-        if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.IsLockedAt(now))
-            throw new UserServicesException(TooManyFailedLoginsMessage);
+        EnsureNotLocked(loginKey, now);
 
         // Con un email desconocido se verifica igual una contrasena: si no, la respuesta rapida delataria cuales estan registrados.
         bool passwordMatches = user?.PasswordMatches(password) ?? User.PasswordMatchesNoAccount(password);
@@ -169,6 +169,12 @@ public class UserServices : IUserService
     {
         string key = email.Trim().ToLowerInvariant();
         return key.Length > MaxLoginKeyLength ? key[..MaxLoginKeyLength] : key;
+    }
+
+    private void EnsureNotLocked(string loginKey, DateTimeOffset now)
+    {
+        if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.IsLockedAt(now))
+            throw new UserServicesException(TooManyFailedLoginsMessage);
     }
 
     // Se cuenta también para emails inexistentes: si no, el bloqueo delataría cuáles están registrados.
@@ -291,6 +297,7 @@ public class UserServices : IUserService
             throw new UserServicesException(EmailAlreadyExistsMessage);
 
         User user = GetUserById(id);
+        string oldLoginKey = LoginKeyFor(user.email);
 
         // Quien edita su propia cuenta: tras guardar, su email anterior ya no resuelve a su id en la auditoria.
         bool isOwnAccount = string.Equals(performedByEmail?.Trim(), user.email, StringComparison.OrdinalIgnoreCase);
@@ -298,6 +305,13 @@ public class UserServices : IUserService
         user.UpdatePersonalData(name, lastname, email);
 
         _userRepository.Update(user);
+
+        // El contador sigue a la cuenta: si quedara bajo el email viejo, cambiar el email (que no pide
+        // contrasena) daria intentos nuevos y levantaria un bloqueo.
+        string newLoginKey = LoginKeyFor(user.email);
+
+        if (newLoginKey != oldLoginKey && _failedLogins.TryRemove(oldLoginKey, out FailedLogins? failed))
+            _failedLogins[newLoginKey] = failed;
 
         _auditLogService.LogPerformedBy(
             AuditActions.UpdateUser,
@@ -308,8 +322,44 @@ public class UserServices : IUserService
         );
     }
 
+    // La contrasena actual se pide aunque haya sesion, y sus fallos cuentan para el mismo bloqueo que el login:
+    // si no, una sesion abierta en una maquina ajena alcanzaria para adivinarla sin limite o quedarse con la cuenta.
+    public void ChangePassword(int userId, string currentPassword, string newPassword)
+    {
+        if (userId == SystemAdminUserId)
+            throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
+
+        User user = GetUserById(userId);
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        string loginKey = LoginKeyFor(user.email);
+
+        EnsureNotLocked(loginKey, now);
+
+        if (!user.PasswordMatches(currentPassword))
+        {
+            RegisterFailedLogin(loginKey, now);
+            throw new UserServicesException(WrongCurrentPasswordMessage);
+        }
+
+        _failedLogins.TryRemove(loginKey, out _);
+
+        user.ChangePassword(currentPassword, newPassword);
+        _userRepository.Update(user);
+
+        _auditLogService.LogPerformedBy(
+            AuditActions.ChangePassword,
+            $"Password of UserId={user.idUser} changed.",
+            user.email,
+            nameof(User),
+            user.idUser
+        );
+    }
+
     public void AssignRole(int userId, UserRoles role, string? performedByEmail = null)
     {
+        if (userId == SystemAdminUserId)
+            throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
+
         User user = GetUserById(userId);
 
         user.AddRole(role);

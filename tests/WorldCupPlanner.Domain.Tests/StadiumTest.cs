@@ -79,6 +79,50 @@ public class StadiumTest
             stadium.Update("Ciudad", longDescription, 30000));
     }
 
+    [DataTestMethod]
+    [DataRow("Estadio\nCentenario")]
+    [DataRow("Estadio\u0000")]
+    public void StadiumNameCannotHaveControlCharacters(string name)
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Stadium(name, "Ciudad", "Descripcion", 30000));
+    }
+
+    [DataTestMethod]
+    [DataRow("---")]
+    [DataRow("​")]
+    public void StadiumNameMustHaveALetterOrDigit(string name)
+    {
+        // Solo signos se normaliza a "": la unicidad por nombre normalizado los trataria como el mismo estadio.
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Stadium(name, "Ciudad", "Descripcion", 30000));
+    }
+
+    [TestMethod]
+    public void StadiumCityCannotHaveControlCharacters()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Stadium("Estadio", "Monte\tvideo", "Descripcion", 30000));
+    }
+
+    [TestMethod]
+    public void StadiumUpdateRejectsCityWithControlCharacters()
+    {
+        Stadium stadium = new Stadium("Estadio", "Ciudad", "Descripcion", 30000);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            stadium.Update("Ciu\ndad", "Descripcion", 30000));
+    }
+
+    [TestMethod]
+    public void StadiumAcceptsSignsInsideARealNameAndCity()
+    {
+        Stadium stadium = new Stadium("AT&T Stadium", "St. John's", null, 80000);
+
+        Assert.AreEqual("AT&T Stadium", stadium.Name);
+        Assert.AreEqual("St. John's", stadium.City);
+    }
+
     [TestMethod]
     public void StadiumAcceptsDescriptionOfFourHundredCharacters()
     {

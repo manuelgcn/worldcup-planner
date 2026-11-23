@@ -180,6 +180,86 @@ public sealed class ExportServiceTests
     }
 
     [TestMethod]
+    public void ExportAuditLogRejectsMoreRowsThanTheCapAndAsksForANarrowerRange()
+    {
+        // Cualquier periodista puede pedir el export: sin tope, el registro entero se arma en memoria.
+        SeedAuditRows(ExportService.MaxAuditLogRows + 1);
+        User journalist = BuildUser(UserRoles.Periodista);
+        DateTime today = DateTime.UtcNow.Date;
+
+        ExportServiceException ex = Assert.ThrowsException<ExportServiceException>(() =>
+            _service.ExportAuditLog(new DateRange(today, today), ExportFormat.Csv, journalist));
+
+        StringAssert.Contains(ex.Message, "rango de fechas");
+        Assert.IsFalse(_auditRepository.GetAll().Any(log => log.Action == AuditActions.ExportAuditCsv));
+    }
+
+    [TestMethod]
+    public void ExportAuditLogAtTheCapExportsEveryRowOldestFirst()
+    {
+        _auditRepository.Seed(AuditLog.Create("ACTION", "oldest row"));
+        SeedAuditRows(ExportService.MaxAuditLogRows - 2);
+        _auditRepository.Seed(AuditLog.Create("ACTION", "newest row"));
+        User admin = BuildUser(UserRoles.Admin);
+        DateTime today = DateTime.UtcNow.Date;
+
+        ExportFileDto result = _service.ExportAuditLog(new DateRange(today, today), ExportFormat.Csv, admin);
+        string csv = System.Text.Encoding.UTF8.GetString(result.Content);
+
+        int header = 1;
+        Assert.AreEqual(ExportService.MaxAuditLogRows + header, csv.Split('\n', StringSplitOptions.RemoveEmptyEntries).Length);
+        Assert.IsTrue(csv.IndexOf("oldest row", StringComparison.Ordinal) < csv.IndexOf("newest row", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void ExportAuditLogWithoutStartIsNamedAfterTheOldestExportedRow()
+    {
+        // La pantalla manda DateTime.MinValue cuando "Desde" esta vacio y la lista llego a su tope:
+        // el archivo se llamaba audit-log_00010101_...
+        _auditRepository.Seed(AuditLog.Create("ACTION", "Det"));
+        User admin = BuildUser(UserRoles.Admin);
+        DateTime today = DateTime.UtcNow.Date;
+
+        ExportFileDto result = _service.ExportAuditLog(new DateRange(DateTime.MinValue, today), ExportFormat.Csv, admin);
+
+        Assert.AreEqual($"audit-log_{today:yyyyMMdd}_{today:yyyyMMdd}.csv", result.FileName);
+        StringAssert.Contains(_auditRepository.GetAll().Single(log => log.Action == AuditActions.ExportAuditCsv).Details, result.FileName);
+    }
+
+    [TestMethod]
+    public void ExportAuditLogWithoutStartAndWithoutRowsIsNamedAfterTheEndDate()
+    {
+        User admin = BuildUser(UserRoles.Admin);
+
+        ExportFileDto result = _service.ExportAuditLog(new DateRange(DateTime.MinValue, Date(30)), ExportFormat.Csv, admin);
+
+        Assert.AreEqual("audit-log_20260630_20260630.csv", result.FileName);
+    }
+
+    [TestMethod]
+    public void ExportAuditLogWithoutStartIsNeverNamedWithAStartAfterItsEnd()
+    {
+        // El filtro de la pantalla va en UTC y el rango en dias locales: al oeste de UTC la fila mas vieja puede
+        // caer en el dia UTC siguiente al "Hasta", y el nombre quedaba al reves.
+        _auditRepository.Seed(AuditLog.Create("ACTION", "Det"));
+        User admin = BuildUser(UserRoles.Admin);
+        DateTime yesterday = DateTime.UtcNow.Date.AddDays(-1);
+        AuditLogFilterDto filter = new AuditLogFilterDto { To = DateTime.UtcNow.AddDays(1) };
+
+        ExportFileDto result = _service.ExportAuditLog(new DateRange(DateTime.MinValue, yesterday), ExportFormat.Csv, admin, filter);
+
+        Assert.AreEqual($"audit-log_{yesterday:yyyyMMdd}_{yesterday:yyyyMMdd}.csv", result.FileName);
+    }
+
+    private void SeedAuditRows(int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            _auditRepository.Seed(AuditLog.Create("ACTION", "filler"));
+        }
+    }
+
+    [TestMethod]
     public void ExportRecordsRequesterAsStructuredActor()
     {
         User admin = BuildUser(UserRoles.Admin);

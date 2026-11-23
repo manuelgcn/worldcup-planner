@@ -429,6 +429,78 @@ public class UserTests
         Assert.IsFalse(user.PasswordMatches("Pass123@"));
     }
 
+    [TestMethod]
+    public void ChangePasswordStoresTheNewPasswordAsACurrentHash()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        user.ChangePassword("Pass123@", "Nueva456#");
+
+        StringAssert.StartsWith(user.password, "v2:600000:");
+        Assert.IsTrue(user.PasswordMatches("Nueva456#"));
+        Assert.IsFalse(user.PasswordMatches("Pass123@"));
+    }
+
+    // Cambiar la contrasena tambien deja atras un hash mas debil que el actual.
+    [TestMethod]
+    public void ChangePasswordReplacesALegacyHash()
+    {
+        User user = WithStoredPassword(new User(), SeedScriptHash);
+
+        user.ChangePassword(SeedScriptPassword, "Nueva456#");
+
+        Assert.IsFalse(user.HasLegacyPasswordHash);
+        Assert.IsTrue(user.PasswordMatches("Nueva456#"));
+    }
+
+    [TestMethod]
+    public void ChangePasswordRejectsAWrongCurrentPassword()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+
+        Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Other123@", "Nueva456#"));
+        Assert.AreEqual(stored, user.password);
+    }
+
+    [DataTestMethod]
+    [DataRow("Nu1#")]
+    [DataRow("nueva456#")]
+    [DataRow("NUEVA456#")]
+    [DataRow("Nuevaaaa#")]
+    [DataRow("Nueva4567")]
+    public void ChangePasswordRejectsANewPasswordThatBreaksThePolicy(string newPassword)
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+
+        Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Pass123@", newPassword));
+        Assert.AreEqual(stored, user.password);
+    }
+
+    [TestMethod]
+    public void ChangePasswordRejectsANewPasswordLongerThan128Characters()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+        string tooLong = "Aa1@" + new string('a', 125);
+
+        ArgumentException error = Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Pass123@", tooLong));
+
+        StringAssert.Contains(error.Message, "128");
+        Assert.AreEqual(stored, user.password);
+    }
+
+    [TestMethod]
+    public void ChangePasswordRejectsANewPasswordEqualToTheCurrentOne()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+
+        Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Pass123@", "Pass123@"));
+        Assert.AreEqual(stored, user.password);
+    }
+
 
     [TestMethod]
     public void UserStartsWithoutRoles()
@@ -718,5 +790,35 @@ public class UserTests
         User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15));
 
         Assert.ThrowsException<ArgumentException>(() => user.UpdatePersonalData(" ", "Perez", "juan@mail.com"));
+    }
+
+    [DataTestMethod]
+    [DataRow("Ju\nan", "Perez")]
+    [DataRow("Juan\u0000", "Perez")]
+    [DataRow("Juan", "Pe\trez")]
+    [DataRow("Juan", "Perez\u0085")]
+    public void User_WithControlCharacterInNameOrLastname_Throws(string name, string lastname)
+    {
+        Assert.ThrowsException<ArgumentException>(
+            () => new User(1, name, lastname, "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15)));
+    }
+
+    [TestMethod]
+    public void UpdatePersonalData_WithControlCharacterInName_ThrowsAndKeepsTheName()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15));
+
+        Assert.ThrowsException<ArgumentException>(() => user.UpdatePersonalData("Ju\ran", "Perez", "juan@mail.com"));
+
+        Assert.AreEqual("Juan", user.name);
+    }
+
+    [TestMethod]
+    public void User_WithSignsInsideARealName_IsCreated()
+    {
+        User user = new User(1, "María José", "O'Connor-Núñez", "maria@mail.com", "Pass1234@", new DateTime(1990, 5, 15));
+
+        Assert.AreEqual("María José", user.name);
+        Assert.AreEqual("O'Connor-Núñez", user.lastname);
     }
 }

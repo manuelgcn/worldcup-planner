@@ -1,5 +1,6 @@
 using WorldCupPlanner.DataAccess;
 using WorldCupPlanner.DataAccess.Interfaces;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using WorldCupPlanner.Domain;
@@ -32,7 +33,7 @@ public static class Program
             : DefaultConnectionString;
 
         Console.WriteLine("== WorldCupPlanner 2026 — DataSeeder ==");
-        Console.WriteLine($"Conexion: {Mask(connectionString)}");
+        Console.WriteLine($"Conexion: {DescribeTarget(connectionString)}");
 
         ServiceProvider provider = BuildServiceProvider(connectionString);
 
@@ -190,16 +191,11 @@ public static class Program
         Console.WriteLine($"  Audit logs:     {context.AuditLogs.Count()}");
     }
 
-    private static string Mask(string connectionString)
+    // Solo el servidor y la base. Enmascarar "Password=" dejaba pasar "Pwd=", "Password =" y una clave
+    // entre comillas con ';'; cualquier otra clave de la cadena tambien puede llevar credenciales.
+    private static string DescribeTarget(string connectionString)
     {
-        int idx = connectionString.IndexOf("Password=", StringComparison.OrdinalIgnoreCase);
-        if (idx < 0)
-        {
-            return connectionString;
-        }
-
-        int end = connectionString.IndexOf(';', idx);
-        string tail = end < 0 ? string.Empty : connectionString[end..];
-        return connectionString[..idx] + "Password=***" + tail;
+        SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
+        return $"servidor {builder.DataSource}, base {builder.InitialCatalog}";
     }
 }

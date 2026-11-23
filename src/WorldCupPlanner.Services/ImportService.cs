@@ -123,7 +123,8 @@ public sealed class ImportService : IImportService
 
     private static void ValidateName(string name, int rowNumber)
     {
-        if (string.IsNullOrWhiteSpace(name) || name.Length > MaxNameLength)
+        // Las mismas reglas que Team, repetidas aca para poder decir en que fila esta el nombre rechazado.
+        if (name.Length > MaxNameLength || name.Any(char.IsControl) || TextNormalizer.Normalize(name).Length == 0)
         {
             ThrowInvalidTeamName(rowNumber);
         }
@@ -131,12 +132,13 @@ public sealed class ImportService : IImportService
 
     private static Confederation ParseConfederation(string confederationText, int rowNumber)
     {
-        if (!Enum.TryParse(confederationText, ignoreCase: true, out Confederation confederation) || !Enum.IsDefined(confederation))
+        // Solo el nombre: Enum.TryParse tambien acepta numeros ("3" es CONMEBOL) y listas ("AFC,CAF" es CAF).
+        if (!Enum.GetNames<Confederation>().Contains(confederationText, StringComparer.OrdinalIgnoreCase))
         {
             ThrowInvalidConfederation(rowNumber);
         }
 
-        return confederation;
+        return Enum.Parse<Confederation>(confederationText, ignoreCase: true);
     }
 
     private static int ParseRanking(string rankingText, int rowNumber)

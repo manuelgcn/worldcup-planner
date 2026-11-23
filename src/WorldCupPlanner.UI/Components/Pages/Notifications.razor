@@ -88,14 +88,14 @@ else
 
     private void MarkNotificationAsRead(int notificationId)
     {
-        NotificationService.MarkAsRead(notificationId, Session.CurrentUser!.idUser);
+        NotificationService.MarkAsRead(notificationId, Session.CurrentUser!.idUser, Session.CurrentUser.email);
         LoadUnreadNotifications();
         Session.Refresh();
     }
 
     private void MarkAllNotificationsAsRead()
     {
-        NotificationService.MarkAllAsRead(Session.CurrentUser!.idUser);
+        NotificationService.MarkAllAsRead(Session.CurrentUser!.idUser, Session.CurrentUser.email);
         LoadUnreadNotifications();
         Session.Refresh();
     }

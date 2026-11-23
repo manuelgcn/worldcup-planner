@@ -70,6 +70,45 @@
             }
         </div>
     </div>
+
+    @if (Session.IsLoggedIn)
+    {
+        <div class="m26-card auth-card">
+            <div class="auth-body">
+                <h2 class="pane-title">Cambiar contraseña</h2>
+
+                @if (Session.CurrentUser!.idUser == SystemAdminUserId)
+                {
+                    <p class="mb-0">La contraseña del administrador del sistema no se puede cambiar.</p>
+                }
+                else
+                {
+                    <FeedbackAlerts Errors="passwordErrors" SuccessMessage="@passwordSuccessMessage" />
+
+                    <form @onsubmit="ChangePassword">
+                        <div class="mb-3">
+                            <label class="form-label" for="currentPassword">Contraseña actual</label>
+                            <input id="currentPassword" class="form-control" type="password" autocomplete="current-password"
+                                   @bind="currentPassword" @bind:event="oninput" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="newPassword">Contraseña nueva</label>
+                            <input id="newPassword" class="form-control" type="password" autocomplete="new-password"
+                                   aria-describedby="newPasswordHelp" @bind="newPassword" @bind:event="oninput" />
+                            <div id="newPasswordHelp" class="form-text">De 8 a 128 caracteres, con mayúscula, minúscula, número y símbolo.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="repeatNewPassword">Repetir contraseña nueva</label>
+                            <input id="repeatNewPassword" class="form-control" type="password" autocomplete="new-password"
+                                   @bind="repeatNewPassword" @bind:event="oninput" />
+                        </div>
+
+                        <button class="btn btn-primary w-100" type="submit">Cambiar contraseña</button>
+                    </form>
+                }
+            </div>
+        </div>
+    }
 </section>
 
 @code {
@@ -136,5 +175,55 @@
             errors.Add("El email no es válido.");
 
         return !errors.Any();
+    }
+
+    // Mismo id reservado que UserServices: el servicio rechaza cambiarle la contraseña a esa cuenta.
+    private const int SystemAdminUserId = 1;
+    private const string MissingCurrentPasswordMessage = "Ingresá tu contraseña actual.";
+    private const string MissingNewPasswordMessage = "Ingresá la contraseña nueva.";
+    private const string NewPasswordsDoNotMatchMessage = "Las dos contraseñas nuevas no coinciden.";
+    private const string PasswordChangedMessage = "Contraseña cambiada correctamente.";
+
+    private string currentPassword = "";
+    private string newPassword = "";
+    private string repeatNewPassword = "";
+    private string? passwordSuccessMessage;
+    private readonly List<string> passwordErrors = new List<string>();
+
+    private void ChangePassword()
+    {
+        passwordErrors.Clear();
+        passwordSuccessMessage = null;
+
+        // Se revisa antes de llamar al servicio: un error de tipeo al repetir no tiene que contar como intento fallido.
+        if (Session.CurrentUser is null || !ValidatePasswordInput())
+            return;
+
+        try
+        {
+            UserServices.ChangePassword(Session.CurrentUser.idUser, currentPassword, newPassword);
+
+            currentPassword = "";
+            newPassword = "";
+            repeatNewPassword = "";
+            passwordSuccessMessage = PasswordChangedMessage;
+        }
+        catch (Exception ex)
+        {
+            passwordErrors.Add(UserFacingError.MessageFor(ex, Logger));
+        }
+    }
+
+    private bool ValidatePasswordInput()
+    {
+        if (string.IsNullOrEmpty(currentPassword))
+            passwordErrors.Add(MissingCurrentPasswordMessage);
+
+        if (string.IsNullOrEmpty(newPassword))
+            passwordErrors.Add(MissingNewPasswordMessage);
+        else if (newPassword != repeatNewPassword)
+            passwordErrors.Add(NewPasswordsDoNotMatchMessage);
+
+        return !passwordErrors.Any();
     }
 }
