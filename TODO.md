@@ -48,7 +48,6 @@ Each item says where it is and what the fix looks like. Remove an item in the sa
 - Untested in the browser: the 0-0 confirmation checkbox, the "Regenerar fixture" confirmation, the simulator's "no fixture yet" notice, the role-based hints, the knockout dates with non-default settings, the knockout rows of the team profile, a session ending in an open or a duplicated tab (covered with a manual clock in `SessionStateTests`), the "No se pudo confirmar que tengas permiso…" message, the `.ics` file in a calendar client, `prefers-reduced-motion`, and motion and print outside Chromium. Run them on a fresh database.
 - The fixture export keeps a stale "Hasta" date: `Fixture.razor` `ReloadState` sets `exportToDate ??=` once, so a page opened before the fixture existed exports only the start date until it is reloaded. Fix: recompute the default range when the fixture is generated or deleted.
 - Keyboard and contrast gaps: the reconnect notice does not make the page behind it inert (`App.razor`, `reconnect.js`); the yellow bar of the current stage on the home page has 1.5:1 against the day background (`Home.razor.css`, `.stage.current::before`; the bold label carries the state); the forecast figures on `/matches` are only in the `title` and the hidden text (`MatchForecast.razor`), so touch users see the bar without numbers.
-- `docs/screenshots/bracket.png` predates the bracket tree and the knockout calendar: retake it on a re-seeded database.
 
 ## Operations
 
