@@ -14,9 +14,9 @@ University project for *Diseño de Aplicaciones 1*, Universidad ORT Uruguay (202
 
 ## Highlights
 
-- **1,255 automated tests and about 97% line coverage** (migrations, Razor components and
+- **1,258 automated tests and about 97% line coverage** (migrations, Razor components and
   `Program.cs` excluded), as of November 2026: 408 on the domain, 606 on the services, 164 on
-  data access and 77 on the UI's helper classes. They run in CI and need no database.
+  data access and 80 on the UI's helper classes. They run in CI and need no database.
 - **Written with TDD.** The history has one commit per RED, GREEN and REFACTOR step.
 - **Layered architecture.** The UI only presents, the services hold the use cases, and the
   domain depends on nothing.
@@ -68,8 +68,8 @@ University project for *Diseño de Aplicaciones 1*, Universidad ORT Uruguay (202
   count (600,000 today); an older hash is replaced on its owner's next login. Five failed
   logins within five minutes lock an email for five minutes.
 - A session survives reloads within a browser tab for up to eight hours. Logging out revokes it,
-  in duplicated tabs too, and the user's roles are read again from the database before every
-  action that changes or exports data.
+  in duplicated tabs too, changing the password ends the account's other sessions, and the
+  user's roles are read again from the database before every action that changes or exports data.
 - Every response carries security headers and a Content-Security-Policy that only lets scripts
   load from the app itself (`src/WorldCupPlanner.UI/SecurityHeaders.cs`).
 - The CSV import refuses a file that is not valid UTF-8 or has no header row, and a flag upload

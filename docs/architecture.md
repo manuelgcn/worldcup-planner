@@ -144,7 +144,8 @@ relation to `User`, so the log survives a deleted user.
   The UI shows the message of a WorldCupPlanner exception and, through `UserFacingError`,
   replaces any other with a generic one that is logged.
 - **Session and authorization.** `SessionState` (one per circuit) keeps the user id, email, a
-  session id and an 8-hour expiry in `ProtectedSessionStorage`. `Routes` restores it,
+  session id, a digest of the stored password hash and an 8-hour expiry in
+  `ProtectedSessionStorage`, so a password change ends the account's other sessions. `Routes` restores it,
   `MainLayout` revalidates it on every navigation, and every handler that changes or exports
   data reads the user's roles again first (`StillHasAnyRoleAsync`). Logging out adds the
   session id to `RevokedSessions`, a singleton kept in memory. Authorization lives in the UI:

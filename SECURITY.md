@@ -41,7 +41,7 @@ Known weaknesses that are already tracked are listed under "Security" in [TODO.m
   Protection, with an eight-hour expiry. On every navigation, and again before every action
   that changes or exports data, the app checks the expiry, whether that session was closed from
   another tab, and the user's current roles in the database, so a deleted user or a removed
-  role takes effect there.
+  role takes effect there. Changing the password ends the account's other sessions.
 - **Roles**: public sign-up only creates journalists, and the demo accounts are created only
   when they are missing; existing accounts are never modified at startup.
 - **Database access** goes through EF Core queries only; the application builds no SQL text.
