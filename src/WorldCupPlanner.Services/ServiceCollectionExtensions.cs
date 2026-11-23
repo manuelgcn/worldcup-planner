@@ -47,6 +47,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IMatchService, MatchService>();
         services.AddSingleton<IMatchQueryService, MatchQueryService>();
         services.AddSingleton<ITournamentDashboardService, TournamentDashboardService>();
+        services.AddSingleton<ITournamentStatsService, TournamentStatsService>();
         services.AddSingleton<ISimulationConfigurationService, SimulationConfigurationService>();
         services.AddSingleton<IFixtureViewService, FixtureViewService>();
         services.AddSingleton<IKnockoutFixtureGenerator, KnockoutFixtureGenerator>();
