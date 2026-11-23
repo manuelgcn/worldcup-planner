@@ -804,6 +804,12 @@ public class UserServicesTests
     }
 
     [TestMethod]
+    public void ChangePassword_UserThatDoesNotExist_Throws()
+    {
+        Assert.ThrowsException<UserServicesException>(() => service.ChangePassword(99, "Pass123@", "Nueva456#"));
+    }
+
+    [TestMethod]
     public void RemoveRole_SystemAdmin_Throws()
     {
         Assert.ThrowsException<UserServicesException>(() =>
