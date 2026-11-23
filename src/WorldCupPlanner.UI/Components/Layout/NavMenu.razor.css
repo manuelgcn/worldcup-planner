@@ -3,17 +3,17 @@
     cursor: pointer;
     width: 3rem;
     height: 2.35rem;
-    color: white;
+    color: var(--m26-on-pitch);
     position: absolute;
     top: 1rem;
     right: 1rem;
-    border: 1px solid rgba(255, 255, 255, .25);
+    border: 1px solid color-mix(in srgb, var(--m26-on-pitch) 25%, transparent);
     border-radius: var(--m26-radius-sm);
     background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.5rem transparent;
 }
 
 .navbar-toggler[aria-expanded="true"] {
-    background-color: rgba(255, 255, 255, .15);
+    background-color: color-mix(in srgb, var(--m26-on-pitch) 15%, transparent);
 }
 
 .top-row {
@@ -36,7 +36,7 @@
 .brand-sub {
     margin-top: .25rem;
     font-size: .78rem;
-    color: rgba(255, 255, 255, .7);
+    color: color-mix(in srgb, var(--m26-on-pitch) 70%, transparent);
 }
 
 .brand-mark {
@@ -51,7 +51,7 @@
     font-stretch: 72%;
     font-weight: 800;
     font-size: 1.7rem;
-    color: var(--m26-surface);
+    color: var(--m26-on-pitch);
 }
 
 .brand-wrap:hover .navbar-brand {
@@ -62,7 +62,7 @@
     padding: 1.1rem 1.25rem .35rem;
     font-size: .8rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, .6);
+    color: color-mix(in srgb, var(--m26-on-pitch) 60%, transparent);
 }
 
 .nav-item {
@@ -79,7 +79,7 @@
 }
 
 .nav-item ::deep .nav-link {
-    color: rgba(255, 255, 255, .82);
+    color: color-mix(in srgb, var(--m26-on-pitch) 82%, transparent);
     background: transparent;
     border: none;
     border-radius: var(--m26-radius-sm);
@@ -98,8 +98,8 @@
 }
 
 .nav-item ::deep .nav-link:hover {
-    background-color: rgba(255, 255, 255, .08);
-    color: var(--m26-surface);
+    background-color: color-mix(in srgb, var(--m26-on-pitch) 8%, transparent);
+    color: var(--m26-on-pitch);
 }
 
 /* Activo: la fila se vuelve "tiza" sobre el verde. */
@@ -111,7 +111,7 @@
 
 .nav-item ::deep .nav-link.active i {
     opacity: 1;
-    color: var(--m26-pitch);
+    color: var(--m26-accent);
 }
 
 .brand-wrap:focus-visible,

@@ -12,14 +12,17 @@
     margin-bottom: .6rem;
 }
 
+/* La pelota es blanca en cualquier tema: cal y tinta fijas sobre su propio fondo. */
 .ball {
+    --ball-ring: color-mix(in srgb, var(--m26-on-yellow) 14%, transparent);
     width: 84px;
     height: 84px;
     border-radius: 50%;
     background:
-        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, .85), transparent 48%),
-        repeating-radial-gradient(circle, rgba(23, 37, 29, .14), rgba(23, 37, 29, .14) 7px, rgba(255, 255, 255, .82) 7px, rgba(255, 255, 255, .82) 14px);
-    border: 2px solid rgba(23, 37, 29, .25);
+        radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--m26-on-pitch) 85%, transparent), transparent 48%),
+        repeating-radial-gradient(circle, var(--ball-ring), var(--ball-ring) 7px, transparent 7px, transparent 14px)
+        var(--m26-on-pitch);
+    border: 2px solid color-mix(in srgb, var(--m26-on-yellow) 25%, transparent);
 }
 
 .code {

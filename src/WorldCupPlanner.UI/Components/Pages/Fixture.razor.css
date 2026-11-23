@@ -12,12 +12,13 @@
     padding: 1.1rem 1.4rem 1.2rem;
     margin: 1rem 0;
     border-radius: var(--m26-radius);
-    background: var(--m26-ink);
-    color: var(--m26-surface);
+    background: var(--m26-board);
+    color: var(--m26-on-board);
 }
 
 .wizard-banner.step-done {
     background: var(--m26-pitch);
+    color: var(--m26-on-pitch);
 }
 
 .wizard-step-label {
@@ -278,7 +279,7 @@
 }
 
 ::deep .standings-table tr.qualified td {
-    background: rgba(30, 122, 70, .06);
+    background: color-mix(in srgb, var(--m26-ok) 6%, transparent);
 }
 
 ::deep .standings-table tr.third-place td:first-child {
@@ -286,7 +287,7 @@
 }
 
 ::deep .standings-table tr.third-place td {
-    background: rgba(242, 194, 0, .1);
+    background: color-mix(in srgb, var(--m26-yellow) 10%, transparent);
 }
 
 ::deep .standings-table tr.eliminated td {
@@ -370,7 +371,7 @@
     padding: 1rem 1.25rem;
     border-radius: var(--m26-radius-sm);
     background: repeating-linear-gradient(90deg, var(--m26-pitch) 0 56px, var(--m26-pitch-stripe) 56px 112px);
-    color: var(--m26-surface);
+    color: var(--m26-on-pitch);
 }
 
 ::deep .bracket-champion > i {
@@ -509,7 +510,7 @@
 }
 
 ::deep .bracket-mini-row.winner {
-    background: rgba(30, 122, 70, .1);
+    background: color-mix(in srgb, var(--m26-ok) 10%, transparent);
     font-weight: 700;
 }
 
@@ -528,7 +529,7 @@
 
 /* Danger zone: full tournament reset (delete fixture + knockout) */
 .danger-zone {
-    border-color: rgba(200, 16, 46, .3);
+    border-color: color-mix(in srgb, var(--m26-red) 30%, transparent);
     border-top-color: var(--m26-red);
     background: var(--m26-surface);
 }
@@ -538,7 +539,7 @@
 }
 
 .confirm-panel {
-    border: 1px solid rgba(200, 16, 46, .35);
+    border: 1px solid color-mix(in srgb, var(--m26-red) 35%, transparent);
     border-left: 4px solid var(--m26-red);
     background: var(--m26-surface);
     border-radius: 4px;

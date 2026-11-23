@@ -45,7 +45,7 @@
 }
 
 .row-editing {
-    background-color: rgba(242, 194, 0, .12);
+    background-color: color-mix(in srgb, var(--m26-yellow) 12%, transparent);
 }
 
 @media (max-width: 640.98px) {

@@ -4,9 +4,10 @@
     overflow: hidden;
     padding: clamp(2rem, 5vw, 3.75rem) clamp(1.25rem, 4vw, 3.25rem);
     border-radius: var(--m26-radius);
-    color: var(--m26-surface);
+    color: var(--m26-on-pitch);
     background: repeating-linear-gradient(90deg, var(--m26-pitch) 0 72px, var(--m26-pitch-stripe) 72px 144px);
     isolation: isolate;
+    --pitch-line: color-mix(in srgb, var(--m26-on-pitch) 50%, transparent);
 }
 
 /* Línea de banda, mitad de cancha y círculo central. */
@@ -14,12 +15,12 @@
     content: "";
     position: absolute;
     inset: 14px;
-    border: 2px solid rgba(255, 255, 255, .5);
+    border: 2px solid var(--pitch-line);
     border-radius: 2px;
     background:
-        radial-gradient(circle at 78% 50%, rgba(255, 255, 255, .55) 0 4px, transparent 5px),
-        radial-gradient(circle at 78% 50%, transparent 0 96px, rgba(255, 255, 255, .5) 96px 98px, transparent 99px),
-        linear-gradient(90deg, transparent calc(78% - 1px), rgba(255, 255, 255, .5) calc(78% - 1px) calc(78% + 1px), transparent calc(78% + 1px));
+        radial-gradient(circle at 78% 50%, color-mix(in srgb, var(--m26-on-pitch) 55%, transparent) 0 4px, transparent 5px),
+        radial-gradient(circle at 78% 50%, transparent 0 96px, var(--pitch-line) 96px 98px, transparent 99px),
+        linear-gradient(90deg, transparent calc(78% - 1px), var(--pitch-line) calc(78% - 1px) calc(78% + 1px), transparent calc(78% + 1px));
     z-index: -1;
 }
 
@@ -32,7 +33,7 @@
     width: 64px;
     height: 46%;
     transform: translateY(-50%);
-    border: 2px solid rgba(255, 255, 255, .5);
+    border: 2px solid var(--pitch-line);
     border-right: 0;
     z-index: -1;
 }
@@ -46,7 +47,7 @@
     margin: 0 0 .9rem;
     font-size: .95rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, .78);
+    color: color-mix(in srgb, var(--m26-on-pitch) 78%, transparent);
 }
 
 .pitch-headline {
@@ -57,7 +58,7 @@
     font-weight: 900;
     line-height: .9;
     letter-spacing: -.015em;
-    color: var(--m26-surface);
+    color: var(--m26-on-pitch);
     text-wrap: balance;
 }
 
@@ -66,7 +67,7 @@
     margin: 0 0 1.75rem;
     font-size: clamp(1rem, 2.2vw, 1.15rem);
     line-height: 1.5;
-    color: rgba(255, 255, 255, .9);
+    color: color-mix(in srgb, var(--m26-on-pitch) 90%, transparent);
 }
 
 .pitch-cta {
@@ -77,28 +78,28 @@
 
 .pitch-btn-main,
 .pitch-btn-main:focus {
-    color: var(--m26-ink);
+    color: var(--m26-on-yellow);
     background: var(--m26-yellow);
     border: 1px solid var(--m26-yellow);
 }
 
 .pitch-btn-main:hover {
-    color: var(--m26-ink);
-    background: #FFD633;
-    border-color: #FFD633;
+    color: var(--m26-on-yellow);
+    background: var(--m26-yellow-bright);
+    border-color: var(--m26-yellow-bright);
 }
 
 .pitch-btn-alt,
 .pitch-btn-alt:focus {
-    color: var(--m26-surface);
+    color: var(--m26-on-pitch);
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, .6);
+    border: 1px solid color-mix(in srgb, var(--m26-on-pitch) 60%, transparent);
 }
 
 .pitch-btn-alt:hover {
-    color: var(--m26-ink);
-    background: var(--m26-surface);
-    border-color: var(--m26-surface);
+    color: var(--m26-on-yellow);
+    background: var(--m26-on-pitch);
+    border-color: var(--m26-on-pitch);
 }
 
 /* Sobre el verde el anillo de foco va en amarillo. */
@@ -124,7 +125,7 @@
 }
 
 .stage.done {
-    border-top-color: var(--m26-pitch);
+    border-top-color: var(--m26-accent);
     color: var(--m26-ink);
 }
 
@@ -205,7 +206,7 @@
     font-stretch: 62%;
     font-weight: 900;
     line-height: 1;
-    color: var(--m26-pitch);
+    color: var(--m26-accent);
 }
 
 .how-step h3 {

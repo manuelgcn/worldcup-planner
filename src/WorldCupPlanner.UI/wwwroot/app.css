@@ -10,12 +10,28 @@
     --m26-muted: #56635B;
     --m26-line: #D6DCD5;
     --m26-line-soft: #E7EBE5;
+    /* Bordes punteados de lo vacío o pendiente. */
+    --m26-line-strong: #B5BEB4;
     /* Borde de campos y casillas: 3:1 sobre blanco y sobre tiza (WCAG 1.4.11). */
     --m26-control-border: #848E86;
     --m26-ok: #1E7A46;
     --m26-yellow: #F2C200;
+    --m26-yellow-bright: #FFD633;
     --m26-red: #C8102E;
-    --m26-focus: #0E4D2C;
+    --m26-red-hover: #A50D26;
+    /* Acento: lo que se enciende al pasar, elegir o enfocar, y su texto encima. */
+    --m26-accent: #0E4D2C;
+    --m26-on-accent: #FFFFFF;
+    --m26-focus: var(--m26-accent);
+    /* Tablero: el marcador y el cartel del paso actual. */
+    --m26-board: #17251D;
+    --m26-on-board: #FFFFFF;
+    /* Fijos en cualquier tema: la cal sobre el verde y la tinta sobre la amarilla. */
+    --m26-on-pitch: #FFFFFF;
+    --m26-on-yellow: #17251D;
+    --m26-conf-conmebol: #2B7DB8;
+    --m26-conf-uefa: #2A3F8F;
+    --m26-conf-ofc: #7A8580;
     --m26-shadow: none;
     --m26-shadow-hover: none;
     --m26-radius: 10px;
@@ -54,12 +70,12 @@ h6,
 a,
 .btn-link {
     color: var(--m26-ink);
-    text-decoration-color: rgba(23, 37, 29, .35);
+    text-decoration-color: color-mix(in srgb, var(--m26-ink) 35%, transparent);
     text-underline-offset: .18em;
 }
 
 a:hover {
-    color: var(--m26-pitch);
+    color: var(--m26-accent);
     text-decoration-color: currentColor;
 }
 
@@ -134,9 +150,9 @@ code {
 .btn-primary:hover,
 .btn-primary:focus,
 .btn-primary:active {
-    color: var(--m26-surface);
-    background: var(--m26-pitch);
-    border-color: var(--m26-pitch);
+    color: var(--m26-on-accent);
+    background: var(--m26-accent);
+    border-color: var(--m26-accent);
 }
 
 .btn-secondary,
@@ -175,7 +191,7 @@ code {
 .btn-outline-danger,
 .btn-outline-danger:disabled {
     color: var(--m26-red);
-    border-color: rgba(200, 16, 46, .45);
+    border-color: color-mix(in srgb, var(--m26-red) 45%, transparent);
     background: transparent;
 }
 
@@ -196,8 +212,8 @@ code {
 .btn-danger:hover,
 .btn-danger:focus {
     color: var(--m26-surface);
-    background: #A50D26;
-    border-color: #A50D26;
+    background: var(--m26-red-hover);
+    border-color: var(--m26-red-hover);
 }
 
 .btn-success,
@@ -209,9 +225,9 @@ code {
 
 .btn-success:hover,
 .btn-success:focus {
-    color: var(--m26-surface);
-    background: var(--m26-pitch);
-    border-color: var(--m26-pitch);
+    color: var(--m26-on-accent);
+    background: var(--m26-accent);
+    border-color: var(--m26-accent);
 }
 
 .btn-link {
@@ -233,8 +249,8 @@ code {
 .form-control:focus,
 .form-check-input:focus,
 .form-select:focus {
-    box-shadow: 0 0 0 3px rgba(14, 77, 44, .18);
-    border-color: var(--m26-pitch);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--m26-accent) 18%, transparent);
+    border-color: var(--m26-accent);
 }
 
 /* Bootstrap deja los campos con outline: 0; una casilla marcada ya es verde y la sombra sola no alcanza. */
@@ -246,8 +262,8 @@ code {
 }
 
 .form-check-input:checked {
-    background-color: var(--m26-pitch);
-    border-color: var(--m26-pitch);
+    background-color: var(--m26-accent);
+    border-color: var(--m26-accent);
 }
 
 .form-control,
@@ -313,12 +329,12 @@ code {
     background: var(--badge-mark, var(--m26-muted));
 }
 
-.conf-CONMEBOL { --badge-mark: #2B7DB8; }
-.conf-UEFA { --badge-mark: #2A3F8F; }
+.conf-CONMEBOL { --badge-mark: var(--m26-conf-conmebol); }
+.conf-UEFA { --badge-mark: var(--m26-conf-uefa); }
 .conf-AFC { --badge-mark: var(--m26-red); }
 .conf-CAF { --badge-mark: var(--m26-ok); }
 .conf-CONCACAF { --badge-mark: var(--m26-yellow); }
-.conf-OFC { --badge-mark: #7A8580; }
+.conf-OFC { --badge-mark: var(--m26-conf-ofc); }
 
 .role-Admin { --badge-mark: var(--m26-red); }
 .role-Editor { --badge-mark: var(--m26-ink); }
@@ -384,7 +400,7 @@ code {
 }
 
 .m26-empty {
-    border: 1px dashed #B5BEB4;
+    border: 1px dashed var(--m26-line-strong);
     border-radius: var(--m26-radius);
     padding: 2rem 1rem;
     text-align: center;
@@ -394,7 +410,7 @@ code {
 .m26-empty i {
     display: block;
     font-size: 2rem;
-    color: var(--m26-pitch);
+    color: var(--m26-accent);
     margin-bottom: .6rem;
 }
 
@@ -413,7 +429,7 @@ code {
 .blazor-error-boundary {
     background: var(--m26-red);
     padding: 1rem 1rem 1rem 3.7rem;
-    color: white;
+    color: var(--m26-surface);
 }
 
 .blazor-error-boundary::after {
@@ -433,7 +449,7 @@ code {
     padding: .2rem .65rem;
     border-radius: var(--m26-radius-sm);
     background: var(--m26-yellow);
-    color: var(--m26-ink);
+    color: var(--m26-on-yellow);
     font-size: .9rem;
     font-weight: 600;
     font-stretch: 100%;
@@ -481,9 +497,9 @@ code {
 }
 
 .group-chip.active {
-    background: var(--m26-pitch);
-    border-color: var(--m26-pitch);
-    color: var(--m26-surface);
+    background: var(--m26-accent);
+    border-color: var(--m26-accent);
+    color: var(--m26-on-accent);
 }
 
 /* Estado de partido */
@@ -525,8 +541,8 @@ code {
     min-width: 3.8rem;
     padding: .15rem .55rem;
     border-radius: 4px;
-    background: var(--m26-ink);
-    color: var(--m26-surface);
+    background: var(--m26-board);
+    color: var(--m26-on-board);
     font-stretch: 115%;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
@@ -537,7 +553,7 @@ code {
 .m26-score.pending {
     background: transparent;
     color: var(--m26-muted);
-    border: 1px dashed #B5BEB4;
+    border: 1px dashed var(--m26-line-strong);
     font-weight: 500;
 }
 
@@ -608,7 +624,7 @@ code {
     height: 16px;
     object-fit: cover;
     border-radius: 2px;
-    box-shadow: 0 0 0 1px rgba(23, 37, 29, .15);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--m26-ink) 15%, transparent);
     vertical-align: text-bottom;
     margin-right: .4rem;
     flex-shrink: 0;
@@ -622,7 +638,7 @@ code {
     color: var(--m26-muted);
     font-size: .65rem;
     box-shadow: none;
-    border: 1px dashed #A3ACA3;
+    border: 1px dashed var(--m26-line-strong);
 }
 
 .team-flag-lg {
@@ -653,14 +669,14 @@ code {
 .auth-head {
     text-align: center;
     padding: 1.6rem 1.1rem;
-    color: var(--m26-surface);
+    color: var(--m26-on-pitch);
     background: repeating-linear-gradient(90deg, var(--m26-pitch) 0 44px, var(--m26-pitch-stripe) 44px 88px);
     border-bottom: 0;
 }
 
 .auth-title {
     font-size: 2.4rem;
-    color: var(--m26-surface);
+    color: var(--m26-on-pitch);
     margin: 0;
 }
 

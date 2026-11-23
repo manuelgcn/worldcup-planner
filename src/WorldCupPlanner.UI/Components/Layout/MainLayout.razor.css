@@ -51,7 +51,7 @@ main {
     height: 2.25rem;
     border-radius: 50%;
     background: var(--m26-yellow);
-    color: var(--m26-ink);
+    color: var(--m26-on-yellow);
     font-stretch: 72%;
     font-weight: 800;
     font-size: 1rem;
@@ -100,7 +100,7 @@ main {
         position: sticky;
         top: 0;
         z-index: 10;
-        background: rgba(243, 245, 241, .92);
+        background: color-mix(in srgb, var(--m26-chalk) 92%, transparent);
         backdrop-filter: blur(8px);
     }
 

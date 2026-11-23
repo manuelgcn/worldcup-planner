@@ -9,6 +9,7 @@
     color: var(--m26-muted);
 }
 
+/* Las medallas son de metal en cualquier tema: sus colores y el texto encima van fijos. */
 .rank-gold,
 .rank-silver,
 .rank-bronze {
