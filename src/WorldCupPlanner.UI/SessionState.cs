@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using WorldCupPlanner.Domain;
@@ -70,8 +71,10 @@ public class SessionState
             }
 
             // Restaurar un backup reasigna ids: el email confirma que el id sigue siendo la misma persona.
+            // Y una sesión abierta antes de un cambio de contraseña se termina: para eso se la cambia.
             User user = userService.GetUserById(stored.UserId);
-            if (!string.Equals(user.email, stored.Email, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(user.email, stored.Email, StringComparison.OrdinalIgnoreCase)
+                || stored.PasswordStamp != PasswordStampOf(user))
             {
                 await storage.DeleteAsync(SessionKey);
                 return;
@@ -122,9 +125,11 @@ public class SessionState
         }
 
         // Los ids se reusan si se resetea la base: con otro email es otra persona, no esta sesión.
-        if (!string.Equals(user.email, CurrentUser.email, StringComparison.OrdinalIgnoreCase))
+        // Con otra contraseña, esta sesión es anterior al cambio (hecho en otra pestaña u otro equipo).
+        if (!string.Equals(user.email, CurrentUser.email, StringComparison.OrdinalIgnoreCase)
+            || session!.PasswordStamp != PasswordStampOf(user))
         {
-            // Sin revocar el id: lo comparte la pestaña donde el usuario se cambió el email, que sigue siendo suya.
+            // Sin revocar el id: lo comparte la pestaña donde el usuario hizo el cambio, que sigue siendo suya.
             session = null;
             await LogoutAsync();
             return false;
@@ -146,13 +151,14 @@ public class SessionState
         // Volver a ingresar desde una pestaña con sesión cierra la anterior: una pestaña duplicada la seguiría usando.
         RevokeSession();
         CurrentUser = user;
-        session = new StoredSession(user.idUser, user.email, UtcNow.Add(SessionLifetime), Guid.NewGuid());
+        session = new StoredSession(user.idUser, user.email, UtcNow.Add(SessionLifetime), Guid.NewGuid(), PasswordStampOf(user));
         await storage.SetAsync(SessionKey, session);
         NotifyStateChanged();
     }
 
-    // Después de editar al usuario en sesión: relee sus datos y guarda su email nuevo, que RestoreAsync
-    // compara. El vencimiento y el id de sesión no cambian: solo un login abre otra ventana de 8 horas.
+    // Después de editar al usuario en sesión o de que cambie su contraseña: relee sus datos y guarda su
+    // email y su contraseña nuevos, que RestoreAsync y RevalidateAsync comparan. El vencimiento y el id de
+    // sesión no cambian: solo un login abre otra ventana de 8 horas.
     public async Task RefreshUserAsync()
     {
         if (CurrentUser is null)
@@ -161,7 +167,7 @@ public class SessionState
         }
 
         CurrentUser = userService.GetUserById(CurrentUser.idUser);
-        session = session! with { Email = CurrentUser.email };
+        session = session! with { Email = CurrentUser.email, PasswordStamp = PasswordStampOf(CurrentUser) };
         await storage.SetAsync(SessionKey, session);
         NotifyStateChanged();
     }
@@ -181,7 +187,13 @@ public class SessionState
         NotifyStateChanged();
     }
 
-    private sealed record StoredSession(int UserId, string Email, DateTime ExpiresAtUtc, Guid SessionId);
+    // PasswordStamp ata la sesión a la contraseña con la que se abrió. Una sesión guardada antes de que
+    // existiera no lo trae y se descarta, igual que una sin id.
+    private sealed record StoredSession(int UserId, string Email, DateTime ExpiresAtUtc, Guid SessionId, string? PasswordStamp = null);
+
+    // Un resumen del hash guardado, no el hash: el valor viaja cifrado al navegador y no hace falta más.
+    private static string PasswordStampOf(User user) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(user.password ?? "")));
 
     private DateTime UtcNow => timeProvider.GetUtcNow().UtcDateTime;
 
