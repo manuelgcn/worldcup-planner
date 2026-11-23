@@ -22,7 +22,11 @@ public class SessionState
     // Copia en memoria de lo guardado en el navegador: un circuito que sigue abierto no vuelve a leerlo.
     private StoredSession? session;
 
-    public SessionState(ProtectedSessionStorage storage, IUserService userService, TimeProvider timeProvider)
+    public SessionState(
+        ProtectedSessionStorage storage,
+        IUserService userService,
+        TimeProvider timeProvider,
+        ILogger<SessionState> logger)
     {
         this.storage = storage;
         this.userService = userService;

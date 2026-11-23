@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Logging;
 using Moq;
 using WorldCupPlanner.Domain;
 using WorldCupPlanner.Services.Exceptions;
@@ -21,6 +22,7 @@ public class SessionStateTests
     private readonly EphemeralDataProtectionProvider dataProtection = new();
     private readonly ManualTimeProvider clock = new();
     private readonly Mock<IUserService> userService = new();
+    private readonly Mock<ILogger<SessionState>> logger = new();
     private readonly InMemorySessionStorageJsRuntime tab = new();
 
     private static User BuildUser(string email = Email, UserRoles role = UserRoles.Editor)
@@ -32,7 +34,7 @@ public class SessionStateTests
 
     // Cada circuito de Blazor (una carga de página) tiene su propio SessionState sobre el sessionStorage de la pestaña.
     private SessionState OpenCircuit(InMemorySessionStorageJsRuntime browserTab) =>
-        new SessionState(new ProtectedSessionStorage(browserTab, dataProtection), userService.Object, clock);
+        new SessionState(new ProtectedSessionStorage(browserTab, dataProtection), userService.Object, clock, logger.Object);
 
     private async Task<SessionState> LoginAsync()
     {
@@ -224,5 +226,26 @@ public class SessionStateTests
         Assert.IsFalse(session.IsLoggedIn);
         Assert.IsTrue(tab.IsEmpty);
         userService.Verify(service => service.GetUserById(It.IsAny<int>()), Times.Never);
+    }
+
+    [TestMethod]
+    public async Task RevalidateAsync_WhenReadingTheUserFails_KeepsTheUserAndLogsTheError()
+    {
+        SessionState session = await LoginAsync();
+        InvalidOperationException databaseError = new InvalidOperationException("database unavailable");
+        userService.Setup(service => service.GetUserById(UserId)).Throws(databaseError);
+
+        await session.RevalidateAsync();
+
+        Assert.IsTrue(session.IsLoggedIn);
+        Assert.IsFalse(tab.IsEmpty);
+        logger.Verify(
+            log => log.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.IsAny<It.IsAnyType>(),
+                databaseError,
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 }
