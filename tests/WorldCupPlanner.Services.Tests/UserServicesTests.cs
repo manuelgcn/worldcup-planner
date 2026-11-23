@@ -883,6 +883,26 @@ public class UserServicesTests
         Assert.AreEqual(stored, user.password);
     }
 
+    // El perfil deja cambiar el email sin pedir la contrasena: con el contador bajo el email viejo,
+    // cada cambio de email daba otros cinco intentos.
+    [TestMethod]
+    public void UpdateUser_ThatChangesTheEmail_KeepsTheFailedLoginsOfTheAccount()
+    {
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), new ManualTimeProvider());
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+        lockingService.AddUser(user);
+        FailPasswordChanges(lockingService, userId: 2, times: 5);
+
+        lockingService.UpdateUser(2, "Juan", "Perez", "otro@mail.com");
+
+        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.ChangePassword(2, "Pass123@", "Nueva456#"));
+
+        StringAssert.Contains(locked.Message, "intentos");
+        Assert.AreEqual(stored, user.password);
+    }
+
     [TestMethod]
     public void ChangePassword_AuditsTheChangeWithoutAnyPassword()
     {
