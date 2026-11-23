@@ -222,6 +222,23 @@ public class SessionStateTests
         Assert.IsTrue(session.IsLoggedIn);
     }
 
+    // Sin esto, "Cerrar sesión" después de volver a ingresar solo cerraría la sesión nueva y la
+    // pestaña duplicada seguiría con la anterior.
+    [TestMethod]
+    public async Task LoginAsync_Again_EndsThePreviousSessionInADuplicatedTab()
+    {
+        SessionState session = await LoginAsync();
+        SessionState duplicate = OpenCircuit(tab.CopyTab());
+        await duplicate.RestoreAsync();
+
+        await session.LoginAsync(BuildUser());
+        await duplicate.RevalidateAsync();
+        await session.RevalidateAsync();
+
+        Assert.IsFalse(duplicate.IsLoggedIn);
+        Assert.IsTrue(session.IsLoggedIn);
+    }
+
     [TestMethod]
     public async Task RefreshUserAsync_AfterAnEmailChange_KeepsTheSessionInThisCircuitAndAfterAReload()
     {
