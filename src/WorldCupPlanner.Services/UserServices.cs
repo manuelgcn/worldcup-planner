@@ -307,6 +307,8 @@ public class UserServices : IUserService
 
     public void ChangePassword(int userId, string currentPassword, string newPassword)
     {
+        if (userId == SystemAdminUserId)
+            throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
     }
 
     public void AssignRole(int userId, UserRoles role, string? performedByEmail = null)
