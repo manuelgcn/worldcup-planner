@@ -1,0 +1,33 @@
+@using WorldCupPlanner.Domain
+
+@* La barra es decorativa: las cifras van en el title y en el texto oculto. Los anchos son atributos
+   SVG y no un style en línea; cada tramo deja un hueco para distinguirse sin depender del color. *@
+<span class="match-forecast" title="@Summary">
+    <svg class="forecast-bar" viewBox="0 0 @BarWidth 4" preserveAspectRatio="none" aria-hidden="true">
+        <rect class="forecast-home" x="0" width="@forecast.HomeWin" height="4" />
+        <rect class="forecast-draw" x="@(forecast.HomeWin + SegmentGap)" width="@forecast.Draw" height="4" />
+        <rect class="forecast-away" x="@(forecast.HomeWin + forecast.Draw + 2 * SegmentGap)" width="@forecast.AwayWin" height="4" />
+    </svg>
+    <span class="visually-hidden">@Summary</span>
+</span>
+
+@code {
+    private const string GroupSummaryFormat = "Pronóstico por ranking: local {0} %, empate {1} %, visita {2} %";
+    private const string KnockoutSummaryFormat = "Pronóstico por ranking: local {0} %, visita {2} %";
+    private const int SegmentGap = 2;
+    private const int BarWidth = 100 + 2 * SegmentGap;
+
+    [Parameter, EditorRequired] public int HomeRanking { get; set; }
+    [Parameter, EditorRequired] public int AwayRanking { get; set; }
+    [Parameter] public bool Knockout { get; set; }
+
+    private EloForecast forecast;
+
+    private string Summary =>
+        string.Format(Knockout ? KnockoutSummaryFormat : GroupSummaryFormat, forecast.HomeWin, forecast.Draw, forecast.AwayWin);
+
+    protected override void OnParametersSet()
+    {
+        forecast = EloRankingCalculator.Forecast(HomeRanking, AwayRanking, Knockout ? MatchPhase.Knockout : MatchPhase.GroupStage);
+    }
+}

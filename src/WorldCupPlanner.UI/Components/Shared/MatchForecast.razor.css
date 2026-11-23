@@ -1,0 +1,23 @@
+.match-forecast {
+    display: inline-block;
+    margin-left: .5rem;
+    vertical-align: middle;
+}
+
+.forecast-bar {
+    display: block;
+    width: 4.5rem;
+    height: .4rem;
+}
+
+.forecast-home {
+    fill: var(--m26-pitch);
+}
+
+.forecast-draw {
+    fill: var(--m26-control-border);
+}
+
+.forecast-away {
+    fill: var(--m26-ink);
+}

@@ -131,6 +131,10 @@ else
                                 <span class="m26-score @(IsPlayed(match) ? "" : "pending")">
                                     @(IsPlayed(match) ? $"{match.HomeGoals} - {match.AwayGoals}" : "vs")
                                 </span>
+                                @if (!IsPlayed(match) && match.HomeTeamRanking is int homeRanking && match.AwayTeamRanking is int awayRanking)
+                                {
+                                    <MatchForecast HomeRanking="homeRanking" AwayRanking="awayRanking" Knockout="@(match.GroupName is null)" />
+                                }
                             </td>
                             <td>
                                 <span class="match-status @(IsPlayed(match) ? "played" : "pending")">
