@@ -297,10 +297,16 @@ public class UserServices : IUserService
             throw new UserServicesException(EmailAlreadyExistsMessage);
 
         User user = GetUserById(id);
+        string oldLoginKey = LoginKeyFor(user.email);
 
         user.UpdatePersonalData(name, lastname, email);
 
         _userRepository.Update(user);
+
+        // El contador sigue a la cuenta: si quedara bajo el email viejo, cambiar el email (que no pide
+        // contrasena) daria intentos nuevos y levantaria un bloqueo.
+        if (_failedLogins.TryRemove(oldLoginKey, out FailedLogins? failed))
+            _failedLogins[LoginKeyFor(user.email)] = failed;
 
         _auditLogService.LogPerformedBy(
             AuditActions.UpdateUser,
