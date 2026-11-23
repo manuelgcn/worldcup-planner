@@ -5,7 +5,7 @@
 @inject IJSRuntime JS
 
 @* Con <base href="/"> el ancla sola navegaría al inicio: el clic se cancela y el foco se mueve a mano. *@
-<a class="skip-link" href="#contenido" @onclick="SkipToContent" @onclick:preventDefault>Saltar al contenido</a>
+<a class="skip-link" href="#main-content" @onclick="SkipToContent" @onclick:preventDefault>Saltar al contenido</a>
 
 <div class="page">
     <header class="sidebar">
@@ -31,7 +31,7 @@
             }
         </div>
 
-        <article id="contenido" class="content px-4" tabindex="-1" @ref="content">
+        <article id="main-content" class="content px-4" tabindex="-1" @ref="content">
             @Body
         </article>
     </main>
