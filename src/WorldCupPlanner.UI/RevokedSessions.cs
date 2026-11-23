@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 
 namespace WorldCupPlanner.UI;
 
-// Sesiones cerradas con "Cerrar sesión" que todavía no vencieron. Una pestaña duplicada guarda una copia
+// Sesiones cerradas con "Cerrar sesión", o al volver a ingresar en la misma pestaña, que todavía no vencieron. Una pestaña duplicada guarda una copia
 // válida del valor cifrado, así que solo el servidor puede saber que esa sesión ya se cerró.
 // shortcut: vive en memoria y por servidor, como el bloqueo de login: reiniciar la app o atender con otra
 // instancia olvida los cierres; guardarlas en la base cuando haya más de una instancia.
