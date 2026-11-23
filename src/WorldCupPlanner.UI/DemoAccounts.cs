@@ -9,8 +9,8 @@ public static class DemoAccounts
         "Demo:Enabled is false and no user has the Admin role, so nobody could administer the app. " +
         "Start once with Demo:Enabled=true, or load the demo with WorldCupPlanner.DataSeeder, to create an Admin.";
 
-    // Los mismos emails que Program crea y /login muestra.
-    private static readonly string[] Emails = { "admin@copa.com", "editor@copa.com", "periodista@copa.com" };
+    // Los mismos logins que Program crea y /login muestra: son públicos.
+    private static readonly string[] Logins = { "admin@copa.com", "editor@copa.com", "periodista@copa.com" };
 
     // Solo un Admin puede crear otro, y en una base vacía el primer registro público tomaría el id 1, que
     // UserServices protege: sin ningún Admin no se arranca. Apagar la opción tampoco borra las cuentas de
@@ -24,9 +24,10 @@ public static class DemoAccounts
             throw new InvalidOperationException(NoAdminMessage);
         }
 
-        foreach (User user in existing.Where(user => Emails.Contains(user.email, StringComparer.OrdinalIgnoreCase)))
+        // Al log va el login publicado, nunca el dato guardado del usuario.
+        foreach (string login in Logins.Where(login => existing.Any(user => string.Equals(user.email, login, StringComparison.OrdinalIgnoreCase))))
         {
-            logger.LogWarning("Demo:Enabled is false but the demo account {Email} still exists: turning the setting off does not remove it.", user.email);
+            logger.LogWarning("Demo:Enabled is false but the demo account {Account} still exists: turning the setting off does not remove it.", login);
         }
     }
 }
