@@ -20,6 +20,7 @@ string flagsDirectory = Path.Combine(
     builder.Configuration.GetValue<string>("Flags:Directory") ?? "flags-master");
 
 builder.Services.AddWorldCupPlanner(connectionString, flagsDirectory);
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 builder.Services.AddScoped<SessionState>();
 
 var app = builder.Build();
@@ -93,6 +94,9 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+
+// Para el HEALTHCHECK del contenedor: 200 "Healthy" o 503 "Unhealthy", sin más detalle en el cuerpo.
+app.MapHealthChecks("/health");
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
