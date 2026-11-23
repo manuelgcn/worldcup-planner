@@ -102,6 +102,8 @@
         if (!ValidateInput())
             return;
 
+        (name, lastname, email) = (name.Trim(), lastname.Trim(), email.Trim());
+
         try
         {
             UserServices.UpdateUser(
