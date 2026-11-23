@@ -52,7 +52,7 @@ jobs:
             --results-directory ./TestResults
 
       - name: Upload test results
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3
         if: always()
         with:
           name: MSTest Results
