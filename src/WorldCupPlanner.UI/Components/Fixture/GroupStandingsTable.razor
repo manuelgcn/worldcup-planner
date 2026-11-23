@@ -21,7 +21,8 @@
         @foreach (GroupStandingDto row in Standings)
         {
             position++;
-            <tr class="@RowClass(position)">
+            int moves = rows[row.Team.Id].Moves;
+            <tr @key="(row.Team.Id, moves)" class="@RowClass(position) @(moves > 0 ? "moved" : "")">
                 <td class="text-nowrap"><TeamFlag Team="row.Team" />@row.Team.Name</td>
                 <td>@row.GamesPlayed</td>
                 <td>@row.Wins</td>
@@ -38,6 +39,25 @@
 
 @code {
     [Parameter] public List<GroupStandingDto> Standings { get; set; } = new();
+
+    // Puesto anterior y cantidad de cambios de puesto de cada equipo. Cuando una fila cambia de
+    // puesto, @key la recrea con .moved y el resaltado (Fixture.razor.css) corre una vez; el primer
+    // dibujo no resalta nada.
+    private Dictionary<int, (int Position, int Moves)> rows = new();
+
+    protected override void OnParametersSet()
+    {
+        Dictionary<int, (int Position, int Moves)> current = new();
+        for (int position = 0; position < Standings.Count; position++)
+        {
+            int teamId = Standings[position].Team.Id;
+            int moves = rows.TryGetValue(teamId, out (int Position, int Moves) previous)
+                ? previous.Moves + (previous.Position == position ? 0 : 1)
+                : 0;
+            current[teamId] = (position, moves);
+        }
+        rows = current;
+    }
 
     private static string RowClass(int position)
     {

@@ -14,7 +14,7 @@
 .demo-credentials li {
     margin: 0 !important;
     padding: .55rem .75rem;
-    border: 1px solid rgba(23, 37, 29, .12);
+    border: 1px solid color-mix(in srgb, var(--m26-ink) 12%, transparent);
     border-radius: 10px;
     background: var(--m26-surface);
 }

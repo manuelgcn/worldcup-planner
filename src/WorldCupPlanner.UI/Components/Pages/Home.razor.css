@@ -4,37 +4,140 @@
     overflow: hidden;
     padding: clamp(2rem, 5vw, 3.75rem) clamp(1.25rem, 4vw, 3.25rem);
     border-radius: var(--m26-radius);
-    color: var(--m26-surface);
+    color: var(--m26-on-pitch);
     background: repeating-linear-gradient(90deg, var(--m26-pitch) 0 72px, var(--m26-pitch-stripe) 72px 144px);
     isolation: isolate;
+    --pitch-line: color-mix(in srgb, var(--m26-on-pitch) 50%, transparent);
 }
 
-/* Línea de banda, mitad de cancha y círculo central. */
+/* Línea de banda. */
 .home-pitch::before {
     content: "";
     position: absolute;
     inset: 14px;
-    border: 2px solid rgba(255, 255, 255, .5);
+    border: 2px solid var(--pitch-line);
     border-radius: 2px;
-    background:
-        radial-gradient(circle at 78% 50%, rgba(255, 255, 255, .55) 0 4px, transparent 5px),
-        radial-gradient(circle at 78% 50%, transparent 0 96px, rgba(255, 255, 255, .5) 96px 98px, transparent 99px),
-        linear-gradient(90deg, transparent calc(78% - 1px), rgba(255, 255, 255, .5) calc(78% - 1px) calc(78% + 1px), transparent calc(78% + 1px));
     z-index: -1;
 }
 
-/* Área grande contra la línea de fondo derecha. */
-.home-pitch::after {
-    content: "";
+/* Mitad de cancha, círculo central y área grande, por dentro de la línea de banda. Se marcan con
+   cal una sola vez al cargar: en reposo ya están trazadas y la animación solo pone el punto de
+   partida, así que sin animación (prefers-reduced-motion) la cancha queda completa. */
+.pitch-lines {
     position: absolute;
-    top: 50%;
-    right: 14px;
-    width: 64px;
-    height: 46%;
-    transform: translateY(-50%);
-    border: 2px solid rgba(255, 255, 255, .5);
-    border-right: 0;
+    inset: 16px;
+    width: calc(100% - 32px);
+    height: calc(100% - 32px);
     z-index: -1;
+}
+
+/* pathLength="1" en cada trazo: un mismo guion de largo 1 sirve para todos. */
+.chalk {
+    fill: none;
+    stroke: var(--pitch-line);
+    stroke-width: 2;
+    stroke-dasharray: 1 2;
+    animation: chalk-draw .45s ease-in-out backwards;
+}
+
+/* El círculo arranca arriba, donde lo cruza la mitad de cancha. */
+.chalk-circle {
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: rotate(-90deg);
+    animation-duration: .6s;
+    animation-delay: .3s;
+}
+
+.chalk-spot {
+    fill: color-mix(in srgb, var(--m26-on-pitch) 55%, transparent);
+    animation: chalk-spot .15s ease-out .85s backwards;
+}
+
+/* El área es un solo trazo en tres tramos: sale de la línea de fondo, baja y vuelve. */
+.chalk-area-top {
+    animation-duration: .15s;
+    animation-delay: .8s;
+    animation-timing-function: ease-in;
+}
+
+.chalk-area-front {
+    animation-duration: .3s;
+    animation-delay: .95s;
+    animation-timing-function: linear;
+}
+
+.chalk-area-bottom {
+    animation-duration: .15s;
+    animation-delay: 1.25s;
+    animation-timing-function: ease-out;
+}
+
+@keyframes chalk-draw {
+    from {
+        stroke-dashoffset: 1;
+    }
+}
+
+@keyframes chalk-spot {
+    from {
+        opacity: 0;
+    }
+}
+
+/* Papelitos: las tiras de papel que tira la tribuna cuando hay campeón, en cal y amarilla. Es el
+   único festejo del sitio. Cada <i> es un carril de todo el alto con la tira arriba: baja una vez
+   y queda fuera de la cancha, que recorta. En reposo también está fuera, por encima. */
+.papelitos {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.papelitos i {
+    position: absolute;
+    top: 0;
+    left: var(--x);
+    width: 7px;
+    height: 100%;
+    transform: translateY(-2rem);
+    animation: papelito-fall 2.6s cubic-bezier(.35, 0, .75, 1) var(--delay) both;
+}
+
+.papelitos i::before {
+    content: "";
+    display: block;
+    height: 18px;
+    background: var(--m26-on-pitch);
+    transform: translateX(0) rotate(var(--tilt)) rotateX(0deg);
+    animation: papelito-flutter .6s ease-in-out var(--delay) 6 alternate;
+}
+
+.papelitos i:nth-child(odd)::before {
+    background: var(--m26-yellow);
+}
+
+.papelitos i:nth-child(3n) {
+    width: 5px;
+    animation-duration: 3.2s;
+}
+
+@keyframes papelito-fall {
+    to {
+        transform: translateY(100%);
+    }
+}
+
+@keyframes papelito-flutter {
+    to {
+        transform: translateX(14px) rotate(calc(var(--tilt) + 70deg)) rotateX(180deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .papelitos {
+        display: none;
+    }
 }
 
 /* El texto no pisa el círculo central (al 78% del ancho). */
@@ -46,7 +149,7 @@
     margin: 0 0 .9rem;
     font-size: .95rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, .78);
+    color: color-mix(in srgb, var(--m26-on-pitch) 78%, transparent);
 }
 
 .pitch-headline {
@@ -57,7 +160,7 @@
     font-weight: 900;
     line-height: .9;
     letter-spacing: -.015em;
-    color: var(--m26-surface);
+    color: var(--m26-on-pitch);
     text-wrap: balance;
 }
 
@@ -66,7 +169,7 @@
     margin: 0 0 1.75rem;
     font-size: clamp(1rem, 2.2vw, 1.15rem);
     line-height: 1.5;
-    color: rgba(255, 255, 255, .9);
+    color: color-mix(in srgb, var(--m26-on-pitch) 90%, transparent);
 }
 
 .pitch-cta {
@@ -77,28 +180,28 @@
 
 .pitch-btn-main,
 .pitch-btn-main:focus {
-    color: var(--m26-ink);
+    color: var(--m26-on-yellow);
     background: var(--m26-yellow);
     border: 1px solid var(--m26-yellow);
 }
 
 .pitch-btn-main:hover {
-    color: var(--m26-ink);
-    background: #FFD633;
-    border-color: #FFD633;
+    color: var(--m26-on-yellow);
+    background: var(--m26-yellow-bright);
+    border-color: var(--m26-yellow-bright);
 }
 
 .pitch-btn-alt,
 .pitch-btn-alt:focus {
-    color: var(--m26-surface);
+    color: var(--m26-on-pitch);
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, .6);
+    border: 1px solid color-mix(in srgb, var(--m26-on-pitch) 60%, transparent);
 }
 
 .pitch-btn-alt:hover {
-    color: var(--m26-ink);
-    background: var(--m26-surface);
-    border-color: var(--m26-surface);
+    color: var(--m26-on-yellow);
+    background: var(--m26-on-pitch);
+    border-color: var(--m26-on-pitch);
 }
 
 /* Sobre el verde el anillo de foco va en amarillo. */
@@ -117,6 +220,7 @@
 }
 
 .stage {
+    position: relative;
     padding-top: .6rem;
     border-top: 6px solid var(--m26-line);
     font-size: .9rem;
@@ -124,14 +228,35 @@
 }
 
 .stage.done {
-    border-top-color: var(--m26-pitch);
+    border-top-color: var(--m26-accent);
     color: var(--m26-ink);
 }
 
+/* De noche el acento es la amarilla, que ya marca la etapa actual: lo jugado va en verde. */
+:root[data-theme="night"] .stage.done {
+    border-top-color: var(--m26-ok);
+}
+
 .stage.current {
-    border-top-color: var(--m26-yellow);
     color: var(--m26-ink);
     font-weight: 700;
+}
+
+/* La etapa actual se llena una vez, cuando termina de marcarse la cancha. */
+.stage.current::before {
+    content: "";
+    position: absolute;
+    inset: -6px 0 auto;
+    height: 6px;
+    background: var(--m26-yellow);
+    transform-origin: left;
+    animation: stage-fill .5s ease-out .9s backwards;
+}
+
+@keyframes stage-fill {
+    from {
+        transform: scaleX(0);
+    }
 }
 
 /* Recuento: un solo tablero con cifras anchas en vez de tarjetas sueltas. */
@@ -205,7 +330,7 @@
     font-stretch: 62%;
     font-weight: 900;
     line-height: 1;
-    color: var(--m26-pitch);
+    color: var(--m26-accent);
 }
 
 .how-step h3 {
@@ -231,12 +356,13 @@
 
 @media (max-width: 640.98px) {
     /* En móvil no hay lugar para el círculo central: queda sólo la banda. */
-    .home-pitch::before {
-        background: none;
+    .pitch-lines {
+        display: none;
     }
 
-    .home-pitch::after {
-        display: none;
+    /* Sin líneas que esperar, la etapa actual se llena enseguida. */
+    .stage.current::before {
+        animation-delay: .2s;
     }
 
     .pitch-copy {

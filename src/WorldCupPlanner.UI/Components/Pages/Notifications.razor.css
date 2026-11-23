@@ -24,7 +24,7 @@
     width: 2.25rem;
     height: 2.25rem;
     border-radius: 50%;
-    background: rgba(23, 37, 29, .08);
+    background: color-mix(in srgb, var(--m26-ink) 8%, transparent);
     color: var(--m26-ink);
 }
 

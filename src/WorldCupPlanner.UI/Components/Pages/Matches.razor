@@ -128,9 +128,8 @@ else
                             </td>
                             <td>@match.StadiumName</td>
                             <td>
-                                <span class="m26-score @(IsPlayed(match) ? "" : "pending")">
-                                    @(IsPlayed(match) ? $"{match.HomeGoals} - {match.AwayGoals}" : "vs")
-                                </span>
+                                <ScoreCell @key="match.MatchId" Played="IsPlayed(match)"
+                                           HomeGoals="match.HomeGoals" AwayGoals="match.AwayGoals" />
                                 @if (!IsPlayed(match) && match.HomeTeamRanking is int homeRanking && match.AwayTeamRanking is int awayRanking)
                                 {
                                     <MatchForecast HomeRanking="homeRanking" AwayRanking="awayRanking" Knockout="@(match.GroupName is null)" />
@@ -180,7 +179,7 @@ else
     {
         <div class="m26-empty">
             <i class="bi bi-calendar-x" aria-hidden="true"></i>
-            <p class="mb-0">No hay partidos para los filtros seleccionados.</p>
+            <p class="mb-0">No hay partidos para mostrar: si usaste filtros, tocá Limpiar; si no, todavía falta generar el fixture.</p>
         </div>
     }
 }

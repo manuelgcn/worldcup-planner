@@ -1,6 +1,7 @@
 /* Golazo: "cancha de día". El verde es el marco (cancha), la tinta es la acción,
    la amarilla y la roja se usan como en el fútbol: aviso y falta. */
 :root {
+    color-scheme: light;
     --m26-pitch: #0E4D2C;
     --m26-pitch-deep: #0A3A21;
     --m26-pitch-stripe: #12592F;
@@ -10,17 +11,64 @@
     --m26-muted: #56635B;
     --m26-line: #D6DCD5;
     --m26-line-soft: #E7EBE5;
+    /* Bordes punteados de lo vacío o pendiente. */
+    --m26-line-strong: #B5BEB4;
     /* Borde de campos y casillas: 3:1 sobre blanco y sobre tiza (WCAG 1.4.11). */
     --m26-control-border: #848E86;
     --m26-ok: #1E7A46;
     --m26-yellow: #F2C200;
+    --m26-yellow-bright: #FFD633;
     --m26-red: #C8102E;
-    --m26-focus: #0E4D2C;
+    --m26-red-hover: #A50D26;
+    /* Acento: lo que se enciende al pasar, elegir o enfocar, y su texto encima. */
+    --m26-accent: #0E4D2C;
+    --m26-on-accent: #FFFFFF;
+    --m26-focus: var(--m26-accent);
+    /* Tablero: el marcador y el cartel del paso actual. */
+    --m26-board: #17251D;
+    --m26-on-board: #FFFFFF;
+    /* Fijos en cualquier tema: la cal sobre el verde y la tinta sobre la amarilla. */
+    --m26-on-pitch: #FFFFFF;
+    --m26-on-yellow: #17251D;
+    --m26-conf-conmebol: #2B7DB8;
+    --m26-conf-uefa: #2A3F8F;
+    --m26-conf-ofc: #7A8580;
     --m26-shadow: none;
     --m26-shadow-hover: none;
     --m26-radius: 10px;
     --m26-radius-sm: 6px;
     --m26-font: "Archivo", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* "Cancha de noche": partido bajo los focos. La tribuna queda a oscuras (verde noche), la cal pasa
+   a ser el texto y la acción, y la amarilla es el foco: lo que se enciende al pasar, elegir o enfocar.
+   El verde de la cancha, la amarilla y lo que va encima de ellos no cambian. theme.js pone el atributo.
+   Contraste medido par por par (WCAG): tiza 13.4:1 sobre la superficie y 15.1:1 sobre el fondo,
+   gris 6.9:1 y 7.8:1, verde 7.9:1, roja 6.3:1, amarilla 9.0:1; borde de control 3.8:1 y 4.3:1;
+   texto sobre botón de cal 13.4:1, sobre verde 7.9:1, sobre roja 6.3:1 y sobre el tablero 8.9:1
+   (la amarilla sobre el tablero, 5.3:1).
+   Solo en pantalla: en papel valen siempre los tokens de día (ver @media print, más abajo). */
+@media screen {
+    html[data-theme="night"] {
+        color-scheme: dark;
+        --m26-chalk: #0A2014;
+        --m26-surface: #0F2B1B;
+        --m26-ink: #EEF2EB;
+        --m26-muted: #A5B2A8;
+        --m26-line: #27493A;
+        --m26-line-soft: #1A3A29;
+        --m26-line-strong: #3F6A52;
+        --m26-control-border: #6E8577;
+        --m26-ok: #5BD08C;
+        --m26-red: #FF8088;
+        --m26-red-hover: #FFA3A9;
+        --m26-accent: #F2C200;
+        --m26-on-accent: #17251D;
+        --m26-board: #28523A;
+        --m26-conf-conmebol: #5BA8E0;
+        --m26-conf-uefa: #8496EA;
+        --m26-conf-ofc: #9AA69F;
+    }
 }
 
 /* Foco visible y consistente para teclado (WCAG 2.4.7). */
@@ -54,12 +102,14 @@ h6,
 a,
 .btn-link {
     color: var(--m26-ink);
-    text-decoration-color: rgba(23, 37, 29, .35);
+    text-decoration-color: color-mix(in srgb, var(--m26-ink) 35%, transparent);
     text-underline-offset: .18em;
 }
 
-a:hover {
-    color: var(--m26-pitch);
+/* .btn-link:hover: Bootstrap lo pasa a su azul, que de noche no se lee. */
+a:hover,
+.btn-link:hover {
+    color: var(--m26-accent);
     text-decoration-color: currentColor;
 }
 
@@ -134,9 +184,9 @@ code {
 .btn-primary:hover,
 .btn-primary:focus,
 .btn-primary:active {
-    color: var(--m26-surface);
-    background: var(--m26-pitch);
-    border-color: var(--m26-pitch);
+    color: var(--m26-on-accent);
+    background: var(--m26-accent);
+    border-color: var(--m26-accent);
 }
 
 .btn-secondary,
@@ -175,7 +225,7 @@ code {
 .btn-outline-danger,
 .btn-outline-danger:disabled {
     color: var(--m26-red);
-    border-color: rgba(200, 16, 46, .45);
+    border-color: color-mix(in srgb, var(--m26-red) 45%, transparent);
     background: transparent;
 }
 
@@ -196,8 +246,8 @@ code {
 .btn-danger:hover,
 .btn-danger:focus {
     color: var(--m26-surface);
-    background: #A50D26;
-    border-color: #A50D26;
+    background: var(--m26-red-hover);
+    border-color: var(--m26-red-hover);
 }
 
 .btn-success,
@@ -209,9 +259,9 @@ code {
 
 .btn-success:hover,
 .btn-success:focus {
-    color: var(--m26-surface);
-    background: var(--m26-pitch);
-    border-color: var(--m26-pitch);
+    color: var(--m26-on-accent);
+    background: var(--m26-accent);
+    border-color: var(--m26-accent);
 }
 
 .btn-link {
@@ -233,8 +283,8 @@ code {
 .form-control:focus,
 .form-check-input:focus,
 .form-select:focus {
-    box-shadow: 0 0 0 3px rgba(14, 77, 44, .18);
-    border-color: var(--m26-pitch);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--m26-accent) 18%, transparent);
+    border-color: var(--m26-accent);
 }
 
 /* Bootstrap deja los campos con outline: 0; una casilla marcada ya es verde y la sombra sola no alcanza. */
@@ -246,15 +296,57 @@ code {
 }
 
 .form-check-input:checked {
-    background-color: var(--m26-pitch);
-    border-color: var(--m26-pitch);
+    background-color: var(--m26-accent);
+    border-color: var(--m26-accent);
 }
 
+/* Bootstrap 5.1 fija colores claros en campos, selects y tablas (#212529 sobre #fff, grises propios):
+   de acá hasta .table se los pasa a los tokens para que sigan al tema. */
 .form-control,
 .form-select {
     border-radius: var(--m26-radius-sm);
     border: 1px solid var(--m26-control-border);
     color: var(--m26-ink);
+    background-color: var(--m26-surface);
+}
+
+.form-control:focus {
+    color: var(--m26-ink);
+    background-color: var(--m26-surface);
+}
+
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+    background-color: var(--m26-line-soft);
+}
+
+.form-control::placeholder,
+.form-text {
+    color: var(--m26-muted);
+}
+
+.form-control::file-selector-button {
+    color: var(--m26-ink);
+    background-color: var(--m26-line-soft);
+}
+
+.form-control:hover:not(:disabled):not([readonly])::file-selector-button {
+    background-color: var(--m26-line);
+}
+
+.form-check-input {
+    background-color: var(--m26-surface);
+}
+
+/* La flecha del select y el tilde de la casilla son SVG de Bootstrap con el color fijo (gris oscuro
+   y blanco): de noche van en cal y en tinta. Solo background-image, nunca el atajo background. */
+html[data-theme="night"] .form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23EEF2EB' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+}
+
+html[data-theme="night"] .form-check-input:checked[type=checkbox] {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%2317251D' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
 }
 
 .form-label {
@@ -262,9 +354,12 @@ code {
     font-size: .9rem;
 }
 
+/* La fila bajo el mouse se tiñe con el acento: verde de día, amarilla de noche. Con la tiza de
+   fondo (más oscura que la superficie de noche) casi no se notaba. */
 .table {
-    --bs-table-color: var(--m26-ink);
-    --bs-table-hover-bg: var(--m26-chalk);
+    --bs-table-hover-color: var(--m26-ink);
+    --bs-table-hover-bg: color-mix(in srgb, var(--m26-accent) 10%, transparent);
+    color: var(--m26-ink);
     border-color: var(--m26-line-soft);
 }
 
@@ -294,6 +389,31 @@ code {
     border-bottom: 2px solid var(--m26-ink);
 }
 
+/* Tablas largas (ranking, partidos, usuarios, log): la tabla scrollea dentro de su caja, que nunca
+   pasa del alto de la pantalla, y el encabezado queda fijo arriba. Así la barra de scroll horizontal
+   también queda siempre a mano. */
+.table-wrap {
+    max-height: max(22rem, calc(100vh - 7rem));
+    overflow-y: auto;
+    /* Deja medir lo que se ve de la tabla (100cqw) al editor de resultado, más abajo. */
+    container-type: inline-size;
+}
+
+/* Con border-collapse el borde de una celda fija se va con el scroll: acá cada celda lleva el suyo. */
+.table-wrap > .table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* El selector largo le gana a Bootstrap (0,3,0), que pinta ese borde del color del texto. */
+.table-wrap > .table.m26-scoreboard > thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--m26-surface);
+    border-bottom-color: var(--m26-ink);
+}
+
 /* Confederaciones y roles: una marca de color, el texto queda en tinta. */
 .m26-conf-badge {
     display: inline-flex;
@@ -313,12 +433,12 @@ code {
     background: var(--badge-mark, var(--m26-muted));
 }
 
-.conf-CONMEBOL { --badge-mark: #2B7DB8; }
-.conf-UEFA { --badge-mark: #2A3F8F; }
+.conf-CONMEBOL { --badge-mark: var(--m26-conf-conmebol); }
+.conf-UEFA { --badge-mark: var(--m26-conf-uefa); }
 .conf-AFC { --badge-mark: var(--m26-red); }
 .conf-CAF { --badge-mark: var(--m26-ok); }
 .conf-CONCACAF { --badge-mark: var(--m26-yellow); }
-.conf-OFC { --badge-mark: #7A8580; }
+.conf-OFC { --badge-mark: var(--m26-conf-ofc); }
 
 .role-Admin { --badge-mark: var(--m26-red); }
 .role-Editor { --badge-mark: var(--m26-ink); }
@@ -357,12 +477,26 @@ code {
     border-left-color: var(--m26-ink);
 }
 
+/* El aviso de éxito de FeedbackAlerts entra bajando un poco: se nota que es nuevo. */
+.feedback-success {
+    animation: m26-feedback-in .25s ease-out;
+}
+
+@keyframes m26-feedback-in {
+    from {
+        opacity: 0;
+        transform: translateY(-.4rem);
+    }
+}
+
 /* Bootstrap colorea .alert-warning .alert-link (0,2,0); acá queda en tinta. */
 .alert .alert-link {
     color: var(--m26-ink);
 }
 
+/* El texto blanco de Bootstrap no se lee sobre la roja de noche. */
 .badge.bg-danger {
+    color: var(--m26-surface);
     background-color: var(--m26-red) !important;
 }
 
@@ -384,7 +518,7 @@ code {
 }
 
 .m26-empty {
-    border: 1px dashed #B5BEB4;
+    border: 1px dashed var(--m26-line-strong);
     border-radius: var(--m26-radius);
     padding: 2rem 1rem;
     text-align: center;
@@ -394,7 +528,7 @@ code {
 .m26-empty i {
     display: block;
     font-size: 2rem;
-    color: var(--m26-pitch);
+    color: var(--m26-accent);
     margin-bottom: .6rem;
 }
 
@@ -413,7 +547,7 @@ code {
 .blazor-error-boundary {
     background: var(--m26-red);
     padding: 1rem 1rem 1rem 3.7rem;
-    color: white;
+    color: var(--m26-surface);
 }
 
 .blazor-error-boundary::after {
@@ -433,7 +567,7 @@ code {
     padding: .2rem .65rem;
     border-radius: var(--m26-radius-sm);
     background: var(--m26-yellow);
-    color: var(--m26-ink);
+    color: var(--m26-on-yellow);
     font-size: .9rem;
     font-weight: 600;
     font-stretch: 100%;
@@ -481,9 +615,9 @@ code {
 }
 
 .group-chip.active {
-    background: var(--m26-pitch);
-    border-color: var(--m26-pitch);
-    color: var(--m26-surface);
+    background: var(--m26-accent);
+    border-color: var(--m26-accent);
+    color: var(--m26-on-accent);
 }
 
 /* Estado de partido */
@@ -525,8 +659,8 @@ code {
     min-width: 3.8rem;
     padding: .15rem .55rem;
     border-radius: 4px;
-    background: var(--m26-ink);
-    color: var(--m26-surface);
+    background: var(--m26-board);
+    color: var(--m26-on-board);
     font-stretch: 115%;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
@@ -537,8 +671,23 @@ code {
 .m26-score.pending {
     background: transparent;
     color: var(--m26-muted);
-    border: 1px dashed #B5BEB4;
+    border: 1px dashed var(--m26-line-strong);
     font-weight: 500;
+}
+
+/* Cuando un resultado cambia (ScoreCell), la cifra se da vuelta una vez, como la chapa del tablero. */
+.m26-score.is-flipped {
+    animation: m26-score-flip .45s cubic-bezier(.2, .7, .3, 1);
+}
+
+@keyframes m26-score-flip {
+    from {
+        transform: perspective(10rem) rotateX(-90deg);
+    }
+
+    60% {
+        transform: perspective(10rem) rotateX(14deg);
+    }
 }
 
 /* Editor de resultado compartido */
@@ -550,6 +699,16 @@ code {
     border: 1px solid var(--m26-line);
     border-radius: var(--m26-radius-sm);
     background: var(--m26-chalk);
+}
+
+/* En una tabla que scrollea de costado (partidos, en el celular) el editor ocupa lo que se ve de la
+   tabla y se queda ahí, en vez de medir el ancho entero y obligar a scrollear para cada campo. */
+.table-wrap .match-result-editor {
+    position: sticky;
+    left: .5rem;
+    max-width: calc(100cqw - 1rem);
+    /* Las celdas de la tabla no parten línea en pantallas angostas; el editor sí. */
+    white-space: normal;
 }
 
 .match-result-editor .editor-row {
@@ -608,7 +767,7 @@ code {
     height: 16px;
     object-fit: cover;
     border-radius: 2px;
-    box-shadow: 0 0 0 1px rgba(23, 37, 29, .15);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--m26-ink) 15%, transparent);
     vertical-align: text-bottom;
     margin-right: .4rem;
     flex-shrink: 0;
@@ -622,7 +781,7 @@ code {
     color: var(--m26-muted);
     font-size: .65rem;
     box-shadow: none;
-    border: 1px dashed #A3ACA3;
+    border: 1px dashed var(--m26-line-strong);
 }
 
 .team-flag-lg {
@@ -653,14 +812,14 @@ code {
 .auth-head {
     text-align: center;
     padding: 1.6rem 1.1rem;
-    color: var(--m26-surface);
+    color: var(--m26-on-pitch);
     background: repeating-linear-gradient(90deg, var(--m26-pitch) 0 44px, var(--m26-pitch-stripe) 44px 88px);
     border-bottom: 0;
 }
 
 .auth-title {
     font-size: 2.4rem;
-    color: var(--m26-surface);
+    color: var(--m26-on-pitch);
     margin: 0;
 }
 
@@ -746,6 +905,180 @@ code {
     }
 }
 
+/* Interruptor de rol encendido en la tabla de usuarios */
+.btn-secondary.role-on {
+    color: var(--m26-surface);
+    background: var(--m26-ink);
+    border-color: var(--m26-ink);
+}
+
+/* Estados de la app, escritos en App.razor fuera del árbol de Blazor: la carga inicial y el corte
+   de conexión. La carga se ve mientras baja Blazor, conecta y se restaura la sesión; se oculta
+   cuando Routes dibuja la página. */
+.app-loader {
+    min-height: 100vh;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 1rem;
+    color: var(--m26-muted);
+    font-weight: 600;
+}
+
+.app-loader p {
+    margin: 0;
+}
+
+.page ~ .app-loader {
+    display: none;
+}
+
+/* La misma barra de las etapas del inicio, con el tramo amarillo yendo y viniendo. Sin animación
+   (prefers-reduced-motion) el tramo queda quieto a la izquierda y el texto alcanza. */
+.app-loader-track {
+    position: relative;
+    display: block;
+    width: 10rem;
+    height: 6px;
+    overflow: hidden;
+    background: var(--m26-line);
+}
+
+.app-loader-track::after {
+    content: "";
+    position: absolute;
+    inset: 0 60% 0 0;
+    background: var(--m26-yellow);
+    animation: m26-slide 1s ease-in-out infinite alternate;
+}
+
+@keyframes m26-slide {
+    to {
+        transform: translateX(150%);
+    }
+}
+
+/* Blazor Server le pone una de tres clases: -show mientras reintenta, -failed si se rindió y
+   -rejected si el servidor ya no reconoce la sesión. Amarilla mientras reintenta, roja si no pudo. */
+#components-reconnect-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    place-items: center;
+    padding: 1rem;
+    background: color-mix(in srgb, var(--m26-chalk) 88%, transparent);
+}
+
+#components-reconnect-modal:is(.components-reconnect-show, .components-reconnect-failed, .components-reconnect-rejected) {
+    display: grid;
+}
+
+.reconnect-card {
+    display: grid;
+    justify-items: center;
+    gap: .75rem;
+    width: 100%;
+    max-width: 24rem;
+    padding: 1.5rem;
+    border-top: 5px solid var(--m26-yellow);
+    text-align: center;
+}
+
+.reconnect-card p {
+    margin: 0;
+    text-wrap: balance;
+}
+
+.reconnect-title {
+    font-stretch: 72%;
+    font-weight: 800;
+    font-size: 1.6rem;
+    line-height: 1.1;
+}
+
+#components-reconnect-modal:is(.components-reconnect-failed, .components-reconnect-rejected) .reconnect-card {
+    border-top-color: var(--m26-red);
+}
+
+#components-reconnect-modal:is(.components-reconnect-failed, .components-reconnect-rejected) .reconnect-retrying,
+#components-reconnect-modal.components-reconnect-show .reconnect-lost {
+    display: none;
+}
+
+/* Impresión: tinta sobre blanco en cualquier tema (los tokens de noche son solo de pantalla). Los
+   navegadores no imprimen fondos ni sombras salvo que se pida, así que nada puede depender de un
+   fondo oscuro: lo que iba en cal sobre el verde o sobre el tablero pasa a tinta sobre blanco. El
+   marco de la app y el fixture ajustan lo suyo en MainLayout.razor.css y Fixture.razor.css. */
+@media print {
+    :root {
+        --m26-chalk: #FFFFFF;
+        --m26-pitch: #FFFFFF;
+        --m26-pitch-stripe: #FFFFFF;
+        --m26-on-pitch: var(--m26-ink);
+        --m26-board: #FFFFFF;
+        --m26-on-board: var(--m26-ink);
+    }
+
+    @page {
+        margin: 12mm;
+    }
+
+    /* En papel los controles no sirven: fuera botones, campos y los paneles que solo tienen eso. */
+    .btn,
+    button,
+    form,
+    .form-control,
+    .form-select,
+    .form-label,
+    .form-check,
+    .match-result-editor,
+    .admin-grid > .pane:first-child,
+    .admin-stack > .pane:first-child {
+        display: none !important;
+    }
+
+    .admin-grid {
+        display: block;
+    }
+
+    /* Las cajas con scroll muestran todo su contenido y se pueden partir entre hojas. */
+    .table-responsive,
+    .table-wrap {
+        max-height: none;
+        overflow: visible;
+        container-type: normal;
+    }
+
+    .table-wrap > .table.m26-scoreboard > thead th {
+        position: static;
+    }
+
+    /* El ranking, con sus 12 columnas, entra justo en una hoja A4: un cuerpo menor le da margen. */
+    .m26-scoreboard {
+        font-size: .875rem;
+    }
+
+    /* Ninguna fila queda cortada entre dos hojas ni un título solo al pie. */
+    tr,
+    .alert,
+    .m26-empty {
+        break-inside: avoid;
+    }
+
+    h1,
+    h2,
+    h3 {
+        break-after: avoid;
+    }
+
+    /* Sin su fondo, el marcador se distingue por el borde. */
+    .m26-score {
+        border: 1px solid var(--m26-ink);
+    }
+}
+
+/* Siempre al final: apaga cualquier transición o animación definida más arriba. */
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -753,11 +1086,4 @@ code {
         transition: none !important;
         animation: none !important;
     }
-}
-
-/* Interruptor de rol encendido en la tabla de usuarios */
-.btn-secondary.role-on {
-    color: var(--m26-surface);
-    background: var(--m26-ink);
-    border-color: var(--m26-ink);
 }

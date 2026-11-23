@@ -4,9 +4,9 @@
     justify-items: center;
     gap: .35rem;
     padding: 2.5rem 1rem;
-    border: 2px dashed rgba(23, 37, 29, .3);
+    border: 2px dashed color-mix(in srgb, var(--m26-ink) 30%, transparent);
     border-radius: var(--m26-radius);
-    background: rgba(23, 37, 29, .03);
+    background: color-mix(in srgb, var(--m26-ink) 3%, transparent);
     text-align: center;
     cursor: pointer;
     transition: background-color .15s ease, border-color .15s ease;
@@ -15,11 +15,11 @@
 .import-drop:hover,
 .import-drop:focus-within {
     border-color: var(--m26-ink);
-    background: rgba(23, 37, 29, .07);
+    background: color-mix(in srgb, var(--m26-ink) 7%, transparent);
 }
 
 .import-drop:focus-within {
-    outline: 3px solid rgba(242, 194, 0, .6);
+    outline: 3px solid color-mix(in srgb, var(--m26-yellow) 60%, transparent);
     outline-offset: 2px;
 }
 

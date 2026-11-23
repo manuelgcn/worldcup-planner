@@ -7,7 +7,7 @@
 
 .not-found-logo {
     border-radius: 16px;
-    box-shadow: 0 8px 18px rgba(23, 37, 29, .25);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--m26-on-yellow) 25%, transparent);
 }
 
 .not-found-code {
