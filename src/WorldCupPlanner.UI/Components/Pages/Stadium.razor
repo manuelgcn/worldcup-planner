@@ -4,6 +4,7 @@
 @using WorldCupPlanner.Services.Interfaces
 @inject IStadiumService StadiumServices
 @inject SessionState Session
+@inject ILogger<Stadium> Logger
 
 <PageTitle>Estadios · Golazo</PageTitle>
 
@@ -160,13 +161,10 @@ else
             ClearForm();
             LoadStadiums();
         }
-        catch (StadiumServicesException ex)
+        // También las de la base: dos altas simultáneas calculan el mismo id y la segunda falla al guardar.
+        catch (Exception ex)
         {
-            errors.Add(ex.Message);
-        }
-        catch (ArgumentException ex)
-        {
-            errors.Add(ex.Message);
+            errors.Add(UserFacingError.MessageFor(ex, Logger));
         }
     }
 

@@ -504,7 +504,7 @@
         }
         catch (Exception ex)
         {
-            errors.Add($"Error al cargar el estado: {ex.Message}");
+            errors.Add("Error al cargar el estado: " + UserFacingError.MessageFor(ex, Logger));
         }
     }
 
@@ -724,7 +724,7 @@
         catch (TeamServicesException ex) { errors.Add(ex.Message); }
         catch (SettingsException ex) { errors.Add(ex.Message); }
         catch (ArgumentException ex) { errors.Add(ex.Message); }
-        catch (InvalidOperationException ex) { errors.Add(ex.Message); }
+        catch (InvalidOperationException ex) { errors.Add(UserFacingError.MessageFor(ex, Logger)); }
         catch (KnockoutGeneratorException ex) { errors.Add(ex.Message); }
         catch (Exception ex)
         {

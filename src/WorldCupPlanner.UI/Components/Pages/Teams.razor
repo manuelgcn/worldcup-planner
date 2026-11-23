@@ -237,13 +237,10 @@ else
             ClearForm();
             LoadTeams();
         }
-        catch (TeamServicesException ex)
+        // También las de la base: dos altas simultáneas calculan el mismo id y la segunda falla al guardar.
+        catch (Exception ex)
         {
-            errors.Add(ex.Message);
-        }
-        catch (ArgumentException ex)
-        {
-            errors.Add(ex.Message);
+            errors.Add(UserFacingError.MessageFor(ex, Logger));
         }
     }
 
