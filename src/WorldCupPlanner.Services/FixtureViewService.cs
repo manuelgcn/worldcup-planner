@@ -19,14 +19,19 @@ public class FixtureViewService(
     {
         List<Match> matches = matchRepository.GetAll();
         List<DateTime> matchDates = matches.Select(match => match.MatchDate).ToList();
+        List<MatchGroup> groupMatches = matches.OfType<MatchGroup>().ToList();
+        int pendingGroupMatches = groupMatches.Count(match => !match.HasResult);
 
         return new FixtureSnapshotDto
         {
             Settings = tournamentSettingsRepository.GetAll().FirstOrDefault(),
             TeamCount = teamRepository.Count(),
             Groups = groupRepository.GetAll().OrderBy(group => group.Name).ToList(),
-            GroupMatches = matches.OfType<MatchGroup>().ToList(),
+            GroupMatches = groupMatches,
             EliminationMatches = matches.OfType<MatchElimination>().ToList(),
+            PendingGroupMatchCount = pendingGroupMatches,
+            // Sin partidos de grupo la fase no esta completa (misma regla que GroupStandingsService).
+            IsGroupStageComplete = groupMatches.Count > 0 && pendingGroupMatches == 0,
             EarliestMatchDate = matchDates.Count > 0 ? matchDates.Min() : null,
             LatestMatchDate = matchDates.Count > 0 ? matchDates.Max() : null
         };
