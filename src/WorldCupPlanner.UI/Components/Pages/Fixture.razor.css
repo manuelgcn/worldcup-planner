@@ -606,13 +606,13 @@
     opacity: .45;
 }
 
-/* Seguir a un equipo (bracket.js): su fila se enciende en amarillo en todas las rondas y las
-   demás se atenúan. */
+/* Seguir a un equipo (bracket.js): su fila se enciende en amarillo en todas las rondas. De las
+   demás se atenúa solo la bandera: con la fila entera, nombres y marcadores bajaban de 4.5:1. */
 ::deep .bracket-mini-row {
-    transition: opacity .12s ease, background-color .12s ease;
+    transition: background-color .12s ease;
 }
 
-::deep .bracket-compact[data-following] .bracket-mini-row:not([data-followed]) {
+::deep .bracket-compact[data-following] .bracket-mini-row:not([data-followed]) .team-flag {
     opacity: .45;
 }
 
