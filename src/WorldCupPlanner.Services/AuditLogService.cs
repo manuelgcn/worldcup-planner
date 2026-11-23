@@ -1,4 +1,3 @@
-using System.Text;
 using WorldCupPlanner.Domain;
 using WorldCupPlanner.DataAccess.Interfaces;
 using WorldCupPlanner.Services.DTOs;
@@ -43,14 +42,6 @@ public sealed class AuditLogService : IAuditLogService
         _repository.Add(log);
     }
 
-    public List<AuditLogDto> GetAll()
-    {
-        List<AuditLog> logs = _repository.GetAll();
-        return logs
-            .Select(MapToDto)
-            .ToList();
-    }
-
     public List<AuditLogDto> GetFiltered(AuditLogFilterDto filter, int? take = null)
     {
         ArgumentNullException.ThrowIfNull(filter);
@@ -59,47 +50,6 @@ public sealed class AuditLogService : IAuditLogService
         return logs
             .Select(MapToDto)
             .ToList();
-    }
-
-    public string ExportAsText()
-    {
-        List<AuditLog> logs = _repository.GetAll();
-
-        StringBuilder sb = new StringBuilder();
-        foreach (AuditLog log in logs.OrderBy(l => l.Timestamp))
-        {
-            sb.AppendLine(FormatLogLine(log));
-        }
-
-        return sb.ToString().TrimEnd();
-    }
-
-    private static string FormatLogLine(AuditLog log)
-    {
-        StringBuilder line = new StringBuilder();
-        line.Append($"[{log.Timestamp.ToString("o")}] Action: {log.Action} | Details: {log.Details}");
-
-        if (!string.IsNullOrWhiteSpace(log.PerformedByEmail))
-        {
-            line.Append($" | PerformedBy: {log.PerformedByEmail}");
-        }
-
-        if (log.TournamentSettingsId.HasValue)
-        {
-            line.Append($" | TournamentID: {log.TournamentSettingsId.Value}");
-        }
-
-        if (ExistLogEntity(log))
-        {
-            line.Append($" | Entity: {log.AffectedEntityType} - ID: {log.AffectedEntityId!.Value}");
-        }
-
-        return line.ToString();
-    }
-
-    private static bool ExistLogEntity(AuditLog log)
-    {
-        return !string.IsNullOrWhiteSpace(log.AffectedEntityType) && log.AffectedEntityId.HasValue;
     }
 
     private static AuditLogDto MapToDto(AuditLog log)

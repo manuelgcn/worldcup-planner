@@ -26,19 +26,9 @@ public sealed class MockAuditLogService : IAuditLogService
         LoggedActions.Add(new LoggedAction(action, details, null, affectedEntityType, affectedEntityId, performedByEmail));
     }
 
-    public List<AuditLogDto> GetAll()
-    {
-        return new List<AuditLogDto>();
-    }
-
     public List<AuditLogDto> GetFiltered(AuditLogFilterDto filter, int? take = null)
     {
         return new List<AuditLogDto>();
-    }
-
-    public string ExportAsText()
-    {
-        return string.Empty;
     }
 
     public sealed record LoggedAction(

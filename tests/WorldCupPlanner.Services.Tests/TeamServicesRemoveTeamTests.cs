@@ -151,18 +151,8 @@ internal sealed class NullAuditLogService : IAuditLogService
     {
     }
 
-    public List<AuditLogDto> GetAll()
-    {
-        return new List<AuditLogDto>();
-    }
-
     public List<AuditLogDto> GetFiltered(AuditLogFilterDto filter, int? take = null)
     {
         return new List<AuditLogDto>();
-    }
-
-    public string ExportAsText()
-    {
-        return string.Empty;
     }
 }
