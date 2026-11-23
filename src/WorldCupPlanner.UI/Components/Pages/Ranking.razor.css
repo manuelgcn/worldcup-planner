@@ -28,3 +28,27 @@
 .rank-bronze {
     background: linear-gradient(160deg, #F6D7B8 0%, #D9A26E 60%);
 }
+
+/* En pantallas angostas la tabla scrollea de costado: el equipo queda fijo a la izquierda, porque
+   sin él no se sabe de quién son las cifras. El nombre largo se corta con puntos suspensivos.
+   Solo en pantalla: una hoja también es angosta, y ahí el nombre va entero. */
+@media screen and (max-width: 991.98px) {
+    .table-wrap th:nth-child(2),
+    .table-wrap td:nth-child(2) {
+        position: sticky;
+        left: 0;
+        background: var(--m26-surface);
+        border-right: 1px solid var(--m26-line);
+    }
+
+    /* La esquina va por encima del encabezado fijo (z-index 1 en app.css) y de la columna fija. */
+    .table-wrap thead th:nth-child(2) {
+        z-index: 2;
+    }
+
+    .table-wrap td:nth-child(2) {
+        max-width: 10.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}

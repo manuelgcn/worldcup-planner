@@ -351,9 +351,11 @@ html[data-theme="night"] .form-check-input:checked[type=checkbox] {
     font-size: .9rem;
 }
 
+/* La fila bajo el mouse se tiñe con el acento: verde de día, amarilla de noche. Con la tiza de
+   fondo (más oscura que la superficie de noche) casi no se notaba. */
 .table {
     --bs-table-hover-color: var(--m26-ink);
-    --bs-table-hover-bg: var(--m26-chalk);
+    --bs-table-hover-bg: color-mix(in srgb, var(--m26-accent) 10%, transparent);
     color: var(--m26-ink);
     border-color: var(--m26-line-soft);
 }
@@ -382,6 +384,31 @@ html[data-theme="night"] .form-check-input:checked[type=checkbox] {
     font-size: .8rem;
     font-weight: 600;
     border-bottom: 2px solid var(--m26-ink);
+}
+
+/* Tablas largas (ranking, partidos, usuarios, log): la tabla scrollea dentro de su caja, que nunca
+   pasa del alto de la pantalla, y el encabezado queda fijo arriba. Así la barra de scroll horizontal
+   también queda siempre a mano. */
+.table-wrap {
+    max-height: max(22rem, calc(100vh - 7rem));
+    overflow-y: auto;
+    /* Deja medir lo que se ve de la tabla (100cqw) al editor de resultado, más abajo. */
+    container-type: inline-size;
+}
+
+/* Con border-collapse el borde de una celda fija se va con el scroll: acá cada celda lleva el suyo. */
+.table-wrap > .table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* El selector largo le gana a Bootstrap (0,3,0), que pinta ese borde del color del texto. */
+.table-wrap > .table.m26-scoreboard > thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--m26-surface);
+    border-bottom-color: var(--m26-ink);
 }
 
 /* Confederaciones y roles: una marca de color, el texto queda en tinta. */
@@ -669,6 +696,16 @@ html[data-theme="night"] .form-check-input:checked[type=checkbox] {
     border: 1px solid var(--m26-line);
     border-radius: var(--m26-radius-sm);
     background: var(--m26-chalk);
+}
+
+/* En una tabla que scrollea de costado (partidos, en el celular) el editor ocupa lo que se ve de la
+   tabla y se queda ahí, en vez de medir el ancho entero y obligar a scrollear para cada campo. */
+.table-wrap .match-result-editor {
+    position: sticky;
+    left: .5rem;
+    max-width: calc(100cqw - 1rem);
+    /* Las celdas de la tabla no parten línea en pantallas angostas; el editor sí. */
+    white-space: normal;
 }
 
 .match-result-editor .editor-row {
