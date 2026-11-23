@@ -22,6 +22,7 @@ string flagsDirectory = Path.Combine(
 
 builder.Services.AddWorldCupPlanner(connectionString, flagsDirectory);
 builder.Services.TryAddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<RevokedSessions>();
 builder.Services.AddScoped<SessionState>();
 
 var app = builder.Build();
