@@ -523,6 +523,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             throw new KnockoutGeneratorException(StadiumsRequiredMessage);
         }
 
+        // DaysBetweenJourneys es aca la separacion exacta entre rondas; en grupos es el minimo entre jornadas.
         int daysBetweenRounds = Math.Max(1, settings.DaysBetweenJourneys);
         int daysAfterPreviousRound = phase == Phase.Final ? daysBetweenRounds + DaysFromThirdPlaceToFinal : daysBetweenRounds;
         return new KnockoutRoundScheduler(stadiums, settings.MaxMatchesPerDay, previousRoundLastMatch.Date.AddDays(daysAfterPreviousRound));
