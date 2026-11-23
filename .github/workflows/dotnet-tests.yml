@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -52,7 +52,7 @@ jobs:
             --results-directory ./TestResults
 
       - name: Upload test results
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3
         if: always()
         with:
           name: MSTest Results
@@ -60,7 +60,7 @@ jobs:
           reporter: dotnet-trx
 
       - name: Generate coverage report
-        uses: danielpalme/ReportGenerator-GitHub-Action@5.3.9
+        uses: danielpalme/ReportGenerator-GitHub-Action@v5.6.0
         with:
           reports: TestResults/**/coverage.cobertura.xml
           targetdir: CoverageReport
