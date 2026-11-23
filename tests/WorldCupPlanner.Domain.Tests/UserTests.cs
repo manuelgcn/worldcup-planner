@@ -453,6 +453,16 @@ public class UserTests
         Assert.IsTrue(user.PasswordMatches("Nueva456#"));
     }
 
+    [TestMethod]
+    public void ChangePasswordRejectsAWrongCurrentPassword()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+
+        Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Other123@", "Nueva456#"));
+        Assert.AreEqual(stored, user.password);
+    }
+
 
     [TestMethod]
     public void UserStartsWithoutRoles()
