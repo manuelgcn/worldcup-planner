@@ -2,6 +2,7 @@ using WorldCupPlanner.DataAccess.Repositories;
 using WorldCupPlanner.DataAccess.Tests.TestDoubles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WorldCupPlanner.Domain;
+using WorldCupPlanner.Services;
 
 namespace WorldCupPlanner.DataAccess.Tests;
 
@@ -98,6 +99,31 @@ public class AuditLogRepositoryTests
         List<AuditLog> logs = repository.GetAll();
         Assert.AreEqual(4242, logs[0].PerformedByUserId);
         Assert.IsNull(logs[1].PerformedByUserId);
+    }
+
+    // El caso que motivo guardar el id: el actor cambia su email, o se lo borra, y sus registros lo siguen identificando.
+    [TestMethod]
+    public void LogsKeepTheActorIdAfterTheUserChangesEmailAndIsDeleted()
+    {
+        using SqliteDbContextFactory factory = new SqliteDbContextFactory();
+        UserRepository users = new UserRepository(factory);
+        AuditLogRepository logs = new AuditLogRepository(factory);
+        AuditLogService service = AuditLogService.CreateInstance(logs, users);
+        User actor = new User(0, "Ana", "Admin", "ana@copa.com", "Pass123@", new DateTime(1990, 5, 15));
+        actor.AddRole(UserRoles.Admin);
+        users.Add(actor);
+        int actorId = actor.idUser;
+
+        service.LogPerformedBy("ACTION", "Before the change", "ana@copa.com");
+        actor.UpdatePersonalData("Ana", "Admin", "otra@copa.com");
+        users.Update(actor);
+        service.LogPerformedBy("ACTION", "After the change", "otra@copa.com");
+        users.Remove(actor);
+
+        List<AuditLog> stored = logs.GetAll();
+        Assert.AreEqual(2, stored.Count);
+        Assert.IsTrue(actorId > 0);
+        Assert.IsTrue(stored.All(log => log.PerformedByUserId == actorId));
     }
 
     [TestMethod]
