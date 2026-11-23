@@ -16,7 +16,7 @@ public sealed class AuditLogService : IAuditLogService
         _repository = repository;
     }
 
-    public static AuditLogService CreateInstance(IAuditLogRepository repository)
+    public static AuditLogService CreateInstance(IAuditLogRepository repository, IUserRepository? userRepository = null)
     {
         return new AuditLogService(repository);
     }

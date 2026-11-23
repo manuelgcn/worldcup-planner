@@ -8,14 +8,19 @@ namespace WorldCupPlanner.Services.Tests;
 [TestClass]
 public class AuditLogServiceTests
 {
+    private const int ActorId = 7;
+    private const string ActorEmail = "admin@copa.com";
+
     private MockAuditLogRepository _repository = null!;
+    private MockUserRepository _users = null!;
     private AuditLogService _service = null!;
 
     [TestInitialize]
     public void Setup()
     {
         _repository = new MockAuditLogRepository();
-        _service = AuditLogService.CreateInstance(_repository);
+        _users = new MockUserRepository();
+        _service = AuditLogService.CreateInstance(_repository, _users);
     }
 
     [TestMethod]
@@ -161,6 +166,76 @@ public class AuditLogServiceTests
             performedByEmail: "   ");
 
         Assert.IsNull(_repository.GetAll()[0].PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void LogPerformedBy_WithTheEmailOfAUser_StoresThatUserId()
+    {
+        AddActor();
+
+        _service.LogPerformedBy(AuditActions.GenerateFixture, "Fixture generated", ActorEmail);
+        _service.LogPerformedBy(AuditActions.GenerateFixture, "Fixture generated", 1, ActorEmail);
+
+        List<AuditLog> logs = _repository.GetAll();
+        Assert.AreEqual(ActorId, logs[0].PerformedByUserId);
+        Assert.AreEqual(ActorId, logs[1].PerformedByUserId);
+    }
+
+    [TestMethod]
+    public void LogPerformedBy_WithPaddedEmail_StoresThatUserId()
+    {
+        AddActor();
+
+        _service.LogPerformedBy(AuditActions.GenerateFixture, "Fixture generated", "  " + ActorEmail + "  ");
+
+        Assert.AreEqual(ActorId, _repository.GetAll()[0].PerformedByUserId);
+    }
+
+    [TestMethod]
+    public void LogPerformedBy_WithAnEmailOfNoUser_LeavesTheUserIdNull()
+    {
+        AddActor();
+
+        _service.LogPerformedBy(AuditActions.GenerateFixture, "Fixture generated", "nobody@copa.com");
+
+        Assert.IsNull(_repository.GetAll()[0].PerformedByUserId);
+    }
+
+    [TestMethod]
+    public void Log_WithoutActor_LeavesTheUserIdNull()
+    {
+        AddActor();
+
+        _service.Log("ACTION", "Details");
+        _service.LogPerformedBy("ACTION", "Details", performedByEmail: null);
+        _service.LogPerformedBy("ACTION", "Details", performedByEmail: "   ");
+
+        Assert.IsTrue(_repository.GetAll().All(log => log.PerformedByUserId is null));
+    }
+
+    // Los tests que no miran al actor arman el servicio sin usuarios: registra igual, sin id.
+    [TestMethod]
+    public void LogPerformedBy_WithoutUserRepository_LeavesTheUserIdNull()
+    {
+        AuditLogService serviceWithoutUsers = AuditLogService.CreateInstance(_repository);
+
+        serviceWithoutUsers.LogPerformedBy(AuditActions.GenerateFixture, "Fixture generated", ActorEmail);
+
+        AuditLog log = _repository.GetAll()[0];
+        Assert.AreEqual(ActorEmail, log.PerformedByEmail);
+        Assert.IsNull(log.PerformedByUserId);
+    }
+
+    [TestMethod]
+    public void GetFiltered_MapsPerformedByUserId()
+    {
+        _repository.Seed(AuditLog.Create("WITH_ACTOR", "Det 1", performedByEmail: ActorEmail, performedByUserId: ActorId));
+        _repository.Seed(AuditLog.Create("WITHOUT_ACTOR", "Det 2"));
+
+        List<AuditLogDto> result = _service.GetFiltered(new AuditLogFilterDto());
+
+        Assert.AreEqual(ActorId, result.Single(log => log.Action == "WITH_ACTOR").PerformedByUserId);
+        Assert.IsNull(result.Single(log => log.Action == "WITHOUT_ACTOR").PerformedByUserId);
     }
 
     [TestMethod]
@@ -314,5 +389,10 @@ public class AuditLogServiceTests
 
         Assert.AreEqual(log.Timestamp, parsed);
         Assert.IsTrue(parsed >= before);
+    }
+
+    private void AddActor()
+    {
+        _users.Add(new User(ActorId, "Ana", "Admin", ActorEmail, "Password@1", new DateTime(1990, 1, 1)));
     }
 }
