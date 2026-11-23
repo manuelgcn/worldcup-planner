@@ -161,6 +161,8 @@ else
     private const string ChampionLabel = "Campeón del mundo";
     private const string ReachedPrefix = "Instancia alcanzada: ";
     private const string GroupStageLabel = "Fase de grupos";
+    // "Tercer puesto" a secas se leería como "salió tercero", y lo ve también el que perdió ese partido.
+    private const string ThirdPlaceMatchLabel = "Partido por el tercer puesto";
     private const string NoFixtureLabel = "Todavía sin partidos";
 
     [Parameter] public int Id { get; set; }
@@ -210,7 +212,7 @@ else
 
         if (profile.RoundReached is Phase phase)
         {
-            return ReachedPrefix + PhaseLabel(phase);
+            return ReachedPrefix + (phase == Phase.ThirdPlace ? ThirdPlaceMatchLabel : PhaseLabel(phase));
         }
 
         return profile.Matches.Count == 0 ? NoFixtureLabel : ReachedPrefix + GroupStageLabel;
