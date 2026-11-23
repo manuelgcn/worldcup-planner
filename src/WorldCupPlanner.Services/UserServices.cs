@@ -312,10 +312,15 @@ public class UserServices : IUserService
             throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
 
         User user = GetUserById(userId);
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        string loginKey = LoginKeyFor(user.email);
+
+        if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.IsLockedAt(now))
+            throw new UserServicesException(TooManyFailedLoginsMessage);
 
         if (!user.PasswordMatches(currentPassword))
         {
-            RegisterFailedLogin(LoginKeyFor(user.email), _timeProvider.GetUtcNow());
+            RegisterFailedLogin(loginKey, now);
             throw new UserServicesException(WrongCurrentPasswordMessage);
         }
 
