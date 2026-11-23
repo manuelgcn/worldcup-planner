@@ -18,6 +18,7 @@ public class SessionState
     private readonly ProtectedSessionStorage storage;
     private readonly IUserService userService;
     private readonly TimeProvider timeProvider;
+    private readonly ILogger<SessionState> logger;
 
     // Copia en memoria de lo guardado en el navegador: un circuito que sigue abierto no vuelve a leerlo.
     private StoredSession? session;
@@ -31,6 +32,7 @@ public class SessionState
         this.storage = storage;
         this.userService = userService;
         this.timeProvider = timeProvider;
+        this.logger = logger;
     }
 
     public User? CurrentUser { get; private set; }
@@ -96,22 +98,31 @@ public class SessionState
             return;
         }
 
+        User user;
         try
         {
-            User user = userService.GetUserById(CurrentUser.idUser);
-            // Los ids se reusan si se resetea la base: con otro email es otra persona, no esta sesión.
-            if (!string.Equals(user.email, CurrentUser.email, StringComparison.OrdinalIgnoreCase))
-            {
-                await LogoutAsync();
-                return;
-            }
-
-            CurrentUser = user;
+            user = userService.GetUserById(CurrentUser.idUser);
         }
         catch (UserServicesException)
         {
             await LogoutAsync();
+            return;
         }
+        // Un corte breve de la base no es una baja: romper el circuito por eso dejaría la página inutilizable.
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Could not read user {UserId} again; the session keeps its current copy.", CurrentUser.idUser);
+            return;
+        }
+
+        // Los ids se reusan si se resetea la base: con otro email es otra persona, no esta sesión.
+        if (!string.Equals(user.email, CurrentUser.email, StringComparison.OrdinalIgnoreCase))
+        {
+            await LogoutAsync();
+            return;
+        }
+
+        CurrentUser = user;
     }
 
     public async Task LoginAsync(User user)
