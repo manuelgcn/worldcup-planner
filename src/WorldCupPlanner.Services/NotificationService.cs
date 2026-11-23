@@ -83,9 +83,10 @@ public class NotificationService : INotificationService
             return;
         }
 
-        auditLogService.Log(
+        auditLogService.LogPerformedBy(
             AuditActions.NotificationReadAll,
             $"All notifications ({marked}) marked as read by user {userId}.",
+            performedByEmail,
             affectedEntityType: nameof(Notification),
             affectedEntityId: userId);
     }
@@ -107,9 +108,10 @@ public class NotificationService : INotificationService
         notification.MarkAsRead();
         notificationRepository.Update(notification);
 
-        auditLogService.Log(
+        auditLogService.LogPerformedBy(
             AuditActions.NotificationRead,
             $"Notification {notificationId} marked as read by user {userId}.",
+            performedByEmail,
             affectedEntityType: nameof(Notification),
             affectedEntityId: notificationId);
     }
