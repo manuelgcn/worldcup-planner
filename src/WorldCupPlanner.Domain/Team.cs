@@ -21,6 +21,13 @@ public class Team
     public Confederation Confederation { get; }
     public string? FlagBase64 { get; private set; }
 
+    // Solo para EF Core, que lo prefiere al leer: las reglas valen al crear un equipo, no al cargar una fila
+    // guardada con reglas anteriores, que si no haria fallar cada lectura de la tabla.
+    private Team()
+    {
+        Name = string.Empty;
+    }
+
     public Team(
         int id,
         string name,

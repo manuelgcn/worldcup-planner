@@ -22,6 +22,14 @@ public class Stadium
     public string? Description { get; private set; }
     public int Capacity { get; private set; }
 
+    // Solo para EF Core, que lo prefiere al leer: las reglas valen al crear un estadio, no al cargar una fila
+    // guardada con reglas anteriores, que si no haria fallar cada lectura de la tabla.
+    private Stadium()
+    {
+        Name = string.Empty;
+        City = string.Empty;
+    }
+
     public Stadium(string name, string city, string? description, int capacity)
     {
         ValidateName(name);
