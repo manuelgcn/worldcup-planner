@@ -86,22 +86,12 @@
                     <FeedbackAlerts Errors="passwordErrors" SuccessMessage="@passwordSuccessMessage" />
 
                     <form @onsubmit="ChangePassword">
-                        <div class="mb-3">
-                            <label class="form-label" for="currentPassword">Contraseña actual</label>
-                            <input id="currentPassword" class="form-control" type="password" autocomplete="current-password"
-                                   @bind="currentPassword" @bind:event="oninput" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="newPassword">Contraseña nueva</label>
-                            <input id="newPassword" class="form-control" type="password" autocomplete="new-password"
-                                   aria-describedby="newPasswordHelp" @bind="newPassword" @bind:event="oninput" />
-                            <div id="newPasswordHelp" class="form-text">De 8 a 128 caracteres, con mayúscula, minúscula, número y símbolo.</div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="repeatNewPassword">Repetir contraseña nueva</label>
-                            <input id="repeatNewPassword" class="form-control" type="password" autocomplete="new-password"
-                                   @bind="repeatNewPassword" @bind:event="oninput" />
-                        </div>
+                        <PasswordField Id="currentPassword" Label="Contraseña actual" Autocomplete="current-password"
+                                       @bind-Value="currentPassword" />
+                        <PasswordField Id="newPassword" Label="Contraseña nueva" Autocomplete="new-password"
+                                       @bind-Value="newPassword" ShowRules="true" />
+                        <PasswordField Id="repeatNewPassword" Label="Repetir contraseña nueva" Autocomplete="new-password"
+                                       @bind-Value="repeatNewPassword" />
 
                         <button class="btn btn-primary w-100" type="submit">Cambiar contraseña</button>
                     </form>
