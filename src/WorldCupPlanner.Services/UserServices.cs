@@ -305,8 +305,10 @@ public class UserServices : IUserService
 
         // El contador sigue a la cuenta: si quedara bajo el email viejo, cambiar el email (que no pide
         // contrasena) daria intentos nuevos y levantaria un bloqueo.
-        if (_failedLogins.TryRemove(oldLoginKey, out FailedLogins? failed))
-            _failedLogins[LoginKeyFor(user.email)] = failed;
+        string newLoginKey = LoginKeyFor(user.email);
+
+        if (newLoginKey != oldLoginKey && _failedLogins.TryRemove(oldLoginKey, out FailedLogins? failed))
+            _failedLogins[newLoginKey] = failed;
 
         _auditLogService.LogPerformedBy(
             AuditActions.UpdateUser,
