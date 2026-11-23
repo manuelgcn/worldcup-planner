@@ -107,6 +107,7 @@
                             <select id="exportFixtureFormat" class="form-select" @bind="exportFormat">
                                 <option value="@ExportFormat.Csv">CSV</option>
                                 <option value="@ExportFormat.Xlsx">XLSX</option>
+                                <option value="@IcsFormatOption">ICS (calendario)</option>
                             </select>
                         </span>
                         <button class="btn btn-outline-primary" disabled="@isExporting" @onclick="HandleExportFixtureAsync">
@@ -400,7 +401,9 @@
     private Dictionary<string, List<GroupStandingDto>> standingsByGroup = new();
     private DateTime? exportFromDate;
     private DateTime? exportToDate;
-    private ExportFormat exportFormat = ExportFormat.Csv;
+    // El calendario no es un ExportFormat (ese enum es de las planillas): el select guarda el nombre de la opción.
+    private const string IcsFormatOption = "Ics";
+    private string exportFormat = nameof(ExportFormat.Csv);
     private bool isExporting;
 
     private readonly List<string> errors = new();
@@ -650,10 +653,10 @@
         isExporting = true;
         try
         {
-            ExportFileDto file = ExportService.ExportFixture(
-                new DateRange(exportFromDate ?? DateTime.UtcNow.Date, exportToDate ?? DateTime.UtcNow.Date),
-                exportFormat,
-                Session.CurrentUser!);
+            DateRange range = new DateRange(exportFromDate ?? DateTime.UtcNow.Date, exportToDate ?? DateTime.UtcNow.Date);
+            ExportFileDto file = exportFormat == IcsFormatOption
+                ? ExportService.ExportFixtureIcs(range, Session.CurrentUser!)
+                : ExportService.ExportFixture(range, Enum.Parse<ExportFormat>(exportFormat), Session.CurrentUser!);
 
             await JS.InvokeVoidAsync(
                 "downloadExportFile",
