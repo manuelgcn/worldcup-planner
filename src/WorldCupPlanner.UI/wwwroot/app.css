@@ -395,6 +395,8 @@ html[data-theme="night"] .form-check-input:checked[type=checkbox] {
 .table-wrap {
     max-height: max(22rem, calc(100vh - 7rem));
     overflow-y: auto;
+    /* Alto del encabezado fijo: un botón que recibe el foco no queda tapado por él (WCAG 2.4.11). */
+    scroll-padding-top: 2.5rem;
     /* Deja medir lo que se ve de la tabla (100cqw) al editor de resultado, más abajo. */
     container-type: inline-size;
 }

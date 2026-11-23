@@ -26,8 +26,8 @@
     @if (championName is not null)
     {
         @* Papelitos: caen una sola vez. Posición, demora e inclinación salen del índice, sin azar. *@
-        <div class="papelitos" aria-hidden="true">
-            @for (int i = 0; i < PapelitoCount; i++)
+        <div class="confetti" aria-hidden="true">
+            @for (int i = 0; i < ConfettiCount; i++)
             {
                 <i style="--x:@(i * 37 % 100)%;--delay:@(i * 53 % 1200)ms;--tilt:@(i * 67 % 180)deg"></i>
             }
@@ -126,7 +126,7 @@
     private const string DashboardLoadErrorMessage =
         "No se pudo cargar el resumen del torneo. Intentá nuevamente más tarde.";
     private const int RequiredTeamCount = 48;
-    private const int PapelitoCount = 32;
+    private const int ConfettiCount = 32;
 
     private int unreadCount;
     private int teamCount;
