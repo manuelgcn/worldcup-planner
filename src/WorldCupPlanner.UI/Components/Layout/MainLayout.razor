@@ -4,6 +4,9 @@
 @inject SessionState Session
 @inject IJSRuntime JS
 
+@* Con <base href="/"> el ancla sola navegaría al inicio: el clic se cancela y el foco se mueve a mano. *@
+<a class="skip-link" href="#contenido" @onclick="SkipToContent" @onclick:preventDefault>Saltar al contenido</a>
+
 <div class="page">
     <header class="sidebar">
         <NavMenu/>
@@ -28,19 +31,27 @@
             }
         </div>
 
-        <article class="content px-4">
+        <article id="contenido" class="content px-4" tabindex="-1" @ref="content">
             @Body
         </article>
     </main>
 </div>
 
+@* Blazor lo muestra ante un error sin manejar y atiende .reload y .dismiss. *@
 <div id="blazor-error-ui" role="alert">
+    <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
     Ocurrió un error inesperado.
     <a href="" class="reload">Recargar</a>
-    <button type="button" class="dismiss" aria-label="Cerrar aviso">🗙</button>
+    <button type="button" class="dismiss" aria-label="Cerrar aviso">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+    </button>
 </div>
 
 @code {
+    private ElementReference content;
+
+    private async Task SkipToContent() => await content.FocusAsync();
+
     private string Initials =>
         $"{FirstLetter(Session.CurrentUser!.name)}{FirstLetter(Session.CurrentUser.lastname)}";
 

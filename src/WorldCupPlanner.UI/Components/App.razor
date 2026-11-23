@@ -27,7 +27,30 @@
 
 <body>
 <Routes @rendermode="new InteractiveServerRenderMode(prerender: false)"/>
+
+@* Se ve mientras baja Blazor, conecta y Routes restaura la sesión; el CSS lo oculta cuando aparece .page. *@
+<div class="app-loader" role="status">
+    <img src="img/golazo-mark.svg" alt="" width="64" height="64"/>
+    <span class="app-loader-track" aria-hidden="true"></span>
+    <p>Entrando en calor…</p>
+</div>
+
+@* Blazor solo le cambia la clase a este id: components-reconnect-show, -failed o -rejected. *@
+<div id="components-reconnect-modal" role="alert">
+    <div class="m26-card reconnect-card">
+        <p class="reconnect-title">Se cortó la conexión.</p>
+        <p class="reconnect-retrying">Reintentando…</p>
+        <span class="app-loader-track reconnect-retrying" aria-hidden="true"></span>
+        <p class="reconnect-lost">No pudimos reconectar. Recargá la página para seguir.</p>
+        <button type="button" class="btn btn-primary reconnect-lost" data-reload>
+            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+            Recargar
+        </button>
+    </div>
+</div>
+
 <script src="export-download.js"></script>
+<script src="reconnect.js"></script>
 <script src="_framework/blazor.web.js"></script>
 </body>
 

@@ -1,3 +1,26 @@
+/* Primer elemento con foco: saltea el menú. Solo aparece al enfocarlo, como una amarilla sobre el verde.
+   :hover repite el color porque a:hover lo pasaría al acento, que de noche es la misma amarilla. */
+.skip-link,
+.skip-link:hover {
+    position: absolute;
+    top: .75rem;
+    left: .75rem;
+    z-index: 100;
+    padding: .5rem .9rem;
+    border-radius: var(--m26-radius-sm);
+    background: var(--m26-yellow);
+    color: var(--m26-on-yellow);
+    font-weight: 700;
+    text-decoration: none;
+    transform: translateY(-200%);
+}
+
+.skip-link:focus {
+    transform: none;
+    outline: 3px solid var(--m26-on-pitch);
+    outline-offset: 2px;
+}
+
 .page {
     position: relative;
     display: flex;
@@ -9,6 +32,11 @@
 main {
     flex: 1;
     min-width: 0;
+}
+
+/* Destino del salto: recibe el foco por código y no hace falta marcar todo el contenido. */
+article:focus {
+    outline: none;
 }
 
 .sidebar {
@@ -143,28 +171,45 @@ main {
     }
 }
 
+/* Aviso de error sin manejar: una roja al pie, en los colores del tema. */
 #blazor-error-ui {
     background: var(--m26-surface);
+    color: var(--m26-ink);
     border-top: 4px solid var(--m26-red);
     bottom: 0;
     display: none;
     left: 0;
-    padding: .7rem 1.1rem;
+    padding: .7rem 3.5rem .7rem 1.1rem;
     position: fixed;
     width: 100%;
     z-index: 1000;
 }
 
+#blazor-error-ui > .bi {
+    margin-right: .4rem;
+    color: var(--m26-red);
+}
+
 #blazor-error-ui .reload {
     margin: 0 .6rem;
+    font-weight: 600;
 }
 
 #blazor-error-ui .dismiss {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
     border: 0;
+    border-radius: var(--m26-radius-sm);
     background: none;
     color: inherit;
     cursor: pointer;
     position: absolute;
     right: .8rem;
-    top: .5rem;
+    top: .45rem;
+}
+
+#blazor-error-ui .dismiss:hover {
+    background: var(--m26-chalk);
 }

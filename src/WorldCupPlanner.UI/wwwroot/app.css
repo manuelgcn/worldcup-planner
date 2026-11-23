@@ -845,6 +845,100 @@ html[data-theme="night"] .form-check-input:checked[type=checkbox] {
     border-color: var(--m26-ink);
 }
 
+/* Estados de la app, escritos en App.razor fuera del árbol de Blazor: la carga inicial y el corte
+   de conexión. La carga se ve mientras baja Blazor, conecta y se restaura la sesión; se oculta
+   cuando Routes dibuja la página. */
+.app-loader {
+    min-height: 100vh;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 1rem;
+    color: var(--m26-muted);
+    font-weight: 600;
+}
+
+.app-loader p {
+    margin: 0;
+}
+
+.page ~ .app-loader {
+    display: none;
+}
+
+/* La misma barra de las etapas del inicio, con el tramo amarillo yendo y viniendo. Sin animación
+   (prefers-reduced-motion) el tramo queda quieto a la izquierda y el texto alcanza. */
+.app-loader-track {
+    position: relative;
+    display: block;
+    width: 10rem;
+    height: 6px;
+    overflow: hidden;
+    background: var(--m26-line);
+}
+
+.app-loader-track::after {
+    content: "";
+    position: absolute;
+    inset: 0 60% 0 0;
+    background: var(--m26-yellow);
+    animation: m26-slide 1s ease-in-out infinite alternate;
+}
+
+@keyframes m26-slide {
+    to {
+        transform: translateX(150%);
+    }
+}
+
+/* Blazor Server le pone una de tres clases: -show mientras reintenta, -failed si se rindió y
+   -rejected si el servidor ya no reconoce la sesión. Amarilla mientras reintenta, roja si no pudo. */
+#components-reconnect-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    place-items: center;
+    padding: 1rem;
+    background: color-mix(in srgb, var(--m26-chalk) 88%, transparent);
+}
+
+#components-reconnect-modal:is(.components-reconnect-show, .components-reconnect-failed, .components-reconnect-rejected) {
+    display: grid;
+}
+
+.reconnect-card {
+    display: grid;
+    justify-items: center;
+    gap: .75rem;
+    width: 100%;
+    max-width: 24rem;
+    padding: 1.5rem;
+    border-top: 5px solid var(--m26-yellow);
+    text-align: center;
+}
+
+.reconnect-card p {
+    margin: 0;
+    text-wrap: balance;
+}
+
+.reconnect-title {
+    font-stretch: 72%;
+    font-weight: 800;
+    font-size: 1.6rem;
+    line-height: 1.1;
+}
+
+#components-reconnect-modal:is(.components-reconnect-failed, .components-reconnect-rejected) .reconnect-card {
+    border-top-color: var(--m26-red);
+}
+
+#components-reconnect-modal:is(.components-reconnect-failed, .components-reconnect-rejected) .reconnect-retrying,
+#components-reconnect-modal.components-reconnect-show .reconnect-lost {
+    display: none;
+}
+
 /* Siempre al final: apaga cualquier transición o animación definida más arriba. */
 @media (prefers-reduced-motion: reduce) {
     *,
