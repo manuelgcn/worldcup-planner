@@ -18,7 +18,6 @@ public class TeamServices : ITeamService
     private const string TeamInUseMessage = "No se puede eliminar el equipo porque ya esta asignado a un grupo.";
     private const string DuplicateTeamNameMessage = "El nombre del equipo debe ser unico en el sistema.";
     private const string QuotaExceededMessage = "Se supero el cupo de equipos de {0}.";
-    private const string FixtureRequires48TeamsMessage = "El ordenamiento del fixture requiere exactamente 48 equipos.";
 
     // Orden fijo de recorrido de confederaciones. El orden de iteracion de un
     // Dictionary no esta garantizado por el lenguaje; fijarlo asegura que, a igual
@@ -160,15 +159,6 @@ public class TeamServices : ITeamService
             team.Id);
     }
 
-    public IReadOnlyList<Team> OrderForFixture(IReadOnlyCollection<Team> teams, int fixtureSeed)
-    {
-        ArgumentNullException.ThrowIfNull(teams);
-
-        ValidateFixtureTeamCount(teams.Count);
-
-        return BuildFixtureOrder(teams, fixtureSeed);
-    }
-
     private void ValidateUniqueName(string name)
     {
         if (teamRepository.ExistsByName(name))
@@ -184,46 +174,5 @@ public class TeamServices : ITeamService
         {
             throw new TeamServicesException(string.Format(QuotaExceededMessage, confederation));
         }
-    }
-
-    private static void ShuffleDeterministically(IList<Team> teams, int seed)
-    {
-        Random random = new Random(seed);
-
-        for (int i = teams.Count - 1; i > 0; i--)
-        {
-            int j = random.Next(i + 1);
-            (teams[i], teams[j]) = (teams[j], teams[i]);
-        }
-    }
-
-    private static void ValidateFixtureTeamCount(int teamCount)
-    {
-        if (teamCount != FixtureTeamCount)
-        {
-            throw new TeamServicesException(FixtureRequires48TeamsMessage);
-        }
-    }
-
-    private static IReadOnlyList<Team> BuildFixtureOrder(IEnumerable<Team> teams, int fixtureSeed)
-    {
-        List<Team> orderedTeams = new List<Team>(capacity: FixtureTeamCount);
-
-        List<IGrouping<int, Team>> groupsByRanking = teams
-            .GroupBy(team => team.FifaRanking)
-            .OrderByDescending(group => group.Key)
-            .ToList();
-
-        int groupIndex = 0;
-
-        foreach (IGrouping<int, Team> tiedGroup in groupsByRanking)
-        {
-            List<Team> tiedTeams = tiedGroup.ToList();
-            ShuffleDeterministically(tiedTeams, fixtureSeed + groupIndex);
-            orderedTeams.AddRange(tiedTeams);
-            groupIndex++;
-        }
-
-        return orderedTeams;
     }
 }

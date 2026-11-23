@@ -8,14 +8,19 @@ namespace WorldCupPlanner.Services.Tests;
 [TestClass]
 public class AuditLogServiceTests
 {
+    private const int ActorId = 7;
+    private const string ActorEmail = "admin@copa.com";
+
     private MockAuditLogRepository _repository = null!;
+    private MockUserRepository _users = null!;
     private AuditLogService _service = null!;
 
     [TestInitialize]
     public void Setup()
     {
         _repository = new MockAuditLogRepository();
-        _service = AuditLogService.CreateInstance(_repository);
+        _users = new MockUserRepository();
+        _service = AuditLogService.CreateInstance(_repository, _users);
     }
 
     [TestMethod]
@@ -164,59 +169,73 @@ public class AuditLogServiceTests
     }
 
     [TestMethod]
-    public void GetAll_ReturnsListOfAuditLogDtosWithCorrectCount()
+    public void LogPerformedBy_WithTheEmailOfAUser_StoresThatUserId()
     {
-        // Arrange
-        _repository.Seed(AuditLog.Create("ACTION1", "Det 1", 1));
-        _repository.Seed(AuditLog.Create("ACTION2", "Det 2", 2));
+        AddActor();
 
-        // Act
-        List<AuditLogDto> result = _service.GetAll();
+        _service.LogPerformedBy(AuditActions.GenerateFixture, "Fixture generated", ActorEmail);
+        _service.LogPerformedBy(AuditActions.GenerateFixture, "Fixture generated", 1, ActorEmail);
 
-        // Assert
-        Assert.AreEqual(2, result.Count);
+        List<AuditLog> logs = _repository.GetAll();
+        Assert.AreEqual(ActorId, logs[0].PerformedByUserId);
+        Assert.AreEqual(ActorId, logs[1].PerformedByUserId);
     }
 
     [TestMethod]
-    public void GetAll_ReturnsListOfAuditLogDtosWithCorrectActions()
+    public void LogPerformedBy_WithPaddedEmail_StoresThatUserId()
     {
-        // Arrange
-        _repository.Seed(AuditLog.Create("ACTION1", "Det 1", 1));
-        _repository.Seed(AuditLog.Create("ACTION2", "Det 2", 2));
+        AddActor();
 
-        // Act
-        List<AuditLogDto> result = _service.GetAll();
+        _service.LogPerformedBy(AuditActions.GenerateFixture, "Fixture generated", "  " + ActorEmail + "  ");
 
-        // Assert
-        CollectionAssert.AreEqual(new List<string> { "ACTION1", "ACTION2" }, result.Select(dto => dto.Action).ToList());
+        Assert.AreEqual(ActorId, _repository.GetAll()[0].PerformedByUserId);
     }
 
     [TestMethod]
-    public void GetAll_MapsNullableTournamentSettingsId()
+    public void LogPerformedBy_WithAnEmailOfNoUser_LeavesTheUserIdNull()
     {
-        // Arrange
-        _repository.Seed(AuditLog.Create("WITH_TOURNAMENT", "Det 1", 1));
-        _repository.Seed(AuditLog.Create("GLOBAL", "Det 2"));
+        AddActor();
 
-        // Act
-        List<AuditLogDto> result = _service.GetAll();
+        _service.LogPerformedBy(AuditActions.GenerateFixture, "Fixture generated", "nobody@copa.com");
 
-        // Assert
-        Assert.AreEqual(1, result[0].TournamentSettingsId);
-        Assert.IsNull(result[1].TournamentSettingsId);
+        Assert.IsNull(_repository.GetAll()[0].PerformedByUserId);
     }
 
     [TestMethod]
-    public void GetAll_MapsPerformedByEmail()
+    public void Log_WithoutActor_LeavesTheUserIdNull()
     {
-        // Arrange
-        _repository.Seed(AuditLog.Create("ACTION", "Det", performedByEmail: "admin@copa.com"));
+        AddActor();
 
-        // Act
-        List<AuditLogDto> result = _service.GetAll();
+        _service.Log("ACTION", "Details");
+        _service.LogPerformedBy("ACTION", "Details", performedByEmail: null);
+        _service.LogPerformedBy("ACTION", "Details", performedByEmail: "   ");
 
-        // Assert
-        Assert.AreEqual("admin@copa.com", result[0].PerformedByEmail);
+        Assert.IsTrue(_repository.GetAll().All(log => log.PerformedByUserId is null));
+    }
+
+    // Los tests que no miran al actor arman el servicio sin usuarios: registra igual, sin id.
+    [TestMethod]
+    public void LogPerformedBy_WithoutUserRepository_LeavesTheUserIdNull()
+    {
+        AuditLogService serviceWithoutUsers = AuditLogService.CreateInstance(_repository);
+
+        serviceWithoutUsers.LogPerformedBy(AuditActions.GenerateFixture, "Fixture generated", ActorEmail);
+
+        AuditLog log = _repository.GetAll()[0];
+        Assert.AreEqual(ActorEmail, log.PerformedByEmail);
+        Assert.IsNull(log.PerformedByUserId);
+    }
+
+    [TestMethod]
+    public void GetFiltered_MapsPerformedByUserId()
+    {
+        _repository.Seed(AuditLog.Create("WITH_ACTOR", "Det 1", performedByEmail: ActorEmail, performedByUserId: ActorId));
+        _repository.Seed(AuditLog.Create("WITHOUT_ACTOR", "Det 2"));
+
+        List<AuditLogDto> result = _service.GetFiltered(new AuditLogFilterDto());
+
+        Assert.AreEqual(ActorId, result.Single(log => log.Action == "WITH_ACTOR").PerformedByUserId);
+        Assert.IsNull(result.Single(log => log.Action == "WITHOUT_ACTOR").PerformedByUserId);
     }
 
     [TestMethod]
@@ -228,6 +247,18 @@ public class AuditLogServiceTests
         List<AuditLogDto> result = _service.GetFiltered(new AuditLogFilterDto());
 
         Assert.AreEqual(2, result.Count);
+    }
+
+    [TestMethod]
+    public void GetFiltered_MapsNullableTournamentSettingsId()
+    {
+        _repository.Seed(AuditLog.Create("WITH_TOURNAMENT", "Det 1", 1));
+        _repository.Seed(AuditLog.Create("GLOBAL", "Det 2"));
+
+        List<AuditLogDto> result = _service.GetFiltered(new AuditLogFilterDto());
+
+        Assert.AreEqual(1, result.Single(log => log.Action == "WITH_TOURNAMENT").TournamentSettingsId);
+        Assert.IsNull(result.Single(log => log.Action == "GLOBAL").TournamentSettingsId);
     }
 
     [TestMethod]
@@ -307,101 +338,6 @@ public class AuditLogServiceTests
     }
 
     [TestMethod]
-    public void ExportAsText_ReturnsAllLogsActions()
-    {
-        // Arrange
-        _repository.Seed(AuditLog.Create("ACTION1", "Det 1", 1));
-        _repository.Seed(AuditLog.Create("ACTION2", "Det 2"));
-
-        // Act
-        string result = _service.ExportAsText();
-
-        // Assert
-        Assert.IsTrue(result.Contains("ACTION1"));
-        Assert.IsTrue(result.Contains("ACTION2"));
-    }
-
-    [TestMethod]
-    public void ExportAsText_WithTournamentContext_IncludesTournamentId()
-    {
-        // Arrange
-        _repository.Seed(AuditLog.Create("ACTION1", "Det 1", 1));
-
-        // Act
-        string result = _service.ExportAsText();
-
-        // Assert
-        Assert.IsTrue(result.Contains("TournamentID: 1"));
-    }
-
-    [TestMethod]
-    public void ExportAsText_GlobalLog_OmitsTournamentId()
-    {
-        // Arrange
-        _repository.Seed(AuditLog.Create("GLOBAL", "Det 1"));
-
-        // Act
-        string result = _service.ExportAsText();
-
-        // Assert
-        Assert.IsFalse(result.Contains("TournamentID:"));
-    }
-
-    [TestMethod]
-    public void ExportAsText_WithActor_IncludesPerformedBy()
-    {
-        // Arrange
-        _repository.Seed(AuditLog.Create("ACTION", "Det 1", performedByEmail: "admin@copa.com"));
-
-        // Act
-        string result = _service.ExportAsText();
-
-        // Assert
-        Assert.IsTrue(result.Contains("PerformedBy: admin@copa.com"));
-    }
-
-    [TestMethod]
-    public void ExportAsText_WithoutActor_OmitsPerformedBy()
-    {
-        // Arrange
-        _repository.Seed(AuditLog.Create("ACTION", "Det 1"));
-
-        // Act
-        string result = _service.ExportAsText();
-
-        // Assert
-        Assert.IsFalse(result.Contains("PerformedBy:"));
-    }
-
-    [TestMethod]
-    public void ExportAsText_WithEntities_FormatsTextCorrectly()
-    {
-        // Arrange
-        _repository.Seed(AuditLog.Create("UPDATE", "Settings updated", 1, "TournamentSettings", 1));
-
-        // Act
-        string result = _service.ExportAsText();
-
-        // Assert
-        Assert.IsTrue(result.Contains("Entity: TournamentSettings - ID: 1"));
-        Assert.IsTrue(result.Contains("Action: UPDATE"));
-    }
-
-    [TestMethod]
-    public void ExportAsText_WithoutEntities_FormatsTextCorrectly()
-    {
-        // Arrange
-        _repository.Seed(AuditLog.Create("EXPORT", "Full Export"));
-
-        // Act
-        string result = _service.ExportAsText();
-
-        // Assert
-        Assert.IsFalse(result.Contains("Entity:"));
-        Assert.IsTrue(result.Contains("Action: EXPORT"));
-    }
-
-    [TestMethod]
     public void AuditActions_DefinesGenerateKnockoutConstant()
     {
         Assert.AreEqual("GENERATE_KNOCKOUT", AuditActions.GenerateKnockout);
@@ -432,26 +368,6 @@ public class AuditLogServiceTests
     }
 
     [TestMethod]
-    public void AuditActions_DefinesSimulationExecutedConstant()
-    {
-        Assert.AreEqual("SIMULATION_EXECUTED", AuditActions.SimulationExecuted);
-    }
-
-    [TestMethod]
-    public void GetAll_PreservesInsertionOrder()
-    {
-        _service.Log("FIRST", "first action");
-        _service.Log("SECOND", "second action");
-        _service.Log("THIRD", "third action");
-
-        List<AuditLogDto> result = _service.GetAll();
-
-        CollectionAssert.AreEqual(
-            new List<string> { "FIRST", "SECOND", "THIRD" },
-            result.Select(dto => dto.Action).ToList());
-    }
-
-    [TestMethod]
     public void Log_StoresIso8601RoundTrippableTimestamp()
     {
         DateTime before = DateTime.UtcNow.AddSeconds(-1);
@@ -467,5 +383,10 @@ public class AuditLogServiceTests
 
         Assert.AreEqual(log.Timestamp, parsed);
         Assert.IsTrue(parsed >= before);
+    }
+
+    private void AddActor()
+    {
+        _users.Add(new User(ActorId, "Ana", "Admin", ActorEmail, "Password@1", new DateTime(1990, 1, 1)));
     }
 }

@@ -9,4 +9,6 @@ public sealed class AuditLogExportRow
     public string? PerformedByEmail { get; init; }
     public string? EntityType { get; init; }
     public int? EntityId { get; init; }
+    // Va al final: el orden de las propiedades es el de las columnas y las existentes no se mueven.
+    public int? PerformedByUserId { get; init; }
 }

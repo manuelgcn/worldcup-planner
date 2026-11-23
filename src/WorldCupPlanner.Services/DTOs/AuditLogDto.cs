@@ -6,6 +6,7 @@ public class AuditLogDto
     public string Details { get; set; } = string.Empty;
     public int? TournamentSettingsId { get; set; }
     public string? PerformedByEmail { get; set; }
+    public int? PerformedByUserId { get; set; }
     public string? EntityType { get; set; }
     public int? EntityId { get; set; }
 }

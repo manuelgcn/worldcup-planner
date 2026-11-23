@@ -21,6 +21,7 @@ public class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
         builder.Property(l => l.Details).IsRequired().HasMaxLength(DetailsMaxLength);
         builder.Property(l => l.TournamentSettingsId).IsRequired(false); // contexto opcional: los logs son globales por defecto
         builder.Property(l => l.PerformedByEmail).IsRequired(false).HasMaxLength(PerformedByEmailMaxLength);
+        builder.Property(l => l.PerformedByUserId).IsRequired(false);   // sin clave foranea: el log sobrevive al borrado del usuario
         builder.Property(l => l.AffectedEntityType).HasMaxLength(AffectedEntityTypeMaxLength);  // opcional
         builder.Property(l => l.AffectedEntityId);                      // opcional
     }

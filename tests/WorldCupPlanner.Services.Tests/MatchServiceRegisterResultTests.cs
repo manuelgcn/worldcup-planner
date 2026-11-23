@@ -83,6 +83,17 @@ public sealed class MatchServiceRegisterResultTests
         Assert.IsTrue(harness.AuditRepository.GetAll().Any(log => log.PerformedByEmail == Email));
     }
 
+    [TestMethod]
+    public void RegisterResult_AuditsTheScore()
+    {
+        Harness harness = new Harness();
+        harness.SeedGroupMatch(MatchId);
+
+        harness.Service.RegisterResult(MatchId, homeGoals: 3, awayGoals: 2, Email);
+
+        Assert.IsTrue(harness.AuditRepository.GetAll().Any(log => log.Details.Contains("3-2")));
+    }
+
     // Replica EXACTAMENTE el comportamiento del editor actual: el servicio delega en
     // NotifyResultLoaded pasando el marcador previo; la decision de "solo si cambio"
     // sigue siendo responsabilidad de NotifyResultLoaded, no de RegisterResult.
@@ -206,17 +217,17 @@ public sealed class MatchServiceRegisterResultTests
             harness.Service.GetLockedKnockoutMatchIds().ToArray());
     }
 
-    // SimulateMatch ahora tambien notifica a periodistas (antes no colaboraba con
-    // INotificationService). El motor del Harness simula 2-1.
     [TestMethod]
-    public void SimulateMatch_NotifiesJournalistsViaNotifyMatchSimulated()
+    public void GetLockedKnockoutMatchIds_DoesNotLoadTheBracket()
     {
         Harness harness = new Harness();
-        harness.SeedGroupMatch(MatchId);
+        MatchElimination first = harness.SeedRoundOf32Match(MatchId);
+        MatchElimination second = harness.SeedRoundOf32Match(MatchId + 1);
+        harness.SeedRoundOf16Match(first, second);
 
-        harness.Service.SimulateMatch(MatchId);
+        harness.Service.GetLockedKnockoutMatchIds();
 
-        Assert.AreEqual(1, harness.Notifications.MatchSimulatedCalls.Count);
+        Assert.AreEqual(0, harness.EliminationRepository.GetAllCalls);
     }
 
     private sealed class Harness
@@ -228,7 +239,6 @@ public sealed class MatchServiceRegisterResultTests
         public MockAuditLogRepository AuditRepository { get; } = new MockAuditLogRepository();
         public MatchService Service { get; }
 
-        private readonly MockMatchSimulationEngine _engine = new MockMatchSimulationEngine();
         private readonly MockTournamentSettingsRepository _settingsRepository = new MockTournamentSettingsRepository();
 
         public Harness()
@@ -245,9 +255,7 @@ public sealed class MatchServiceRegisterResultTests
 
             Service = new MatchService(
                 MatchRepository,
-                _settingsRepository,
                 new StubMatchFactory(),
-                new SimulationEngineRegistry(new IMatchSimulationEngine[] { _engine }),
                 AuditLogService.CreateInstance(AuditRepository),
                 RankingMock.Object,
                 Notifications,
@@ -312,7 +320,7 @@ public sealed class MatchServiceRegisterResultTests
         }
     }
 
-    // SimulateMatch y RegisterResult no pasan por la fabrica, pero el constructor la exige.
+    // RegisterResult no pasa por la fabrica, pero el constructor la exige.
     private sealed class StubMatchFactory : IMatchFactory
     {
         public Match Create(CreateMatchRequestDto request)

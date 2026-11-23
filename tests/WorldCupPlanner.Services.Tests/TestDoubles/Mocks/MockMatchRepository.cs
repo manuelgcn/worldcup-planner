@@ -12,6 +12,8 @@ public sealed class MockMatchRepository : IMatchRepository
     public int DeleteCalls { get; private set; }
     // Lecturas de listas de partidos: en la base real, cada una es una consulta con el grafo completo.
     public int ReadCalls { get; private set; }
+    // Lecturas de la tabla completa; Count, CountPlayed y LatestGroupMatchDate son consultas angostas y no cuentan.
+    public int GetAllCalls { get; private set; }
 
     // Simula una base que rechaza el próximo guardado.
     public Exception? FailNextUpdate { get; set; }
@@ -22,6 +24,7 @@ public sealed class MockMatchRepository : IMatchRepository
         UpdateCalls = 0;
         DeleteCalls = 0;
         ReadCalls = 0;
+        GetAllCalls = 0;
     }
 
     public bool ExistsById(int matchId)
@@ -182,8 +185,16 @@ public sealed class MockMatchRepository : IMatchRepository
     public List<Match> GetAll()
     {
         ReadCalls++;
+        GetAllCalls++;
         return _matches.Values.ToList();
     }
+
+    public int Count() => _matches.Count;
+
+    public int CountPlayed() => _matches.Values.Count(match => match.HasResult);
+
+    public DateTime? LatestGroupMatchDate() =>
+        _matches.Values.OfType<MatchGroup>().Max(match => (DateTime?)match.MatchDate);
 
     public int NextIncidentId()
     {

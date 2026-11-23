@@ -133,4 +133,18 @@ public sealed class AuditLogTests
         AuditLog logWithPaddedActor = AuditLog.Create("Action", ValidDetails, performedByEmail: "  admin@copa.com  ");
         Assert.AreEqual("admin@copa.com", logWithPaddedActor.PerformedByEmail);
     }
+
+    [TestMethod]
+    public void Create_WithPerformedByUserId_StoresTheActorId()
+    {
+        AuditLog logWithActorId = AuditLog.Create("Action", ValidDetails, performedByEmail: "admin@copa.com", performedByUserId: 7);
+        Assert.AreEqual(7, logWithActorId.PerformedByUserId);
+    }
+
+    [TestMethod]
+    public void Create_WithoutPerformedByUserId_LeavesTheActorIdNull()
+    {
+        AuditLog logWithoutActorId = AuditLog.Create("Action", ValidDetails, performedByEmail: "admin@copa.com");
+        Assert.IsNull(logWithoutActorId.PerformedByUserId);
+    }
 }

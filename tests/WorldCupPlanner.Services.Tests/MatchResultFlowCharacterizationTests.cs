@@ -1,10 +1,6 @@
-using Moq;
 using WorldCupPlanner.Domain;
 using WorldCupPlanner.Services;
 using WorldCupPlanner.Services.DTOs;
-using WorldCupPlanner.Services.Exceptions;
-using WorldCupPlanner.Services.Interfaces;
-using WorldCupPlanner.Services.Tests.TestDoubles;
 using WorldCupPlanner.Services.Tests.TestDoubles.Mocks;
 using Match = WorldCupPlanner.Domain.Match;
 
@@ -15,8 +11,8 @@ namespace WorldCupPlanner.Services.Tests;
 // Objetivo: congelar el comportamiento ACTUAL antes del refactor, incluso cuando
 // ese comportamiento es incorrecto. No "arreglan" nada; son una fotografia. Cuando
 // el refactor cambie deliberadamente alguno de estos comportamientos (por ejemplo,
-// que SimulateMatch pase a notificar a periodistas, o que el resultado 0-0 manual
-// cuente como jugado), el test correspondiente debera actualizarse en su propio
+// que el resultado 0-0 manual cuente como jugado), el test correspondiente debera
+// actualizarse en su propio
 // ciclo RED/GREEN, no en un commit de refactor puro.
 
 [TestClass]
@@ -117,98 +113,6 @@ public sealed class NotifyResultLoadedCharacterizationTests
             stadium: stadium,
             group: group,
             journey: journey);
-    }
-}
-
-[TestClass]
-public sealed class MatchServiceResultFlowCharacterizationTests
-{
-    private const int MatchId = 1;
-
-    private MatchServiceTestContext _context = null!;
-
-    [TestInitialize]
-    public void Setup()
-    {
-        _context = new MatchServiceTestContext();
-        _context.Service.CreateMatch(MatchServiceTestContext.NewGroupMatchRequest(MatchId));
-    }
-
-    // (b) Comportamiento invertido en el refactor: SimulateMatch ahora SI notifica a periodistas.
-    // MatchService pasa a colaborar con INotificationService (NotifyMatchSimulated), por lo
-    // que un periodista registrado recibe la notificacion al simular un partido por el servicio.
-    // Antes este test verificaba lo contrario (la UI/flujos agregados eran los unicos que avisaban).
-
-    [TestMethod]
-    public void SimulateMatch_NotifiesJournalists()
-    {
-        _context.UserRepository.Add(BuildJournalist(JournalistId: 1, "ana@mail.com"));
-
-        _context.Service.SimulateMatch(MatchId);
-
-        Assert.AreEqual(1, _context.NotificationRepository.GetAll().Count);
-    }
-
-    [TestMethod]
-    public void SimulateMatch_AppliesRankingOnce()
-    {
-        _context.Service.SimulateMatch(MatchId);
-
-        _context.RankingServiceMock.Verify(
-            ranking => ranking.ApplyMatchResult(It.IsAny<Match>(), It.IsAny<MatchPhase>()),
-            Times.Once);
-    }
-
-    // (c) SetGoals (el camino que usa hoy MatchResultEditor.razor) NO aplica ranking
-    // y NO notifica. La UI hace esas dos cosas por fuera del servicio. Se contrasta
-    // con SimulateMatch, que sobre el mismo contexto si aplica ranking.
-
-    [TestMethod]
-    public void SetGoals_DoesNotApplyRanking()
-    {
-        _context.Service.SetGoals(MatchId, homeGoals: 2, awayGoals: 1);
-
-        _context.RankingServiceMock.Verify(
-            ranking => ranking.ApplyMatchResult(It.IsAny<Match>(), It.IsAny<MatchPhase>()),
-            Times.Never);
-    }
-
-    [TestMethod]
-    public void SetGoals_DoesNotNotifyJournalists()
-    {
-        MockNotificationRepository notificationRepository = new MockNotificationRepository();
-        MockUserRepository userRepository = new MockUserRepository();
-        userRepository.Add(BuildJournalist(JournalistId: 1, "ana@mail.com"));
-        _ = new NotificationService(notificationRepository, userRepository, new MockAuditLogService());
-
-        _context.Service.SetGoals(MatchId, homeGoals: 2, awayGoals: 1);
-
-        Assert.AreEqual(0, notificationRepository.GetAll().Count);
-    }
-
-    // (d) Congelamiento: una vez generado el knockout, editar un partido de grupos
-    // (aca via SetGoals, el camino del editor manual) lanza MatchServicesException.
-
-    [TestMethod]
-    public void SetGoals_OnGroupMatch_WhenKnockoutGenerated_ThrowsMatchServicesException()
-    {
-        _context.SeedFakeEliminationMatchInRepository();
-
-        Assert.ThrowsException<MatchServicesException>(
-            () => _context.Service.SetGoals(MatchId, homeGoals: 2, awayGoals: 1));
-    }
-
-    private static User BuildJournalist(int JournalistId, string email)
-    {
-        User journalist = new User(
-            JournalistId,
-            "Ana",
-            "Lopez",
-            email,
-            "Pass123@",
-            new DateTime(1990, 5, 15));
-        journalist.AddRole(UserRoles.Periodista);
-        return journalist;
     }
 }
 

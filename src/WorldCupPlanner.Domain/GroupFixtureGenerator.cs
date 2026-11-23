@@ -20,6 +20,9 @@ public sealed class GroupFixtureGenerator
     private const int TeamCIndex = 2;
     private const int TeamDIndex = 3;
     private const string NoAvailableTimeslotMessage = "No hay horario disponible para la jornada {0} del grupo {1}.";
+    // La ultima jornada de cada grupo necesita dos estadios libres a la misma hora.
+    private const int MinimumStadiumCount = 2;
+    private const string StadiumsRequiredMessage = "Se requieren al menos 2 estadios: la última jornada de cada grupo se juega en simultáneo.";
 
     // Configurables por TournamentSettings (H9). Se fijan al inicio de GenerateMatches y caen al
     // default cuando no se proveen, preservando el comportamiento previo.
@@ -36,10 +39,11 @@ public sealed class GroupFixtureGenerator
         ArgumentNullException.ThrowIfNull(groups);
         ArgumentNullException.ThrowIfNull(stadiums);
 
-        if (stadiums.Count == 0)
-            throw new MatchException("Se requiere al menos un estadio.");
+        if (stadiums.Count < MinimumStadiumCount)
+            throw new MatchException(StadiumsRequiredMessage);
 
         _daysBetweenJornadas = daysBetweenJourneys ?? DefaultDaysBetweenJornadas;
+        // MaxMatchesPerDay es aca horarios por estadio y por dia; KnockoutRoundScheduler lo lee como el total del dia.
         _allowedTimes = BuildAllowedTimes(maxMatchesPerDay ?? DefaultMaxMatchesPerDay);
 
         List<Group> orderedGroups = new List<Group>(groups.OrderBy(g => g.Name));
@@ -53,6 +57,7 @@ public sealed class GroupFixtureGenerator
         // Una jornada completa ocupa ceil(grupos / gruposPorDia) dias: la siguiente no puede arrancar
         // antes de que termine, aunque DaysBetweenJourneys sea menor (si no, los dias se pisan).
         int blockDays = (orderedGroups.Count + groupsPerDay - 1) / groupsPerDay;
+        // DaysBetweenJourneys es un minimo: si una jornada ocupa mas dias, las jornadas se separan mas.
         int journeySpacingDays = Math.Max(_daysBetweenJornadas, blockDays);
 
         foreach (Group group in orderedGroups)

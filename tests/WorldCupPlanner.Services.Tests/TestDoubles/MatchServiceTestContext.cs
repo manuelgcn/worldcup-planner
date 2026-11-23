@@ -29,7 +29,6 @@ public sealed class MatchServiceTestContext
     
     public MockMatchRepository MatchRepository { get; } = new MockMatchRepository();
     public MockEliminationMatchRepository EliminationMatchRepository { get; } = new MockEliminationMatchRepository();
-    public MockMatchSimulationEngine SimulationEngine { get; } = new MockMatchSimulationEngine();
     public Mock<IRankingService> RankingServiceMock { get; } = new Mock<IRankingService>();
     public MockNotificationRepository NotificationRepository { get; } = new MockNotificationRepository();
     public MockUserRepository UserRepository { get; } = new MockUserRepository();
@@ -92,7 +91,7 @@ public sealed class MatchServiceTestContext
         AuditLogService = AuditLogService.CreateInstance(AuditLogRepository);
 
         // NotificationService real, respaldado por repos inspeccionables: permite verificar que
-        // MatchService (no la UI) avisa a periodistas al simular/registrar resultados.
+        // MatchService (no la UI) avisa a periodistas al registrar resultados.
         NotificationService = new NotificationService(NotificationRepository, UserRepository, AuditLogService);
 
         // 1. Construimos la fábrica con sus responsabilidades de lectura, incluyendo IStadiumRepository
@@ -107,9 +106,7 @@ public sealed class MatchServiceTestContext
         // 2. Construimos el servicio core limpio, inyectando la fábrica y el log directamente
         Service = new MatchService(
             MatchRepository,
-            TournamentSettingsRepository,
             MatchFactory,
-            new SimulationEngineRegistry([SimulationEngine]),
             AuditLogService, // <-- Inyectado directamente en el servicio
             RankingServiceMock.Object,
             NotificationService,

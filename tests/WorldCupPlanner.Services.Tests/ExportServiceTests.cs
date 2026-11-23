@@ -123,6 +123,23 @@ public sealed class ExportServiceTests
     }
 
     [TestMethod]
+    public void ExportAuditLogIncludesActorUserIdColumn()
+    {
+        _auditRepository.Seed(AuditLog.Create("ACTION", "Det", performedByEmail: "actor@copa.com", performedByUserId: 4242));
+        User admin = BuildUser(UserRoles.Admin);
+        DateTime today = DateTime.UtcNow.Date;
+
+        ExportFileDto result = _service.ExportAuditLog(
+            new DateRange(today, today),
+            ExportFormat.Csv,
+            admin);
+        string csv = System.Text.Encoding.UTF8.GetString(result.Content);
+
+        Assert.IsTrue(csv.Contains("PerformedByUserId"));
+        Assert.IsTrue(csv.Contains(",4242"));   // con la coma: los decimales del timestamp no pueden hacerlo pasar
+    }
+
+    [TestMethod]
     public void ExportAuditLogAppliesActiveActionAndActorFilters()
     {
         _auditRepository.Seed(AuditLog.Create("CREATE_USER", "kept", performedByEmail: "admin@copa.com"));

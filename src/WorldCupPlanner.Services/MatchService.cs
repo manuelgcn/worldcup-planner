@@ -9,21 +9,17 @@ namespace WorldCupPlanner.Services;
 public class MatchService : IMatchService
 {
     private readonly IMatchRepository matchRepository;
-    private readonly ITournamentSettingsRepository tournamentSettingsRepository;
     private readonly IMatchFactory matchFactory;
-    private readonly ISimulationEngineRegistry simulationEngineRegistry;
     private readonly IAuditLogService auditLogService;
     private readonly IRankingService rankingService;
     private readonly INotificationService notificationService;
     private readonly IEliminationMatchRepository eliminationMatchRepository;
 
-    private const int DefaultTournamentSettingsId = 1;
     private const string MatchIdAlreadyExistsMessage = "El id de partido ya existe";
     private const string GroupNameRequiredMessage = "El nombre del grupo es obligatorio";
     private const string FromMustBeLessOrEqualToMessage = "'desde' debe ser menor o igual que 'hasta'";
     private const string MatchNotFoundMessage = "Partido no encontrado";
     private const string ValueRequiredMessage = "El valor es obligatorio";
-    private const string TournamentSettingsNotFoundMessage = "No se encontro la configuracion del torneo";
     private const string GroupMatchFrozenByKnockoutMessage = "No se pueden editar los partidos de fase de grupos una vez generada la fase eliminatoria.";
     private const string KnockoutMatchFeedsNextRoundMessage = "No se puede editar este partido: la ronda siguiente ya se armo con su resultado.";
     private const string KnockoutDrawMessage = "Un partido de eliminatoria necesita un ganador: no puede quedar empatado.";
@@ -33,9 +29,7 @@ public class MatchService : IMatchService
 
     public MatchService(
         IMatchRepository matchRepository,
-        ITournamentSettingsRepository tournamentSettingsRepository,
         IMatchFactory matchFactory,
-        ISimulationEngineRegistry simulationEngineRegistry,
         IAuditLogService auditLogService,
         IRankingService rankingService,
         INotificationService notificationService,
@@ -44,9 +38,7 @@ public class MatchService : IMatchService
         ArgumentNullException.ThrowIfNull(notificationService);
         ArgumentNullException.ThrowIfNull(eliminationMatchRepository);
         this.matchRepository = matchRepository;
-        this.tournamentSettingsRepository = tournamentSettingsRepository;
         this.matchFactory = matchFactory;
-        this.simulationEngineRegistry = simulationEngineRegistry;
         this.auditLogService = auditLogService;
         this.rankingService = rankingService;
         this.notificationService = notificationService;
@@ -89,7 +81,7 @@ public class MatchService : IMatchService
         string details = $"Match updated for MatchId={match.MatchId}.";
         if (request.TournamentSettingsId.HasValue)
         {
-            LogAuditAction(AuditActions.UpdateMatch, details, match.MatchId, request.TournamentSettingsId);
+            auditLogService.LogPerformedBy(AuditActions.UpdateMatch, details, request.TournamentSettingsId.Value, performedByEmail, nameof(Match), match.MatchId);
         }
         else
         {
@@ -109,70 +101,6 @@ public class MatchService : IMatchService
             AuditActions.DeleteMatch,
             $"MatchId={matchId} deleted.",
             matchId);
-    }
-
-    public void AddGoal(int matchId, bool isHomeTeam)
-    {
-        Match match = GetMatchOrThrow(matchId);
-        EnsureMatchIsEditable(match);
-        if (isHomeTeam) match.AddHomeGoal();
-        else match.AddAwayGoal();
-
-        string teamStr = isHomeTeam ? "Home" : "Away";
-        LogAuditAction(
-            AuditActions.UpdateMatch,
-            $"Goal added to {teamStr} team in MatchId={matchId}.",
-            matchId);
-
-        matchRepository.Update(match);
-    }
-
-    public void RemoveGoal(int matchId, bool isHomeTeam)
-    {
-        Match match = GetMatchOrThrow(matchId);
-        EnsureMatchIsEditable(match);
-        if (isHomeTeam) match.RemoveHomeGoal();
-        else match.RemoveAwayGoal();
-
-        string teamStr = isHomeTeam ? "Home" : "Away";
-        LogAuditAction(
-            AuditActions.UpdateMatch,
-            $"Goal removed from {teamStr} team in MatchId={matchId}.",
-            matchId);
-
-        matchRepository.Update(match);
-    }
-
-    public void PublishResult(int matchId)
-    {
-        Match match = GetMatchOrThrow(matchId);
-        LogAuditAction(
-            AuditActions.PublishMatchResult,
-            $"MatchId={matchId} published.",
-            matchId);
-
-        ApplyRankingUpdate(match);
-
-        matchRepository.Update(match);
-    }
-
-    public void SimulateMatch(int matchId)
-    {
-        Match match = GetMatchOrThrow(matchId);
-        EnsureMatchIsEditable(match);
-        TournamentSettings tournamentSettings = GetSimulationTournamentSettingsOrThrow();
-        IMatchSimulationEngine engine = simulationEngineRegistry.Resolve(tournamentSettings.SelectedSimulationEngine);
-
-        engine.Simulate(match, tournamentSettings.SimulationSeed);
-        LogAuditAction(
-            AuditActions.SimulationExecuted,
-            $"MatchId={matchId} simulated with engine {engine.Name} and seed {tournamentSettings.SimulationSeed}.",
-            matchId);
-
-        ApplyRankingUpdate(match);
-        notificationService.NotifyMatchSimulated(match);
-
-        matchRepository.Update(match);
     }
 
     public void AddYellowCard(int matchId, int teamId, int minute, string? performedByEmail)
@@ -286,11 +214,7 @@ public class MatchService : IMatchService
 
     public IReadOnlySet<int> GetLockedKnockoutMatchIds()
     {
-        return eliminationMatchRepository.GetAll()
-            .OfType<MatchElimination>()
-            .SelectMany(next => new[] { next.MatchHome?.MatchId, next.MatchAway?.MatchId })
-            .OfType<int>()
-            .ToHashSet();
+        return eliminationMatchRepository.GetSourceMatchIds();
     }
 
     public List<MatchDto> GetByGroup(string groupName)
@@ -316,19 +240,6 @@ public class MatchService : IMatchService
         }
 
         return matchRepository.GetByDateRange(from, to).Select(MapToDto).ToList();
-    }
-
-    public void SetGoals(int matchId, int homeGoals, int awayGoals)
-    {
-        Match match = GetMatchOrThrow(matchId);
-        EnsureMatchIsEditable(match);
-        EnsureKnockoutResultHasWinner(match, homeGoals, awayGoals);
-        match.SetGoals(homeGoals, awayGoals);
-        LogAuditAction(
-            AuditActions.UpdateMatch,
-            $"MatchId={matchId} goals set to {homeGoals}-{awayGoals}.",
-            matchId);
-        matchRepository.Update(match);
     }
 
     // Controlador GRASP del caso de uso "registrar resultado": carga el partido, valida que
@@ -363,11 +274,6 @@ public class MatchService : IMatchService
             performedByEmail: performedByEmail,
             affectedEntityType: nameof(Match),
             affectedEntityId: matchId);
-    }
-
-    private void ApplyRankingUpdate(Match match)
-    {
-        rankingService.ApplyMatchResultOnce(match);
     }
 
     private void LogAuditAction(string action, string details, int affectedEntityId, int? tournamentSettingsId = null)
@@ -444,12 +350,6 @@ public class MatchService : IMatchService
         }
     }
 
-    private TournamentSettings GetSimulationTournamentSettingsOrThrow()
-    {
-        return tournamentSettingsRepository.GetById(DefaultTournamentSettingsId)
-               ?? throw new MatchServicesException(TournamentSettingsNotFoundMessage);
-    }
-    
     private static void ValidateRequired(object? value)
     {
         if (value == null)

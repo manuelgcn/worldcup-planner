@@ -125,7 +125,8 @@ public sealed class ExportService(
             TournamentSettingsId = log.TournamentSettingsId,
             PerformedByEmail = log.PerformedByEmail,
             EntityType = log.AffectedEntityType,
-            EntityId = log.AffectedEntityId
+            EntityId = log.AffectedEntityId,
+            PerformedByUserId = log.PerformedByUserId
         };
     }
 

@@ -78,4 +78,10 @@ public class StadiumRepository : IStadiumRepository
         using AppDbContext context = _contextFactory.CreateDbContext();
         return context.Stadiums.AsNoTracking().ToList();
     }
+
+    public int Count()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Stadiums.Count();
+    }
 }

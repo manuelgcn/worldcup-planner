@@ -25,7 +25,7 @@ torneo) y debe registrar **toda mutación relevante, uso de semilla y simulació
 ## Procedimiento para instrumentar un caso de uso
 
 1. **Definí la acción** como constante en `src/WorldCupPlanner.Services/AuditActions.cs`, formato
-   `SCREAMING_SNAKE` (`RANKING_UPDATED`, `SIMULATION_EXECUTED`, `EXPORT_FIXTURE_CSV`,
+   `SCREAMING_SNAKE` (`RANKING_UPDATED`, `SIMULATE_GROUP_STAGE`, `EXPORT_FIXTURE_CSV`,
    `NOTIFICATION_READ`). No uses literales sueltos en los servicios.
 2. **Logueá en el punto de cierre del caso de uso** (el método del servicio que es
    "controlador" del caso de uso), después de que la operación tuvo éxito.
@@ -56,6 +56,6 @@ auditoría de `tests/WorldCupPlanner.Services.Tests/TestDoubles/` en vez de la i
 
 ## Ejemplo de uso documentado
 
-Fase 7: al desacoplar el log del torneo se agregaron `SIMULATION_EXECUTED` (registra
-motor + semilla) y `RANKING_UPDATED` (una entrada por equipo con `anterior → nuevo`),
-y la vista de auditoría pasó a consumir `GetFiltered` con filtros en SQL.
+Fase 7: al desacoplar el log del torneo se agregó `RANKING_UPDATED` (una entrada por
+equipo con `anterior → nuevo`) y la vista de auditoría pasó a consumir `GetFiltered`
+con filtros en SQL. Las simulaciones registran motor + semilla (`SIMULATE_GROUP_STAGE`).

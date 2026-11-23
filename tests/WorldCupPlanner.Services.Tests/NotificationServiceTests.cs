@@ -227,7 +227,8 @@ public class NotificationServiceTests
         service.NotifyMatchesSimulated(matches);
 
         Assert.AreEqual(6, notificationRepository.GetAll().Count);
-        Assert.AreEqual(1, userRepository.GetAllCalls - readsBefore);
+        Assert.AreEqual(0, userRepository.GetAllCalls - readsBefore, "Only the journalists are read, not every user.");
+        Assert.AreEqual(1, userRepository.GetByRoleCalls);
         Assert.AreEqual(1, notificationRepository.AddRangeCalls);
     }
 

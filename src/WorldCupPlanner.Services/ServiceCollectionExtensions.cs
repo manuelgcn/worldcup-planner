@@ -28,12 +28,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
 
         services.AddSingleton<IAuditLogService>(sp =>
-            AuditLogService.CreateInstance(sp.GetRequiredService<IAuditLogRepository>()));
+            AuditLogService.CreateInstance(
+                sp.GetRequiredService<IAuditLogRepository>(),
+                sp.GetRequiredService<IUserRepository>()));
         services.AddSingleton<IUserService, UserServices>();
         services.AddSingleton<ITeamService, TeamServices>();
         services.AddSingleton<IStadiumService, StadiumServices>();
-        services.AddSingleton<IGroupService, GroupServices>();
-        services.AddSingleton<IJourneyService, JourneyServices>();
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IExporter, Exporter>();
         services.AddSingleton<IExportService, ExportService>();

@@ -292,6 +292,9 @@ public class UserServices : IUserService
 
         User user = GetUserById(id);
 
+        // Quien edita su propia cuenta: tras guardar, su email anterior ya no resuelve a su id en la auditoria.
+        bool isOwnAccount = string.Equals(performedByEmail?.Trim(), user.email, StringComparison.OrdinalIgnoreCase);
+
         user.UpdatePersonalData(name, lastname, email);
 
         _userRepository.Update(user);
@@ -299,7 +302,7 @@ public class UserServices : IUserService
         _auditLogService.LogPerformedBy(
             AuditActions.UpdateUser,
             $"UserId={user.idUser} updated.",
-            performedByEmail,
+            isOwnAccount ? user.email : performedByEmail,
             nameof(User),
             user.idUser
         );
