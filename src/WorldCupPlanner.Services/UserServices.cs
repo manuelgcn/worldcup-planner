@@ -144,8 +144,7 @@ public class UserServices : IUserService
         // Por eso la lectura va antes del bloqueo; la verificacion de la contrasena, que es lo caro, sigue despues.
         string loginKey = LoginKeyFor(user?.email ?? email);
 
-        if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.IsLockedAt(now))
-            throw new UserServicesException(TooManyFailedLoginsMessage);
+        EnsureNotLocked(loginKey, now);
 
         // Con un email desconocido se verifica igual una contrasena: si no, la respuesta rapida delataria cuales estan registrados.
         bool passwordMatches = user?.PasswordMatches(password) ?? User.PasswordMatchesNoAccount(password);
@@ -170,6 +169,12 @@ public class UserServices : IUserService
     {
         string key = email.Trim().ToLowerInvariant();
         return key.Length > MaxLoginKeyLength ? key[..MaxLoginKeyLength] : key;
+    }
+
+    private void EnsureNotLocked(string loginKey, DateTimeOffset now)
+    {
+        if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.IsLockedAt(now))
+            throw new UserServicesException(TooManyFailedLoginsMessage);
     }
 
     // Se cuenta también para emails inexistentes: si no, el bloqueo delataría cuáles están registrados.
@@ -306,6 +311,8 @@ public class UserServices : IUserService
         );
     }
 
+    // La contrasena actual se pide aunque haya sesion, y sus fallos cuentan para el mismo bloqueo que el login:
+    // si no, una sesion abierta en una maquina ajena alcanzaria para adivinarla sin limite o quedarse con la cuenta.
     public void ChangePassword(int userId, string currentPassword, string newPassword)
     {
         if (userId == SystemAdminUserId)
@@ -315,8 +322,7 @@ public class UserServices : IUserService
         DateTimeOffset now = _timeProvider.GetUtcNow();
         string loginKey = LoginKeyFor(user.email);
 
-        if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.IsLockedAt(now))
-            throw new UserServicesException(TooManyFailedLoginsMessage);
+        EnsureNotLocked(loginKey, now);
 
         if (!user.PasswordMatches(currentPassword))
         {
