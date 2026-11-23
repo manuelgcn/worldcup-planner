@@ -493,10 +493,10 @@
             groups = loadedGroups;
             groupMatches = snapshot.GroupMatches.ToList();
             eliminationMatches = snapshot.EliminationMatches.ToList();
-            pendingGroupMatches = StandingsService.PendingGroupStageMatchCount();
+            pendingGroupMatches = snapshot.PendingGroupMatchCount;
             IsFixtureGenerated = FixtureOrchestrator.IsFixtureGenerated();
             IsKnockoutGenerated = KnockoutGenerator.IsBracketGenerated();
-            IsGroupStageComplete = StandingsService.IsGroupStageComplete();
+            IsGroupStageComplete = snapshot.IsGroupStageComplete;
             CanAdvancePhase = KnockoutGenerator.CanAdvanceToNextRound();
             IsBracketComplete = KnockoutGenerator.IsBracketComplete();
             exportFromDate ??= snapshot.EarliestMatchDate?.Date ?? settings?.StartDate.Date ?? DateTime.UtcNow.Date;
