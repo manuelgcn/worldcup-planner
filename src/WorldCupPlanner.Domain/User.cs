@@ -229,6 +229,8 @@ public class User
         if (!PasswordMatches(currentPassword))
             throw new ArgumentException(PasswordMismatchMessage);
 
+        ValidatePassword(newPassword);
+
         password = HashPassword(newPassword);
     }
 
