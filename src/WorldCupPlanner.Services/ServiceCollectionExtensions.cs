@@ -28,7 +28,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
 
         services.AddSingleton<IAuditLogService>(sp =>
-            AuditLogService.CreateInstance(sp.GetRequiredService<IAuditLogRepository>()));
+            AuditLogService.CreateInstance(
+                sp.GetRequiredService<IAuditLogRepository>(),
+                sp.GetRequiredService<IUserRepository>()));
         services.AddSingleton<IUserService, UserServices>();
         services.AddSingleton<ITeamService, TeamServices>();
         services.AddSingleton<IStadiumService, StadiumServices>();
