@@ -133,6 +133,22 @@ public class CsvStreamTeamParserTests
         Assert.AreEqual("CONCACAF", rows[1].Confederation);
     }
 
+    [TestMethod]
+    public void ParseKeepsTheDelimiterOfTheHeaderWhenARowHasNone()
+    {
+        // El detector de CsvHelper exige el separador en todas las lineas: con una sola fila sin ';'
+        // leia el archivo entero con ',' y el error de importacion senalaba la fila 2, que estaba bien.
+        MemoryStream stream = CreateStream("Nombre;Confederación;Ranking\nMéxico;CONCACAF;1660\nBrasil\nJapón;AFC;1648\n");
+
+        List<TeamImportDto> rows = new CsvStreamTeamParser().Parse(stream);
+
+        Assert.AreEqual("CONCACAF", rows[0].Confederation);
+        Assert.AreEqual("Brasil", rows[1].Name);
+        Assert.AreEqual(string.Empty, rows[1].Confederation);
+        Assert.AreEqual(3, rows[1].RowNumber);
+        Assert.AreEqual("1648", rows[2].Ranking);
+    }
+
     [DataTestMethod]
     [DataRow("Name,Confederation,Ranking\n\nArgentina,CONMEBOL,500\nJapan,AFC,600")]
     [DataRow("Name,Confederation,Ranking\r\n\r\nArgentina,CONMEBOL,500\r\nJapan,AFC,600\r\n")]
