@@ -12,6 +12,18 @@ University project for *Diseño de Aplicaciones 1*, Universidad ORT Uruguay (202
 
 ![Home page with the tournament state and the champion](docs/screenshots/home.png)
 
+## Highlights
+
+- **1,040 automated tests and 98% line coverage** (migrations excluded), as of November 2026:
+  333 on the domain, 557 on the services and 150 on data access. They run in CI and need no database.
+- **Written with TDD.** The history has one commit per RED, GREEN and REFACTOR step.
+- **Layered architecture.** The UI only presents, the services hold the use cases, and the
+  domain depends on nothing.
+- **Deterministic draws and simulations.** Every shuffle takes a seed, so a tournament can be
+  reproduced exactly, and each seeded operation is written to the audit log.
+- **Audited after delivery.** Backend, security, accessibility and UX reviews were run on the
+  finished project; what is still pending is listed in [TODO.md](TODO.md).
+
 ## Features
 
 - Teams with confederation, FIFA ranking and flag, entered by hand or imported from CSV
@@ -25,6 +37,10 @@ University project for *Diseño de Aplicaciones 1*, Universidad ORT Uruguay (202
 - Sessions survive reloads within a browser tab for up to eight hours; five failed logins
   within five minutes lock an email for five minutes.
 - CSV and XLSX export of the fixture and of the audit log, which records every change with its author and time.
+
+![Group standings after the group stage](docs/screenshots/group-stage.png)
+
+![Knockout bracket from the round of 32 to the final](docs/screenshots/bracket.png)
 
 ## Tournament rules
 
@@ -141,12 +157,12 @@ See [scripts/release/README.md](scripts/release/README.md) for how to start it a
 
 ## Contributing
 
-The project uses Gitflow (`feature/*` branches from `develop`) and TDD, with one commit per
-RED, GREEN and REFACTOR step. Conventions for code and for AI coding agents are in [AGENTS.md](AGENTS.md). Known pending work is listed in [TODO.md](TODO.md).
+Development followed Gitflow (`feature/*` branches merged through pull requests) and TDD, with one
+commit per RED, GREEN and REFACTOR step. Conventions for code and for AI coding agents are in [AGENTS.md](AGENTS.md). Known pending work is listed in [TODO.md](TODO.md).
 
 ## Authors
 
-- Manuel García Conde Neira ([@manuelgcn](https://github.com/manuelgcn), manu10.garciaconde@gmail.com)
+- Manuel García Conde Neira ([@manuelgcn](https://github.com/manuelgcn), [LinkedIn](https://www.linkedin.com/in/manuelgcn), manu10.garciaconde@gmail.com)
 - Joaquín Costa ([@CostaJoacoORT](https://github.com/CostaJoacoORT))
 - Tomás Dotta ([@Toto829](https://github.com/Toto829))
 
