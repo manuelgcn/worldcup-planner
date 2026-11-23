@@ -60,8 +60,9 @@ public sealed class ExportService(
         List<AuditLogExportRow> rows = logs.Select(MapAuditLogRow).ToList();
 
         // Sin "desde" la pantalla manda DateTime.MinValue: el nombre arranca en la fila más vieja exportada, no en 00010101.
+        // Esa fila está en UTC y "hasta" es un día local: si cae después, el nombre arranca en "hasta" para no quedar al revés.
         DateRange namedRange = range.From.Date == DateTime.MinValue
-            ? range with { From = rows.Count > 0 ? rows[0].Timestamp : range.To }
+            ? range with { From = rows.Count > 0 && rows[0].Timestamp.Date <= range.To.Date ? rows[0].Timestamp : range.To }
             : range;
 
         string fileName = BuildFileName("audit-log", namedRange, format);
