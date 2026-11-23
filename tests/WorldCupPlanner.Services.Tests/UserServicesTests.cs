@@ -871,6 +871,23 @@ public class UserServicesTests
         Assert.AreEqual(stored, user.password);
     }
 
+    [TestMethod]
+    public void ChangePassword_AuditsTheChangeWithoutAnyPassword()
+    {
+        MockAuditLogService audit = new MockAuditLogService();
+        UserServices auditedService = new UserServices(repository, audit);
+        repository.Add(BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+
+        auditedService.ChangePassword(2, "Pass123@", "Nueva456#");
+
+        MockAuditLogService.LoggedAction log = audit.LoggedActions.Single();
+        Assert.AreEqual("CHANGE_PASSWORD", log.Action);
+        Assert.AreEqual("juan@mail.com", log.PerformedByEmail);
+        Assert.AreEqual(2, log.AffectedEntityId);
+        Assert.IsFalse(log.Details.Contains("Pass123@"));
+        Assert.IsFalse(log.Details.Contains("Nueva456#"));
+    }
+
     private static void FailPasswordChanges(UserServices target, int userId, int times)
     {
         for (int attempt = 0; attempt < times; attempt++)
