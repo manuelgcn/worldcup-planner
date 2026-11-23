@@ -809,6 +809,22 @@ public class UserServicesTests
         Assert.ThrowsException<UserServicesException>(() => service.ChangePassword(99, "Pass123@", "Nueva456#"));
     }
 
+    // MockUserRepository.Update no hace nada: con Moq se comprueba que el hash nuevo se manda a guardar.
+    [TestMethod]
+    public void ChangePassword_WithTheCurrentPassword_StoresTheNewOne()
+    {
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        Mock<IUserRepository> users = new Mock<IUserRepository>();
+        users.Setup(repo => repo.GetById(2)).Returns(user);
+        UserServices changingService = new UserServices(users.Object, new MockAuditLogService());
+
+        changingService.ChangePassword(2, "Pass123@", "Nueva456#");
+
+        Assert.IsTrue(user.PasswordMatches("Nueva456#"));
+        Assert.IsFalse(user.PasswordMatches("Pass123@"));
+        users.Verify(repo => repo.Update(user), Times.Once);
+    }
+
     [TestMethod]
     public void RemoveRole_SystemAdmin_Throws()
     {
