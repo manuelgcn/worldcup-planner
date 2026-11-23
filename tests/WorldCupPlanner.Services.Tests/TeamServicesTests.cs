@@ -257,39 +257,6 @@ public sealed class TeamServicesTests
     }
 
     [TestMethod]
-    public void FixtureOrderingWithSameSeedProducesSameOrderWhenRankingHasTies()
-    {
-        List<Team> teams = new List<Team>();
-
-        for (int i = 0; i < 48; i++)
-        {
-            int ranking = 2500 - (i / 4) * 10;
-            Confederation conf = (Confederation)(i % 6);
-
-            teams.Add(new Team(i + 1, $"Team{i + 1}", ranking, false, conf));
-        }
-
-        List<string> firstOrder = _service.OrderForFixture(teams, 2026).Select(t => t.Name).ToList();
-        List<string> secondOrder = _service.OrderForFixture(teams, 2026).Select(t => t.Name).ToList();
-
-        Assert.AreEqual(48, firstOrder.Count);
-        CollectionAssert.AreEqual(firstOrder, secondOrder);
-    }
-
-    [TestMethod]
-    public void OrderForFixtureThrowsTeamServicesExceptionWhenTeamCountIsNot48()
-    {
-        List<Team> teams = new List<Team>();
-
-        for (int i = 0; i < 47; i++)
-        {
-            teams.Add(new Team(i + 1, $"Team{i + 1}", 2500 - i, false, Confederation.UEFA));
-        }
-
-        Assert.ThrowsException<TeamServicesException>(() => _service.OrderForFixture(teams, 2026));
-    }
-
-    [TestMethod]
     public void FillToFortyEight_FromEmpty_AddsExactlyFortyEightTeams()
     {
         _service.FillToFortyEight(completionSeed: 7, performedByEmail: null);

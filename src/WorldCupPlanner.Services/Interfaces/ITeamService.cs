@@ -9,5 +9,4 @@ public interface ITeamService
     IReadOnlyCollection<Team> GetTeams();
     Team FindByName(string name);
     void RemoveTeam(string name, string? performedByEmail = null);
-    IReadOnlyList<Team> OrderForFixture(IReadOnlyCollection<Team> teams, int fixtureSeed);
 }
