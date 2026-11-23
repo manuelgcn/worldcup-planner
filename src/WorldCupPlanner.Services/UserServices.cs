@@ -310,7 +310,10 @@ public class UserServices : IUserService
         if (userId == SystemAdminUserId)
             throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
 
-        GetUserById(userId);
+        User user = GetUserById(userId);
+
+        user.ChangePassword(currentPassword, newPassword);
+        _userRepository.Update(user);
     }
 
     public void AssignRole(int userId, UserRoles role, string? performedByEmail = null)
