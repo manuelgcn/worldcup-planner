@@ -463,6 +463,34 @@ public class UserTests
         Assert.AreEqual(stored, user.password);
     }
 
+    [DataTestMethod]
+    [DataRow("Nu1#")]
+    [DataRow("nueva456#")]
+    [DataRow("NUEVA456#")]
+    [DataRow("Nuevaaaa#")]
+    [DataRow("Nueva4567")]
+    public void ChangePasswordRejectsANewPasswordThatBreaksThePolicy(string newPassword)
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+
+        Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Pass123@", newPassword));
+        Assert.AreEqual(stored, user.password);
+    }
+
+    [TestMethod]
+    public void ChangePasswordRejectsANewPasswordLongerThan128Characters()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+        string tooLong = "Aa1@" + new string('a', 125);
+
+        ArgumentException error = Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Pass123@", tooLong));
+
+        StringAssert.Contains(error.Message, "128");
+        Assert.AreEqual(stored, user.password);
+    }
+
 
     [TestMethod]
     public void UserStartsWithoutRoles()
