@@ -163,6 +163,46 @@ public sealed class ExportServiceTests
     }
 
     [TestMethod]
+    public void ExportAuditLogRejectsMoreRowsThanTheCapAndAsksForANarrowerRange()
+    {
+        // Cualquier periodista puede pedir el export: sin tope, el registro entero se arma en memoria.
+        SeedAuditRows(ExportService.MaxAuditLogRows + 1);
+        User journalist = BuildUser(UserRoles.Periodista);
+        DateTime today = DateTime.UtcNow.Date;
+
+        ExportServiceException ex = Assert.ThrowsException<ExportServiceException>(() =>
+            _service.ExportAuditLog(new DateRange(today, today), ExportFormat.Csv, journalist));
+
+        StringAssert.Contains(ex.Message, "rango de fechas");
+        Assert.IsFalse(_auditRepository.GetAll().Any(log => log.Action == AuditActions.ExportAuditCsv));
+    }
+
+    [TestMethod]
+    public void ExportAuditLogAtTheCapExportsEveryRowOldestFirst()
+    {
+        _auditRepository.Seed(AuditLog.Create("ACTION", "oldest row"));
+        SeedAuditRows(ExportService.MaxAuditLogRows - 2);
+        _auditRepository.Seed(AuditLog.Create("ACTION", "newest row"));
+        User admin = BuildUser(UserRoles.Admin);
+        DateTime today = DateTime.UtcNow.Date;
+
+        ExportFileDto result = _service.ExportAuditLog(new DateRange(today, today), ExportFormat.Csv, admin);
+        string csv = System.Text.Encoding.UTF8.GetString(result.Content);
+
+        int header = 1;
+        Assert.AreEqual(ExportService.MaxAuditLogRows + header, csv.Split('\n', StringSplitOptions.RemoveEmptyEntries).Length);
+        Assert.IsTrue(csv.IndexOf("oldest row", StringComparison.Ordinal) < csv.IndexOf("newest row", StringComparison.Ordinal));
+    }
+
+    private void SeedAuditRows(int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            _auditRepository.Seed(AuditLog.Create("ACTION", "filler"));
+        }
+    }
+
+    [TestMethod]
     public void ExportRecordsRequesterAsStructuredActor()
     {
         User admin = BuildUser(UserRoles.Admin);
