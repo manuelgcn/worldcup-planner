@@ -17,6 +17,7 @@ public sealed class ExportService(
 
     private const string InvalidDateRangeMessage = "'desde' debe ser menor o igual que 'hasta'.";
     private const string UnauthorizedMessage = "Solo los usuarios Admin y Periodista pueden exportar datos.";
+    private const string TooManyAuditLogRowsMessage = "El registro de auditoría tiene más de {0} filas en ese rango. Elegí un rango de fechas más corto.";
     private const string FixtureWorksheetName = "Fixture";
     private const string AuditLogWorksheetName = "AuditLog";
     private const string CsvContentType = "text/csv; charset=utf-8";
@@ -45,9 +46,18 @@ public sealed class ExportService(
         (DateTime from, DateTime to) = NormalizeRange(range);
 
         // Los límites exactos del filtro (día local de la pantalla, en UTC) ganan sobre los días del rango.
-        List<AuditLogExportRow> rows = auditLogRepository.GetFiltered(filter?.From ?? from, filter?.To ?? to, filter?.Action, filter?.PerformedByEmail)
-            .Select(MapAuditLogRow)
-            .ToList();
+        // Se pide una fila de más solo para saber si el rango supera el tope: así SQL nunca devuelve el registro entero.
+        List<AuditLog> logs = auditLogRepository.GetFiltered(
+            filter?.From ?? from, filter?.To ?? to, filter?.Action, filter?.PerformedByEmail, MaxAuditLogRows + 1);
+
+        if (logs.Count > MaxAuditLogRows)
+        {
+            throw new ExportServiceException(string.Format(TooManyAuditLogRowsMessage, MaxAuditLogRows));
+        }
+
+        // Con tope el repositorio devuelve de la más nueva a la más vieja; el archivo va de la más vieja a la más nueva.
+        logs.Reverse();
+        List<AuditLogExportRow> rows = logs.Select(MapAuditLogRow).ToList();
 
         string fileName = BuildFileName("audit-log", range, format);
         ExportFileDto file = BuildFile(rows, format, AuditLogWorksheetName, fileName);
