@@ -9,6 +9,7 @@ using WorldCupPlanner.Domain;
 using WorldCupPlanner.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -39,6 +40,15 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
+
+// Después del manejador de excepciones: este limpia la respuesta y vuelve a correr solo lo que sigue,
+// así la página /Error también lleva las cabeceras.
+bool isDevelopment = app.Environment.IsDevelopment();
+app.Use((context, next) =>
+{
+    SecurityHeaders.Apply(context.Response.Headers, isDevelopment);
+    return next(context);
+});
 
 // Las rutas inexistentes muestran la página 404 de la app en vez de una respuesta vacía.
 app.UseStatusCodePagesWithReExecute("/not-found");
