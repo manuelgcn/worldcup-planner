@@ -457,7 +457,8 @@
     border-left: 3px solid var(--m26-line);
 }
 
-::deep .bracket-mini.placeholder {
+/* No se llama .placeholder: esa clase es de Bootstrap (opacidad .5 y cursor de espera). */
+::deep .bracket-mini.undecided {
     text-align: center;
     font-style: italic;
     font-size: .7rem;
