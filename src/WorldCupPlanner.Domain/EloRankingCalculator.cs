@@ -3,6 +3,9 @@ namespace WorldCupPlanner.Domain;
 public enum EloResult { Win, Draw, Loss }
 public enum MatchPhase { GroupStage, Knockout }
 
+// Porcentajes enteros que suman 100; Draw vale 0 en eliminatorias.
+public readonly record struct EloForecast(int HomeWin, int Draw, int AwayWin);
+
 public static class EloRankingCalculator
 {
     private const int MinRanking = 300;
@@ -33,5 +36,15 @@ public static class EloRankingCalculator
         newRating = Math.Clamp(newRating, MinRanking, MaxRanking);
 
         return newRating;
+    }
+
+    public static double ExpectedScore(int rankingActual, int rankingOpponent)
+    {
+        return 0.0;
+    }
+
+    public static EloForecast Forecast(int rankingHome, int rankingAway, MatchPhase phase)
+    {
+        return default;
     }
 }
