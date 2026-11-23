@@ -447,6 +447,18 @@ html[data-theme="night"] .form-check-input:checked[type=checkbox] {
     border-left-color: var(--m26-ink);
 }
 
+/* El aviso de éxito de FeedbackAlerts entra bajando un poco: se nota que es nuevo. */
+.feedback-success {
+    animation: m26-feedback-in .25s ease-out;
+}
+
+@keyframes m26-feedback-in {
+    from {
+        opacity: 0;
+        transform: translateY(-.4rem);
+    }
+}
+
 /* Bootstrap colorea .alert-warning .alert-link (0,2,0); acá queda en tinta. */
 .alert .alert-link {
     color: var(--m26-ink);
