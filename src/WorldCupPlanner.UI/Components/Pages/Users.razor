@@ -367,6 +367,10 @@ else
         if (!await IsStillAdminAsync())
             return;
 
+        // El botón de su propio rol Admin está deshabilitado, pero eso se quita desde el navegador.
+        if (role == UserRoles.Admin && user.idUser == Session.CurrentUser!.idUser)
+            return;
+
         try
         {
             if (user.HasRole(role))
