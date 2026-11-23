@@ -152,11 +152,14 @@
         : isFixtureGenerated ? 1
         : 0;
 
+    // Con los 72 partidos jugados y sin cruces, "está en juego" ya no es cierto.
+    private bool GroupStageFinished => totalMatches > 0 && playedMatches == totalMatches;
+
     private string Headline => CurrentStage switch
     {
         3 => $"{championName}, campeón del mundo.",
         2 => "Se juegan las eliminatorias.",
-        1 => "La fase de grupos está en juego.",
+        1 => GroupStageFinished ? "Terminó la fase de grupos." : "La fase de grupos está en juego.",
         _ => "El Mundial se está armando."
     };
 
@@ -164,7 +167,9 @@
     {
         3 => $"Se jugaron los {totalMatches} partidos. El cuadro completo está en el fixture y el ranking Elo final, en Ranking.",
         2 => "El cuadro eliminatorio ya está armado: de 16avos a la final, cada llave se define en un partido.",
-        1 => $"Van {playedMatches} de {totalMatches} partidos. Los dos primeros de cada grupo y los ocho mejores terceros pasan a 16avos.",
+        1 => GroupStageFinished
+            ? $"Se jugaron los {totalMatches} partidos de grupos. Falta sortear los cruces de 16avos."
+            : $"Van {playedMatches} de {totalMatches} partidos. Los dos primeros de cada grupo y los ocho mejores terceros pasan a 16avos.",
         _ => $"Hay {teamCount} de {RequiredTeamCount} selecciones y {stadiumCount} estadios cargados. Con los 48 equipos se puede sortear el fixture."
     };
 
