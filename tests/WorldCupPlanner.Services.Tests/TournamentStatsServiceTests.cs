@@ -41,6 +41,8 @@ public sealed class TournamentStatsServiceTests
         Assert.AreEqual(0, stats.RedCards);
         Assert.IsNull(stats.BiggestWin);
         Assert.IsNull(stats.HighestScoringMatch);
+        Assert.AreEqual(0, stats.AttackLeaders.Count);
+        Assert.AreEqual(0, stats.DefenceLeaders.Count);
     }
 
     [TestMethod]
@@ -140,6 +142,71 @@ public sealed class TournamentStatsServiceTests
 
         Assert.AreEqual(2, stats.YellowCards);
         Assert.AreEqual(1, stats.RedCards);
+    }
+
+    [TestMethod]
+    public void GetStats_TeamRows_AddUpEveryMatchOfATeam()
+    {
+        Team uruguay = NewTeam("Uruguay");
+        // Otra instancia del mismo equipo, como cuando cada partido llega de una lectura distinta.
+        Team uruguayAgain = new Team(uruguay.Id, "Uruguay", 1500, false, Confederation.CONMEBOL);
+        PlayGroupMatch(uruguay, 3, NewTeam("Brasil"), 1);
+        PlayGroupMatch(NewTeam("Chile"), 2, uruguayAgain, 2);
+
+        TournamentStatsDto stats = _service.GetStats();
+
+        Assert.AreEqual(3, stats.AttackLeaders.Count);
+        Assert.AreEqual(
+            new TeamGoalsDto(uruguay.Id, "Uruguay", Confederation.CONMEBOL, MatchesPlayed: 2, GoalsFor: 5, GoalsAgainst: 3),
+            stats.AttackLeaders[0]);
+    }
+
+    [TestMethod]
+    public void GetStats_AttackLeaders_AreOrderedByGoalsFor_AndTiesByNameIgnoringAccents()
+    {
+        PlayGroupMatch(NewTeam("Zambia"), 2, NewTeam("Éire"), 2);
+        PlayGroupMatch(NewTeam("Egipto"), 2, NewTeam("Uruguay"), 4);
+
+        TournamentStatsDto stats = _service.GetStats();
+
+        CollectionAssert.AreEqual(
+            new[] { "Uruguay", "Egipto", "Éire", "Zambia" },
+            stats.AttackLeaders.Select(row => row.TeamName).ToArray());
+    }
+
+    [TestMethod]
+    public void GetStats_Leaders_KeepOnlyTheTopFive()
+    {
+        PlayGroupMatch(NewTeam("Uruguay"), 6, NewTeam("Brasil"), 5);
+        PlayGroupMatch(NewTeam("Chile"), 4, NewTeam("Peru"), 3);
+        PlayGroupMatch(NewTeam("Ecuador"), 2, NewTeam("Bolivia"), 1);
+
+        TournamentStatsDto stats = _service.GetStats();
+
+        CollectionAssert.AreEqual(
+            new[] { "Uruguay", "Brasil", "Chile", "Peru", "Ecuador" },
+            stats.AttackLeaders.Select(row => row.TeamName).ToArray());
+        CollectionAssert.AreEqual(
+            new[] { "Ecuador", "Bolivia", "Chile", "Peru", "Uruguay" },
+            stats.DefenceLeaders.Select(row => row.TeamName).ToArray());
+    }
+
+    [TestMethod]
+    public void GetStats_DefenceLeaders_AreOrderedByFewestGoalsAgainst_ThenMostMatchesPlayed_ThenName()
+    {
+        Team uruguay = NewTeam("Uruguay");
+        Team chile = NewTeam("Chile");
+        PlayGroupMatch(uruguay, 1, NewTeam("Brasil"), 0);
+        PlayGroupMatch(uruguay, 0, chile, 0);
+        PlayGroupMatch(chile, 1, NewTeam("Peru"), 1);
+        PlayGroupMatch(NewTeam("Ecuador"), 0, NewTeam("Bolivia"), 0);
+
+        TournamentStatsDto stats = _service.GetStats();
+
+        // Uruguay recibio 0 en dos partidos; Bolivia y Ecuador, 0 en uno; el resto recibio 1.
+        CollectionAssert.AreEqual(
+            new[] { "Uruguay", "Bolivia", "Ecuador", "Chile", "Brasil" },
+            stats.DefenceLeaders.Select(row => row.TeamName).ToArray());
     }
 
     [TestMethod]

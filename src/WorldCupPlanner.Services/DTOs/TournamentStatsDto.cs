@@ -15,4 +15,6 @@ public sealed class TournamentStatsDto
     public int RedCards { get; set; }
     public MatchHighlightDto? BiggestWin { get; set; }
     public MatchHighlightDto? HighestScoringMatch { get; set; }
+    public IReadOnlyList<TeamGoalsDto> AttackLeaders { get; set; } = Array.Empty<TeamGoalsDto>();
+    public IReadOnlyList<TeamGoalsDto> DefenceLeaders { get; set; } = Array.Empty<TeamGoalsDto>();
 }
