@@ -185,7 +185,7 @@
     private const string MissingCurrentPasswordMessage = "Ingresá tu contraseña actual.";
     private const string MissingNewPasswordMessage = "Ingresá la contraseña nueva.";
     private const string NewPasswordsDoNotMatchMessage = "Las dos contraseñas nuevas no coinciden.";
-    private const string PasswordChangedMessage = "Contraseña cambiada correctamente.";
+    private const string PasswordChangedMessage = "Contraseña cambiada correctamente. Se cerraron las demás sesiones abiertas de tu cuenta.";
 
     private string currentPassword = "";
     private string newPassword = "";
@@ -201,7 +201,16 @@
         // Igual que Save: la página pudo quedar abierta con la sesión vencida o cerrada en otra pestaña.
         if (!await Session.RevalidateAsync())
         {
-            passwordErrors.Add(Session.IsLoggedIn ? SessionNotConfirmedMessage : SessionEndedMessage);
+            if (Session.IsLoggedIn)
+            {
+                passwordErrors.Add(SessionNotConfirmedMessage);
+                return;
+            }
+
+            // Sin sesión esta tarjeta deja de mostrarse: el aviso va en la de arriba, que sigue en pantalla.
+            errors.Clear();
+            successMessage = null;
+            errors.Add(SessionEndedMessage);
             return;
         }
 
@@ -212,6 +221,9 @@
         try
         {
             UserServices.ChangePassword(Session.CurrentUser!.idUser, currentPassword, newPassword);
+
+            // La sesión está atada a la contraseña: esta pestaña toma la nueva y las demás sesiones se cierran.
+            await Session.RefreshUserAsync();
 
             currentPassword = "";
             newPassword = "";
