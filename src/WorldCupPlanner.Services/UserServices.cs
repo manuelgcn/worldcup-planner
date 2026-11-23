@@ -344,6 +344,9 @@ public class UserServices : IUserService
 
     public void AssignRole(int userId, UserRoles role, string? performedByEmail = null)
     {
+        if (userId == SystemAdminUserId)
+            throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
+
         User user = GetUserById(userId);
 
         user.AddRole(role);

@@ -556,10 +556,10 @@ public class UserServicesTests
             AuditLogService.CreateInstance(auditRepo)
         );
 
-        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         auditedService.AddUser(user);
 
-        auditedService.AssignRole(1, UserRoles.Admin);
+        auditedService.AssignRole(2, UserRoles.Admin);
 
         Assert.IsTrue(auditRepo.GetAll().Any(log => log.Action == "ASSIGN_USER_ROLE"));
     }
@@ -668,13 +668,13 @@ public class UserServicesTests
     [TestMethod]
     public void AdminCanAssignRoleToUser()
     {
-        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
 
         service.AddUser(user);
 
-        service.AssignRole(1, UserRoles.Admin);
+        service.AssignRole(2, UserRoles.Admin);
 
-        User updated = service.GetUserById(1);
+        User updated = service.GetUserById(2);
 
         Assert.IsTrue(updated.HasRole(UserRoles.Admin));
     }
