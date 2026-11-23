@@ -13,7 +13,7 @@
 <section class="home-pitch" aria-labelledby="homeHeadline">
     @* Sin viewBox: las unidades son px y los porcentajes siguen el tamaño de la cancha. El svg
        anidado ancla el área grande a la línea de fondo derecha. *@
-    <svg class="pitch-lines" aria-hidden="true" focusable="false">
+    <svg class="pitch-lines" aria-hidden="true">
         <line class="chalk chalk-halfway" pathLength="1" x1="78%" y1="0" x2="78%" y2="100%" />
         <circle class="chalk chalk-circle" pathLength="1" cx="78%" cy="50%" r="96" />
         <circle class="chalk-spot" cx="78%" cy="50%" r="4" />
@@ -23,6 +23,16 @@
             <line class="chalk chalk-area-bottom" pathLength="1" x1="-65" y1="73%" x2="0" y2="73%" />
         </svg>
     </svg>
+    @if (championName is not null)
+    {
+        @* Papelitos: caen una sola vez. Posición, demora e inclinación salen del índice, sin azar. *@
+        <div class="papelitos" aria-hidden="true">
+            @for (int i = 0; i < PapelitoCount; i++)
+            {
+                <i style="--x:@(i * 37 % 100)%;--delay:@(i * 53 % 1200)ms;--tilt:@(i * 67 % 180)deg"></i>
+            }
+        </div>
+    }
     <div class="pitch-copy">
         <p class="pitch-brand">Mundial 2026, 48 selecciones</p>
         <h1 id="homeHeadline" class="pitch-headline">@Headline</h1>
@@ -116,6 +126,7 @@
     private const string DashboardLoadErrorMessage =
         "No se pudo cargar el resumen del torneo. Intentá nuevamente más tarde.";
     private const int RequiredTeamCount = 48;
+    private const int PapelitoCount = 32;
 
     private int unreadCount;
     private int teamCount;

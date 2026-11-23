@@ -86,6 +86,61 @@
     }
 }
 
+/* Papelitos: las tiras de papel que tira la tribuna cuando hay campeón, en cal y amarilla. Es el
+   único festejo del sitio. Cada <i> es un carril de todo el alto con la tira arriba: baja una vez
+   y queda fuera de la cancha, que recorta. En reposo también está fuera, por encima. */
+.papelitos {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.papelitos i {
+    position: absolute;
+    top: 0;
+    left: var(--x);
+    width: 7px;
+    height: 100%;
+    transform: translateY(-2rem);
+    animation: papelito-fall 2.6s cubic-bezier(.35, 0, .75, 1) var(--delay) both;
+}
+
+.papelitos i::before {
+    content: "";
+    display: block;
+    height: 18px;
+    background: var(--m26-on-pitch);
+    transform: translateX(0) rotate(var(--tilt)) rotateX(0deg);
+    animation: papelito-flutter .6s ease-in-out var(--delay) 6 alternate;
+}
+
+.papelitos i:nth-child(odd)::before {
+    background: var(--m26-yellow);
+}
+
+.papelitos i:nth-child(3n) {
+    width: 5px;
+    animation-duration: 3.2s;
+}
+
+@keyframes papelito-fall {
+    to {
+        transform: translateY(100%);
+    }
+}
+
+@keyframes papelito-flutter {
+    to {
+        transform: translateX(14px) rotate(calc(var(--tilt) + 70deg)) rotateX(180deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .papelitos {
+        display: none;
+    }
+}
+
 /* El texto no pisa el círculo central (al 78% del ancho). */
 .pitch-copy {
     max-width: min(40rem, 64%);
