@@ -40,12 +40,8 @@
                     <input id="signupEmail" class="form-control" type="email" autocomplete="email" placeholder="tu@email.com"
                            @bind="email" @bind:event="oninput" />
                 </div>
-                <div class="mb-3">
-                    <label class="form-label" for="signupPassword">Contraseña</label>
-                    <input id="signupPassword" class="form-control" type="password" autocomplete="new-password" placeholder="••••••••"
-                           aria-describedby="signupPasswordHelp" @bind="password" @bind:event="oninput" />
-                    <div id="signupPasswordHelp" class="form-text">Mínimo 8 caracteres, con mayúscula, minúscula, número y símbolo.</div>
-                </div>
+                <PasswordField Id="signupPassword" Label="Contraseña" Autocomplete="new-password" @bind-Value="password"
+                               ShowRules="true" />
                 <div class="mb-4">
                     <label class="form-label" for="signupBirth">Fecha de nacimiento</label>
                     <input id="signupBirth" class="form-control" type="date" autocomplete="bday" @bind="dateOfBirth" />
