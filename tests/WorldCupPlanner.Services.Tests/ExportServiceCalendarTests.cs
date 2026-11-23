@@ -44,6 +44,21 @@ public sealed class ExportServiceCalendarTests
     }
 
     [TestMethod]
+    public void ExportFixtureIcsRejectsRangeWithoutMatchesWithoutAuditLog()
+    {
+        Team home = new Team(1, "Uruguay", 1800, false, Confederation.CONMEBOL);
+        Team away = new Team(2, "Argentina", 1900, false, Confederation.CONMEBOL);
+        Stadium stadium = new Stadium("Centenario", "Montevideo", null, 60000);
+        _matchRepository.Add(MatchGroup.CreateInstance(9, Date(28), home, away, stadium, new Group("A"), Journey.CreateInstance(2)));
+        User admin = BuildUser(UserRoles.Admin);
+
+        // RFC 5545 exige al menos un componente dentro de VCALENDAR: un .ics sin eventos no es válido.
+        Assert.ThrowsException<ExportServiceException>(() =>
+            _service.ExportFixtureIcs(new DateRange(Date(1), Date(25)), admin));
+        Assert.AreEqual(0, _auditRepository.GetAll().Count);
+    }
+
+    [TestMethod]
     public void ExportFixtureIcsWritesTheMatchesInRangeInDateOrderAndAuditsFile()
     {
         Team home = new Team(1, "Uruguay", 1800, false, Confederation.CONMEBOL);
