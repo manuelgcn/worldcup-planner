@@ -336,6 +336,8 @@ public class UserServices : IUserService
             throw new UserServicesException(WrongCurrentPasswordMessage);
         }
 
+        _failedLogins.TryRemove(loginKey, out _);
+
         user.ChangePassword(currentPassword, newPassword);
         _userRepository.Update(user);
 
