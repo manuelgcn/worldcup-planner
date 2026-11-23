@@ -226,6 +226,7 @@ public class User
 
     public void ChangePassword(string currentPassword, string newPassword)
     {
+        password = HashPassword(newPassword);
     }
 
     public bool PasswordMatches(string plainTextPassword)
