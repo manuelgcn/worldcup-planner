@@ -145,13 +145,23 @@ else
     {
         if (CanExport)
         {
-            LoadLogs();
+            QueryLogs();
+        }
+    }
+
+    // Los filtros se pueden seguir usando en una página dejada abierta: el rol se relee antes de cada consulta.
+    // La primera carga no lo necesita: MainLayout acaba de releer al usuario al navegar hasta acá.
+    private async Task LoadLogs()
+    {
+        if (await Session.StillHasAnyRoleAsync(UserRoles.Admin, UserRoles.Periodista))
+        {
+            QueryLogs();
         }
     }
 
     // Filtro, orden (más nuevo primero) y tope corren en SQL. Se pide una fila de más
     // solo para saber si quedaron registros afuera de la pantalla.
-    private void LoadLogs()
+    private void QueryLogs()
     {
         logs = AuditLogService.GetFiltered(BuildFilter(), MaxRows + 1);
         limitReached = logs.Count > MaxRows;
@@ -173,19 +183,25 @@ else
         };
     }
 
-    private void ClearFilters()
+    private Task ClearFilters()
     {
         actionFilter = "";
         emailFilter = "";
         fromDate = null;
         toDate = null;
         exportError = null;
-        LoadLogs();
+        return LoadLogs();
     }
 
     private async Task ExportAsync()
     {
         exportError = null;
+
+        if (!await Session.StillHasAnyRoleAsync(UserRoles.Admin, UserRoles.Periodista))
+        {
+            return;
+        }
+
         isExporting = true;
         try
         {

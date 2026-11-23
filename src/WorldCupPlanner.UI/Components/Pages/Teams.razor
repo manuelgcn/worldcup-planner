@@ -212,12 +212,15 @@ else
         }
     }
 
-    private void Create()
+    // La página pudo quedar abierta después de que al usuario le quitaran el rol o lo dieran de baja.
+    private Task<bool> IsStillAdminAsync() => Session.StillHasAnyRoleAsync(UserRoles.Admin);
+
+    private async Task Create()
     {
         errors.Clear();
         successMessage = null;
 
-        if (!ValidateInput())
+        if (!await IsStillAdminAsync() || !ValidateInput())
             return;
 
         try
@@ -258,10 +261,13 @@ else
 
     private bool overwriteFlags;
 
-    private void AssignFlags()
+    private async Task AssignFlags()
     {
         errors.Clear();
         successMessage = null;
+
+        if (!await IsStillAdminAsync())
+            return;
 
         try
         {
@@ -295,10 +301,14 @@ else
         return message;
     }
 
-    private void Remove(string nombreEquipo)
+    private async Task Remove(string nombreEquipo)
     {
         errors.Clear();
         successMessage = null;
+
+        if (!await IsStillAdminAsync())
+            return;
+
         confirmingDeleteName = null;
 
         try

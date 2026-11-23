@@ -135,12 +135,15 @@ else
         stadiums = StadiumServices.GetAllStadiums();
     }
 
-    private void Create()
+    // La página pudo quedar abierta después de que al usuario le quitaran el rol o lo dieran de baja.
+    private Task<bool> IsStillAdminAsync() => Session.StillHasAnyRoleAsync(UserRoles.Admin);
+
+    private async Task Create()
     {
         errors.Clear();
         successMessage = null;
 
-        if (!ValidateInput())
+        if (!await IsStillAdminAsync() || !ValidateInput())
             return;
 
         try
@@ -179,10 +182,14 @@ else
         confirmingDeleteId = null;
     }
 
-    private void Remove(int id)
+    private async Task Remove(int id)
     {
         errors.Clear();
         successMessage = null;
+
+        if (!await IsStillAdminAsync())
+            return;
+
         confirmingDeleteId = null;
 
         try

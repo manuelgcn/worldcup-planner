@@ -146,6 +146,13 @@
     {
         errors.Clear();
         successMessage = null;
+
+        // La página pudo quedar abierta después de que al usuario le quitaran el rol o lo dieran de baja.
+        if (!await Session.StillHasAnyRoleAsync(UserRoles.Admin, UserRoles.Editor))
+        {
+            return;
+        }
+
         isBusy = true;
         try
         {

@@ -277,8 +277,7 @@ else
     // La página pudo quedar abierta después de que otro admin le quitara el rol o diera de baja a este usuario.
     private async Task<bool> IsStillAdminAsync()
     {
-        await Session.RevalidateAsync();
-        return IsAdmin;
+        return await Session.StillHasAnyRoleAsync(UserRoles.Admin);
     }
 
     private void StartEdit(User u)

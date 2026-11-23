@@ -129,6 +129,8 @@
     private const string ResultSavedMessage = "Resultado guardado correctamente";
     private const string MatchUpdatedMessage = "Partido actualizado correctamente";
     private const string UndecidedTeamName = "A definir";
+    private const string PermissionNotConfirmedMessage =
+        "No se pudo confirmar que tengas permiso para editar partidos. Recargá la página e intentá nuevamente.";
 
     [Parameter, EditorRequired] public Match Match { get; set; } = null!;
     [Parameter] public bool ShowDateAndStadium { get; set; }
@@ -188,9 +190,27 @@
     private static string CardEmoji(string type) =>
         type == MatchIncidentDto.RedCardType ? "🟥" : "🟨";
 
-    private void AddIncident()
+    // El editor pudo quedar abierto después de que al usuario le quitaran el rol o lo dieran de baja.
+    // También da falso si no se lo pudo releer: el mensaje no afirma que haya perdido el permiso.
+    private async Task<bool> CanStillEditAsync()
+    {
+        if (await Session.StillHasAnyRoleAsync(UserRoles.Admin, UserRoles.Editor))
+        {
+            return true;
+        }
+
+        editorErrors.Add(PermissionNotConfirmedMessage);
+        return false;
+    }
+
+    private async Task AddIncident()
     {
         editorErrors.Clear();
+
+        if (!await CanStillEditAsync())
+        {
+            return;
+        }
 
         try
         {
@@ -215,9 +235,14 @@
         }
     }
 
-    private void RemoveIncident(int incidentId)
+    private async Task RemoveIncident(int incidentId)
     {
         editorErrors.Clear();
+
+        if (!await CanStillEditAsync())
+        {
+            return;
+        }
 
         try
         {
@@ -234,7 +259,7 @@
     {
         editorErrors.Clear();
 
-        if (!Validate())
+        if (!await CanStillEditAsync() || !Validate())
         {
             return;
         }
