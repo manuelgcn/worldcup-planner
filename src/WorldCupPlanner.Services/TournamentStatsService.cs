@@ -11,12 +11,15 @@ namespace WorldCupPlanner.Services;
 public class TournamentStatsService(IMatchRepository matchRepository) : ITournamentStatsService
 {
     private const int LeaderCount = 5;
+    private const int PointsForWin = 3;
+    private const int PointsForDraw = 1;
 
     public TournamentStatsDto GetStats()
     {
         List<Match> played = matchRepository.GetAll().Where(IsPlayed).ToList();
         int goals = played.Sum(TotalGoals);
-        List<TeamGoalsDto> teams = BuildTeamRows(played.SelectMany(Sides));
+        List<TeamSide> sides = played.SelectMany(Sides).ToList();
+        List<TeamGoalsDto> teams = BuildTeamRows(sides);
 
         return new TournamentStatsDto
         {
@@ -37,7 +40,9 @@ public class TournamentStatsService(IMatchRepository matchRepository) : ITournam
             AttackLeaders = TopByName(teams.OrderByDescending(team => team.GoalsFor)),
             DefenceLeaders = TopByName(teams
                 .OrderBy(team => team.GoalsAgainst)
-                .ThenByDescending(team => team.MatchesPlayed))
+                .ThenByDescending(team => team.MatchesPlayed)),
+            Confederations = BuildConfederationRecords(sides),
+            Stadiums = BuildStadiumRows(played)
         };
     }
 
@@ -72,6 +77,39 @@ public class TournamentStatsService(IMatchRepository matchRepository) : ITournam
             .ThenBy(team => TextNormalizer.Normalize(team.TeamName), StringComparer.Ordinal)
             .ThenBy(team => team.TeamId)
             .Take(LeaderCount)
+            .ToList();
+    }
+
+    // Solo miran los goles: un partido definido por penales es empate para los dos equipos.
+    private static List<ConfederationRecordDto> BuildConfederationRecords(IEnumerable<TeamSide> sides)
+    {
+        return sides
+            .GroupBy(side => side.Team.Confederation)
+            .Select(group =>
+            {
+                int wins = group.Count(side => side.GoalsFor > side.GoalsAgainst);
+                int draws = group.Count(side => side.GoalsFor == side.GoalsAgainst);
+                return new ConfederationRecordDto(
+                    group.Key,
+                    group.Select(side => side.Team.Id).Distinct().Count(),
+                    wins,
+                    draws,
+                    group.Count() - wins - draws,
+                    (double)(wins * PointsForWin + draws * PointsForDraw) / group.Count());
+            })
+            .OrderByDescending(record => record.PointsPerMatch)
+            .ThenBy(record => record.Confederation.ToString(), StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static List<StadiumStatsDto> BuildStadiumRows(IEnumerable<Match> played)
+    {
+        return played
+            .Where(match => match.Stadium is not null)
+            .GroupBy(match => match.Stadium!.Id)
+            .Select(group => new StadiumStatsDto(group.First().Stadium!.Name, group.Count(), group.Sum(TotalGoals)))
+            .OrderByDescending(stadium => stadium.Goals)
+            .ThenBy(stadium => TextNormalizer.Normalize(stadium.StadiumName), StringComparer.Ordinal)
             .ToList();
     }
 
