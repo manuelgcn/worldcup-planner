@@ -393,8 +393,9 @@
 }
 
 ::deep .bracket-compact {
+    --bracket-gap: 1.5rem;
     display: flex;
-    gap: .6rem;
+    gap: var(--bracket-gap);
     padding: .3rem 0;
     align-items: stretch;
     overflow-x: auto;
@@ -417,11 +418,76 @@
 }
 
 ::deep .bracket-compact-cells {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: .3rem;
-    justify-content: space-around;
     flex: 1;
+}
+
+/* Cada llave ocupa una franja igual de su columna y queda centrada en ella: así la franja de una
+   ronda mide lo que dos de la anterior y su centro cae justo entre las dos llaves que la alimentan. */
+::deep .bracket-slot {
+    position: relative;
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: .15rem 0;
+}
+
+/* Conectores: cada llave sale hasta la mitad del hueco y sube o baja hasta el borde de su franja,
+   donde se junta con su par; la llave siguiente pone el tramo que falta. */
+::deep .bracket-slot::before,
+::deep .bracket-slot::after {
+    content: "";
+    position: absolute;
+    width: calc(var(--bracket-gap) / 2);
+    border: 0 solid var(--m26-line-strong);
+}
+
+::deep .bracket-slot::before {
+    right: 100%;
+    top: calc(50% - 1px);
+    border-top-width: 2px;
+}
+
+::deep .bracket-slot::after {
+    left: 100%;
+    border-right-width: 2px;
+}
+
+::deep .bracket-slot:nth-child(odd)::after {
+    top: calc(50% - 1px);
+    bottom: 0;
+    border-top-width: 2px;
+}
+
+::deep .bracket-slot:nth-child(even)::after {
+    top: 0;
+    bottom: calc(50% - 1px);
+    border-bottom-width: 2px;
+}
+
+/* A los 16avos no les llega nada, de la final no sale nada y el tercer puesto no es parte del árbol. */
+::deep .phase-RoundOf32 .bracket-slot::before,
+::deep .phase-Final .bracket-slot::after,
+::deep .bracket-slot.detached::before {
+    content: none;
+}
+
+/* Tercer puesto: en la columna de la final, debajo y sin conectores. */
+::deep .bracket-slot.detached {
+    position: absolute;
+    inset: calc(50% + 3.5rem) 0 auto;
+}
+
+::deep .bracket-slot-label {
+    margin: 0 0 .4rem;
+    padding-bottom: .3rem;
+    text-align: center;
+    font-size: .9rem;
+    color: var(--m26-muted);
+    border-bottom: 2px solid var(--m26-muted);
 }
 
 ::deep .bracket-mini {
@@ -439,7 +505,7 @@
     border-left: 3px solid var(--m26-ok);
 }
 
-::deep .phase-Final .bracket-mini {
+::deep .phase-Final .bracket-slot:not(.detached) .bracket-mini {
     border: 2px solid var(--m26-ink);
 }
 
@@ -447,10 +513,6 @@
     color: var(--m26-ink);
     border-bottom-color: var(--m26-yellow);
     border-bottom-width: 4px;
-}
-
-::deep .phase-ThirdPlace h3 {
-    border-bottom-color: var(--m26-muted);
 }
 
 ::deep .bracket-mini.pending {
@@ -508,6 +570,9 @@
     color: var(--m26-ink);
     min-width: 1ch;
     text-align: right;
+    /* "1 (4)" no se parte en dos líneas en las columnas angostas. */
+    flex: 0 0 auto;
+    white-space: nowrap;
 }
 
 ::deep .bracket-mini-row.winner {
