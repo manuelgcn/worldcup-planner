@@ -313,7 +313,7 @@ else
 
             // La sesión guarda una copia del usuario: si se editó a sí mismo, se recarga como en EditUser.
             if (id == Session.CurrentUser!.idUser)
-                await Session.LoginAsync(UserServices.GetUserById(id));
+                await Session.RefreshUserAsync();
 
             successMessage = "Usuario actualizado correctamente";
             editingUserId = null;
@@ -385,7 +385,7 @@ else
 
             // El menú y los permisos leen los roles de la copia en sesión: si cambió los propios, se recarga.
             if (user.idUser == Session.CurrentUser!.idUser)
-                await Session.LoginAsync(UserServices.GetUserById(user.idUser));
+                await Session.RefreshUserAsync();
         }
         catch (Exception ex)
         {

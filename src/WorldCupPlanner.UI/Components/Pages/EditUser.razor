@@ -113,7 +113,7 @@
             );
 
             // La sesión guarda una copia del usuario: se recarga para que el layout y "Email actual" reflejen el cambio.
-            await Session.LoginAsync(UserServices.GetUserById(Session.CurrentUser!.idUser));
+            await Session.RefreshUserAsync();
             successMessage = "Usuario actualizado correctamente";
         }
         catch (Exception ex)

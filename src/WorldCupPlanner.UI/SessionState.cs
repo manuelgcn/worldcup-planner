@@ -17,11 +17,16 @@ public class SessionState
 
     private readonly ProtectedSessionStorage storage;
     private readonly IUserService userService;
+    private readonly TimeProvider timeProvider;
+
+    // Copia en memoria de lo guardado en el navegador: un circuito que sigue abierto no vuelve a leerlo.
+    private StoredSession? session;
 
     public SessionState(ProtectedSessionStorage storage, IUserService userService, TimeProvider timeProvider)
     {
         this.storage = storage;
         this.userService = userService;
+        this.timeProvider = timeProvider;
     }
 
     public User? CurrentUser { get; private set; }
@@ -38,29 +43,32 @@ public class SessionState
     {
         try
         {
-            ProtectedBrowserStorageResult<StoredSession> stored = await storage.GetAsync<StoredSession>(SessionKey);
+            ProtectedBrowserStorageResult<StoredSession> result = await storage.GetAsync<StoredSession>(SessionKey);
 
-            if (!stored.Success)
+            if (!result.Success)
             {
                 return;
             }
 
+            StoredSession stored = result.Value!;
+
             // Una copia del valor cifrado sirve igual que el original: el vencimiento acota cuánto.
-            if (stored.Value!.ExpiresAtUtc <= DateTime.UtcNow)
+            if (HasEnded(stored))
             {
                 await storage.DeleteAsync(SessionKey);
                 return;
             }
 
             // Restaurar un backup reasigna ids: el email confirma que el id sigue siendo la misma persona.
-            User user = userService.GetUserById(stored.Value.UserId);
-            if (!string.Equals(user.email, stored.Value.Email, StringComparison.OrdinalIgnoreCase))
+            User user = userService.GetUserById(stored.UserId);
+            if (!string.Equals(user.email, stored.Email, StringComparison.OrdinalIgnoreCase))
             {
                 await storage.DeleteAsync(SessionKey);
                 return;
             }
 
             CurrentUser = user;
+            session = stored;
         }
         catch (Exception ex) when (ex is CryptographicException or UserServicesException or JsonException)
         {
@@ -74,6 +82,13 @@ public class SessionState
     {
         if (CurrentUser is null)
         {
+            return;
+        }
+
+        // Sin esto una pestaña que nunca se recarga seguiría con sesión pasadas las 8 horas.
+        if (HasEnded(session!))
+        {
+            await LogoutAsync();
             return;
         }
 
@@ -98,11 +113,25 @@ public class SessionState
     public async Task LoginAsync(User user)
     {
         CurrentUser = user;
-        await storage.SetAsync(SessionKey, new StoredSession(user.idUser, user.email, DateTime.UtcNow.Add(SessionLifetime)));
+        session = new StoredSession(user.idUser, user.email, UtcNow.Add(SessionLifetime));
+        await storage.SetAsync(SessionKey, session);
         NotifyStateChanged();
     }
 
-    public Task RefreshUserAsync() => Task.CompletedTask;
+    // Después de editar al usuario en sesión: relee sus datos y guarda su email nuevo, que RestoreAsync
+    // compara. El vencimiento no cambia: solo un login abre otra ventana de 8 horas.
+    public async Task RefreshUserAsync()
+    {
+        if (CurrentUser is null)
+        {
+            return;
+        }
+
+        CurrentUser = userService.GetUserById(CurrentUser.idUser);
+        session = session! with { Email = CurrentUser.email };
+        await storage.SetAsync(SessionKey, session);
+        NotifyStateChanged();
+    }
 
     // Avisa al menú y al inicio que cambió algo que muestran de la sesión (p. ej. las notificaciones sin leer).
     public void Refresh()
@@ -113,11 +142,16 @@ public class SessionState
     public async Task LogoutAsync()
     {
         CurrentUser = null;
+        session = null;
         await storage.DeleteAsync(SessionKey);
         NotifyStateChanged();
     }
 
     private sealed record StoredSession(int UserId, string Email, DateTime ExpiresAtUtc);
+
+    private DateTime UtcNow => timeProvider.GetUtcNow().UtcDateTime;
+
+    private bool HasEnded(StoredSession stored) => stored.ExpiresAtUtc <= UtcNow;
 
     private void NotifyStateChanged()
     {

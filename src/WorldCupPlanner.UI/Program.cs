@@ -2,6 +2,7 @@ using WorldCupPlanner.Services;
 using WorldCupPlanner.DataAccess;
 using WorldCupPlanner.DataAccess.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using WorldCupPlanner.UI;
 using WorldCupPlanner.UI.Components;
 using WorldCupPlanner.Domain;
@@ -20,6 +21,7 @@ string flagsDirectory = Path.Combine(
     builder.Configuration.GetValue<string>("Flags:Directory") ?? "flags-master");
 
 builder.Services.AddWorldCupPlanner(connectionString, flagsDirectory);
+builder.Services.TryAddSingleton(TimeProvider.System);
 builder.Services.AddScoped<SessionState>();
 
 var app = builder.Build();
