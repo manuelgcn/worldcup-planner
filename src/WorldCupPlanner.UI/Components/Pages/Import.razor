@@ -77,8 +77,9 @@ else
 }
 
 @code {
-    private const long MaxImportFileSize = 5 * 1024 * 1024;
-    private const string FileTooLargeMessage = "El archivo no puede superar los 5 MB.";
+    // 48 equipos entran en menos de 5 KB: un archivo enorme solo sirve para agotar la memoria.
+    private const long MaxImportFileSize = 256 * 1024;
+    private const string FileTooLargeMessage = "El archivo no puede superar los 256 KB.";
 
     private ImportResult? result;
     private string? error;
