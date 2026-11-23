@@ -903,6 +903,20 @@ public class UserServicesTests
         Assert.AreEqual(stored, user.password);
     }
 
+    // Igual que un login correcto: quien acaba de probar la contrasena actual no arrastra sus errores de tipeo.
+    [TestMethod]
+    public void ChangePassword_ThatSucceeds_ForgetsTheFailedLogins()
+    {
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), new ManualTimeProvider());
+        lockingService.AddUser(BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+        FailPasswordChanges(lockingService, userId: 2, times: 4);
+
+        lockingService.ChangePassword(2, "Pass123@", "Nueva456#");
+        FailLogins(lockingService, "juan@mail.com", times: 1);
+
+        Assert.AreEqual(2, lockingService.Authenticate("juan@mail.com", "Nueva456#").idUser);
+    }
+
     [TestMethod]
     public void ChangePassword_AuditsTheChangeWithoutAnyPassword()
     {
