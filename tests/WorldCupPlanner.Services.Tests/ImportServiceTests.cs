@@ -266,6 +266,33 @@ public class ImportServiceTests
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
     }
 
+    [DataTestMethod]
+    [DataRow("3")]
+    [DataRow("+3")]
+    [DataRow("AFC,CAF")]
+    public void ImportTeamsThrowsWhenConfederationIsNotAName(string confederation)
+    {
+        // Enum.TryParse lee "3" como CONMEBOL y combina "AFC,CAF" en CAF: solo vale el nombre.
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, new List<TeamImportDto> { Row(2, "Atlantida", confederation, "1500") });
+
+        ImportServiceException ex = Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+
+        StringAssert.Contains(ex.Message, "Confederacion invalida. Row: 2.");
+        Assert.AreEqual(0, _teamRepository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void ImportTeamsAcceptsTheConfederationNameInAnyCase()
+    {
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, new List<TeamImportDto> { Row(2, "Noruega", " uefa ", "1500") });
+
+        ImportResult result = _service.ImportTeams(stream);
+
+        Assert.AreEqual(Confederation.UEFA, result.ImportedTeams.Single().Confederation);
+    }
+
     [TestMethod]
     public void ImportTeamsThrowsWhenTheSameNameAppearsWithAndWithoutAccents()
     {
