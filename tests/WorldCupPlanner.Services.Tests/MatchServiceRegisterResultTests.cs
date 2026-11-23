@@ -130,7 +130,7 @@ public sealed class MatchServiceRegisterResultTests
     {
         Harness harness = new Harness();
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => harness.Service.RegisterResult(matchId: 999, homeGoals: 1, awayGoals: 0, Email));
     }
 
@@ -141,7 +141,7 @@ public sealed class MatchServiceRegisterResultTests
         harness.SeedGroupMatch(MatchId);
         harness.SeedKnockout();
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => harness.Service.RegisterResult(MatchId, homeGoals: 2, awayGoals: 1, Email));
     }
 
@@ -151,7 +151,7 @@ public sealed class MatchServiceRegisterResultTests
         Harness harness = new Harness();
         harness.SeedRoundOf32Match(MatchId);
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => harness.Service.RegisterResult(MatchId, homeGoals: 1, awayGoals: 1, Email));
     }
 
@@ -174,7 +174,7 @@ public sealed class MatchServiceRegisterResultTests
         MatchElimination second = harness.SeedRoundOf32Match(MatchId + 1);
         harness.SeedRoundOf16Match(first, second);
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => harness.Service.RegisterResult(MatchId, homeGoals: 2, awayGoals: 0, Email));
     }
 
@@ -199,7 +199,7 @@ public sealed class MatchServiceRegisterResultTests
         match.SetGoals(1, 1);
         match.SetPenaltyShootoutResult(4, 3);
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => harness.Service.RegisterResult(MatchId, homeGoals: 2, awayGoals: 2, Email));
     }
 

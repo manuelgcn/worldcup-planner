@@ -84,7 +84,7 @@ public class UserServicesTests
     [TestMethod]
     public void RegisterUser_WithInvalidEmail_ThrowsArgumentException()
     {
-        Assert.ThrowsException<ArgumentException>(() => service.RegisterUser(new CreateUserRequestDto
+        Assert.ThrowsExactly<ArgumentException>(() => service.RegisterUser(new CreateUserRequestDto
         {
             Id = 6,
             Name = "Ana",
@@ -110,7 +110,7 @@ public class UserServicesTests
             InitialRole = UserRoles.Editor
         });
 
-        Assert.ThrowsException<UserServicesException>(() => service.RegisterUser(new CreateUserRequestDto
+        Assert.ThrowsExactly<UserServicesException>(() => service.RegisterUser(new CreateUserRequestDto
         {
             Id = 8,
             Name = "Otra",
@@ -324,13 +324,13 @@ public class UserServicesTests
         User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         service.AddUser(user);
 
-        Assert.ThrowsException<UserServicesException>(() => service.Authenticate("juan@mail.com", "Wrong123@"));
+        Assert.ThrowsExactly<UserServicesException>(() => service.Authenticate("juan@mail.com", "Wrong123@"));
     }
 
     [TestMethod]
     public void Authenticate_WithUnknownEmail_Throws()
     {
-        Assert.ThrowsException<UserServicesException>(() => service.Authenticate("nobody@mail.com", "Pass123@"));
+        Assert.ThrowsExactly<UserServicesException>(() => service.Authenticate("nobody@mail.com", "Pass123@"));
     }
 
     // Un email desconocido tiene que verse igual que una contrasena equivocada: mismo mensaje y mismo conteo.
@@ -339,9 +339,9 @@ public class UserServicesTests
     {
         service.AddUser(BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
 
-        UserServicesException wrongPassword = Assert.ThrowsException<UserServicesException>(
+        UserServicesException wrongPassword = Assert.ThrowsExactly<UserServicesException>(
             () => service.Authenticate("juan@mail.com", "Wrong123@"));
-        UserServicesException unknownEmail = Assert.ThrowsException<UserServicesException>(
+        UserServicesException unknownEmail = Assert.ThrowsExactly<UserServicesException>(
             () => service.Authenticate("nobody@mail.com", "Wrong123@"));
 
         Assert.AreEqual(wrongPassword.Message, unknownEmail.Message);
@@ -353,7 +353,7 @@ public class UserServicesTests
         UserServices lockingService = new UserServices(repository, new MockAuditLogService(), new ManualTimeProvider());
         FailLogins(lockingService, "nobody@mail.com", times: 5);
 
-        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+        UserServicesException locked = Assert.ThrowsExactly<UserServicesException>(
             () => lockingService.Authenticate("nobody@mail.com", "Pass123@"));
 
         StringAssert.Contains(locked.Message, "intentos");
@@ -367,7 +367,7 @@ public class UserServicesTests
         lockingService.AddUser(BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
         FailLogins(lockingService, "juan@mail.com", times: 5);
 
-        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+        UserServicesException locked = Assert.ThrowsExactly<UserServicesException>(
             () => lockingService.Authenticate("juan@mail.com", "Pass123@"));
 
         StringAssert.Contains(locked.Message, "intentos");
@@ -425,7 +425,7 @@ public class UserServicesTests
 
         clock.Advance(TimeSpan.FromMinutes(4));
 
-        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+        UserServicesException locked = Assert.ThrowsExactly<UserServicesException>(
             () => lockingService.Authenticate("juan@mail.com", "Pass123@"));
         StringAssert.Contains(locked.Message, "intentos");
     }
@@ -456,13 +456,13 @@ public class UserServicesTests
         FailLogins(lockingService, "nobody@mail.com", times: 1);
 
         Assert.AreEqual(MaxTrackedLogins, lockingService.TrackedLoginCount);
-        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+        UserServicesException locked = Assert.ThrowsExactly<UserServicesException>(
             () => lockingService.Authenticate("locked@mail.com", "Pass123@"));
         StringAssert.Contains(locked.Message, "intentos");
 
         // Si "oldest" siguiera en memoria, este seria su quinto fallo y el intento siguiente quedaria bloqueado.
         FailLogins(lockingService, "oldest@mail.com", times: 1);
-        UserServicesException forgotten = Assert.ThrowsException<UserServicesException>(
+        UserServicesException forgotten = Assert.ThrowsExactly<UserServicesException>(
             () => lockingService.Authenticate("oldest@mail.com", "Pass123@"));
         StringAssert.Contains(forgotten.Message, "Credenciales");
     }
@@ -483,7 +483,7 @@ public class UserServicesTests
 
         foreach (string spelling in new[] { storedEmail, fullWidthSpelling })
         {
-            UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+            UserServicesException locked = Assert.ThrowsExactly<UserServicesException>(
                 () => lockingService.Authenticate(spelling, "Pass123@"));
             StringAssert.Contains(locked.Message, "intentos");
         }
@@ -522,7 +522,7 @@ public class UserServicesTests
     {
         for (int attempt = 0; attempt < times; attempt++)
         {
-            Assert.ThrowsException<UserServicesException>(() => target.Authenticate(email, "Wrong123@"));
+            Assert.ThrowsExactly<UserServicesException>(() => target.Authenticate(email, "Wrong123@"));
         }
     }
 
@@ -578,7 +578,7 @@ public class UserServicesTests
     [TestMethod]
     public void GetUserByEmailThrowsIfNotFound()
     {
-        Assert.ThrowsException<UserServicesException>(() =>
+        Assert.ThrowsExactly<UserServicesException>(() =>
             service.GetUserByEmail("noexiste@mail.com"));
     }
 
@@ -600,7 +600,7 @@ public class UserServicesTests
         User secondUser = BuildUser(2, "Ana", "Lopez", "juan@mail.com", "Pass123@", new DateTime(1995, 3, 10));
         service.AddUser(firstUser);
 
-        Assert.ThrowsException<UserServicesException>(() => service.AddUser(secondUser));
+        Assert.ThrowsExactly<UserServicesException>(() => service.AddUser(secondUser));
     }
 
     [TestMethod]
@@ -610,7 +610,7 @@ public class UserServicesTests
         User secondUser = BuildUser(1, "Ana", "Lopez", "ana@mail.com", "Pass123@", new DateTime(1995, 3, 10));
         service.AddUser(firstUser);
 
-        Assert.ThrowsException<UserServicesException>(() => service.AddUser(secondUser));
+        Assert.ThrowsExactly<UserServicesException>(() => service.AddUser(secondUser));
     }
 
     [TestMethod]
@@ -626,7 +626,7 @@ public class UserServicesTests
     [TestMethod]
     public void CannotRemoveNonExistingUser()
     {
-        Assert.ThrowsException<UserServicesException>(() =>
+        Assert.ThrowsExactly<UserServicesException>(() =>
             service.RemoveUser(99));
     }
 
@@ -648,7 +648,7 @@ public class UserServicesTests
     [TestMethod]
     public void CannotUpdateUserThatDoesNotExist()
     {
-        Assert.ThrowsException<UserServicesException>(() =>
+        Assert.ThrowsExactly<UserServicesException>(() =>
             service.UpdateUser(99, "Ana", "Lopez", "ana@mail.com"));
     }
 
@@ -661,7 +661,7 @@ public class UserServicesTests
         service.AddUser(user1);
         service.AddUser(user2);
 
-        Assert.ThrowsException<UserServicesException>(() =>
+        Assert.ThrowsExactly<UserServicesException>(() =>
             service.UpdateUser(2, "Ana", "Lopez", "juan@mail.com"));
     }
 
@@ -685,7 +685,7 @@ public class UserServicesTests
         // Con el usuario cargado: sin el, "no encontrado" haria pasar el test sin ninguna guarda.
         service.AddUser(BuildUser(1, "Admin", "Sistema", "admin@mail.com", "Pass123@", new DateTime(1985, 1, 1), UserRoles.Admin));
 
-        Assert.ThrowsException<UserServicesException>(() =>
+        Assert.ThrowsExactly<UserServicesException>(() =>
             service.AssignRole(1, UserRoles.Editor, performedByEmail: "admin@mail.com"));
 
         Assert.IsFalse(service.GetUserById(1).HasRole(UserRoles.Editor));
@@ -694,7 +694,7 @@ public class UserServicesTests
     [TestMethod]
     public void CannotAssignRoleToNonExistingUser()
     {
-        Assert.ThrowsException<UserServicesException>(() =>
+        Assert.ThrowsExactly<UserServicesException>(() =>
             service.AssignRole(99, UserRoles.Editor));
     }
 
@@ -746,13 +746,13 @@ public class UserServicesTests
     {
         User user = new User(3, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
 
-        Assert.ThrowsException<UserServicesException>(() => service.AddUser(user));
+        Assert.ThrowsExactly<UserServicesException>(() => service.AddUser(user));
     }
 
     [TestMethod]
     public void RemoveUser_SystemAdmin_Throws()
     {
-        Assert.ThrowsException<UserServicesException>(() => service.RemoveUser(1));
+        Assert.ThrowsExactly<UserServicesException>(() => service.RemoveUser(1));
     }
 
     [TestMethod]
@@ -762,7 +762,7 @@ public class UserServicesTests
         User actor = BuildUser(2, "Admin", "Self", "self@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         service.AddUser(actor);
 
-        Assert.ThrowsException<UserServicesException>(
+        Assert.ThrowsExactly<UserServicesException>(
             () => service.RemoveUser(2, performedByEmail: "self@mail.com"));
 
         // La cuenta sigue existiendo: la auto-eliminacion fue rechazada.
@@ -786,7 +786,7 @@ public class UserServicesTests
     [TestMethod]
     public void UpdateUser_SystemAdmin_Throws()
     {
-        Assert.ThrowsException<UserServicesException>(() =>
+        Assert.ThrowsExactly<UserServicesException>(() =>
             service.UpdateUser(1, "Ana", "Lopez", "ana@mail.com"));
     }
 
@@ -811,14 +811,14 @@ public class UserServicesTests
         string stored = admin.password;
         service.AddUser(admin);
 
-        Assert.ThrowsException<UserServicesException>(() => service.ChangePassword(1, "Admin@123", "Nueva456#"));
+        Assert.ThrowsExactly<UserServicesException>(() => service.ChangePassword(1, "Admin@123", "Nueva456#"));
         Assert.AreEqual(stored, admin.password);
     }
 
     [TestMethod]
     public void ChangePassword_UserThatDoesNotExist_Throws()
     {
-        Assert.ThrowsException<UserServicesException>(() => service.ChangePassword(99, "Pass123@", "Nueva456#"));
+        Assert.ThrowsExactly<UserServicesException>(() => service.ChangePassword(99, "Pass123@", "Nueva456#"));
     }
 
     // MockUserRepository.Update no hace nada: con Moq se comprueba que el hash nuevo se manda a guardar.
@@ -844,7 +844,7 @@ public class UserServicesTests
         string stored = user.password;
         service.AddUser(user);
 
-        UserServicesException error = Assert.ThrowsException<UserServicesException>(
+        UserServicesException error = Assert.ThrowsExactly<UserServicesException>(
             () => service.ChangePassword(2, "Wrong123@", "Nueva456#"));
 
         StringAssert.Contains(error.Message, "contraseña actual");
@@ -861,7 +861,7 @@ public class UserServicesTests
         FailPasswordChanges(lockingService, userId: 2, times: 3);
         FailLogins(lockingService, "Juan@Mail.com", times: 2);
 
-        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+        UserServicesException locked = Assert.ThrowsExactly<UserServicesException>(
             () => lockingService.Authenticate("Juan@Mail.com", "Pass123@"));
 
         StringAssert.Contains(locked.Message, "intentos");
@@ -876,7 +876,7 @@ public class UserServicesTests
         lockingService.AddUser(user);
         FailLogins(lockingService, "juan@mail.com", times: 5);
 
-        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+        UserServicesException locked = Assert.ThrowsExactly<UserServicesException>(
             () => lockingService.ChangePassword(2, "Pass123@", "Nueva456#"));
 
         StringAssert.Contains(locked.Message, "intentos");
@@ -896,7 +896,7 @@ public class UserServicesTests
 
         lockingService.UpdateUser(2, "Juan", "Perez", "otro@mail.com");
 
-        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+        UserServicesException locked = Assert.ThrowsExactly<UserServicesException>(
             () => lockingService.ChangePassword(2, "Pass123@", "Nueva456#"));
 
         StringAssert.Contains(locked.Message, "intentos");
@@ -944,8 +944,8 @@ public class UserServicesTests
         MockAuditLogService audit = new MockAuditLogService();
         UserServices auditedService = new UserServices(users.Object, audit);
 
-        Assert.ThrowsException<UserServicesException>(() => auditedService.ChangePassword(2, "Wrong123@", "Nueva456#"));
-        Assert.ThrowsException<ArgumentException>(() => auditedService.ChangePassword(2, "Pass123@", "corta"));
+        Assert.ThrowsExactly<UserServicesException>(() => auditedService.ChangePassword(2, "Wrong123@", "Nueva456#"));
+        Assert.ThrowsExactly<ArgumentException>(() => auditedService.ChangePassword(2, "Pass123@", "corta"));
 
         users.Verify(repo => repo.Update(It.IsAny<User>()), Times.Never);
         Assert.AreEqual(0, audit.LoggedActions.Count);
@@ -955,14 +955,14 @@ public class UserServicesTests
     {
         for (int attempt = 0; attempt < times; attempt++)
         {
-            Assert.ThrowsException<UserServicesException>(() => target.ChangePassword(userId, "Wrong123@", "Nueva456#"));
+            Assert.ThrowsExactly<UserServicesException>(() => target.ChangePassword(userId, "Wrong123@", "Nueva456#"));
         }
     }
 
     [TestMethod]
     public void RemoveRole_SystemAdmin_Throws()
     {
-        Assert.ThrowsException<UserServicesException>(() =>
+        Assert.ThrowsExactly<UserServicesException>(() =>
             service.RemoveRole(1, UserRoles.Editor));
     }
 
@@ -985,7 +985,7 @@ public class UserServicesTests
         User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15), UserRoles.Editor);
         service.AddUser(user);
 
-        Assert.ThrowsException<UserServicesException>(() =>
+        Assert.ThrowsExactly<UserServicesException>(() =>
             service.RemoveRole(2, UserRoles.Editor));
     }
 
@@ -1013,7 +1013,7 @@ public class UserServicesTests
     [TestMethod]
     public void ToggleRole_SystemAdmin_Throws()
     {
-        Assert.ThrowsException<UserServicesException>(() =>
+        Assert.ThrowsExactly<UserServicesException>(() =>
             service.ToggleRole(1, UserRoles.Admin));
     }
 
@@ -1058,7 +1058,7 @@ public class UserServicesTests
         User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15), UserRoles.Editor);
         service.AddUser(user);
 
-        Assert.ThrowsException<UserServicesException>(() =>
+        Assert.ThrowsExactly<UserServicesException>(() =>
             service.ToggleRole(2, UserRoles.Editor));
     }
 }

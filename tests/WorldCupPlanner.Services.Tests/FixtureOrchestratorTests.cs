@@ -73,7 +73,7 @@ public class FixtureOrchestratorTests
         SeedTeams(47);
         _orchestrator = NewOrchestrator();
 
-        Assert.ThrowsException<FixtureOrchestratorException>(
+        Assert.ThrowsExactly<FixtureOrchestratorException>(
             () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
     }
 
@@ -84,7 +84,7 @@ public class FixtureOrchestratorTests
         SeedStadiums(3);
         _orchestrator = NewOrchestrator();
 
-        Assert.ThrowsException<FixtureOrchestratorException>(
+        Assert.ThrowsExactly<FixtureOrchestratorException>(
             () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
     }
 
@@ -94,7 +94,7 @@ public class FixtureOrchestratorTests
         _settingsRepository = new MockTournamentSettingsRepository();
         _orchestrator = NewOrchestrator();
 
-        Assert.ThrowsException<FixtureOrchestratorException>(
+        Assert.ThrowsExactly<FixtureOrchestratorException>(
             () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
     }
 
@@ -187,7 +187,7 @@ public class FixtureOrchestratorTests
     {
         _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
-        Assert.ThrowsException<FixtureOrchestratorException>(
+        Assert.ThrowsExactly<FixtureOrchestratorException>(
             () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
     }
 
@@ -221,7 +221,7 @@ public class FixtureOrchestratorTests
         _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
         SeedFakeEliminationMatch();
 
-        Assert.ThrowsException<FixtureOrchestratorException>(
+        Assert.ThrowsExactly<FixtureOrchestratorException>(
             () => _orchestrator.RegenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
     }
 
@@ -339,7 +339,7 @@ public class FixtureOrchestratorTests
     {
         _orchestrator = NewOrchestrator(OneStadiumListedFourTimes());
 
-        Assert.ThrowsException<FixtureOrchestratorException>(
+        Assert.ThrowsExactly<FixtureOrchestratorException>(
             () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
         Assert.AreEqual(0, _groupRepository.GetAll().Count);
         Assert.AreEqual(0, _journeyRepository.GetAll().Count);
@@ -353,7 +353,7 @@ public class FixtureOrchestratorTests
         // El mensaje para la pantalla es generico; el log necesita el grupo y la jornada que fallaron.
         _orchestrator = NewOrchestrator(OneStadiumListedFourTimes());
 
-        FixtureOrchestratorException exception = Assert.ThrowsException<FixtureOrchestratorException>(
+        FixtureOrchestratorException exception = Assert.ThrowsExactly<FixtureOrchestratorException>(
             () => _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
 
         Assert.IsInstanceOfType(exception.InnerException, typeof(MatchException));
@@ -369,7 +369,7 @@ public class FixtureOrchestratorTests
         Dictionary<int, int> rankingsAfterPlaying = CurrentRankings();
         _orchestrator = NewOrchestrator(OneStadiumListedFourTimes());
 
-        Assert.ThrowsException<FixtureOrchestratorException>(
+        Assert.ThrowsExactly<FixtureOrchestratorException>(
             () => _orchestrator.RegenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail));
         CollectionAssert.AreEquivalent(previousGroups, _groupRepository.GetAll().ToList());
         Assert.AreEqual(TotalExpectedJourneys, _journeyRepository.GetAll().Count);

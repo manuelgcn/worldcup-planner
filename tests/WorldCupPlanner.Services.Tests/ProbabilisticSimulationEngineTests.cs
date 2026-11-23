@@ -76,7 +76,7 @@ public sealed class ProbabilisticSimulationEngineTests
         // Arrange
 
         // Act & Assert
-        Assert.ThrowsException<ArgumentNullException>(() => _simulationEngine.Simulate(null!, 123));
+        Assert.ThrowsExactly<ArgumentNullException>(() => _simulationEngine.Simulate(null!, 123));
     }
 
     [TestMethod]

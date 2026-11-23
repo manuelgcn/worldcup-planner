@@ -186,7 +186,7 @@ public class MatchEliminationTests
         Assert.AreEqual(Phase.Final, matchElimination.Phase);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(Phase.Final)]
     [DataRow(Phase.SemiFinal)]
     [DataRow(Phase.QuarterFinals)]
@@ -208,7 +208,7 @@ public class MatchEliminationTests
         Match sourceHomeMatch = CreateSourceMatch(100);
         Match sourceAwayMatch = CreateSourceMatch(200);
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, phase: (Phase)999));
     }
 
@@ -218,7 +218,7 @@ public class MatchEliminationTests
         Match sourceHomeMatch = CreateSourceMatch(100);
         Match sourceAwayMatch = CreateSourceMatch(200);
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, matchCode: null!));
     }
 
@@ -228,7 +228,7 @@ public class MatchEliminationTests
         Match sourceHomeMatch = CreateSourceMatch(100);
         Match sourceAwayMatch = CreateSourceMatch(200);
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, matchCode: "   "));
     }
 
@@ -238,7 +238,7 @@ public class MatchEliminationTests
         Match sourceHomeMatch = CreateSourceMatch(100);
         Match sourceAwayMatch = CreateSourceMatch(200);
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             CreateValidMatchElimination(sourceHomeMatch, sourceAwayMatch, matchCode: string.Empty));
     }
 
@@ -247,7 +247,7 @@ public class MatchEliminationTests
     {
         Match sourceAwayMatch = CreateSourceMatch(200);
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             CreateValidMatchElimination(null!, sourceAwayMatch));
     }
 
@@ -256,7 +256,7 @@ public class MatchEliminationTests
     {
         Match sourceHomeMatch = CreateSourceMatch(100);
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             CreateValidMatchElimination(sourceHomeMatch, null!));
     }
 
@@ -265,7 +265,7 @@ public class MatchEliminationTests
     {
         Match sourceMatch = CreateSourceMatch(100);
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             CreateValidMatchElimination(sourceMatch, sourceMatch));
     }
 
@@ -275,7 +275,7 @@ public class MatchEliminationTests
         Match sourceHomeMatch = CreateSourceMatch(100);
         Match sourceAwayMatch = CreateSourceMatch(200);
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             CreateValidMatchEliminationWithConfiguration(sourceHomeMatch, sourceAwayMatch, matchCode: null!));
     }
 
@@ -309,19 +309,19 @@ public class MatchEliminationTests
     [TestMethod]
     public void CreateInitialRound_RejectsInvalidPhase()
     {
-        Assert.ThrowsException<MatchException>(() => CreateValidInitialRound(phase: (Phase)999));
+        Assert.ThrowsExactly<MatchException>(() => CreateValidInitialRound(phase: (Phase)999));
     }
 
     [TestMethod]
     public void CreateInitialRound_RejectsNullMatchCode()
     {
-        Assert.ThrowsException<MatchException>(() => CreateValidInitialRound(matchCode: null!));
+        Assert.ThrowsExactly<MatchException>(() => CreateValidInitialRound(matchCode: null!));
     }
 
     [TestMethod]
     public void CreateInitialRound_RejectsWhitespaceMatchCode()
     {
-        Assert.ThrowsException<MatchException>(() => CreateValidInitialRound(matchCode: "   "));
+        Assert.ThrowsExactly<MatchException>(() => CreateValidInitialRound(matchCode: "   "));
     }
 
     // Inheritance: scoring behaviors

@@ -134,7 +134,7 @@ public class GroupStandingsServiceTests
     [TestMethod]
     public void GetStandings_WithUnknownGroupName_Throws()
     {
-        Assert.ThrowsException<GroupServicesException>(() => _service.GetStandings("ZZ"));
+        Assert.ThrowsExactly<GroupServicesException>(() => _service.GetStandings("ZZ"));
     }
 
     [TestMethod]

@@ -31,7 +31,7 @@ public class DemoAccountsTests
     [TestMethod]
     public void VerifyDisabled_OnAnEmptyDatabase_RefusesToStart()
     {
-        Assert.ThrowsException<InvalidOperationException>(
+        Assert.ThrowsExactly<InvalidOperationException>(
             () => DemoAccounts.VerifyDisabled(Array.Empty<User>(), logger.Object));
     }
 
@@ -40,7 +40,7 @@ public class DemoAccountsTests
     {
         User[] users = { BuildUser("ana@copa.com", UserRoles.Editor), BuildUser("luis@copa.com", UserRoles.Periodista) };
 
-        Assert.ThrowsException<InvalidOperationException>(() => DemoAccounts.VerifyDisabled(users, logger.Object));
+        Assert.ThrowsExactly<InvalidOperationException>(() => DemoAccounts.VerifyDisabled(users, logger.Object));
     }
 
     [TestMethod]

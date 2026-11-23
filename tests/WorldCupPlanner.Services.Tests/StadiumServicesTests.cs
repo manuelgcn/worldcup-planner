@@ -40,7 +40,7 @@ public class StadiumServicesTests
     {
         _service.AddStadium(new Stadium("Estadio Azteca", "Ciudad de Mexico", null, 87000) { Id = 1 });
 
-        Assert.ThrowsException<StadiumServicesException>(
+        Assert.ThrowsExactly<StadiumServicesException>(
             () => _service.AddStadium(new Stadium("ESTADIO AZTECA", "Otra Ciudad", null, 70000) { Id = 2 }));
     }
 
@@ -125,7 +125,7 @@ public class StadiumServicesTests
         Stadium s2 = new Stadium("Centenario", "Otra", null, 50000);
 
         _service.AddStadium(s1);
-        Assert.ThrowsException<StadiumServicesException>(() => _service.AddStadium(s2));
+        Assert.ThrowsExactly<StadiumServicesException>(() => _service.AddStadium(s2));
     }
 
     
@@ -177,7 +177,7 @@ public class StadiumServicesTests
     [TestMethod]
     public void GetStadiumByNameThrowsIfNotFound()
     {
-        Assert.ThrowsException<StadiumServicesException>(() => _service.GetByName("NoExiste"));
+        Assert.ThrowsExactly<StadiumServicesException>(() => _service.GetByName("NoExiste"));
     }
 
     
@@ -202,7 +202,7 @@ public class StadiumServicesTests
     [TestMethod]
     public void CannotRemoveNonExistingStadium()
     {
-        Assert.ThrowsException<StadiumServicesException>(() => _service.RemoveById(-1));
+        Assert.ThrowsExactly<StadiumServicesException>(() => _service.RemoveById(-1));
     }
 
     [TestMethod]
@@ -263,7 +263,7 @@ public class StadiumServicesTests
     [TestMethod]
     public void CannotUpdateNonExistingStadium()
     {
-        Assert.ThrowsException<StadiumServicesException>(() =>
+        Assert.ThrowsExactly<StadiumServicesException>(() =>
             _service.UpdateById(-1, "Ciudad", null, 30000));
     }
 
@@ -277,7 +277,7 @@ public class StadiumServicesTests
             new DeleteFailingStadiumRepository(referenced),
             new MockAuditLogService());
 
-        Assert.ThrowsException<StadiumServicesException>(() => service.RemoveById(7));
+        Assert.ThrowsExactly<StadiumServicesException>(() => service.RemoveById(7));
     }
 
     [TestMethod]

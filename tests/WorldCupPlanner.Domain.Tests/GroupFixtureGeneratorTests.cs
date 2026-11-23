@@ -135,7 +135,7 @@ public class GroupFixtureGeneratorTests
         GroupFixtureGenerator generator = new GroupFixtureGenerator();
         List<Stadium> stadiums = CreateStadiums();
 
-        Assert.ThrowsException<ArgumentNullException>(() =>
+        Assert.ThrowsExactly<ArgumentNullException>(() =>
             generator.GenerateMatches(null!, stadiums, DefaultStartDate));
     }
 
@@ -145,7 +145,7 @@ public class GroupFixtureGeneratorTests
         GroupFixtureGenerator generator = new GroupFixtureGenerator();
         List<Group> groups = CreateGroups(SingleGroupCount);
 
-        Assert.ThrowsException<ArgumentNullException>(() =>
+        Assert.ThrowsExactly<ArgumentNullException>(() =>
             generator.GenerateMatches(groups, null!, DefaultStartDate));
     }
 
@@ -156,7 +156,7 @@ public class GroupFixtureGeneratorTests
         List<Group> groups = new List<Group> { new Group("Fail") };
         List<Stadium> stadiums = CreateStadiums();
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             generator.GenerateMatches(groups, stadiums, DefaultStartDate));
     }
 
@@ -167,7 +167,7 @@ public class GroupFixtureGeneratorTests
         List<Group> groups = CreateGroups(SingleGroupCount);
         List<Stadium> emptyStadiums = new List<Stadium>();
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             generator.GenerateMatches(groups, emptyStadiums, DefaultStartDate));
     }
 
@@ -178,7 +178,7 @@ public class GroupFixtureGeneratorTests
         List<Group> groups = CreateGroups(SingleGroupCount);
         List<Stadium> singleStadium = CreateStadiums(count: 1);
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             generator.GenerateMatches(groups, singleStadium, DefaultStartDate));
     }
 

@@ -10,7 +10,6 @@ public class FixtureServiceTests
    
     
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void CannotCreateFixtureWithout48Teams()
     {
         List<Team> teams = new List<Team>();
@@ -18,7 +17,7 @@ public class FixtureServiceTests
 
         FixtureService service = new FixtureService(teams, stadiums);
 
-        service.CreateFixture();
+        Assert.ThrowsExactly<ArgumentException>(() => service.CreateFixture());
     }
 
     [TestMethod]
@@ -34,7 +33,7 @@ public class FixtureServiceTests
 
         FixtureService service = new FixtureService(teams, stadiums);
 
-        Assert.ThrowsException<ArgumentException>(() => service.CreateFixture());
+        Assert.ThrowsExactly<ArgumentException>(() => service.CreateFixture());
     }
 
     [TestMethod]
@@ -437,6 +436,6 @@ public class FixtureServiceTests
         List<Stadium> stadiums = Create4ValidStadiums();
         FixtureService service = new FixtureService(teams, stadiums);
 
-        Assert.ThrowsException<FixtureServiceException>(() => service.CreateFixture());
+        Assert.ThrowsExactly<FixtureServiceException>(() => service.CreateFixture());
     }
 }

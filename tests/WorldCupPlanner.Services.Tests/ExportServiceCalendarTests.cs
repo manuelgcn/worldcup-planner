@@ -29,7 +29,7 @@ public sealed class ExportServiceCalendarTests
     {
         User editor = BuildUser(UserRoles.Editor);
 
-        Assert.ThrowsException<ExportServiceException>(() =>
+        Assert.ThrowsExactly<ExportServiceException>(() =>
             _service.ExportFixtureIcs(new DateRange(Date(1), Date(25)), editor));
         Assert.AreEqual(0, _auditRepository.GetAll().Count);
     }
@@ -39,7 +39,7 @@ public sealed class ExportServiceCalendarTests
     {
         User admin = BuildUser(UserRoles.Admin);
 
-        Assert.ThrowsException<ExportServiceException>(() =>
+        Assert.ThrowsExactly<ExportServiceException>(() =>
             _service.ExportFixtureIcs(new DateRange(Date(25), Date(1)), admin));
     }
 
@@ -53,7 +53,7 @@ public sealed class ExportServiceCalendarTests
         User admin = BuildUser(UserRoles.Admin);
 
         // RFC 5545 exige al menos un componente dentro de VCALENDAR: un .ics sin eventos no es válido.
-        Assert.ThrowsException<ExportServiceException>(() =>
+        Assert.ThrowsExactly<ExportServiceException>(() =>
             _service.ExportFixtureIcs(new DateRange(Date(1), Date(25)), admin));
         Assert.AreEqual(0, _auditRepository.GetAll().Count);
     }

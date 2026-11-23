@@ -64,14 +64,14 @@ public sealed class MatchServiceIncidentTests
     [TestMethod]
     public void AddYellowCard_OnTeamNotInMatch_Throws()
     {
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => _context.Service.AddYellowCard(GroupMatchId, ForeignTeamId, minute: 30, EditorEmail));
     }
 
     [TestMethod]
     public void AddYellowCard_WithNegativeMinute_Throws()
     {
-        Assert.ThrowsException<MatchException>(
+        Assert.ThrowsExactly<MatchException>(
             () => _context.Service.AddYellowCard(GroupMatchId, HomeTeamId, minute: -1, EditorEmail));
     }
 
@@ -80,7 +80,7 @@ public sealed class MatchServiceIncidentTests
     {
         _context.SeedFakeEliminationMatchInRepository();
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => _context.Service.AddYellowCard(GroupMatchId, HomeTeamId, minute: 30, EditorEmail));
     }
 
@@ -89,7 +89,7 @@ public sealed class MatchServiceIncidentTests
     {
         _context.SeedFakeEliminationMatchInRepository();
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => _context.Service.AddRedCard(GroupMatchId, AwayTeamId, minute: 75, EditorEmail));
     }
 
@@ -121,7 +121,7 @@ public sealed class MatchServiceIncidentTests
     [TestMethod]
     public void RemoveIncident_WithUnknownIncidentId_Throws()
     {
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => _context.Service.RemoveIncident(GroupMatchId, UnknownIncidentId, EditorEmail));
     }
 
@@ -132,7 +132,7 @@ public sealed class MatchServiceIncidentTests
         MatchIncidentDto incident = _context.Service.GetIncidents(GroupMatchId).Single();
         _context.SeedFakeEliminationMatchInRepository();
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => _context.Service.RemoveIncident(GroupMatchId, incident.Id, EditorEmail));
     }
 
@@ -157,7 +157,7 @@ public sealed class MatchServiceIncidentTests
     [TestMethod]
     public void GetIncidents_WithUnknownMatch_Throws()
     {
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.GetIncidents(matchId: 404));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.GetIncidents(matchId: 404));
     }
 
     private Match GetGroupMatch()

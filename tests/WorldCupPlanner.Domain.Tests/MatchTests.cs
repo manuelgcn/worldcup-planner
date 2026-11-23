@@ -95,7 +95,7 @@ public class MatchTests
     {
         Team sameTeam = new Team(1, name: "Same Team", fifaRanking: 800, isFictitious: true, confederation: Confederation.CONMEBOL);
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             new MockMatch(1, MatchDate, sameTeam, sameTeam, _stadium));
     }
 
@@ -121,14 +121,14 @@ public class MatchTests
         TournamentSettings tournamentSettings = new TournamentSettings();
         DateTime invalidDate = MatchDate.AddDays(-1);
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             new MockMatch(1, invalidDate, _homeTeam, _awayTeam, _stadium, tournamentSettings));
     }
 
     [TestMethod]
     public void MatchRejectsNullChampionshipConfiguration()
     {
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             new MockMatch(1, MatchDate, _homeTeam, _awayTeam, _stadium, null!));
     }
 
@@ -146,7 +146,7 @@ public class MatchTests
     [TestMethod]
     public void MatchRejectsNullStadium()
     {
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             new MockMatch(1, MatchDate, _homeTeam, _awayTeam, null!));
     }
 
@@ -166,7 +166,7 @@ public class MatchTests
     {
         _match = CreateMatchWithData();
 
-        Assert.ThrowsException<MatchException>(() => _match.ChangeStadium(null!));
+        Assert.ThrowsExactly<MatchException>(() => _match.ChangeStadium(null!));
     }
 
     [TestMethod]
@@ -203,7 +203,7 @@ public class MatchTests
     {
         DateTime invalidDate = MatchDate.AddDays(-1);
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             new MockMatch(1, invalidDate, _homeTeam, _awayTeam, _stadium));
     }
 
@@ -212,7 +212,7 @@ public class MatchTests
     {
         _match = CreateMatchWithData();
 
-        Assert.ThrowsException<MatchException>(() => _match.SetGoals(homeGoals: -1, awayGoals: 0));
+        Assert.ThrowsExactly<MatchException>(() => _match.SetGoals(homeGoals: -1, awayGoals: 0));
     }
 
     [TestMethod]
@@ -220,7 +220,7 @@ public class MatchTests
     {
         _match = CreateMatchWithData();
 
-        Assert.ThrowsException<MatchException>(() => _match.SetGoals(homeGoals: 0, awayGoals: -1));
+        Assert.ThrowsExactly<MatchException>(() => _match.SetGoals(homeGoals: 0, awayGoals: -1));
     }
 
     [TestMethod]
@@ -235,7 +235,7 @@ public class MatchTests
     public void SetHomeGoals_RejectsNegativeValue()
     {
         _match = CreateMatchWithData();
-        Assert.ThrowsException<MatchException>(() => _match.SetHomeGoals(-1));
+        Assert.ThrowsExactly<MatchException>(() => _match.SetHomeGoals(-1));
     }
 
     [TestMethod]
@@ -250,7 +250,7 @@ public class MatchTests
     public void SetAwayGoals_RejectsNegativeValue()
     {
         _match = CreateMatchWithData();
-        Assert.ThrowsException<MatchException>(() => _match.SetAwayGoals(-1));
+        Assert.ThrowsExactly<MatchException>(() => _match.SetAwayGoals(-1));
     }
 
     [TestMethod]
@@ -300,7 +300,7 @@ public class MatchTests
     public void RemoveHomeGoal_ThrowsWhenHomeGoalsIsZero()
     {
         _match = CreateMatchWithData();
-        Assert.ThrowsException<MatchException>(() => _match.RemoveHomeGoal());
+        Assert.ThrowsExactly<MatchException>(() => _match.RemoveHomeGoal());
     }
 
     [TestMethod]
@@ -316,7 +316,7 @@ public class MatchTests
     public void RemoveAwayGoal_ThrowsWhenAwayGoalsIsZero()
     {
         _match = CreateMatchWithData();
-        Assert.ThrowsException<MatchException>(() => _match.RemoveAwayGoal());
+        Assert.ThrowsExactly<MatchException>(() => _match.RemoveAwayGoal());
     }
 
     [TestMethod]
@@ -457,7 +457,7 @@ public class MatchTests
         _match = CreateMatchWithData();
         TournamentSettings settings = new TournamentSettings(1, new DateTime(2026, 6, 1), 3, 3, 0, 0, 0, 0);
 
-        Assert.ThrowsException<MatchException>(() => _match.ChangeDate(new DateTime(2023, 1, 1), settings));
+        Assert.ThrowsExactly<MatchException>(() => _match.ChangeDate(new DateTime(2023, 1, 1), settings));
     }
 
     [TestMethod]
@@ -477,7 +477,7 @@ public class MatchTests
         _match = CreateMatchWithData();
         DateTime invalidDate = new DateTime(2022, 11, 19);
 
-        Assert.ThrowsException<MatchException>(
+        Assert.ThrowsExactly<MatchException>(
             () => _match.ChangeDate(invalidDate, new TournamentSettings(1, new DateTime(2022, 11, 21), 3, 3, 0, 0, 0, 0)));
     }
 

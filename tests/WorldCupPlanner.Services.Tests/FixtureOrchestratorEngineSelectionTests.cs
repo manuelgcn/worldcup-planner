@@ -99,7 +99,7 @@ public sealed class FixtureOrchestratorEngineSelectionTests
     [TestMethod]
     public void GenerateGroupStage_WithUnknownEngineName_ThrowsAndGeneratesNothing()
     {
-        Assert.ThrowsException<SimulationEngineException>(
+        Assert.ThrowsExactly<SimulationEngineException>(
             () => _orchestrator.GenerateGroupStage(null, UnknownEngineName, AdminEmail));
 
         Assert.AreEqual(0, _groupRepository.GetAll().Count, "No groups should be persisted when the engine is invalid.");

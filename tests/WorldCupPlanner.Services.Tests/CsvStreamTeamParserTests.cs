@@ -32,7 +32,7 @@ public class CsvStreamTeamParserTests
         // Act
 
         // Assert
-        Assert.ThrowsException<ArgumentNullException>(() => parser.Parse(null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => parser.Parse(null!));
     }
 
     [TestMethod]
@@ -58,7 +58,7 @@ public class CsvStreamTeamParserTests
         byte[] bytes = Windows1252Bytes("Name,Confederation,Ranking\nMéxico,CONCACAF,1660");
         CsvStreamTeamParser parser = new CsvStreamTeamParser();
 
-        ImportServiceException ex = Assert.ThrowsException<ImportServiceException>(() => parser.Parse(new MemoryStream(bytes)));
+        ImportServiceException ex = Assert.ThrowsExactly<ImportServiceException>(() => parser.Parse(new MemoryStream(bytes)));
 
         Assert.AreEqual("El archivo debe estar guardado en UTF-8.", ex.Message);
     }
@@ -70,7 +70,7 @@ public class CsvStreamTeamParserTests
         byte[] bytes = Utf8ByteOrderMark.Concat(Windows1252Bytes("Name,Confederation,Ranking\nMéxico,CONCACAF,1660")).ToArray();
         CsvStreamTeamParser parser = new CsvStreamTeamParser();
 
-        Assert.ThrowsException<ImportServiceException>(() => parser.Parse(new MemoryStream(bytes)));
+        Assert.ThrowsExactly<ImportServiceException>(() => parser.Parse(new MemoryStream(bytes)));
     }
 
     [TestMethod]
@@ -149,7 +149,7 @@ public class CsvStreamTeamParserTests
         Assert.AreEqual("1648", rows[2].Ranking);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("Name,Confederation,Ranking\n\nArgentina,CONMEBOL,500\nJapan,AFC,600")]
     [DataRow("Name,Confederation,Ranking\r\n\r\nArgentina,CONMEBOL,500\r\nJapan,AFC,600\r\n")]
     public void ParseNumbersRowsByPhysicalLine(string csv)
@@ -170,7 +170,7 @@ public class CsvStreamTeamParserTests
         Assert.AreEqual("Argentina", rows.Single().Name);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("Argentina,CONMEBOL,500\nJapan,AFC,600")]
     [DataRow("Argentina,conmebol,sin ranking\nJapan,AFC,600")]
     [DataRow("Argentina,Sudamerica,500\nJapan,AFC,600")]
@@ -178,7 +178,7 @@ public class CsvStreamTeamParserTests
     public void ParseRejectsAFileWhoseFirstRowIsATeam(string csv)
     {
         // Sin encabezado, la primera seleccion se perdia sin aviso.
-        ImportServiceException ex = Assert.ThrowsException<ImportServiceException>(
+        ImportServiceException ex = Assert.ThrowsExactly<ImportServiceException>(
             () => new CsvStreamTeamParser().Parse(CreateStream(csv)));
 
         StringAssert.Contains(ex.Message, "encabezado");
@@ -198,7 +198,7 @@ public class CsvStreamTeamParserTests
         // Una comilla suelta en un campo sin comillas no tiene una lectura unica.
         MemoryStream stream = CreateStream("Name,Confederation,Ranking\nArgentina,CONMEBOL,500\nCosta \"Rica,CONCACAF,1500\n");
 
-        ImportServiceException ex = Assert.ThrowsException<ImportServiceException>(
+        ImportServiceException ex = Assert.ThrowsExactly<ImportServiceException>(
             () => new CsvStreamTeamParser().Parse(stream));
 
         StringAssert.Contains(ex.Message, "Row: 3.");

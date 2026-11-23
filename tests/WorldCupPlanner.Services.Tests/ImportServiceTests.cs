@@ -58,7 +58,7 @@ public class ImportServiceTests
     [TestMethod]
     public void ImportTeamsThrowsWhenStreamIsNull()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => _service.ImportTeams(null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => _service.ImportTeams(null!));
     }
 
     [TestMethod]
@@ -70,7 +70,7 @@ public class ImportServiceTests
         SetupParserRows(stream, rows);
 
         // Assert
-        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.ThrowsExactly<ImportServiceException>(() => _service.ImportTeams(stream));
     }
 
     [TestMethod]
@@ -82,7 +82,7 @@ public class ImportServiceTests
         SetupParserRows(stream, rows);
 
         // Assert
-        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.ThrowsExactly<ImportServiceException>(() => _service.ImportTeams(stream));
         Assert.AreEqual(0, _teamRepository.GetAll().Count);
     }
 
@@ -95,7 +95,7 @@ public class ImportServiceTests
         SetupParserRows(stream, rows);
 
         // Assert
-        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.ThrowsExactly<ImportServiceException>(() => _service.ImportTeams(stream));
     }
 
     [TestMethod]
@@ -107,7 +107,7 @@ public class ImportServiceTests
         SetupParserRows(stream, rows);
 
         // Assert
-        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.ThrowsExactly<ImportServiceException>(() => _service.ImportTeams(stream));
         Assert.AreEqual(0, _teamRepository.GetAll().Count);
     }
 
@@ -120,7 +120,7 @@ public class ImportServiceTests
         SetupParserRows(stream, rows);
 
         // Assert
-        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.ThrowsExactly<ImportServiceException>(() => _service.ImportTeams(stream));
     }
 
     [TestMethod]
@@ -133,7 +133,7 @@ public class ImportServiceTests
 
         // Assert: import atomico (H4): si una fila falla, no se persiste NINGUNA, ni siquiera
         // la primera valida que la precede.
-        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.ThrowsExactly<ImportServiceException>(() => _service.ImportTeams(stream));
         Assert.AreEqual(0, _teamRepository.GetAll().Count);
     }
 
@@ -149,7 +149,7 @@ public class ImportServiceTests
         };
         SetupParserRows(stream, rows);
 
-        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.ThrowsExactly<ImportServiceException>(() => _service.ImportTeams(stream));
         Assert.AreEqual(0, _teamRepository.GetAll().Count);
         Assert.AreEqual(0, _teamRepository.AddCalls);
     }
@@ -166,7 +166,7 @@ public class ImportServiceTests
         SetupParserRows(stream, rows);
 
         // Assert
-        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.ThrowsExactly<ImportServiceException>(() => _service.ImportTeams(stream));
         Assert.AreEqual(1, _teamRepository.GetAll().Count);
     }
 
@@ -239,7 +239,7 @@ public class ImportServiceTests
         MemoryStream stream = CreateImportStream();
         SetupParserRows(stream, new List<TeamImportDto> { Row(2, "Noruega", "UEFA", "1500") });
 
-        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.ThrowsExactly<ImportServiceException>(() => _service.ImportTeams(stream));
         Assert.AreEqual(16, _teamRepository.GetAll().Count);
     }
 
@@ -252,7 +252,7 @@ public class ImportServiceTests
         MemoryStream stream = CreateImportStream();
         SetupParserRows(stream, rows);
 
-        ImportServiceException ex = Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        ImportServiceException ex = Assert.ThrowsExactly<ImportServiceException>(() => _service.ImportTeams(stream));
         StringAssert.Contains(ex.Message, "Row: 18.");
         Assert.AreEqual(0, _teamRepository.GetAll().Count);
     }
@@ -263,10 +263,10 @@ public class ImportServiceTests
         MemoryStream stream = CreateImportStream();
         SetupParserRows(stream, new List<TeamImportDto> { Row(2, "Atlantida", "99", "1500") });
 
-        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.ThrowsExactly<ImportServiceException>(() => _service.ImportTeams(stream));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("3")]
     [DataRow("+3")]
     [DataRow("AFC,CAF")]
@@ -276,13 +276,13 @@ public class ImportServiceTests
         MemoryStream stream = CreateImportStream();
         SetupParserRows(stream, new List<TeamImportDto> { Row(2, "Atlantida", confederation, "1500") });
 
-        ImportServiceException ex = Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        ImportServiceException ex = Assert.ThrowsExactly<ImportServiceException>(() => _service.ImportTeams(stream));
 
         StringAssert.Contains(ex.Message, "Confederacion invalida. Row: 2.");
         Assert.AreEqual(0, _teamRepository.GetAll().Count);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("---")]
     [DataRow("Costa\nRica")]
     public void ImportTeamsReportsTheRowOfANameWithoutLettersOrWithControlCharacters(string name)
@@ -296,7 +296,7 @@ public class ImportServiceTests
             Row(3, name, "CONCACAF", "800")
         });
 
-        ImportServiceException ex = Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        ImportServiceException ex = Assert.ThrowsExactly<ImportServiceException>(() => _service.ImportTeams(stream));
 
         StringAssert.Contains(ex.Message, "Nombre de equipo invalido. Row: 3.");
         Assert.AreEqual(0, _teamRepository.GetAll().Count);
@@ -323,7 +323,7 @@ public class ImportServiceTests
             Row(3, "Espana", "UEFA", "1700")
         });
 
-        Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+        Assert.ThrowsExactly<ImportServiceException>(() => _service.ImportTeams(stream));
         Assert.AreEqual(0, _teamRepository.GetAll().Count);
     }
 

@@ -48,7 +48,7 @@ public sealed class TeamTests
     public void TeamCreationThrowsWhenNameIsEmpty()
     {
         const int rankingFifa = 2400;
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
         {
             _ = new Team(1, string.Empty, rankingFifa, false, Confederation.CONMEBOL);
         });
@@ -58,7 +58,7 @@ public sealed class TeamTests
     public void TeamCreationThrowsWhenNameIsNull()
     {
         const int rankingFifa = 2400;
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
         {
             _ = new Team(1, null!, rankingFifa, false, Confederation.CONMEBOL);
         });
@@ -89,7 +89,7 @@ public sealed class TeamTests
     {
         const int rankingFifa = 2400;
         string nombre = new string('A', 61);
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
         {
             _ = new Team(1, nombre, rankingFifa, false, Confederation.CONMEBOL);
         });
@@ -155,7 +155,7 @@ public sealed class TeamTests
     public void TeamCreationThrowsWhenFifaRankingIsBelowMinimum()
     {
         const int rankingFifa = 299;
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
         {
             _ = new Team(1, "Argentina", rankingFifa, false, Confederation.CONMEBOL);
         });
@@ -165,7 +165,7 @@ public sealed class TeamTests
     public void TeamCreationThrowsWhenFifaRankingIsAboveMaximum()
     {
         const int rankingFifa = 2501;
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
         {
             _ = new Team(1, "Argentina", rankingFifa, false, Confederation.CONMEBOL);
         });
@@ -174,7 +174,7 @@ public sealed class TeamTests
     [TestMethod]
     public void TeamCreationThrowsWhenIdIsZero()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
         {
             _ = new WorldCupPlanner.Domain.Team(0, "Argentina", 2400, false, Confederation.CONMEBOL);
         });
@@ -217,7 +217,7 @@ public sealed class TeamTests
     [TestMethod]
     public void CannotCreateTeamWithInvalidBase64Flag()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new Team(
                 1,
                 "Uruguay",
@@ -278,7 +278,7 @@ public sealed class TeamTests
             Confederation.CONMEBOL
         );
 
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             team.UpdateFlag("esto-no-es-base64")
         );
     }
@@ -288,7 +288,7 @@ public sealed class TeamTests
     {
         string oversizedFlag = Convert.ToBase64String(new byte[200 * 1024 + 1]);
 
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new Team(
                 1,
                 "Uruguay",
@@ -313,7 +313,7 @@ public sealed class TeamTests
 
         string oversizedFlag = Convert.ToBase64String(new byte[200 * 1024 + 1]);
 
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             team.UpdateFlag(oversizedFlag)
         );
     }
@@ -369,33 +369,33 @@ public sealed class TeamTests
     public void Team_WithWhitespaceOnlyName_Throws()
     {
         // Un nombre de solo espacios se normaliza a "" y choca con la unicidad por nombre normalizado.
-        Assert.ThrowsException<ArgumentException>(
+        Assert.ThrowsExactly<ArgumentException>(
             () => new Team(1, name: "   ", fifaRanking: 1500, isFictitious: false, confederation: Confederation.CONMEBOL));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("Uru\nguay")]
     [DataRow("Uruguay\t")]
     [DataRow("Uru\u0000guay")]
     [DataRow("Uru\u0085guay")]
     public void Team_WithControlCharacterInName_Throws(string name)
     {
-        Assert.ThrowsException<ArgumentException>(
+        Assert.ThrowsExactly<ArgumentException>(
             () => new Team(1, name, fifaRanking: 1500, isFictitious: false, confederation: Confederation.CONMEBOL));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("---")]
     [DataRow("?!")]
     [DataRow("​​")]
     public void Team_WithNameWithoutLettersOrDigits_Throws(string name)
     {
         // Solo signos (o solo espacios de ancho cero) se normaliza a "": todos esos nombres serian el mismo equipo.
-        Assert.ThrowsException<ArgumentException>(
+        Assert.ThrowsExactly<ArgumentException>(
             () => new Team(1, name, fifaRanking: 1500, isFictitious: false, confederation: Confederation.CONMEBOL));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("UEFA_01")]
     [DataRow("Côte d'Ivoire")]
     [DataRow("Bosnia y Herzegovina")]

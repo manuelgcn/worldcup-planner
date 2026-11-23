@@ -68,7 +68,7 @@ public class NotificationTest
             new DateTime(1990, 5, 15)
         );
 
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new Notification(
                 1,
                 user,

@@ -125,7 +125,7 @@ public class UserTests
     [TestMethod]
     public void UserCannotHaveEmptyEmail()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(1, "Juan", "Perez", "", "Pass1234@", DateTime.Now));
     }
     
@@ -133,11 +133,11 @@ public class UserTests
     [TestMethod]
     public void UserCannotHaveInvalidEmailFormat()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(1, "Juan", "Perez", "mailinvalido", "Pass1234@", DateTime.Now));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("a@b.")]
     [DataRow("@.")]
     [DataRow("a@b")]
@@ -146,11 +146,11 @@ public class UserTests
     [DataRow("juan@@mail.com")]
     public void UserRejectsMalformedEmail(string email)
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(1, "Juan", "Perez", email, "Pass1234@", new DateTime(1990, 5, 15)));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("juan@mail.com")]
     [DataRow("juan.perez@sub.dominio.uy")]
     [DataRow("user+tag@mail.co")]
@@ -165,7 +165,7 @@ public class UserTests
     [TestMethod]
     public void PasswordMustHaveAtLeast8Characters()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(1, "Juan", "Perez", "juan@mail.com", "Pa1@", DateTime.Now));
     }
 
@@ -173,7 +173,7 @@ public class UserTests
     [TestMethod]
     public void PasswordMustHaveUppercaseLetter()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(1, "Juan", "Perez", "juan@mail.com", "pass123@", DateTime.Now));
     }
 
@@ -181,7 +181,7 @@ public class UserTests
     [TestMethod]
     public void PasswordMustHaveLowercaseLetter()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(1, "Juan", "Perez", "juan@mail.com", "PASS123@", new DateTime(1990, 5, 15)));
     }
 
@@ -189,7 +189,7 @@ public class UserTests
     [TestMethod]
     public void PasswordMustHaveNumber()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(1, "Juan", "Perez", "juan@mail.com", "Passsss@", DateTime.Now));
     }
 
@@ -197,7 +197,7 @@ public class UserTests
     [TestMethod]
     public void PasswordMustHaveSpecialCharacter()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(1, "Juan", "Perez", "juan@mail.com", "Pass1234", DateTime.Now));
     }
 
@@ -208,7 +208,7 @@ public class UserTests
     {
         string tooLong = "Aa1@" + new string('a', 125);
 
-        ArgumentException error = Assert.ThrowsException<ArgumentException>(() =>
+        ArgumentException error = Assert.ThrowsExactly<ArgumentException>(() =>
             new User(1, "Juan", "Perez", "juan@mail.com", tooLong, new DateTime(1990, 5, 15)));
 
         StringAssert.Contains(error.Message, "128");
@@ -269,7 +269,7 @@ public class UserTests
     {
         User user = WithLegacyHash(new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)), "Pass123@");
 
-        Assert.ThrowsException<ArgumentException>(() => user.UpgradeLegacyPasswordHash("Other123@"));
+        Assert.ThrowsExactly<ArgumentException>(() => user.UpgradeLegacyPasswordHash("Other123@"));
         Assert.IsTrue(user.HasLegacyPasswordHash);
     }
 
@@ -314,7 +314,7 @@ public class UserTests
     }
 
     // Los "sal:hash" (PBKDF2, 100.000 iteraciones) de db/scripts/seed-full.sql, con las contrasenas del README.
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(SeedScriptPassword, SeedScriptHash)]
     [DataRow("Admin@456", "Iaz3OUXq6gNg9ouIZreHaw==:PujOzyetnEYZf7SDY/Jqb2xfTI3+aFBGuDKXyM2X8dg=")]
     [DataRow("Editor@123", "og79LuOs2AVfjMwwLZ5eDQ==:Wjw4utF31I4jBYRFYKB3kLYaL/u24n7YCduRyqJG9gY=")]
@@ -362,7 +362,7 @@ public class UserTests
     {
         User user = WithStoredPassword(new User(), SeedScriptHash);
 
-        Assert.ThrowsException<ArgumentException>(() => user.UpgradeLegacyPasswordHash("Other123@"));
+        Assert.ThrowsExactly<ArgumentException>(() => user.UpgradeLegacyPasswordHash("Other123@"));
         Assert.AreEqual(SeedScriptHash, user.password);
     }
 
@@ -388,7 +388,7 @@ public class UserTests
     }
 
     // Lo que el login verifica cuando el email no existe: tiene que fallar siempre, sea cual sea la contrasena.
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("Pass123@")]
     [DataRow("")]
     public void NoPasswordMatchesTheAccountThatDoesNotExist(string plainTextPassword)
@@ -397,7 +397,7 @@ public class UserTests
     }
 
     // Un valor guardado que no se puede leer nunca coincide, y tampoco rompe el login con una excepcion.
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(":")]
     [DataRow("no-es-base64:no-es-base64")]
     [DataRow(ZeroSalt + ":")]
@@ -459,11 +459,11 @@ public class UserTests
         User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         string stored = user.password;
 
-        Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Other123@", "Nueva456#"));
+        Assert.ThrowsExactly<ArgumentException>(() => user.ChangePassword("Other123@", "Nueva456#"));
         Assert.AreEqual(stored, user.password);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("Nu1#")]
     [DataRow("nueva456#")]
     [DataRow("NUEVA456#")]
@@ -474,7 +474,7 @@ public class UserTests
         User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         string stored = user.password;
 
-        Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Pass123@", newPassword));
+        Assert.ThrowsExactly<ArgumentException>(() => user.ChangePassword("Pass123@", newPassword));
         Assert.AreEqual(stored, user.password);
     }
 
@@ -485,7 +485,7 @@ public class UserTests
         string stored = user.password;
         string tooLong = "Aa1@" + new string('a', 125);
 
-        ArgumentException error = Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Pass123@", tooLong));
+        ArgumentException error = Assert.ThrowsExactly<ArgumentException>(() => user.ChangePassword("Pass123@", tooLong));
 
         StringAssert.Contains(error.Message, "128");
         Assert.AreEqual(stored, user.password);
@@ -497,7 +497,7 @@ public class UserTests
         User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         string stored = user.password;
 
-        Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Pass123@", "Pass123@"));
+        Assert.ThrowsExactly<ArgumentException>(() => user.ChangePassword("Pass123@", "Pass123@"));
         Assert.AreEqual(stored, user.password);
     }
 
@@ -545,7 +545,7 @@ public class UserTests
     {
         DateTime futureDate = DateTime.Today.AddDays(1);
 
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(
                 1,
                 "Juan",
@@ -563,7 +563,7 @@ public class UserTests
     {
         DateTime underageDate = DateTime.Today.AddYears(-17);
 
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(
                 1,
                 "Juan",
@@ -599,7 +599,7 @@ public class UserTests
     {
         DateTime oneDayYoungerThan18 = DateTime.Today.AddYears(-18).AddDays(1);
 
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(
                 1,
                 "Juan",
@@ -614,7 +614,7 @@ public class UserTests
     [TestMethod]
     public void UserCannotHaveEmailWithoutLocalPart()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(
                 1,
                 "Juan",
@@ -629,7 +629,7 @@ public class UserTests
     [TestMethod]
     public void UserCannotHaveEmailWithSpaces()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(
                 1,
                 "Juan",
@@ -644,7 +644,7 @@ public class UserTests
     [TestMethod]
     public void UserCannotHaveEmailWithMultipleAtSymbols()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(
                 1,
                 "Juan",
@@ -660,7 +660,7 @@ public class UserTests
     [TestMethod]
     public void UserCannotHaveEmailWithoutDotInDomain()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(
                 1,
                 "Juan",
@@ -675,7 +675,7 @@ public class UserTests
     [TestMethod]
     public void UserCannotHaveEmailWithDomainStartingWithDot()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(
                 1,
                 "Juan",
@@ -690,7 +690,7 @@ public class UserTests
     [TestMethod]
     public void UserCannotHaveEmailWithConsecutiveDotsInDomain()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(
                 1,
                 "Juan",
@@ -705,7 +705,7 @@ public class UserTests
     [TestMethod]
     public void UserCannotHaveEmailWithLocalPartEndingWithDot()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(
                 1,
                 "Juan",
@@ -720,7 +720,7 @@ public class UserTests
     [TestMethod]
     public void UserCannotHaveEmailWithLocalPartStartingWithDot()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new User(
                 1,
                 "Juan",
@@ -757,21 +757,21 @@ public class UserTests
     [TestMethod]
     public void User_WithBlankName_Throws()
     {
-        Assert.ThrowsException<ArgumentException>(
+        Assert.ThrowsExactly<ArgumentException>(
             () => new User(1, "   ", "Perez", "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15)));
     }
 
     [TestMethod]
     public void User_WithNameOver100Chars_Throws()
     {
-        Assert.ThrowsException<ArgumentException>(
+        Assert.ThrowsExactly<ArgumentException>(
             () => new User(1, new string('a', 101), "Perez", "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15)));
     }
 
     [TestMethod]
     public void User_WithLastnameOver100Chars_Throws()
     {
-        Assert.ThrowsException<ArgumentException>(
+        Assert.ThrowsExactly<ArgumentException>(
             () => new User(1, "Juan", new string('a', 101), "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15)));
     }
 
@@ -780,7 +780,7 @@ public class UserTests
     {
         string longEmail = new string('a', 60) + "@" + string.Concat(Enumerable.Repeat(new string('b', 60) + ".", 4)) + "com";
 
-        Assert.ThrowsException<ArgumentException>(
+        Assert.ThrowsExactly<ArgumentException>(
             () => new User(1, "Juan", "Perez", longEmail, "Pass1234@", new DateTime(1990, 5, 15)));
     }
 
@@ -789,17 +789,17 @@ public class UserTests
     {
         User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15));
 
-        Assert.ThrowsException<ArgumentException>(() => user.UpdatePersonalData(" ", "Perez", "juan@mail.com"));
+        Assert.ThrowsExactly<ArgumentException>(() => user.UpdatePersonalData(" ", "Perez", "juan@mail.com"));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("Ju\nan", "Perez")]
     [DataRow("Juan\u0000", "Perez")]
     [DataRow("Juan", "Pe\trez")]
     [DataRow("Juan", "Perez\u0085")]
     public void User_WithControlCharacterInNameOrLastname_Throws(string name, string lastname)
     {
-        Assert.ThrowsException<ArgumentException>(
+        Assert.ThrowsExactly<ArgumentException>(
             () => new User(1, name, lastname, "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15)));
     }
 
@@ -808,7 +808,7 @@ public class UserTests
     {
         User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15));
 
-        Assert.ThrowsException<ArgumentException>(() => user.UpdatePersonalData("Ju\ran", "Perez", "juan@mail.com"));
+        Assert.ThrowsExactly<ArgumentException>(() => user.UpdatePersonalData("Ju\ran", "Perez", "juan@mail.com"));
 
         Assert.AreEqual("Juan", user.name);
     }

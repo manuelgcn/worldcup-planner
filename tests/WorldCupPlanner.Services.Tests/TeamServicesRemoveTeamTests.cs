@@ -29,7 +29,7 @@ public class TeamServicesRemoveTeamTests
             groupRepository,
             auditLogService);
 
-        Assert.ThrowsException<TeamServicesException>(() => service.RemoveTeam("Brasil"));
+        Assert.ThrowsExactly<TeamServicesException>(() => service.RemoveTeam("Brasil"));
         Assert.IsNotNull(teamRepository.GetByName("Brasil"));
     }
 }

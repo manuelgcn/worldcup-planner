@@ -30,9 +30,8 @@ public sealed class MatchServiceGetEntityTests
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void GetEntity_WhenMatchDoesNotExist_ThrowsServiceException()
     {
-        _context.Service.GetEntity(999);
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.GetEntity(999));
     }
 }

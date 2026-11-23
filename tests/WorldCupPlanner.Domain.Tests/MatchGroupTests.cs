@@ -90,14 +90,14 @@ public class MatchGroupTests
     [TestMethod]
     public void MatchGroupRejectsNullGroup()
     {
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             MatchGroup.CreateInstance(1, MatchDate, _homeTeam, _awayTeam, _stadium, null!, _journey));
     }
 
     [TestMethod]
     public void MatchGroupRejectsNullJourney()
     {
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             MatchGroup.CreateInstance(1, MatchDate, _homeTeam, _awayTeam, _stadium, _group, null!));
     }
 
@@ -106,7 +106,7 @@ public class MatchGroupTests
     {
         MatchGroup matchGroup = CreateValidMatchGroup();
 
-        Assert.ThrowsException<MatchException>(() => matchGroup.SetMatchCode(string.Empty));
+        Assert.ThrowsExactly<MatchException>(() => matchGroup.SetMatchCode(string.Empty));
     }
 
     [TestMethod]

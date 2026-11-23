@@ -29,7 +29,7 @@ public sealed class PureRandomSimulationEngineTests
     [TestMethod]
     public void Simulate_WithNullMatch_ThrowsArgumentNullException()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => _engine.Simulate(null!, FixedSimulationSeed));
+        Assert.ThrowsExactly<ArgumentNullException>(() => _engine.Simulate(null!, FixedSimulationSeed));
     }
 
     [TestMethod]
