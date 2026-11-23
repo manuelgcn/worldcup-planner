@@ -129,6 +129,11 @@
     color: var(--m26-ink);
 }
 
+/* De noche el acento es la amarilla, que ya marca la etapa actual: lo jugado va en verde. */
+:root[data-theme="night"] .stage.done {
+    border-top-color: var(--m26-ok);
+}
+
 .stage.current {
     border-top-color: var(--m26-yellow);
     color: var(--m26-ink);

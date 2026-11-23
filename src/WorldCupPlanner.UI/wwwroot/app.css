@@ -1,6 +1,7 @@
 /* Golazo: "cancha de día". El verde es el marco (cancha), la tinta es la acción,
    la amarilla y la roja se usan como en el fútbol: aviso y falta. */
 :root {
+    color-scheme: light;
     --m26-pitch: #0E4D2C;
     --m26-pitch-deep: #0A3A21;
     --m26-pitch-stripe: #12592F;
@@ -39,6 +40,34 @@
     --m26-font: "Archivo", "Helvetica Neue", Arial, sans-serif;
 }
 
+/* "Cancha de noche": partido bajo los focos. La tribuna queda a oscuras (verde noche), la cal pasa
+   a ser el texto y la acción, y la amarilla es el foco: lo que se enciende al pasar, elegir o enfocar.
+   El verde de la cancha, la amarilla y lo que va encima de ellos no cambian. theme.js pone el atributo.
+   Contraste medido par por par (WCAG): tiza 13.4:1 sobre la superficie y 15.1:1 sobre el fondo,
+   gris 6.9:1 y 7.8:1, verde 7.9:1, roja 6.3:1, amarilla 9.0:1; borde de control 3.8:1 y 4.3:1;
+   texto sobre botón de cal 13.4:1, sobre verde 7.9:1, sobre roja 6.3:1 y sobre el tablero 8.9:1
+   (la amarilla sobre el tablero, 5.3:1). */
+html[data-theme="night"] {
+    color-scheme: dark;
+    --m26-chalk: #0A2014;
+    --m26-surface: #0F2B1B;
+    --m26-ink: #EEF2EB;
+    --m26-muted: #A5B2A8;
+    --m26-line: #27493A;
+    --m26-line-soft: #1A3A29;
+    --m26-line-strong: #3F6A52;
+    --m26-control-border: #6E8577;
+    --m26-ok: #5BD08C;
+    --m26-red: #FF8088;
+    --m26-red-hover: #FFA3A9;
+    --m26-accent: #F2C200;
+    --m26-on-accent: #17251D;
+    --m26-board: #28523A;
+    --m26-conf-conmebol: #5BA8E0;
+    --m26-conf-uefa: #8496EA;
+    --m26-conf-ofc: #9AA69F;
+}
+
 /* Foco visible y consistente para teclado (WCAG 2.4.7). */
 :focus-visible {
     outline: 3px solid var(--m26-focus);
@@ -74,7 +103,9 @@ a,
     text-underline-offset: .18em;
 }
 
-a:hover {
+/* .btn-link:hover: Bootstrap lo pasa a su azul, que de noche no se lee. */
+a:hover,
+.btn-link:hover {
     color: var(--m26-accent);
     text-decoration-color: currentColor;
 }
@@ -266,11 +297,53 @@ code {
     border-color: var(--m26-accent);
 }
 
+/* Bootstrap 5.1 fija colores claros en campos, selects y tablas (#212529 sobre #fff, grises propios):
+   de acá hasta .table se los pasa a los tokens para que sigan al tema. */
 .form-control,
 .form-select {
     border-radius: var(--m26-radius-sm);
     border: 1px solid var(--m26-control-border);
     color: var(--m26-ink);
+    background-color: var(--m26-surface);
+}
+
+.form-control:focus {
+    color: var(--m26-ink);
+    background-color: var(--m26-surface);
+}
+
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+    background-color: var(--m26-line-soft);
+}
+
+.form-control::placeholder,
+.form-text {
+    color: var(--m26-muted);
+}
+
+.form-control::file-selector-button {
+    color: var(--m26-ink);
+    background-color: var(--m26-line-soft);
+}
+
+.form-control:hover:not(:disabled):not([readonly])::file-selector-button {
+    background-color: var(--m26-line);
+}
+
+.form-check-input {
+    background-color: var(--m26-surface);
+}
+
+/* La flecha del select y el tilde de la casilla son SVG de Bootstrap con el color fijo (gris oscuro
+   y blanco): de noche van en cal y en tinta. Solo background-image, nunca el atajo background. */
+html[data-theme="night"] .form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23EEF2EB' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+}
+
+html[data-theme="night"] .form-check-input:checked[type=checkbox] {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%2317251D' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
 }
 
 .form-label {
@@ -279,8 +352,9 @@ code {
 }
 
 .table {
-    --bs-table-color: var(--m26-ink);
+    --bs-table-hover-color: var(--m26-ink);
     --bs-table-hover-bg: var(--m26-chalk);
+    color: var(--m26-ink);
     border-color: var(--m26-line-soft);
 }
 
@@ -378,7 +452,9 @@ code {
     color: var(--m26-ink);
 }
 
+/* El texto blanco de Bootstrap no se lee sobre la roja de noche. */
 .badge.bg-danger {
+    color: var(--m26-surface);
     background-color: var(--m26-red) !important;
 }
 
@@ -762,6 +838,14 @@ code {
     }
 }
 
+/* Interruptor de rol encendido en la tabla de usuarios */
+.btn-secondary.role-on {
+    color: var(--m26-surface);
+    background: var(--m26-ink);
+    border-color: var(--m26-ink);
+}
+
+/* Siempre al final: apaga cualquier transición o animación definida más arriba. */
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -769,11 +853,4 @@ code {
         transition: none !important;
         animation: none !important;
     }
-}
-
-/* Interruptor de rol encendido en la tabla de usuarios */
-.btn-secondary.role-on {
-    color: var(--m26-surface);
-    background: var(--m26-ink);
-    border-color: var(--m26-ink);
 }

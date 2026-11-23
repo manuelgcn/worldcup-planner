@@ -19,6 +19,8 @@
     <link rel="apple-touch-icon" href="img/apple-touch-icon.png"/>
     <meta name="theme-color" content="#0E4D2C"/>
     <meta name="color-scheme" content="light"/>
+    @* Bloqueante a propósito y después de los dos meta que actualiza: elige el tema antes de pintar. *@
+    <script src="theme.js"></script>
     @* Sin prerender: Routes necesita leer sessionStorage (JS) antes de mostrar la primera página. *@
     <HeadOutlet @rendermode="new InteractiveServerRenderMode(prerender: false)"/>
 </head>
