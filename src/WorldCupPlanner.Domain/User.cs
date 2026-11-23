@@ -226,6 +226,9 @@ public class User
 
     public void ChangePassword(string currentPassword, string newPassword)
     {
+        if (!PasswordMatches(currentPassword))
+            throw new ArgumentException(PasswordMismatchMessage);
+
         password = HashPassword(newPassword);
     }
 
