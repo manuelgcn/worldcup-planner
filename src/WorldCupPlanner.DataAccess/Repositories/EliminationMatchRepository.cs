@@ -39,9 +39,24 @@ public class EliminationMatchRepository : IEliminationMatchRepository
         return context.Matches.OfType<MatchElimination>().Any();
     }
 
-    public int? MaxMatchId() => throw new NotImplementedException();
+    public int? MaxMatchId()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Matches.OfType<MatchElimination>().Max(match => (int?)match.MatchId);
+    }
 
-    public IReadOnlySet<int> GetSourceMatchIds() => throw new NotImplementedException();
+    // Solo las dos FK de las filas que tienen fuente (la primera ronda no tiene): sin equipos, estadios ni incidencias.
+    public IReadOnlySet<int> GetSourceMatchIds()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Matches.OfType<MatchElimination>()
+            .Select(match => new { Home = EF.Property<int?>(match, "MatchHomeId"), Away = EF.Property<int?>(match, "MatchAwayId") })
+            .Where(sources => sources.Home != null || sources.Away != null)
+            .AsEnumerable()
+            .SelectMany(sources => new[] { sources.Home, sources.Away })
+            .OfType<int>()
+            .ToHashSet();
+    }
 
     public IReadOnlyCollection<Match> GetAll()
     {

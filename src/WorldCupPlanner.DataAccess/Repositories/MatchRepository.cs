@@ -125,11 +125,24 @@ public class MatchRepository : IMatchRepository
         return MatchEf.WithGraph(context.Matches).ToList();
     }
 
-    public int Count() => throw new NotImplementedException();
+    public int Count()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Matches.Count();
+    }
 
-    public int CountPlayed() => throw new NotImplementedException();
+    public int CountPlayed()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Matches.Count(match => match.HasResult);
+    }
 
-    public DateTime? LatestGroupMatchDate() => throw new NotImplementedException();
+    public DateTime? LatestGroupMatchDate()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        // El cast a nullable hace que MAX sobre cero filas devuelva null en vez de lanzar.
+        return context.Matches.OfType<MatchGroup>().Max(match => (DateTime?)match.MatchDate);
+    }
 
     public int NextIncidentId()
     {

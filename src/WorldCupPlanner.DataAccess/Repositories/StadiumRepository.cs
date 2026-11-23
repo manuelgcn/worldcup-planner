@@ -79,5 +79,9 @@ public class StadiumRepository : IStadiumRepository
         return context.Stadiums.AsNoTracking().ToList();
     }
 
-    public int Count() => throw new NotImplementedException();
+    public int Count()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Stadiums.Count();
+    }
 }

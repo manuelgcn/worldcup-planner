@@ -80,7 +80,11 @@ public class TeamRepository : ITeamRepository
         return context.Teams.AsNoTracking().ToList();
     }
 
-    public int Count() => throw new NotImplementedException();
+    public int Count()
+    {
+        using AppDbContext context = _contextFactory.CreateDbContext();
+        return context.Teams.Count();
+    }
 
     public int CountByConfederation(Confederation confederation)
     {
