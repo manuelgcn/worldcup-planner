@@ -888,6 +888,23 @@ public class UserServicesTests
         Assert.IsFalse(log.Details.Contains("Nueva456#"));
     }
 
+    // Guarda: un cambio rechazado, por la contrasena actual o por la politica de la nueva, no guarda ni audita nada.
+    [TestMethod]
+    public void ChangePassword_ThatIsRejected_SavesAndAuditsNothing()
+    {
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        Mock<IUserRepository> users = new Mock<IUserRepository>();
+        users.Setup(repo => repo.GetById(2)).Returns(user);
+        MockAuditLogService audit = new MockAuditLogService();
+        UserServices auditedService = new UserServices(users.Object, audit);
+
+        Assert.ThrowsException<UserServicesException>(() => auditedService.ChangePassword(2, "Wrong123@", "Nueva456#"));
+        Assert.ThrowsException<ArgumentException>(() => auditedService.ChangePassword(2, "Pass123@", "corta"));
+
+        users.Verify(repo => repo.Update(It.IsAny<User>()), Times.Never);
+        Assert.AreEqual(0, audit.LoggedActions.Count);
+    }
+
     private static void FailPasswordChanges(UserServices target, int userId, int times)
     {
         for (int attempt = 0; attempt < times; attempt++)
