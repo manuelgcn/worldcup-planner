@@ -84,6 +84,8 @@ public static class AuditActions
 
     public const string ExportFixtureXlsx = "EXPORT_FIXTURE_XLSX";
 
+    public const string ExportFixtureIcs = "EXPORT_FIXTURE_ICS";
+
     public const string ExportAuditCsv = "EXPORT_AUDIT_CSV";
 
     public const string ExportAuditXlsx = "EXPORT_AUDIT_XLSX";

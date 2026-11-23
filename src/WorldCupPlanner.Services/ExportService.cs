@@ -36,6 +36,11 @@ public sealed class ExportService(
         return file;
     }
 
+    public ExportFileDto ExportFixtureIcs(DateRange range, User requestedBy)
+    {
+        return new ExportFileDto { Content = [], ContentType = string.Empty, FileName = string.Empty };
+    }
+
     public ExportFileDto ExportAuditLog(DateRange range, ExportFormat format, User requestedBy, AuditLogFilterDto? filter = null)
     {
         EnsureAuthorized(requestedBy);
