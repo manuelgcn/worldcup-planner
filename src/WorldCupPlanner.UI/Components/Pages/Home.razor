@@ -11,6 +11,18 @@
 <PageTitle>Inicio · Golazo</PageTitle>
 
 <section class="home-pitch" aria-labelledby="homeHeadline">
+    @* Sin viewBox: las unidades son px y los porcentajes siguen el tamaño de la cancha. El svg
+       anidado ancla el área grande a la línea de fondo derecha. *@
+    <svg class="pitch-lines" aria-hidden="true" focusable="false">
+        <line class="chalk chalk-halfway" pathLength="1" x1="78%" y1="0" x2="78%" y2="100%" />
+        <circle class="chalk chalk-circle" pathLength="1" cx="78%" cy="50%" r="96" />
+        <circle class="chalk-spot" cx="78%" cy="50%" r="4" />
+        <svg x="100%" overflow="visible">
+            <line class="chalk chalk-area-top" pathLength="1" x1="0" y1="27%" x2="-65" y2="27%" />
+            <line class="chalk chalk-area-front" pathLength="1" x1="-64" y1="27%" x2="-64" y2="73%" />
+            <line class="chalk chalk-area-bottom" pathLength="1" x1="-65" y1="73%" x2="0" y2="73%" />
+        </svg>
+    </svg>
     <div class="pitch-copy">
         <p class="pitch-brand">Mundial 2026, 48 selecciones</p>
         <h1 id="homeHeadline" class="pitch-headline">@Headline</h1>
