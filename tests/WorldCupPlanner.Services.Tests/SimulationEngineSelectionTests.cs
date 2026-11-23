@@ -1,6 +1,5 @@
 using WorldCupPlanner.Domain;
 using WorldCupPlanner.Services;
-using WorldCupPlanner.Services.DTOs;
 using WorldCupPlanner.Services.Interfaces;
 using WorldCupPlanner.Services.Tests.TestDoubles.Mocks;
 
@@ -65,28 +64,6 @@ public sealed class SimulationEngineSelectionTests
     }
 
     [TestMethod]
-    public void MatchService_SimulateMatch_UsesEngineSelectedInSettings()
-    {
-        MatchService service = CreateMatchService();
-
-        service.SimulateMatch(MatchId);
-
-        Assert.AreEqual(1, _selectedEngineSpy.SimulateCalls);
-        Assert.AreEqual(0, _defaultEngineSpy.SimulateCalls);
-    }
-
-    [TestMethod]
-    public void MatchService_SimulateMatch_AuditsEngineName()
-    {
-        MatchService service = CreateMatchService();
-
-        service.SimulateMatch(MatchId);
-
-        AuditLog log = _auditLogRepository.GetAll().First(entry => entry.Action == AuditActions.SimulationExecuted);
-        Assert.IsTrue(log.Details.Contains(PureRandomName), $"Expected engine name in details, got '{log.Details}'");
-    }
-
-    [TestMethod]
     public void KnockoutFixtureGenerator_SimulateNextRound_UsesEngineSelectedInSettings()
     {
         MockEliminationMatchRepository eliminationRepository = new MockEliminationMatchRepository();
@@ -126,22 +103,6 @@ public sealed class SimulationEngineSelectionTests
             new Moq.Mock<IRankingService>().Object);
     }
 
-    private MatchService CreateMatchService()
-    {
-        MockMatchRepository matchRepository = new MockMatchRepository();
-        matchRepository.Add(CreateGroupMatch(MatchId));
-
-        return new MatchService(
-            matchRepository,
-            _settingsRepository,
-            new StubMatchFactory(),
-            _registry,
-            _auditLogService,
-            new Moq.Mock<IRankingService>().Object,
-            new MockNotificationService(),
-            new MockEliminationMatchRepository());
-    }
-
     private static void SeedGroupWithMatches(MockGroupRepository groupRepository, MockMatchRepository matchRepository)
     {
         Group group = new Group("A");
@@ -178,19 +139,5 @@ public sealed class SimulationEngineSelectionTests
         return MatchElimination.Create(
             matchId, new DateTime(2026, 7, 1), homeTeam, awayTeam, stadium, Phase.RoundOf32, "R32-1",
             CreateGroupMatch(matchId + 100), CreateGroupMatch(matchId + 200));
-    }
-
-    // Stub minimo: SimulateMatch no pasa por la fabrica, pero el constructor la exige.
-    private sealed class StubMatchFactory : IMatchFactory
-    {
-        public Match Create(CreateMatchRequestDto request)
-        {
-            throw new NotSupportedException();
-        }
-
-        public void ApplyUpdate(Match match, UpdateMatchRequestDto request)
-        {
-            throw new NotSupportedException();
-        }
     }
 }

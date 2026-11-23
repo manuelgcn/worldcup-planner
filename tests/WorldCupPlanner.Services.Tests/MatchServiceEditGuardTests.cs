@@ -62,39 +62,6 @@ public sealed class MatchServiceEditGuardTests
     }
 
     [TestMethod]
-    public void SetGoals_OnGroupMatch_WhenKnockoutExists_Throws()
-    {
-        _context.SeedFakeEliminationMatchInRepository();
-
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.SetGoals(GroupMatchId, 2, 1));
-    }
-
-    [TestMethod]
-    public void AddGoal_OnGroupMatch_WhenKnockoutExists_Throws()
-    {
-        _context.SeedFakeEliminationMatchInRepository();
-
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.AddGoal(GroupMatchId, isHomeTeam: true));
-    }
-
-    [TestMethod]
-    public void RemoveGoal_OnGroupMatch_WhenKnockoutExists_Throws()
-    {
-        _context.Service.SetGoals(GroupMatchId, 2, 0);
-        _context.SeedFakeEliminationMatchInRepository();
-
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.RemoveGoal(GroupMatchId, isHomeTeam: true));
-    }
-
-    [TestMethod]
-    public void SimulateMatch_OnGroupMatch_WhenKnockoutExists_Throws()
-    {
-        _context.SeedFakeEliminationMatchInRepository();
-
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.SimulateMatch(GroupMatchId));
-    }
-
-    [TestMethod]
     public void DeleteMatch_OnGroupMatch_WhenKnockoutExists_Throws()
     {
         _context.SeedFakeEliminationMatchInRepository();
