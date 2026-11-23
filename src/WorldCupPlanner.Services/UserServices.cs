@@ -309,6 +309,8 @@ public class UserServices : IUserService
     {
         if (userId == SystemAdminUserId)
             throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
+
+        GetUserById(userId);
     }
 
     public void AssignRole(int userId, UserRoles role, string? performedByEmail = null)
