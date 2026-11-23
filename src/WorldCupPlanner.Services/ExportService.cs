@@ -59,7 +59,12 @@ public sealed class ExportService(
         logs.Reverse();
         List<AuditLogExportRow> rows = logs.Select(MapAuditLogRow).ToList();
 
-        string fileName = BuildFileName("audit-log", range, format);
+        // Sin "desde" la pantalla manda DateTime.MinValue: el nombre arranca en la fila más vieja exportada, no en 00010101.
+        DateRange namedRange = range.From.Date == DateTime.MinValue
+            ? range with { From = rows.Count > 0 ? rows[0].Timestamp : range.To }
+            : range;
+
+        string fileName = BuildFileName("audit-log", namedRange, format);
         ExportFileDto file = BuildFile(rows, format, AuditLogWorksheetName, fileName);
         LogExport(GetAuditLogAuditAction(format), fileName, requestedBy);
         return file;
