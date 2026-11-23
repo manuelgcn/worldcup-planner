@@ -326,6 +326,14 @@ public class UserServices : IUserService
 
         user.ChangePassword(currentPassword, newPassword);
         _userRepository.Update(user);
+
+        _auditLogService.LogPerformedBy(
+            AuditActions.ChangePassword,
+            $"Password of UserId={user.idUser} changed.",
+            user.email,
+            nameof(User),
+            user.idUser
+        );
     }
 
     public void AssignRole(int userId, UserRoles role, string? performedByEmail = null)

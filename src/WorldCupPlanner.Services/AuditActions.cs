@@ -12,6 +12,8 @@ public static class AuditActions
 
     public const string UpgradePasswordHash = "UPGRADE_PASSWORD_HASH";
 
+    public const string ChangePassword = "CHANGE_PASSWORD";
+
     public const string CreateMatch = "CREATE_MATCH";
 
     public const string UpdateMatch = "UPDATE_MATCH";
