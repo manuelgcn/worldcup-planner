@@ -172,6 +172,17 @@ public class GroupFixtureGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateMatches_SingleStadium_ThrowsMatchException()
+    {
+        GroupFixtureGenerator generator = new GroupFixtureGenerator();
+        List<Group> groups = CreateGroups(SingleGroupCount);
+        List<Stadium> singleStadium = CreateStadiums(count: 1);
+
+        Assert.ThrowsException<MatchException>(() =>
+            generator.GenerateMatches(groups, singleStadium, DefaultStartDate));
+    }
+
+    [TestMethod]
     public void GenerateMatches_WithFiveStadiums_GeneratesValidFullFixture()
     {
         const int FiveStadiums = 5;
