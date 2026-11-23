@@ -124,6 +124,9 @@ else
 @code {
     private const string TimestampFormat = "dd/MM/yyyy HH:mm:ss";
     private const int MaxRows = 500;
+    // No afirma que perdió el permiso: también pasa cuando no se pudo releer al usuario de la base.
+    private const string PermissionNotConfirmedMessage =
+        "No se pudo confirmar que tengas permiso para esta acción. Recargá la página e intentá nuevamente.";
 
     private string actionFilter = "";
     private string emailFilter = "";
@@ -199,6 +202,7 @@ else
 
         if (!await Session.StillHasAnyRoleAsync(UserRoles.Admin, UserRoles.Periodista))
         {
+            if (Session.IsLoggedIn) exportError = PermissionNotConfirmedMessage;
             return;
         }
 

@@ -274,10 +274,20 @@ else
         }
     }
 
+    private const string PermissionNotConfirmedMessage =
+        "No se pudo confirmar que tengas permiso para esta acción. Recargá la página e intentá nuevamente.";
+
     // La página pudo quedar abierta después de que otro admin le quitara el rol o diera de baja a este usuario.
+    // También da falso si no se lo pudo releer: el mensaje no afirma que haya perdido el permiso.
     private async Task<bool> IsStillAdminAsync()
     {
-        return await Session.StillHasAnyRoleAsync(UserRoles.Admin);
+        if (await Session.StillHasAnyRoleAsync(UserRoles.Admin))
+            return true;
+
+        if (Session.IsLoggedIn)
+            errors.Add(PermissionNotConfirmedMessage);
+
+        return false;
     }
 
     private void StartEdit(User u)

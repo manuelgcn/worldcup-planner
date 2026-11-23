@@ -378,6 +378,9 @@
         "Ocurrió un error inesperado. Revisá el estado del torneo e intentá nuevamente.";
     private const string StandingsLoadErrorMessage =
         "No se pudo cargar la tabla de posiciones del grupo. Intentá nuevamente.";
+    // No afirma que perdió el permiso: también pasa cuando no se pudo releer al usuario de la base.
+    private const string PermissionNotConfirmedMessage =
+        "No se pudo confirmar que tengas permiso para esta acción. Recargá la página e intentá nuevamente.";
     // Mismos umbrales que validan FixtureService y StadiumServices; aca solo guian el asistente.
     private const int RequiredTeamCount = 48;
     private const int MinimumStadiumCount = 4;
@@ -659,6 +662,7 @@
 
         if (!await Session.StillHasAnyRoleAsync(UserRoles.Admin, UserRoles.Periodista))
         {
+            if (Session.IsLoggedIn) errors.Add(PermissionNotConfirmedMessage);
             return;
         }
 
@@ -708,6 +712,7 @@
 
         if (!await Session.StillHasAnyRoleAsync(allowedRoles))
         {
+            if (Session.IsLoggedIn) errors.Add(PermissionNotConfirmedMessage);
             return;
         }
 
