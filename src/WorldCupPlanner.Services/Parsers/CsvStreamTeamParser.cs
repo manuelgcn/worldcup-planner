@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;
+using CsvHelper.Delegates;
 using WorldCupPlanner.Domain;
 using WorldCupPlanner.Services.DTOs;
 using WorldCupPlanner.Services.Exceptions;
@@ -41,10 +42,10 @@ public sealed class CsvStreamTeamParser : ITeamParser
 
     private static List<TeamImportDto> ReadRows(StreamReader reader)
     {
-        // Cultura invariante: la deteccion del separador consulta el separador de listas de la cultura.
         CsvConfiguration configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
             DetectDelimiter = true,
+            GetDelimiter = DelimiterOfHeader,
             TrimOptions = TrimOptions.Trim
         };
         using CsvParser csv = new CsvParser(reader, configuration, leaveOpen: true);
@@ -86,6 +87,14 @@ public sealed class CsvStreamTeamParser : ITeamParser
         }
 
         return teams;
+    }
+
+    // El detector de CsvHelper exige el separador en todas las lineas: una sola fila sin ninguno hacia leer el
+    // archivo entero con ',' y el error senalaba la fila 2. Alcanza con el encabezado; si empata o no hay, es ','.
+    private static string DelimiterOfHeader(GetDelimiterArgs args)
+    {
+        string header = args.Text.Split('\r', '\n').FirstOrDefault(line => !string.IsNullOrWhiteSpace(line)) ?? string.Empty;
+        return args.Configuration.DetectDelimiterValues.MaxBy(delimiter => header.Split(delimiter).Length)!;
     }
 
     // Los titulos son libres ("Nombre,Confederación,RankingFIFA", "Name,Confederation,Ranking"), asi que se mira
