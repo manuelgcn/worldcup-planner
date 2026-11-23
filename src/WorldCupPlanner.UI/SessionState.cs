@@ -18,7 +18,7 @@ public class SessionState
     private readonly ProtectedSessionStorage storage;
     private readonly IUserService userService;
 
-    public SessionState(ProtectedSessionStorage storage, IUserService userService)
+    public SessionState(ProtectedSessionStorage storage, IUserService userService, TimeProvider timeProvider)
     {
         this.storage = storage;
         this.userService = userService;
@@ -101,6 +101,8 @@ public class SessionState
         await storage.SetAsync(SessionKey, new StoredSession(user.idUser, user.email, DateTime.UtcNow.Add(SessionLifetime)));
         NotifyStateChanged();
     }
+
+    public Task RefreshUserAsync() => Task.CompletedTask;
 
     // Avisa al menú y al inicio que cambió algo que muestran de la sesión (p. ej. las notificaciones sin leer).
     public void Refresh()
