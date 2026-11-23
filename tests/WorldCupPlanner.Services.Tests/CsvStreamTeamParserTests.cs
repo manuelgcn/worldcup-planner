@@ -85,6 +85,108 @@ public class CsvStreamTeamParserTests
         Assert.AreEqual("México", rows.Single().Name);
     }
 
+    [TestMethod]
+    public void ParseReadsAQuotedFieldThatContainsTheDelimiter()
+    {
+        MemoryStream stream = CreateStream("Name,Confederation,Ranking\n\"Congo, RD\",CAF,1380");
+
+        TeamImportDto row = new CsvStreamTeamParser().Parse(stream).Single();
+
+        Assert.AreEqual("Congo, RD", row.Name);
+        Assert.AreEqual("CAF", row.Confederation);
+        Assert.AreEqual("1380", row.Ranking);
+    }
+
+    [TestMethod]
+    public void ParseDetectsASemicolonDelimiter()
+    {
+        // Excel en español separa con punto y coma.
+        MemoryStream stream = CreateStream("Nombre;Confederación;Ranking\nMéxico;CONCACAF;1660\nBrasil;CONMEBOL;1760\n");
+
+        List<TeamImportDto> rows = new CsvStreamTeamParser().Parse(stream);
+
+        Assert.AreEqual(2, rows.Count);
+        Assert.AreEqual("México", rows[0].Name);
+        Assert.AreEqual("CONCACAF", rows[0].Confederation);
+        Assert.AreEqual("1760", rows[1].Ranking);
+    }
+
+    [TestMethod]
+    public void ParseDetectsTheDelimiterInAFileWithBlankLines()
+    {
+        MemoryStream stream = CreateStream("Nombre;Confederación;Ranking\n\nMéxico;CONCACAF;1660\n\nBrasil;CONMEBOL;1760\n");
+
+        List<TeamImportDto> rows = new CsvStreamTeamParser().Parse(stream);
+
+        Assert.AreEqual(2, rows.Count);
+        Assert.AreEqual("CONMEBOL", rows[1].Confederation);
+    }
+
+    [TestMethod]
+    public void ParseDetectsTheDelimiterWhenANameContainsAnotherOne()
+    {
+        MemoryStream stream = CreateStream("Nombre;Confederación;Ranking\nCongo, RD;CAF;1380\nTrinidad, Tobago;CONCACAF;1300\n");
+
+        List<TeamImportDto> rows = new CsvStreamTeamParser().Parse(stream);
+
+        Assert.AreEqual("Congo, RD", rows[0].Name);
+        Assert.AreEqual("CONCACAF", rows[1].Confederation);
+    }
+
+    [DataTestMethod]
+    [DataRow("Name,Confederation,Ranking\n\nArgentina,CONMEBOL,500\nJapan,AFC,600")]
+    [DataRow("Name,Confederation,Ranking\r\n\r\nArgentina,CONMEBOL,500\r\nJapan,AFC,600\r\n")]
+    public void ParseNumbersRowsByPhysicalLine(string csv)
+    {
+        // El numero de fila es el que el usuario ve en su editor: cuenta el encabezado y las lineas en blanco.
+        List<TeamImportDto> rows = new CsvStreamTeamParser().Parse(CreateStream(csv));
+
+        CollectionAssert.AreEqual(new[] { 3, 4 }, rows.Select(row => row.RowNumber).ToArray());
+    }
+
+    [TestMethod]
+    public void ParseSkipsLinesWithoutAnyValue()
+    {
+        MemoryStream stream = CreateStream("Name,Confederation,Ranking\n   \nArgentina,CONMEBOL,500\n,,\n");
+
+        List<TeamImportDto> rows = new CsvStreamTeamParser().Parse(stream);
+
+        Assert.AreEqual("Argentina", rows.Single().Name);
+    }
+
+    [DataTestMethod]
+    [DataRow("Argentina,CONMEBOL,500\nJapan,AFC,600")]
+    [DataRow("Argentina,conmebol,sin ranking\nJapan,AFC,600")]
+    [DataRow("Argentina,Sudamerica,500\nJapan,AFC,600")]
+    public void ParseRejectsAFileWhoseFirstRowIsATeam(string csv)
+    {
+        // Sin encabezado, la primera seleccion se perdia sin aviso.
+        ImportServiceException ex = Assert.ThrowsException<ImportServiceException>(
+            () => new CsvStreamTeamParser().Parse(CreateStream(csv)));
+
+        StringAssert.Contains(ex.Message, "encabezado");
+    }
+
+    [TestMethod]
+    public void ParseAcceptsTheHeaderOfTheSampleFile()
+    {
+        MemoryStream stream = CreateStream("Nombre,Confederación,RankingFIFA\nMéxico,CONCACAF,1660");
+
+        Assert.AreEqual("México", new CsvStreamTeamParser().Parse(stream).Single().Name);
+    }
+
+    [TestMethod]
+    public void ParseReportsAMalformedRowWithItsNumber()
+    {
+        // Una comilla suelta en un campo sin comillas no tiene una lectura unica.
+        MemoryStream stream = CreateStream("Name,Confederation,Ranking\nArgentina,CONMEBOL,500\nCosta \"Rica,CONCACAF,1500\n");
+
+        ImportServiceException ex = Assert.ThrowsException<ImportServiceException>(
+            () => new CsvStreamTeamParser().Parse(stream));
+
+        StringAssert.Contains(ex.Message, "Row: 3.");
+    }
+
     private static readonly byte[] Utf8ByteOrderMark = { 0xEF, 0xBB, 0xBF };
 
     // Latin1 coincide con Windows-1252 en las letras acentuadas del español.
