@@ -81,7 +81,7 @@ public class MatchService : IMatchService
         string details = $"Match updated for MatchId={match.MatchId}.";
         if (request.TournamentSettingsId.HasValue)
         {
-            LogAuditAction(AuditActions.UpdateMatch, details, match.MatchId, request.TournamentSettingsId);
+            auditLogService.LogPerformedBy(AuditActions.UpdateMatch, details, request.TournamentSettingsId.Value, performedByEmail, nameof(Match), match.MatchId);
         }
         else
         {

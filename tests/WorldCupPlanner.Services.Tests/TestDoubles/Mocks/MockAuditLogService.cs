@@ -26,6 +26,11 @@ public sealed class MockAuditLogService : IAuditLogService
         LoggedActions.Add(new LoggedAction(action, details, null, affectedEntityType, affectedEntityId, performedByEmail));
     }
 
+    public void LogPerformedBy(string action, string details, int tournamentSettingsId, string? performedByEmail, string? affectedEntityType = null, int? affectedEntityId = null)
+    {
+        LoggedActions.Add(new LoggedAction(action, details, tournamentSettingsId, affectedEntityType, affectedEntityId, performedByEmail));
+    }
+
     public List<AuditLogDto> GetFiltered(AuditLogFilterDto filter, int? take = null)
     {
         return new List<AuditLogDto>();

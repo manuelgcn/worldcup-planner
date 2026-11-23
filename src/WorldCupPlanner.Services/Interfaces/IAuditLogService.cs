@@ -8,6 +8,7 @@ public interface IAuditLogService
     void Log(string action, string details, string? affectedEntityType = null, int? affectedEntityId = null);
 
     void LogPerformedBy(string action, string details, string? performedByEmail, string? affectedEntityType = null, int? affectedEntityId = null);
+    void LogPerformedBy(string action, string details, int tournamentSettingsId, string? performedByEmail, string? affectedEntityType = null, int? affectedEntityId = null);
 
     // Con take devuelve solo los 'take' registros mas nuevos, del mas nuevo al mas viejo.
     List<AuditLogDto> GetFiltered(AuditLogFilterDto filter, int? take = null);

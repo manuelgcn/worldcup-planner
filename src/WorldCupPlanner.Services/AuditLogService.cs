@@ -36,6 +36,11 @@ public sealed class AuditLogService : IAuditLogService
         AddLog(action, details, tournamentSettingsId: null, affectedEntityType, affectedEntityId, performedByEmail);
     }
 
+    public void LogPerformedBy(string action, string details, int tournamentSettingsId, string? performedByEmail, string? affectedEntityType = null, int? affectedEntityId = null)
+    {
+        AddLog(action, details, tournamentSettingsId, affectedEntityType, affectedEntityId, performedByEmail);
+    }
+
     private void AddLog(string action, string details, int? tournamentSettingsId, string? affectedEntityType, int? affectedEntityId, string? performedByEmail)
     {
         AuditLog log = AuditLog.Create(action, details, tournamentSettingsId, affectedEntityType, affectedEntityId, performedByEmail);

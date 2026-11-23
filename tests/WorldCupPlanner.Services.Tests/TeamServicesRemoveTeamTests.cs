@@ -151,6 +151,10 @@ internal sealed class NullAuditLogService : IAuditLogService
     {
     }
 
+    public void LogPerformedBy(string action, string details, int tournamentSettingsId, string? performedByEmail, string? affectedEntityType = null, int? affectedEntityId = null)
+    {
+    }
+
     public List<AuditLogDto> GetFiltered(AuditLogFilterDto filter, int? take = null)
     {
         return new List<AuditLogDto>();
