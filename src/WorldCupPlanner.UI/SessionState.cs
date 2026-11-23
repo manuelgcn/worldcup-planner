@@ -143,6 +143,8 @@ public class SessionState
 
     public async Task LoginAsync(User user)
     {
+        // Volver a ingresar desde una pestaña con sesión cierra la anterior: una pestaña duplicada la seguiría usando.
+        RevokeSession();
         CurrentUser = user;
         session = new StoredSession(user.idUser, user.email, UtcNow.Add(SessionLifetime), Guid.NewGuid());
         await storage.SetAsync(SessionKey, session);
@@ -172,11 +174,7 @@ public class SessionState
 
     public async Task LogoutAsync()
     {
-        if (session is not null)
-        {
-            revokedSessions.Add(session.SessionId, session.ExpiresAtUtc, UtcNow);
-        }
-
+        RevokeSession();
         CurrentUser = null;
         session = null;
         await storage.DeleteAsync(SessionKey);
@@ -189,6 +187,14 @@ public class SessionState
 
     private bool HasEnded(StoredSession stored) =>
         stored.ExpiresAtUtc <= UtcNow || revokedSessions.Contains(stored.SessionId);
+
+    private void RevokeSession()
+    {
+        if (session is not null)
+        {
+            revokedSessions.Add(session.SessionId, session.ExpiresAtUtc, UtcNow);
+        }
+    }
 
     private void NotifyStateChanged()
     {
