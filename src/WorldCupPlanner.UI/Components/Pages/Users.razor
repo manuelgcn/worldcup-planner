@@ -49,10 +49,8 @@ else
 
                 @if (editingUserId is null)
                 {
-                    <div class="mb-3">
-                        <label class="form-label" for="userPassword">Contraseña</label>
-                        <input id="userPassword" class="form-control" type="password" @bind="password" />
-                    </div>
+                    <PasswordField Id="userPassword" Label="Contraseña" Autocomplete="new-password"
+                                   @bind-Value="password" ShowRules="true" />
 
                     <div class="mb-3">
                         <label class="form-label" for="userBirth">Fecha de nacimiento</label>
