@@ -51,4 +51,28 @@ public class ImageHelperTests
     {
         Assert.IsFalse(ImageHelper.IsSupportedImage(Array.Empty<byte>()));
     }
+
+    // Una bandera llega a 200 KB y se adivina su tipo en cada render: alcanza con leer el comienzo.
+    // El final inválido lo prueba: decodificar todo el texto falla y cae en el tipo por defecto.
+    [TestMethod]
+    public void GuessImageMimeType_LongImage_ReadsOnlyItsFirst256Characters()
+    {
+        byte[] image = new byte[300];
+        Jpeg.CopyTo(image, 0);
+        string base64 = Convert.ToBase64String(image)[..^4] + "****";
+
+        string mimeType = ImageHelper.GuessImageMimeType(base64);
+
+        Assert.AreEqual("image/jpeg", mimeType);
+    }
+
+    [TestMethod]
+    public void GuessImageMimeType_ImageShorterThanThePrefix_IsStillRecognised()
+    {
+        string base64 = Convert.ToBase64String(Jpeg);
+
+        string mimeType = ImageHelper.GuessImageMimeType(base64);
+
+        Assert.AreEqual("image/jpeg", mimeType);
+    }
 }
