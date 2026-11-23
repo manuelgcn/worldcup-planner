@@ -53,6 +53,11 @@ public static class ImageHelper
         return DefaultMimeType;
     }
 
+    public static bool IsSupportedImage(byte[] bytes)
+    {
+        return false;
+    }
+
     private static bool IsPng(byte[] bytes)
     {
         return bytes.Length >= 8 &&
