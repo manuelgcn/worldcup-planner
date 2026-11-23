@@ -19,7 +19,7 @@ else
                 <strong>@Champion.Name</strong>
             </div>
         }
-        <p class="bracket-hint">Cada llave muestra las banderas de los dos equipos con su resultado. Pasá el mouse para ver nombres y penales.</p>
+        <p class="bracket-hint">Pasá el mouse por un equipo, tocalo o llegá a él con Tab para seguir su camino por el cuadro.</p>
         <div class="bracket-compact" tabindex="0" role="region" aria-label="Cuadro eliminatorio">
             @foreach (BracketColumn column in BuildColumns())
             {
@@ -41,12 +41,16 @@ else
                                         {
                                             <span class="bracket-mini-code">@match.MatchCode</span>
                                         }
-                                        <div class="bracket-mini-row @WinnerClass(match, true)">
+                                        @* data-team: bracket.js marca la fila del mismo equipo en todas las rondas. El foco
+                                           entra por los 16avos, donde cada equipo aparece una sola vez. *@
+                                        <div class="bracket-mini-row @WinnerClass(match, true)"
+                                             data-team="@match.HomeTeam?.Id" tabindex="@RowTabIndex(match)">
                                             <TeamFlag Team="match.HomeTeam" />
                                             <span class="bracket-mini-name">@TeamName(match.HomeTeam)</span>
                                             <span class="bracket-mini-score">@ScoreFor(match, true)</span>
                                         </div>
-                                        <div class="bracket-mini-row @WinnerClass(match, false)">
+                                        <div class="bracket-mini-row @WinnerClass(match, false)"
+                                             data-team="@match.AwayTeam?.Id" tabindex="@RowTabIndex(match)">
                                             <TeamFlag Team="match.AwayTeam" />
                                             <span class="bracket-mini-name">@TeamName(match.AwayTeam)</span>
                                             <span class="bracket-mini-score">@ScoreFor(match, false)</span>
@@ -113,6 +117,8 @@ else
     }
 
     private static string PlayedClass(MatchElimination match) => match.HasResult ? "played" : "pending";
+
+    private static string? RowTabIndex(MatchElimination match) => match.Phase == Phase.RoundOf32 ? "0" : null;
 
     private static string WinnerClass(MatchElimination match, bool isHome)
     {

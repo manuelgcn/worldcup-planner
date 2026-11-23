@@ -593,6 +593,29 @@
     opacity: .45;
 }
 
+/* Seguir a un equipo (bracket.js): su fila se enciende en amarillo en todas las rondas y las
+   demás se atenúan. */
+::deep .bracket-mini-row {
+    transition: opacity .12s ease, background-color .12s ease;
+}
+
+::deep .bracket-compact[data-following] .bracket-mini-row:not([data-followed]) {
+    opacity: .45;
+}
+
+::deep .bracket-mini-row[data-followed] {
+    background: var(--m26-yellow);
+}
+
+::deep .bracket-mini-row[data-followed] .bracket-mini-name,
+::deep .bracket-mini-row[data-followed] .bracket-mini-score {
+    color: var(--m26-on-yellow);
+}
+
+::deep .bracket-mini-row[data-followed] .team-flag {
+    opacity: 1;
+}
+
 /* Danger zone: full tournament reset (delete fixture + knockout) */
 .danger-zone {
     border-color: color-mix(in srgb, var(--m26-red) 30%, transparent);
