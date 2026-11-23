@@ -43,6 +43,8 @@ public sealed class TournamentStatsServiceTests
         Assert.IsNull(stats.HighestScoringMatch);
         Assert.AreEqual(0, stats.AttackLeaders.Count);
         Assert.AreEqual(0, stats.DefenceLeaders.Count);
+        Assert.AreEqual(0, stats.Confederations.Count);
+        Assert.AreEqual(0, stats.Stadiums.Count);
     }
 
     [TestMethod]
@@ -207,6 +209,71 @@ public sealed class TournamentStatsServiceTests
         CollectionAssert.AreEqual(
             new[] { "Uruguay", "Bolivia", "Ecuador", "Chile", "Brasil" },
             stats.DefenceLeaders.Select(row => row.TeamName).ToArray());
+    }
+
+    [TestMethod]
+    public void GetStats_Confederations_ReportTeamsRecordAndPointsPerMatch_BestFirst()
+    {
+        Team spain = NewTeam("España", Confederation.UEFA);
+        Team france = NewTeam("Francia", Confederation.UEFA);
+        Team uruguay = NewTeam("Uruguay", Confederation.CONMEBOL);
+        PlayGroupMatch(spain, 2, uruguay, 0);
+        PlayGroupMatch(spain, 1, france, 1);
+        PlayGroupMatch(france, 0, uruguay, 1);
+
+        TournamentStatsDto stats = _service.GetStats();
+
+        // CONMEBOL: 3 puntos en 2 presentaciones. UEFA: 5 puntos en 4 (el empate entre sus dos equipos suma dos).
+        CollectionAssert.AreEqual(
+            new[]
+            {
+                new ConfederationRecordDto(Confederation.CONMEBOL, Teams: 1, Wins: 1, Draws: 0, Losses: 1, PointsPerMatch: 1.5),
+                new ConfederationRecordDto(Confederation.UEFA, Teams: 2, Wins: 1, Draws: 2, Losses: 1, PointsPerMatch: 1.25)
+            },
+            stats.Confederations.ToArray());
+    }
+
+    [TestMethod]
+    public void GetStats_Confederations_AShootOutIsADrawForBothSides_AndTiesGoByName()
+    {
+        MatchElimination shootOut = KnockoutMatch(
+            NewTeam("Marruecos", Confederation.CAF), NewTeam("Japon", Confederation.AFC));
+        shootOut.SetGoals(1, 1);
+        shootOut.SetPenaltyShootoutResult(4, 3);
+        _matchRepository.Add(shootOut);
+
+        TournamentStatsDto stats = _service.GetStats();
+
+        CollectionAssert.AreEqual(
+            new[]
+            {
+                new ConfederationRecordDto(Confederation.AFC, Teams: 1, Wins: 0, Draws: 1, Losses: 0, PointsPerMatch: 1),
+                new ConfederationRecordDto(Confederation.CAF, Teams: 1, Wins: 0, Draws: 1, Losses: 0, PointsPerMatch: 1)
+            },
+            stats.Confederations.ToArray());
+    }
+
+    [TestMethod]
+    public void GetStats_Stadiums_ReportMatchesAndGoals_OrderedByGoalsThenName()
+    {
+        Stadium bombonera = Stadium(3, "Bombonera");
+        PlayGroupMatch(NewTeam("Uruguay"), 2, NewTeam("Brasil"), 1);
+        PlayGroupMatch(NewTeam("Chile"), 1, NewTeam("Peru"), 0, stadium: Stadium(2, "Azteca"));
+        // Otra instancia del mismo estadio: se agrupa por id.
+        PlayGroupMatch(NewTeam("Ecuador"), 1, NewTeam("Bolivia"), 1, stadium: Stadium(2, "Azteca"));
+        PlayGroupMatch(NewTeam("Paraguay"), 4, NewTeam("Colombia"), 1, stadium: bombonera);
+        _matchRepository.Add(GroupMatch(NewTeam("Venezuela"), NewTeam("Mexico"), stadium: bombonera));
+
+        TournamentStatsDto stats = _service.GetStats();
+
+        CollectionAssert.AreEqual(
+            new[]
+            {
+                new StadiumStatsDto("Bombonera", MatchesPlayed: 1, Goals: 5),
+                new StadiumStatsDto("Azteca", MatchesPlayed: 2, Goals: 3),
+                new StadiumStatsDto("Centenario", MatchesPlayed: 1, Goals: 3)
+            },
+            stats.Stadiums.ToArray());
     }
 
     [TestMethod]

@@ -17,4 +17,6 @@ public sealed class TournamentStatsDto
     public MatchHighlightDto? HighestScoringMatch { get; set; }
     public IReadOnlyList<TeamGoalsDto> AttackLeaders { get; set; } = Array.Empty<TeamGoalsDto>();
     public IReadOnlyList<TeamGoalsDto> DefenceLeaders { get; set; } = Array.Empty<TeamGoalsDto>();
+    public IReadOnlyList<ConfederationRecordDto> Confederations { get; set; } = Array.Empty<ConfederationRecordDto>();
+    public IReadOnlyList<StadiumStatsDto> Stadiums { get; set; } = Array.Empty<StadiumStatsDto>();
 }
