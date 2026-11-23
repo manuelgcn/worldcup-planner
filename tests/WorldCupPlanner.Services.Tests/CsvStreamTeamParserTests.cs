@@ -174,6 +174,7 @@ public class CsvStreamTeamParserTests
     [DataRow("Argentina,CONMEBOL,500\nJapan,AFC,600")]
     [DataRow("Argentina,conmebol,sin ranking\nJapan,AFC,600")]
     [DataRow("Argentina,Sudamerica,500\nJapan,AFC,600")]
+    [DataRow("Uruguay,Conmebol.,18OO\nJapan,AFC,600")]
     public void ParseRejectsAFileWhoseFirstRowIsATeam(string csv)
     {
         // Sin encabezado, la primera seleccion se perdia sin aviso.
