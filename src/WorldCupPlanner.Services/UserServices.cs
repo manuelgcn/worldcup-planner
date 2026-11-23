@@ -314,7 +314,10 @@ public class UserServices : IUserService
         User user = GetUserById(userId);
 
         if (!user.PasswordMatches(currentPassword))
+        {
+            RegisterFailedLogin(LoginKeyFor(user.email), _timeProvider.GetUtcNow());
             throw new UserServicesException(WrongCurrentPasswordMessage);
+        }
 
         user.ChangePassword(currentPassword, newPassword);
         _userRepository.Update(user);
