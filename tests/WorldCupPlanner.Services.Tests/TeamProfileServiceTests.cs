@@ -154,6 +154,108 @@ public sealed class TeamProfileServiceTests
     }
 
     [TestMethod]
+    public void GetProfile_Matches_AreListedInDateOrder_SeenFromTheTeamsSide()
+    {
+        KnockoutMatch(Phase.RoundOf32, _uruguay, Rival(10, "Mexico"), day: 28);
+        PlayGroupMatch(_brasil, 2, _uruguay, 1, day: 14, stadium: Stadium(2, "Azteca"));
+        PlayGroupMatch(_uruguay, 3, _chile, 0, day: 10);
+
+        TeamProfileDto profile = _service.GetProfile(_uruguay.Id);
+
+        CollectionAssert.AreEqual(
+            new[]
+            {
+                new TeamProfileMatchDto(3, Date(10), GroupName, null, _chile.Id, "Chile", "Centenario", 3, 0, null, null, true),
+                new TeamProfileMatchDto(2, Date(14), GroupName, null, _brasil.Id, "Brasil", "Azteca", 1, 2, null, null, true),
+                new TeamProfileMatchDto(1, Date(28), null, Phase.RoundOf32, 10, "Mexico", "Centenario", 0, 0, null, null, false)
+            },
+            profile.Matches.ToArray());
+    }
+
+    [TestMethod]
+    public void GetProfile_AMatchDecidedOnPenalties_ReportsTheShootOutFromTheTeamsSide()
+    {
+        MatchElimination roundOf32 = KnockoutMatch(Phase.RoundOf32, Rival(10, "Mexico"), _uruguay, day: 28);
+        roundOf32.SetGoals(1, 1);
+        roundOf32.SetPenaltyShootoutResult(3, 5);
+
+        TeamProfileMatchDto match = _service.GetProfile(_uruguay.Id).Matches.Single();
+
+        Assert.AreEqual(5, match.PenaltiesFor);
+        Assert.AreEqual(3, match.PenaltiesAgainst);
+    }
+
+    [TestMethod]
+    public void GetProfile_WithOnlyGroupMatches_ReachedNoKnockoutRound()
+    {
+        PlayGroupMatch(_uruguay, 1, _brasil, 0);
+
+        TeamProfileDto profile = _service.GetProfile(_uruguay.Id);
+
+        Assert.IsNull(profile.RoundReached);
+        Assert.IsFalse(profile.IsChampion);
+    }
+
+    [TestMethod]
+    public void GetProfile_RoundReached_IsTheFurthestKnockoutRoundWhereTheTeamHasAMatch()
+    {
+        KnockoutMatch(Phase.RoundOf32, _uruguay, Rival(10, "Mexico"), day: 28).SetGoals(2, 0);
+        KnockoutMatch(Phase.RoundOf16, Rival(11, "Japon"), _uruguay, day: 30);
+
+        TeamProfileDto profile = _service.GetProfile(_uruguay.Id);
+
+        Assert.AreEqual(Phase.RoundOf16, profile.RoundReached);
+        Assert.IsFalse(profile.IsChampion);
+    }
+
+    [TestMethod]
+    public void GetProfile_TheThirdPlaceMatch_RanksAboveTheSemiFinal()
+    {
+        KnockoutMatch(Phase.SemiFinal, _uruguay, Rival(10, "Mexico"), day: 40).SetGoals(0, 1);
+        KnockoutMatch(Phase.ThirdPlace, _uruguay, Rival(11, "Japon"), day: 44);
+
+        TeamProfileDto profile = _service.GetProfile(_uruguay.Id);
+
+        Assert.AreEqual(Phase.ThirdPlace, profile.RoundReached);
+    }
+
+    [TestMethod]
+    public void GetProfile_TheLoserOfTheFinal_ReachedTheFinalButIsNotChampion()
+    {
+        KnockoutMatch(Phase.SemiFinal, _uruguay, Rival(10, "Mexico"), day: 40).SetGoals(1, 0);
+        KnockoutMatch(Phase.Final, _uruguay, Rival(11, "Japon"), day: 45).SetGoals(0, 1);
+
+        TeamProfileDto profile = _service.GetProfile(_uruguay.Id);
+
+        Assert.AreEqual(Phase.Final, profile.RoundReached);
+        Assert.IsFalse(profile.IsChampion);
+    }
+
+    [TestMethod]
+    public void GetProfile_TheWinnerOfTheFinal_IsChampion_AlsoWhenItWinsOnPenalties()
+    {
+        MatchElimination final = KnockoutMatch(Phase.Final, Rival(11, "Japon"), _uruguay, day: 45);
+        final.SetGoals(0, 0);
+        final.SetPenaltyShootoutResult(2, 4);
+
+        TeamProfileDto profile = _service.GetProfile(_uruguay.Id);
+
+        Assert.AreEqual(Phase.Final, profile.RoundReached);
+        Assert.IsTrue(profile.IsChampion);
+    }
+
+    [TestMethod]
+    public void GetProfile_WhileTheFinalHasNoResult_NobodyIsChampion()
+    {
+        KnockoutMatch(Phase.Final, _uruguay, Rival(11, "Japon"), day: 45);
+
+        TeamProfileDto profile = _service.GetProfile(_uruguay.Id);
+
+        Assert.AreEqual(Phase.Final, profile.RoundReached);
+        Assert.IsFalse(profile.IsChampion);
+    }
+
+    [TestMethod]
     public void AddWorldCupPlanner_RegistersTheTeamProfileService()
     {
         ServiceCollection services = new ServiceCollection();
@@ -174,9 +276,10 @@ public sealed class TeamProfileServiceTests
 
     private static Team Rival(int id, string name) => new Team(id, name, 1500, false, Confederation.UEFA);
 
-    private MatchGroup PlayGroupMatch(Team home, int homeGoals, Team away, int awayGoals, int day = 10)
+    private MatchGroup PlayGroupMatch(
+        Team home, int homeGoals, Team away, int awayGoals, int day = 10, Stadium? stadium = null)
     {
-        MatchGroup match = GroupMatch(home, away, day);
+        MatchGroup match = GroupMatch(home, away, day, stadium);
         match.SetGoals(homeGoals, awayGoals);
         _matchRepository.Add(match);
         return match;
