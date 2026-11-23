@@ -95,6 +95,48 @@ public class SessionStateTests
     }
 
     [TestMethod]
+    public async Task RestoreAsync_WhenTheUserWasRemoved_DiscardsTheSession()
+    {
+        await LoginAsync();
+        userService.Setup(service => service.GetUserById(UserId)).Throws(new UserServicesException("Usuario no encontrado"));
+
+        SessionState reloaded = OpenCircuit(tab);
+        await reloaded.RestoreAsync();
+
+        Assert.IsFalse(reloaded.IsLoggedIn);
+        Assert.IsTrue(tab.IsEmpty);
+    }
+
+    [TestMethod]
+    public async Task RestoreAsync_WhenTheServerHasOtherEncryptionKeys_DiscardsTheSession()
+    {
+        await LoginAsync();
+        SessionState restarted = new SessionState(
+            new ProtectedSessionStorage(tab, new EphemeralDataProtectionProvider()),
+            userService.Object,
+            clock,
+            logger.Object,
+            revokedSessions);
+
+        await restarted.RestoreAsync();
+
+        Assert.IsFalse(restarted.IsLoggedIn);
+        Assert.IsTrue(tab.IsEmpty);
+    }
+
+    [TestMethod]
+    public async Task RevalidateAsync_WhenTheIdNowBelongsToAnotherEmail_LogsOut()
+    {
+        SessionState session = await LoginAsync();
+        userService.Setup(service => service.GetUserById(UserId)).Returns(() => BuildUser("otra@copa.com"));
+
+        await session.RevalidateAsync();
+
+        Assert.IsFalse(session.IsLoggedIn);
+        Assert.IsTrue(tab.IsEmpty);
+    }
+
+    [TestMethod]
     public async Task RevalidateAsync_WhenARoleChangedInAnotherTab_ReadsTheUserAgain()
     {
         SessionState session = await LoginAsync();
