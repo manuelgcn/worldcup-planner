@@ -7,7 +7,11 @@
     border-top: 2px solid var(--m26-ink);
 }
 
+/* Un rótulo en dos líneas no desalinea su cifra: todas apoyan abajo. */
 .stat-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     padding: 1rem 0 1.1rem;
     border-bottom: 1px solid var(--m26-line);
 }
@@ -49,7 +53,7 @@
 
 .stat-columns {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
     column-gap: 1.25rem;
 }
 

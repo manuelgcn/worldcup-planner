@@ -112,7 +112,8 @@ else
                         <thead>
                             <tr>
                                 <th>Equipo</th>
-                                <th>Confederación</th>
+                                @* En un teléfono no entra: sin esta columna la cifra de goles queda a la vista. *@
+                                <th class="d-none d-sm-table-cell">Confederación</th>
                                 <th>Partidos</th>
                                 <th>@table.GoalsHeader</th>
                             </tr>
@@ -122,7 +123,7 @@ else
                             {
                                 <tr>
                                     <td>@team.TeamName</td>
-                                    <td><span class="m26-conf-badge conf-@team.Confederation">@team.Confederation</span></td>
+                                    <td class="d-none d-sm-table-cell"><span class="m26-conf-badge conf-@team.Confederation">@team.Confederation</span></td>
                                     <td>@team.MatchesPlayed</td>
                                     <td><strong>@table.Goals(team)</strong></td>
                                 </tr>
