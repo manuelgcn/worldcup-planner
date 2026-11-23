@@ -256,9 +256,9 @@ else
             UserServices.CreateUser(new CreateUserRequestDto
             {
                 Id = 0,
-                Name = name,
-                Lastname = lastname,
-                Email = email,
+                Name = name.Trim(),
+                Lastname = lastname.Trim(),
+                Email = email.Trim(),
                 Password = password,
                 DateOfBirth = dateOfBirth.Value,
                 InitialRole = initialRole
@@ -274,11 +274,20 @@ else
         }
     }
 
+    private const string PermissionNotConfirmedMessage =
+        "No se pudo confirmar que tengas permiso para esta acción. Recargá la página e intentá nuevamente.";
+
     // La página pudo quedar abierta después de que otro admin le quitara el rol o diera de baja a este usuario.
+    // También da falso si no se lo pudo releer: el mensaje no afirma que haya perdido el permiso.
     private async Task<bool> IsStillAdminAsync()
     {
-        await Session.RevalidateAsync();
-        return IsAdmin;
+        if (await Session.StillHasAnyRoleAsync(UserRoles.Admin))
+            return true;
+
+        if (Session.IsLoggedIn)
+            errors.Add(PermissionNotConfirmedMessage);
+
+        return false;
     }
 
     private void StartEdit(User u)
@@ -309,11 +318,11 @@ else
         try
         {
             int id = editingUserId!.Value;
-            UserServices.UpdateUser(id, name, lastname, email, Session.CurrentUser?.email);
+            UserServices.UpdateUser(id, name.Trim(), lastname.Trim(), email.Trim(), Session.CurrentUser?.email);
 
             // La sesión guarda una copia del usuario: si se editó a sí mismo, se recarga como en EditUser.
             if (id == Session.CurrentUser!.idUser)
-                await Session.LoginAsync(UserServices.GetUserById(id));
+                await Session.RefreshUserAsync();
 
             successMessage = "Usuario actualizado correctamente";
             editingUserId = null;
@@ -368,6 +377,10 @@ else
         if (!await IsStillAdminAsync())
             return;
 
+        // El botón de su propio rol Admin está deshabilitado, pero eso se quita desde el navegador.
+        if (role == UserRoles.Admin && user.idUser == Session.CurrentUser!.idUser)
+            return;
+
         try
         {
             if (user.HasRole(role))
@@ -385,7 +398,7 @@ else
 
             // El menú y los permisos leen los roles de la copia en sesión: si cambió los propios, se recarga.
             if (user.idUser == Session.CurrentUser!.idUser)
-                await Session.LoginAsync(UserServices.GetUserById(user.idUser));
+                await Session.RefreshUserAsync();
         }
         catch (Exception ex)
         {

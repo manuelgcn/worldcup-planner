@@ -378,6 +378,9 @@
         "Ocurrió un error inesperado. Revisá el estado del torneo e intentá nuevamente.";
     private const string StandingsLoadErrorMessage =
         "No se pudo cargar la tabla de posiciones del grupo. Intentá nuevamente.";
+    // No afirma que perdió el permiso: también pasa cuando no se pudo releer al usuario de la base.
+    private const string PermissionNotConfirmedMessage =
+        "No se pudo confirmar que tengas permiso para esta acción. Recargá la página e intentá nuevamente.";
     // Mismos umbrales que validan FixtureService y StadiumServices; aca solo guian el asistente.
     private const int RequiredTeamCount = 48;
     private const int MinimumStadiumCount = 4;
@@ -504,7 +507,7 @@
         }
         catch (Exception ex)
         {
-            errors.Add($"Error al cargar el estado: {ex.Message}");
+            errors.Add("Error al cargar el estado: " + UserFacingError.MessageFor(ex, Logger));
         }
     }
 
@@ -561,7 +564,8 @@
     {
         await RunAdminActionAsync(
             () => FixtureOrchestrator.GenerateGroupStage(fixtureSeedInput, selectedEngine, Session.CurrentUser?.email),
-            "Fixture generado correctamente.");
+            "Fixture generado correctamente.",
+            UserRoles.Admin, UserRoles.Editor);
     }
 
     private void StartRegenerateConfirmation()
@@ -579,7 +583,8 @@
         confirmingRegenerate = false;
         await RunAdminActionAsync(
             () => FixtureOrchestrator.RegenerateGroupStage(fixtureSeedInput, selectedEngineName: null, Session.CurrentUser?.email),
-            "Fixture regenerado correctamente.");
+            "Fixture regenerado correctamente.",
+            UserRoles.Admin, UserRoles.Editor);
     }
 
     private async Task HandleSimulateGroupStageAsync()
@@ -587,7 +592,8 @@
         int seed = simulationSeedInput ?? settings?.SimulationSeed ?? 0;
         await RunAdminActionAsync(
             () => SimulationService.SimulateGroupStage(seed, Session.CurrentUser?.email),
-            "Fase de grupos simulada correctamente.");
+            "Fase de grupos simulada correctamente.",
+            UserRoles.Admin, UserRoles.Editor);
     }
 
     private void StartDeleteConfirmation()
@@ -605,35 +611,40 @@
         confirmingDelete = false;
         await RunAdminActionAsync(
             () => FixtureOrchestrator.DeleteGroupStage(Session.CurrentUser?.email),
-            "Fixture borrado. Podés generar uno nuevo.");
+            "Fixture borrado. Podés generar uno nuevo.",
+            UserRoles.Admin);
     }
 
     private async Task HandleGenerateKnockoutAsync()
     {
         await RunAdminActionAsync(
             () => KnockoutGenerator.GenerateBracket(crossingsSeedInput, Session.CurrentUser?.email),
-            "Cruces de fase 2 generados.");
+            "Cruces de fase 2 generados.",
+            UserRoles.Admin, UserRoles.Editor);
     }
 
     private async Task HandleSimulateNextRoundAsync()
     {
         await RunAdminActionAsync(
             () => KnockoutGenerator.SimulateNextRound(Session.CurrentUser?.email),
-            "Ronda simulada.");
+            "Ronda simulada.",
+            UserRoles.Admin, UserRoles.Editor);
     }
 
     private async Task HandleSimulateUntilFinalAsync()
     {
         await RunAdminActionAsync(
             () => KnockoutGenerator.SimulateUntilFinal(Session.CurrentUser?.email),
-            "Bracket simulado hasta el final.");
+            "Bracket simulado hasta el final.",
+            UserRoles.Admin, UserRoles.Editor);
     }
 
     private async Task HandleAdvancePhaseAsync()
     {
         await RunAdminActionAsync(
             () => KnockoutGenerator.AdvanceToNextRound(Session.CurrentUser?.email),
-            "Fase avanzada. Cargá los resultados de la nueva ronda en Partidos.");
+            "Fase avanzada. Cargá los resultados de la nueva ronda en Partidos.",
+            UserRoles.Admin, UserRoles.Editor);
     }
 
     private async Task HandleFillTeamsAsync()
@@ -641,12 +652,20 @@
         int completionSeed = settings?.CompletionSeed ?? 0;
         await RunAdminActionAsync(
             () => TeamServices.FillToFortyEight(completionSeed, Session.CurrentUser?.email),
-            "Equipos demo cargados.");
+            "Equipos demo cargados.",
+            UserRoles.Admin);
     }
 
     private async Task HandleExportFixtureAsync()
     {
         errors.Clear();
+
+        if (!await Session.StillHasAnyRoleAsync(UserRoles.Admin, UserRoles.Periodista))
+        {
+            if (Session.IsLoggedIn) errors.Add(PermissionNotConfirmedMessage);
+            return;
+        }
+
         isExporting = true;
         try
         {
@@ -680,13 +699,23 @@
     {
         await RunAdminActionAsync(
             () => StadiumService.SeedDefaultStadiums(Session.CurrentUser?.email),
-            "Estadios demo cargados.");
+            "Estadios demo cargados.",
+            UserRoles.Admin);
     }
 
-    private async Task RunAdminActionAsync(Action action, string successText)
+    // Cada acción nombra los roles que la pueden correr, los mismos que muestran su botón. Se releen
+    // de la base: la página pudo quedar abierta después de que al usuario le quitaran el rol.
+    private async Task RunAdminActionAsync(Action action, string successText, params UserRoles[] allowedRoles)
     {
         errors.Clear();
         successMessage = null;
+
+        if (!await Session.StillHasAnyRoleAsync(allowedRoles))
+        {
+            if (Session.IsLoggedIn) errors.Add(PermissionNotConfirmedMessage);
+            return;
+        }
+
         isBusy = true;
         try
         {
@@ -700,7 +729,7 @@
         catch (TeamServicesException ex) { errors.Add(ex.Message); }
         catch (SettingsException ex) { errors.Add(ex.Message); }
         catch (ArgumentException ex) { errors.Add(ex.Message); }
-        catch (InvalidOperationException ex) { errors.Add(ex.Message); }
+        catch (InvalidOperationException ex) { errors.Add(UserFacingError.MessageFor(ex, Logger)); }
         catch (KnockoutGeneratorException ex) { errors.Add(ex.Message); }
         catch (Exception ex)
         {

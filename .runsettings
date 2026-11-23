@@ -12,7 +12,7 @@
         <Configuration>
           <Format>cobertura</Format>
           <Exclude>[*.Tests]*</Exclude>
-          <ExcludeByFile>**/Migrations/*.cs</ExcludeByFile>
+          <ExcludeByFile>**/Migrations/*.cs,**/*.razor,**/Program.cs</ExcludeByFile>
         </Configuration>
       </DataCollector>
     </DataCollectors>
