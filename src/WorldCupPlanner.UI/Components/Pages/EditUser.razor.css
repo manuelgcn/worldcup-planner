@@ -1,3 +1,9 @@
+/* Dos tarjetas apiladas: sin esto la grilla de .auth-wrap reparte el alto sobrante entre las dos filas. */
+.auth-wrap {
+    align-content: center;
+    gap: 1.25rem;
+}
+
 .current-mail {
     background: rgba(23, 37, 29, .06);
     border: 1px solid rgba(23, 37, 29, .12);
