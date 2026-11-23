@@ -791,6 +791,18 @@ public class UserServicesTests
         Assert.AreEqual("juan@mail.com", updated.email);
     }
 
+    // Con la cuenta en el id 1 la unica razon para rechazar es que sea el administrador del sistema.
+    [TestMethod]
+    public void ChangePassword_SystemAdmin_Throws()
+    {
+        User admin = BuildUser(1, "Admin", "Sistema", "admin@copa.com", "Admin@123", new DateTime(1990, 1, 1), UserRoles.Admin);
+        string stored = admin.password;
+        service.AddUser(admin);
+
+        Assert.ThrowsException<UserServicesException>(() => service.ChangePassword(1, "Admin@123", "Nueva456#"));
+        Assert.AreEqual(stored, admin.password);
+    }
+
     [TestMethod]
     public void RemoveRole_SystemAdmin_Throws()
     {

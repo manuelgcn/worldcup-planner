@@ -305,6 +305,10 @@ public class UserServices : IUserService
         );
     }
 
+    public void ChangePassword(int userId, string currentPassword, string newPassword)
+    {
+    }
+
     public void AssignRole(int userId, UserRoles role, string? performedByEmail = null)
     {
         User user = GetUserById(userId);
