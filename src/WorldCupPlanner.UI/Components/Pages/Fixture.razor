@@ -40,7 +40,8 @@
     }
     else
     {
-        <FeedbackAlerts Errors="errors" SuccessMessage="@successMessage" />
+        <FeedbackAlerts Errors="errors" SuccessMessage="@successMessage"
+                        FocusOnSuccess="@(successMessage != savedResultMessage)" />
 
         @if (settings is null)
         {
@@ -405,6 +406,9 @@
 
     private readonly List<string> errors = new();
     private string? successMessage;
+    // El aviso que dejó guardar un resultado en el detalle del grupo: el marcador ya se ve en su fila,
+    // así que mientras sea el que se muestra el foco se queda ahí (FeedbackAlerts.FocusOnSuccess).
+    private string? savedResultMessage;
     private bool isBusy;
 
     private bool IsAdmin =>
@@ -554,6 +558,7 @@
     {
         errors.Clear();
         successMessage = message;
+        savedResultMessage = message;
         ReloadState();
     }
 

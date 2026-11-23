@@ -24,7 +24,8 @@ else if (!IsAdmin)
 }
 else
 {
-    <FeedbackAlerts Errors="errors" SuccessMessage="@successMessage" />
+    <FeedbackAlerts Errors="errors" SuccessMessage="@successMessage"
+                    FocusOnSuccess="@(successMessage != roleChangeMessage)" />
 
     <section class="admin-stack">
         <article class="m26-card pane">
@@ -221,6 +222,9 @@ else
 
     private List<string> errors = new();
     private string? successMessage;
+    // El aviso que dejó el último cambio de rol: el botón de la fila ya muestra el resultado, así que
+    // mientras sea el que se muestra el foco se queda ahí (FeedbackAlerts.FocusOnSuccess).
+    private string? roleChangeMessage;
 
     private List<User> usuarios = new();
 
@@ -381,6 +385,7 @@ else
                 successMessage = $"Rol {role} asignado";
             }
 
+            roleChangeMessage = successMessage;
             LoadUsers();
 
             // El menú y los permisos leen los roles de la copia en sesión: si cambió los propios, se recarga.
