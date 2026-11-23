@@ -32,7 +32,7 @@
 
 .team-progress i {
     margin-right: .35rem;
-    color: var(--m26-pitch);
+    color: var(--m26-accent);
 }
 
 /* Recuento: el mismo tablero de cifras anchas de Estadísticas, con tantas columnas como entren. */
