@@ -5,6 +5,9 @@ namespace WorldCupPlanner.UI;
 public static class ImageHelper
 {
     private const string DefaultMimeType = "image/png";
+    // La firma está en los primeros bytes y esto corre en cada render de una bandera. Múltiplo de 4:
+    // un prefijo de ese largo sigue siendo base64 válido.
+    private const int SignaturePrefixLength = 256;
 
     public static string GetDataUri(string? base64, string? contentType = null)
     {
@@ -24,7 +27,7 @@ public static class ImageHelper
     {
         try
         {
-            byte[] bytes = Convert.FromBase64String(base64);
+            byte[] bytes = Convert.FromBase64String(base64[..Math.Min(SignaturePrefixLength, base64.Length)]);
 
             if (IsPng(bytes))
             {
