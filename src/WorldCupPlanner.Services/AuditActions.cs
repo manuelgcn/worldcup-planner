@@ -48,14 +48,6 @@ public static class AuditActions
 
     public const string DeleteStadium = "DELETE_STADIUM";
 
-    public const string CreateGroup = "CREATE_GROUP";
-
-    public const string DeleteGroup = "DELETE_GROUP";
-
-    public const string CreateJourney = "CREATE_JOURNEY";
-
-    public const string DeleteJourney = "DELETE_JOURNEY";
-
     public const string GenerateFixture = "GENERATE_FIXTURE";
     
     public const string RemoveUserRoles = "REMOVE_ROLES";

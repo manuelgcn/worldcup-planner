@@ -32,8 +32,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IUserService, UserServices>();
         services.AddSingleton<ITeamService, TeamServices>();
         services.AddSingleton<IStadiumService, StadiumServices>();
-        services.AddSingleton<IGroupService, GroupServices>();
-        services.AddSingleton<IJourneyService, JourneyServices>();
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IExporter, Exporter>();
         services.AddSingleton<IExportService, ExportService>();
