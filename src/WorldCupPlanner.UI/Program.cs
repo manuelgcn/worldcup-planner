@@ -81,6 +81,12 @@ if (settingsRepository.GetById(settingsId) is null)
     settingsRepository.Add(settings);
 }
 
+// Con Demo:Enabled en false nadie crea un Admin: sin uno la app no arranca, y avisa de las cuentas de demo que quedaron.
+if (!builder.Configuration.GetValue("Demo:Enabled", true))
+using (var scope = app.Services.CreateScope())
+{
+    DemoAccounts.VerifyDisabled(scope.ServiceProvider.GetRequiredService<IUserService>().GetAllUsers(), app.Logger);
+}
 
 // Cuentas de demo: se crean solo si faltan y nunca se tocan las existentes. Antes se les reasignaba
 // el rol en cada arranque, así que quien registrara uno de estos emails quedaba como Admin o Editor.
