@@ -18,9 +18,10 @@ public class SessionStateTests
     private const string NewEmail = "ana.perez@copa.com";
     private static readonly TimeSpan SessionLifetime = TimeSpan.FromHours(8);
 
-    // Un servidor: todas las pestañas comparten sus claves de cifrado, su reloj y su servicio de usuarios.
+    // Un servidor: todas las pestañas comparten sus claves de cifrado, su reloj, sus sesiones cerradas y su servicio de usuarios.
     private readonly EphemeralDataProtectionProvider dataProtection = new();
     private readonly ManualTimeProvider clock = new();
+    private readonly RevokedSessions revokedSessions = new();
     private readonly Mock<IUserService> userService = new();
     private readonly Mock<ILogger<SessionState>> logger = new();
     private readonly InMemorySessionStorageJsRuntime tab = new();
@@ -34,7 +35,7 @@ public class SessionStateTests
 
     // Cada circuito de Blazor (una carga de página) tiene su propio SessionState sobre el sessionStorage de la pestaña.
     private SessionState OpenCircuit(InMemorySessionStorageJsRuntime browserTab) =>
-        new SessionState(new ProtectedSessionStorage(browserTab, dataProtection), userService.Object, clock, logger.Object);
+        new SessionState(new ProtectedSessionStorage(browserTab, dataProtection), userService.Object, clock, logger.Object, revokedSessions);
 
     private async Task<SessionState> LoginAsync()
     {
@@ -247,5 +248,104 @@ public class SessionStateTests
                 databaseError,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
+    }
+
+    [TestMethod]
+    public async Task LogoutAsync_EndsTheSessionInADuplicatedTab()
+    {
+        SessionState session = await LoginAsync();
+        InMemorySessionStorageJsRuntime duplicatedTab = tab.CopyTab();
+        SessionState duplicate = OpenCircuit(duplicatedTab);
+        await duplicate.RestoreAsync();
+
+        await session.LogoutAsync();
+        await duplicate.RevalidateAsync();
+
+        Assert.IsFalse(duplicate.IsLoggedIn);
+        Assert.IsTrue(duplicatedTab.IsEmpty);
+    }
+
+    [TestMethod]
+    public async Task RestoreAsync_FromACopyOfALoggedOutSession_StaysLoggedOut()
+    {
+        SessionState session = await LoginAsync();
+        InMemorySessionStorageJsRuntime copiedTab = tab.CopyTab();
+        await session.LogoutAsync();
+
+        SessionState copy = OpenCircuit(copiedTab);
+        await copy.RestoreAsync();
+
+        Assert.IsFalse(copy.IsLoggedIn);
+        Assert.IsTrue(copiedTab.IsEmpty);
+    }
+
+    [TestMethod]
+    public async Task RestoreAsync_OfASessionStoredWithoutAnId_DiscardsIt()
+    {
+        userService.Setup(service => service.GetUserById(UserId)).Returns(() => BuildUser());
+        await new ProtectedSessionStorage(tab, dataProtection).SetAsync(
+            "golazo.session",
+            new { UserId, Email, ExpiresAtUtc = clock.GetUtcNow().UtcDateTime.AddHours(1) });
+
+        SessionState session = OpenCircuit(tab);
+        await session.RestoreAsync();
+
+        Assert.IsFalse(session.IsLoggedIn);
+        Assert.IsTrue(tab.IsEmpty);
+    }
+
+    [TestMethod]
+    public async Task LoginAsync_AfterLogout_StartsASessionThatIsNotRevoked()
+    {
+        SessionState session = await LoginAsync();
+        await session.LogoutAsync();
+        await session.LoginAsync(BuildUser());
+
+        await session.RevalidateAsync();
+        SessionState reloaded = OpenCircuit(tab);
+        await reloaded.RestoreAsync();
+
+        Assert.IsTrue(session.IsLoggedIn);
+        Assert.IsTrue(reloaded.IsLoggedIn);
+    }
+
+    [TestMethod]
+    public async Task LogoutAsync_DoesNotEndAnotherLoginOfTheSameUser()
+    {
+        SessionState session = await LoginAsync();
+        SessionState otherLogin = OpenCircuit(new InMemorySessionStorageJsRuntime());
+        await otherLogin.LoginAsync(BuildUser());
+
+        await session.LogoutAsync();
+        await otherLogin.RevalidateAsync();
+
+        Assert.IsTrue(otherLogin.IsLoggedIn);
+    }
+
+    [TestMethod]
+    public async Task LogoutAsync_ForgetsRevokedSessionsThatAlreadyExpired()
+    {
+        SessionState first = await LoginAsync();
+        await first.LogoutAsync();
+        int revokedAfterFirstLogout = revokedSessions.Count;
+        clock.Advance(SessionLifetime);
+
+        SessionState second = OpenCircuit(new InMemorySessionStorageJsRuntime());
+        await second.LoginAsync(BuildUser());
+        await second.LogoutAsync();
+
+        Assert.AreEqual(1, revokedAfterFirstLogout);
+        Assert.AreEqual(1, revokedSessions.Count);
+    }
+
+    [TestMethod]
+    public async Task RevalidateAsync_OfAnExpiredSession_DoesNotRememberItAsRevoked()
+    {
+        SessionState session = await LoginAsync();
+        clock.Advance(SessionLifetime);
+
+        await session.RevalidateAsync();
+
+        Assert.AreEqual(0, revokedSessions.Count);
     }
 }

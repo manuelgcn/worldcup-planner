@@ -27,7 +27,8 @@ public class SessionState
         ProtectedSessionStorage storage,
         IUserService userService,
         TimeProvider timeProvider,
-        ILogger<SessionState> logger)
+        ILogger<SessionState> logger,
+        RevokedSessions revokedSessions)
     {
         this.storage = storage;
         this.userService = userService;
