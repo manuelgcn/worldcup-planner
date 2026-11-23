@@ -243,6 +243,25 @@ public class SessionStateTests
         Assert.IsTrue(reloaded.IsLoggedIn);
     }
 
+    // La pestaña duplicada comparte el id de sesión y todavía tiene el email viejo: al descartar su copia
+    // no puede cerrar la sesión de la pestaña donde el usuario se cambió el email.
+    [TestMethod]
+    public async Task RevalidateAsync_InADuplicatedTabAfterAnEmailChange_DoesNotEndTheTabThatChangedIt()
+    {
+        SessionState session = await LoginAsync();
+        SessionState duplicate = OpenCircuit(tab.CopyTab());
+        await duplicate.RestoreAsync();
+        userService.Setup(service => service.GetUserById(UserId)).Returns(() => BuildUser(NewEmail));
+        await session.RefreshUserAsync();
+
+        await duplicate.RevalidateAsync();
+        await session.RevalidateAsync();
+
+        Assert.IsFalse(duplicate.IsLoggedIn);
+        Assert.IsTrue(session.IsLoggedIn);
+        Assert.AreEqual(0, revokedSessions.Count);
+    }
+
     [TestMethod]
     public async Task RefreshUserAsync_DoesNotRestartTheEightHours()
     {
