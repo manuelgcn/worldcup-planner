@@ -85,6 +85,21 @@ public class AuditLogRepositoryTests
         Assert.AreEqual("admin@copa.com", _repository.GetAll()[0].PerformedByEmail);
     }
 
+    // Sobre SQLite, que impone las claves foraneas: el id se guarda aunque ese usuario no exista (o ya se haya borrado).
+    [TestMethod]
+    public void AddPersistsPerformedByUserIdEvenWhenNoSuchUserExists()
+    {
+        using SqliteDbContextFactory factory = new SqliteDbContextFactory();
+        AuditLogRepository repository = new AuditLogRepository(factory);
+
+        repository.Add(AuditLog.Create("GLOBAL", "Global log", performedByEmail: "admin@copa.com", performedByUserId: 4242));
+        repository.Add(AuditLog.Create("GLOBAL", "No actor"));
+
+        List<AuditLog> logs = repository.GetAll();
+        Assert.AreEqual(4242, logs[0].PerformedByUserId);
+        Assert.IsNull(logs[1].PerformedByUserId);
+    }
+
     [TestMethod]
     public void AddKeepsMaterializingLogsWithTournamentContext()
     {
