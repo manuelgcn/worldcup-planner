@@ -5,6 +5,7 @@ using WorldCupPlanner.Services;
 using WorldCupPlanner.Services.DTOs;
 using WorldCupPlanner.Services.Exceptions;
 using WorldCupPlanner.Services.Interfaces;
+using WorldCupPlanner.Services.Parsers;
 using WorldCupPlanner.Services.Tests.TestDoubles.Mocks;
 // ReSharper disable UseCollectionExpression
 
@@ -265,6 +266,53 @@ public class ImportServiceTests
         Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
     }
 
+    [DataTestMethod]
+    [DataRow("3")]
+    [DataRow("+3")]
+    [DataRow("AFC,CAF")]
+    public void ImportTeamsThrowsWhenConfederationIsNotAName(string confederation)
+    {
+        // Enum.TryParse lee "3" como CONMEBOL y combina "AFC,CAF" en CAF: solo vale el nombre.
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, new List<TeamImportDto> { Row(2, "Atlantida", confederation, "1500") });
+
+        ImportServiceException ex = Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+
+        StringAssert.Contains(ex.Message, "Confederacion invalida. Row: 2.");
+        Assert.AreEqual(0, _teamRepository.GetAll().Count);
+    }
+
+    [DataTestMethod]
+    [DataRow("---")]
+    [DataRow("Costa\nRica")]
+    public void ImportTeamsReportsTheRowOfANameWithoutLettersOrWithControlCharacters(string name)
+    {
+        // Un campo entre comillas puede traer un salto de linea. El dominio rechaza estos nombres:
+        // el import tiene que decir en que fila, no dejar escapar la excepcion del constructor.
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, new List<TeamImportDto>
+        {
+            Row(2, "Argentina", "CONMEBOL", "500"),
+            Row(3, name, "CONCACAF", "800")
+        });
+
+        ImportServiceException ex = Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+
+        StringAssert.Contains(ex.Message, "Nombre de equipo invalido. Row: 3.");
+        Assert.AreEqual(0, _teamRepository.GetAll().Count);
+    }
+
+    [TestMethod]
+    public void ImportTeamsAcceptsTheConfederationNameInAnyCase()
+    {
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, new List<TeamImportDto> { Row(2, "Noruega", " uefa ", "1500") });
+
+        ImportResult result = _service.ImportTeams(stream);
+
+        Assert.AreEqual(Confederation.UEFA, result.ImportedTeams.Single().Confederation);
+    }
+
     [TestMethod]
     public void ImportTeamsThrowsWhenTheSameNameAppearsWithAndWithoutAccents()
     {
@@ -290,6 +338,32 @@ public class ImportServiceTests
         MockAuditLogService.LoggedAction entry = _auditLogService.LoggedActions.Single();
         Assert.AreEqual(AuditActions.ImportTeams, entry.Action);
         Assert.AreEqual("editor@copa.com", entry.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void ImportTeams_ImportsThe48TeamsOfTheSampleFile()
+    {
+        // samples/teams-wc2026-48.csv es el archivo de la demo y del DataSeeder: tiene que pasar
+        // el parser real y todas las validaciones de nombres, confederaciones y cupos.
+        ImportService service = CreateService(_teamRepository, new CsvStreamTeamParser(), _auditLogService);
+        using FileStream stream = File.OpenRead(SampleTeamsPath());
+
+        ImportResult result = service.ImportTeams(stream);
+
+        Assert.AreEqual(48, result.ImportedCount);
+        Assert.IsNull(result.WarningMessage);
+        Assert.AreEqual("México", result.ImportedTeams.First().Name);
+    }
+
+    private static string SampleTeamsPath()
+    {
+        DirectoryInfo? directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "WorldCupPlanner.sln")))
+        {
+            directory = directory.Parent;
+        }
+
+        return Path.Combine(directory!.FullName, "samples", "teams-wc2026-48.csv");
     }
 
     private static ImportService CreateService(ITeamRepository teamRepository, ITeamParser teamParser, IAuditLogService auditLogService)

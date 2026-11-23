@@ -23,7 +23,7 @@ else
     {
         <div class="m26-empty">
             <i class="bi bi-people" aria-hidden="true"></i>
-            <p class="mb-0">No hay equipos cargados.</p>
+            <p class="mb-0">Todavía no hay equipos: aparecen acá cuando un administrador los carga en Equipos o los importa.</p>
         </div>
     }
     else
@@ -58,7 +58,7 @@ else
                             <td><span class="rank-pos @PodiumClass(position)">@position</span></td>
                             <td>
                                 <TeamFlag Team="team" />
-                                @team.Name
+                                <a href="team/@team.Id">@team.Name</a>
                                 @if (team.IsFictitious)
                                 {
                                     <span class="badge bg-secondary ms-1">Ficticio</span>

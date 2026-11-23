@@ -11,7 +11,10 @@ public class EliminationBuilder
     private const int WorstSecondsCount = 4;
     private const int BestThirdsCount = 8;
 
-    private int _nextMatchId = 2000;
+    // Los partidos de grupos ocupan los ids 1..72 de la misma tabla (TPH): el R32 arranca lejos para no pisarlos.
+    private const int FirstRoundOf32MatchId = 2000;
+
+    private int _nextMatchId = FirstRoundOf32MatchId;
 
     // H2: construye el R32 respetando las categorias de CLAUDE.md §7 a partir de QualifiedTeams,
     // sin aplanar a (Team, Group) y perder la posicion (1ro/2do/3ro):

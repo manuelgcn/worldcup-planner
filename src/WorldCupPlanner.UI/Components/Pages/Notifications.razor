@@ -40,7 +40,7 @@ else
         {
             <div class="m26-empty">
                 <i class="bi bi-bell" aria-hidden="true"></i>
-                <p class="mb-0">No tenés notificaciones pendientes.</p>
+                <p class="mb-0">Estás al día: cuando se cargue un resultado nuevo, el aviso aparece acá.</p>
             </div>
         }
         else
@@ -86,16 +86,23 @@ else
         unreadNotifications = NotificationService.GetUnreadForUser(Session.CurrentUser!.idUser);
     }
 
-    private void MarkNotificationAsRead(int notificationId)
+    // La página pudo quedar abierta después de perder el rol o de cerrar la sesión en otra pestaña.
+    private async Task MarkNotificationAsRead(int notificationId)
     {
-        NotificationService.MarkAsRead(notificationId, Session.CurrentUser!.idUser);
+        if (!await Session.StillHasAnyRoleAsync(UserRoles.Periodista))
+            return;
+
+        NotificationService.MarkAsRead(notificationId, Session.CurrentUser!.idUser, Session.CurrentUser.email);
         LoadUnreadNotifications();
         Session.Refresh();
     }
 
-    private void MarkAllNotificationsAsRead()
+    private async Task MarkAllNotificationsAsRead()
     {
-        NotificationService.MarkAllAsRead(Session.CurrentUser!.idUser);
+        if (!await Session.StillHasAnyRoleAsync(UserRoles.Periodista))
+            return;
+
+        NotificationService.MarkAllAsRead(Session.CurrentUser!.idUser, Session.CurrentUser.email);
         LoadUnreadNotifications();
         Session.Refresh();
     }

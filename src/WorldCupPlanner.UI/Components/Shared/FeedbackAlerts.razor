@@ -1,28 +1,70 @@
-@* Bloque unificado de feedback (errores + exito) para no repetir el mismo markup en cada pagina. *@
+@* Bloque unificado de feedback (errores + exito) para no repetir el mismo markup en cada pagina.
+   Cuando el contenido cambia, el foco pasa al bloque: el resultado de la acción queda a la vista y
+   el teclado sigue desde ahí. El primer dibujo no mueve el foco, que al entrar va al título.
+   Con FocusOnSuccess="false" un aviso de éxito no se lleva el foco: es para acciones de una fila,
+   cuyo resultado ya se ve ahí. Los errores solo se ven acá y siempre lo reciben. *@
 
-@if (Errors is not null && Errors.Any())
-{
-    <div class="alert alert-error" role="alert">
-        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
-        Se encontraron errores:
-        <ul class="mb-0">
-            @foreach (string error in Errors)
-            {
-                <li>@error</li>
-            }
-        </ul>
-    </div>
-}
+<div class="feedback-alerts" tabindex="-1" @ref="container">
+    @if (Errors is not null && Errors.Any())
+    {
+        <div class="alert alert-error" role="alert">
+            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+            Se encontraron errores:
+            <ul class="mb-0">
+                @foreach (string error in Errors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
 
-@if (!string.IsNullOrWhiteSpace(SuccessMessage))
-{
-    <div class="alert alert-success" role="alert">
-        <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-        @SuccessMessage
+    @* La región ya está en la página antes de que llegue el mensaje: así los lectores lo anuncian. *@
+    <div role="status">
+        @if (!string.IsNullOrWhiteSpace(SuccessMessage))
+        {
+            @* @key: un mensaje distinto crea la caja de nuevo y la entrada (app.css) corre otra vez. *@
+            <div @key="SuccessMessage" class="alert alert-success feedback-success">
+                <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                @SuccessMessage
+            </div>
+        }
     </div>
-}
+</div>
 
 @code {
     [Parameter] public IReadOnlyCollection<string>? Errors { get; set; }
     [Parameter] public string? SuccessMessage { get; set; }
+    [Parameter] public bool FocusOnSuccess { get; set; } = true;
+
+    private ElementReference container;
+    // Lo que se mostró la última vez. Las páginas reusan la misma lista de errores, así que se compara el texto.
+    private string? shownContent;
+    private bool focusPending;
+
+    protected override void OnParametersSet()
+    {
+        string content = string.Join('\n', Errors ?? Array.Empty<string>()) + '\n' + SuccessMessage;
+        if (shownContent is not null && content != shownContent)
+        {
+            focusPending = true;
+        }
+        shownContent = content;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!focusPending)
+        {
+            return;
+        }
+
+        focusPending = false;
+        // Si el mensaje se borró (empieza otra acción) no hay nada que enfocar.
+        bool hasErrors = Errors is not null && Errors.Any();
+        if (!string.IsNullOrWhiteSpace(shownContent) && (hasErrors || FocusOnSuccess))
+        {
+            await container.FocusAsync();
+        }
+    }
 }

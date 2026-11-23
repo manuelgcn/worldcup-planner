@@ -138,6 +138,17 @@ public sealed class MatchQueryServiceTests
     }
 
     [TestMethod]
+    public void Search_MapsTheCurrentRankingOfBothTeams()
+    {
+        _repository.Add(GroupMatch(1, Date(10), "A", Stadium(1, "Centenario")));
+
+        MatchListItemDto item = _service.Search(new MatchFilterDto()).Single();
+
+        Assert.AreEqual(1011, item.HomeTeamRanking);
+        Assert.AreEqual(1012, item.AwayTeamRanking);
+    }
+
+    [TestMethod]
     [ExpectedException(typeof(MatchServicesException))]
     public void Search_WhenFromIsAfterTo_ThrowsServiceException()
     {

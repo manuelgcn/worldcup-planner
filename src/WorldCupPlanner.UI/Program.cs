@@ -2,12 +2,14 @@ using WorldCupPlanner.Services;
 using WorldCupPlanner.DataAccess;
 using WorldCupPlanner.DataAccess.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using WorldCupPlanner.UI;
 using WorldCupPlanner.UI.Components;
 using WorldCupPlanner.Domain;
 using WorldCupPlanner.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -20,6 +22,9 @@ string flagsDirectory = Path.Combine(
     builder.Configuration.GetValue<string>("Flags:Directory") ?? "flags-master");
 
 builder.Services.AddWorldCupPlanner(connectionString, flagsDirectory);
+builder.Services.TryAddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<RevokedSessions>();
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 builder.Services.AddScoped<SessionState>();
 
 var app = builder.Build();
@@ -36,6 +41,15 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
+
+// Después del manejador de excepciones: este limpia la respuesta y vuelve a correr solo lo que sigue,
+// así la página /Error también lleva las cabeceras.
+bool isDevelopment = app.Environment.IsDevelopment();
+app.Use((context, next) =>
+{
+    SecurityHeaders.Apply(context.Response.Headers, isDevelopment);
+    return next(context);
+});
 
 // Las rutas inexistentes muestran la página 404 de la app en vez de una respuesta vacía.
 app.UseStatusCodePagesWithReExecute("/not-found");
@@ -68,9 +82,17 @@ if (settingsRepository.GetById(settingsId) is null)
     settingsRepository.Add(settings);
 }
 
+// Con Demo:Enabled en false nadie crea un Admin: sin uno la app no arranca, y avisa de las cuentas de demo que quedaron.
+if (!builder.Configuration.GetValue("Demo:Enabled", true))
+using (var scope = app.Services.CreateScope())
+{
+    DemoAccounts.VerifyDisabled(scope.ServiceProvider.GetRequiredService<IUserService>().GetAllUsers(), app.Logger);
+}
 
 // Cuentas de demo: se crean solo si faltan y nunca se tocan las existentes. Antes se les reasignaba
 // el rol en cada arranque, así que quien registrara uno de estos emails quedaba como Admin o Editor.
+// Con Demo:Enabled en false no se crean (y /login no muestra sus credenciales).
+if (builder.Configuration.GetValue("Demo:Enabled", true))
 using (var scope = app.Services.CreateScope())
 {
     var userServices = scope.ServiceProvider.GetRequiredService<IUserService>();
@@ -93,6 +115,9 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+
+// Para el HEALTHCHECK del contenedor: 200 "Healthy" o 503 "Unhealthy", sin más detalle en el cuerpo.
+app.MapHealthChecks("/health");
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

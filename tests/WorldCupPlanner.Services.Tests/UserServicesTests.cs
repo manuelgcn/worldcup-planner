@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
+using Moq;
+using WorldCupPlanner.DataAccess.Interfaces;
 using WorldCupPlanner.Domain;
 using WorldCupPlanner.Services;
 using WorldCupPlanner.Services.DTOs;
@@ -11,6 +13,9 @@ namespace WorldCupPlanner.Services.Tests;
 [TestClass]
 public class UserServicesTests
 {
+    private const int MaxTrackedLogins = 10_000;
+    private const int MaxEmailLength = 254;
+
     private UserServices service;
     private MockUserRepository repository;
 
@@ -281,6 +286,38 @@ public class UserServicesTests
         Assert.IsTrue(audit.LoggedActions.Any(log => log.Action == AuditActions.UpgradePasswordHash && log.PerformedByEmail == "juan@mail.com"));
     }
 
+    // El "sal:hash" de 100.000 iteraciones de admin1@copa.com en db/scripts/seed-full.sql.
+    [TestMethod]
+    public void Authenticate_WithASaltedHashWeakerThanTheCurrentOne_UpgradesItAndAuditsTheUpgrade()
+    {
+        MockAuditLogService audit = new MockAuditLogService();
+        UserServices auditedService = new UserServices(repository, audit);
+        User user = new User { idUser = 1, email = "admin1@copa.com" };
+        typeof(User).GetProperty(nameof(User.password))!.SetValue(user, "NayVITcSJcByRMrVNU74ug==:mbu4770CN/kEqP065+upgXhAC4zzKJ9smvFh25ZH5BU=");
+        repository.Add(user);
+
+        auditedService.Authenticate("admin1@copa.com", "Admin@123");
+
+        StringAssert.StartsWith(user.password, "v2:600000:");
+        Assert.IsTrue(user.PasswordMatches("Admin@123"));
+        Assert.IsTrue(audit.LoggedActions.Any(log => log.Action == AuditActions.UpgradePasswordHash && log.PerformedByEmail == "admin1@copa.com"));
+    }
+
+    [TestMethod]
+    public void Authenticate_WithACurrentHash_LeavesItAsItIs()
+    {
+        MockAuditLogService audit = new MockAuditLogService();
+        UserServices auditedService = new UserServices(repository, audit);
+        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+        repository.Add(user);
+
+        auditedService.Authenticate("juan@mail.com", "Pass123@");
+
+        Assert.AreEqual(stored, user.password);
+        Assert.IsFalse(audit.LoggedActions.Any(log => log.Action == AuditActions.UpgradePasswordHash));
+    }
+
     [TestMethod]
     public void Authenticate_WithWrongPassword_Throws()
     {
@@ -294,6 +331,33 @@ public class UserServicesTests
     public void Authenticate_WithUnknownEmail_Throws()
     {
         Assert.ThrowsException<UserServicesException>(() => service.Authenticate("nobody@mail.com", "Pass123@"));
+    }
+
+    // Un email desconocido tiene que verse igual que una contrasena equivocada: mismo mensaje y mismo conteo.
+    [TestMethod]
+    public void Authenticate_WithUnknownEmail_FailsWithTheMessageOfAWrongPassword()
+    {
+        service.AddUser(BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+
+        UserServicesException wrongPassword = Assert.ThrowsException<UserServicesException>(
+            () => service.Authenticate("juan@mail.com", "Wrong123@"));
+        UserServicesException unknownEmail = Assert.ThrowsException<UserServicesException>(
+            () => service.Authenticate("nobody@mail.com", "Wrong123@"));
+
+        Assert.AreEqual(wrongPassword.Message, unknownEmail.Message);
+    }
+
+    [TestMethod]
+    public void Authenticate_WithUnknownEmail_CountsTheFailuresAndLocksIt()
+    {
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), new ManualTimeProvider());
+        FailLogins(lockingService, "nobody@mail.com", times: 5);
+
+        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.Authenticate("nobody@mail.com", "Pass123@"));
+
+        StringAssert.Contains(locked.Message, "intentos");
+        Assert.AreEqual(1, lockingService.TrackedLoginCount);
     }
 
     [TestMethod]
@@ -334,6 +398,126 @@ public class UserServicesTests
         Assert.AreEqual(1, lockingService.Authenticate("juan@mail.com", "Pass123@").idUser);
     }
 
+    [TestMethod]
+    public void Authenticate_FailuresOlderThanTheWindow_DoNotCountTowardsTheLock()
+    {
+        ManualTimeProvider clock = new ManualTimeProvider();
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), clock);
+        lockingService.AddUser(BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+        FailLogins(lockingService, "juan@mail.com", times: 4);
+
+        clock.Advance(TimeSpan.FromDays(7));
+        FailLogins(lockingService, "juan@mail.com", times: 1);
+
+        Assert.AreEqual(1, lockingService.Authenticate("juan@mail.com", "Pass123@").idUser);
+    }
+
+    // Guarda: el bloqueo dura cinco minutos desde el quinto fallo, no desde el primero.
+    [TestMethod]
+    public void Authenticate_LockLastsFiveMinutesFromTheFifthFailure()
+    {
+        ManualTimeProvider clock = new ManualTimeProvider();
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), clock);
+        lockingService.AddUser(BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+        FailLogins(lockingService, "juan@mail.com", times: 4);
+        clock.Advance(TimeSpan.FromMinutes(4));
+        FailLogins(lockingService, "juan@mail.com", times: 1);
+
+        clock.Advance(TimeSpan.FromMinutes(4));
+
+        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.Authenticate("juan@mail.com", "Pass123@"));
+        StringAssert.Contains(locked.Message, "intentos");
+    }
+
+    [TestMethod]
+    public void Authenticate_WhenTrackedEmailsReachTheCap_ForgetsTheExpiredOnes()
+    {
+        ManualTimeProvider clock = new ManualTimeProvider();
+        UserServices lockingService = new UserServices(AccountsThatFailFast("random"), new MockAuditLogService(), clock);
+        FailLoginOnDistinctEmails(lockingService, "random", MaxTrackedLogins);
+
+        clock.Advance(TimeSpan.FromMinutes(5));
+        FailLogins(lockingService, "nobody@mail.com", times: 1);
+
+        Assert.AreEqual(1, lockingService.TrackedLoginCount);
+    }
+
+    [TestMethod]
+    public void Authenticate_WhenTheCapIsFullOfLiveEntries_DropsTheOneClosestToExpiry()
+    {
+        ManualTimeProvider clock = new ManualTimeProvider();
+        UserServices lockingService = new UserServices(AccountsThatFailFast("random"), new MockAuditLogService(), clock);
+        FailLogins(lockingService, "oldest@mail.com", times: 4);
+        clock.Advance(TimeSpan.FromMinutes(1));
+        FailLogins(lockingService, "locked@mail.com", times: 5);
+        FailLoginOnDistinctEmails(lockingService, "random", MaxTrackedLogins - 2);
+
+        FailLogins(lockingService, "nobody@mail.com", times: 1);
+
+        Assert.AreEqual(MaxTrackedLogins, lockingService.TrackedLoginCount);
+        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.Authenticate("locked@mail.com", "Pass123@"));
+        StringAssert.Contains(locked.Message, "intentos");
+
+        // Si "oldest" siguiera en memoria, este seria su quinto fallo y el intento siguiente quedaria bloqueado.
+        FailLogins(lockingService, "oldest@mail.com", times: 1);
+        UserServicesException forgotten = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.Authenticate("oldest@mail.com", "Pass123@"));
+        StringAssert.Contains(forgotten.Message, "Credenciales");
+    }
+
+    // La base puede resolver a la misma cuenta un email escrito distinto (aca, con una "j" de ancho completo).
+    [TestMethod]
+    public void Authenticate_WithSpellingsTheDatabaseMapsToOneAccount_SharesOneCounter()
+    {
+        const string storedEmail = "juan@mail.com";
+        const string fullWidthSpelling = "ｊuan@mail.com";
+        User user = BuildUser(1, "Juan", "Perez", storedEmail, "Pass123@", new DateTime(1990, 5, 15));
+        Mock<IUserRepository> collatingRepository = new Mock<IUserRepository>();
+        collatingRepository.Setup(users => users.GetByEmail(It.IsIn(storedEmail, fullWidthSpelling))).Returns(user);
+        UserServices lockingService = new UserServices(
+            collatingRepository.Object, new MockAuditLogService(), new ManualTimeProvider());
+        FailLogins(lockingService, storedEmail, times: 3);
+        FailLogins(lockingService, fullWidthSpelling, times: 2);
+
+        foreach (string spelling in new[] { storedEmail, fullWidthSpelling })
+        {
+            UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+                () => lockingService.Authenticate(spelling, "Pass123@"));
+            StringAssert.Contains(locked.Message, "intentos");
+        }
+    }
+
+    // Un email mas largo que el de cualquier cuenta no puede ocupar memoria sin limite como clave.
+    [TestMethod]
+    public void Authenticate_WithEmailsLongerThanAnyAccount_TracksOnlyTheirFirstCharacters()
+    {
+        string sharedStart = new string('a', MaxEmailLength);
+        FailLogins(service, sharedStart + "1@mail.com", times: 1);
+        FailLogins(service, sharedStart + "2@mail.com", times: 1);
+
+        Assert.AreEqual(1, service.TrackedLoginCount);
+    }
+
+    // Los emails que empiezan con el prefijo son cuentas con el hash vacio, que nunca coincide ni pasa por PBKDF2:
+    // asi llenar el tope con miles de emails no depende de cuanto cueste verificar una contrasena.
+    private static IUserRepository AccountsThatFailFast(string prefix)
+    {
+        Mock<IUserRepository> accounts = new Mock<IUserRepository>();
+        accounts.Setup(users => users.GetByEmail(It.Is<string>(email => email.StartsWith(prefix))))
+            .Returns((string email) => new User { email = email });
+        return accounts.Object;
+    }
+
+    private static void FailLoginOnDistinctEmails(UserServices target, string prefix, int emails)
+    {
+        for (int index = 0; index < emails; index++)
+        {
+            FailLogins(target, $"{prefix}{index}@mail.com", times: 1);
+        }
+    }
+
     private static void FailLogins(UserServices target, string email, int times)
     {
         for (int attempt = 0; attempt < times; attempt++)
@@ -372,10 +556,10 @@ public class UserServicesTests
             AuditLogService.CreateInstance(auditRepo)
         );
 
-        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
         auditedService.AddUser(user);
 
-        auditedService.AssignRole(1, UserRoles.Admin);
+        auditedService.AssignRole(2, UserRoles.Admin);
 
         Assert.IsTrue(auditRepo.GetAll().Any(log => log.Action == "ASSIGN_USER_ROLE"));
     }
@@ -484,15 +668,27 @@ public class UserServicesTests
     [TestMethod]
     public void AdminCanAssignRoleToUser()
     {
-        User user = BuildUser(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
 
         service.AddUser(user);
 
-        service.AssignRole(1, UserRoles.Admin);
+        service.AssignRole(2, UserRoles.Admin);
 
-        User updated = service.GetUserById(1);
+        User updated = service.GetUserById(2);
 
         Assert.IsTrue(updated.HasRole(UserRoles.Admin));
+    }
+
+    [TestMethod]
+    public void AssignRole_SystemAdmin_ThrowsAndAddsNoRole()
+    {
+        // Con el usuario cargado: sin el, "no encontrado" haria pasar el test sin ninguna guarda.
+        service.AddUser(BuildUser(1, "Admin", "Sistema", "admin@mail.com", "Pass123@", new DateTime(1985, 1, 1), UserRoles.Admin));
+
+        Assert.ThrowsException<UserServicesException>(() =>
+            service.AssignRole(1, UserRoles.Editor, performedByEmail: "admin@mail.com"));
+
+        Assert.IsFalse(service.GetUserById(1).HasRole(UserRoles.Editor));
     }
 
     [TestMethod]
@@ -605,6 +801,162 @@ public class UserServicesTests
         User updated = service.GetUserById(2);
         Assert.AreEqual("Juan Carlos", updated.name);
         Assert.AreEqual("juan@mail.com", updated.email);
+    }
+
+    // Con la cuenta en el id 1 la unica razon para rechazar es que sea el administrador del sistema.
+    [TestMethod]
+    public void ChangePassword_SystemAdmin_Throws()
+    {
+        User admin = BuildUser(1, "Admin", "Sistema", "admin@copa.com", "Admin@123", new DateTime(1990, 1, 1), UserRoles.Admin);
+        string stored = admin.password;
+        service.AddUser(admin);
+
+        Assert.ThrowsException<UserServicesException>(() => service.ChangePassword(1, "Admin@123", "Nueva456#"));
+        Assert.AreEqual(stored, admin.password);
+    }
+
+    [TestMethod]
+    public void ChangePassword_UserThatDoesNotExist_Throws()
+    {
+        Assert.ThrowsException<UserServicesException>(() => service.ChangePassword(99, "Pass123@", "Nueva456#"));
+    }
+
+    // MockUserRepository.Update no hace nada: con Moq se comprueba que el hash nuevo se manda a guardar.
+    [TestMethod]
+    public void ChangePassword_WithTheCurrentPassword_StoresTheNewOne()
+    {
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        Mock<IUserRepository> users = new Mock<IUserRepository>();
+        users.Setup(repo => repo.GetById(2)).Returns(user);
+        UserServices changingService = new UserServices(users.Object, new MockAuditLogService());
+
+        changingService.ChangePassword(2, "Pass123@", "Nueva456#");
+
+        Assert.IsTrue(user.PasswordMatches("Nueva456#"));
+        Assert.IsFalse(user.PasswordMatches("Pass123@"));
+        users.Verify(repo => repo.Update(user), Times.Once);
+    }
+
+    [TestMethod]
+    public void ChangePassword_WithAWrongCurrentPassword_ThrowsAndKeepsTheOldOne()
+    {
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+        service.AddUser(user);
+
+        UserServicesException error = Assert.ThrowsException<UserServicesException>(
+            () => service.ChangePassword(2, "Wrong123@", "Nueva456#"));
+
+        StringAssert.Contains(error.Message, "contraseña actual");
+        Assert.AreEqual(stored, user.password);
+    }
+
+    // El mismo contador y la misma clave que el login: los fallos de los dos caminos se suman,
+    // aunque el email guardado tenga mayusculas.
+    [TestMethod]
+    public void ChangePassword_WrongCurrentPasswords_CountAsFailedLogins()
+    {
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), new ManualTimeProvider());
+        lockingService.AddUser(BuildUser(2, "Juan", "Perez", "Juan@Mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+        FailPasswordChanges(lockingService, userId: 2, times: 3);
+        FailLogins(lockingService, "Juan@Mail.com", times: 2);
+
+        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.Authenticate("Juan@Mail.com", "Pass123@"));
+
+        StringAssert.Contains(locked.Message, "intentos");
+    }
+
+    [TestMethod]
+    public void ChangePassword_WhenTheAccountIsLocked_RefusesEvenTheRightPassword()
+    {
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), new ManualTimeProvider());
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+        lockingService.AddUser(user);
+        FailLogins(lockingService, "juan@mail.com", times: 5);
+
+        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.ChangePassword(2, "Pass123@", "Nueva456#"));
+
+        StringAssert.Contains(locked.Message, "intentos");
+        Assert.AreEqual(stored, user.password);
+    }
+
+    // El perfil deja cambiar el email sin pedir la contrasena: con el contador bajo el email viejo,
+    // cada cambio de email daba otros cinco intentos.
+    [TestMethod]
+    public void UpdateUser_ThatChangesTheEmail_KeepsTheFailedLoginsOfTheAccount()
+    {
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), new ManualTimeProvider());
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+        lockingService.AddUser(user);
+        FailPasswordChanges(lockingService, userId: 2, times: 5);
+
+        lockingService.UpdateUser(2, "Juan", "Perez", "otro@mail.com");
+
+        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.ChangePassword(2, "Pass123@", "Nueva456#"));
+
+        StringAssert.Contains(locked.Message, "intentos");
+        Assert.AreEqual(stored, user.password);
+    }
+
+    // Igual que un login correcto: quien acaba de probar la contrasena actual no arrastra sus errores de tipeo.
+    [TestMethod]
+    public void ChangePassword_ThatSucceeds_ForgetsTheFailedLogins()
+    {
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), new ManualTimeProvider());
+        lockingService.AddUser(BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+        FailPasswordChanges(lockingService, userId: 2, times: 4);
+
+        lockingService.ChangePassword(2, "Pass123@", "Nueva456#");
+        FailLogins(lockingService, "juan@mail.com", times: 1);
+
+        Assert.AreEqual(2, lockingService.Authenticate("juan@mail.com", "Nueva456#").idUser);
+    }
+
+    [TestMethod]
+    public void ChangePassword_AuditsTheChangeWithoutAnyPassword()
+    {
+        MockAuditLogService audit = new MockAuditLogService();
+        UserServices auditedService = new UserServices(repository, audit);
+        repository.Add(BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+
+        auditedService.ChangePassword(2, "Pass123@", "Nueva456#");
+
+        MockAuditLogService.LoggedAction log = audit.LoggedActions.Single();
+        Assert.AreEqual("CHANGE_PASSWORD", log.Action);
+        Assert.AreEqual("juan@mail.com", log.PerformedByEmail);
+        Assert.AreEqual(2, log.AffectedEntityId);
+        Assert.IsFalse(log.Details.Contains("Pass123@"));
+        Assert.IsFalse(log.Details.Contains("Nueva456#"));
+    }
+
+    // Guarda: un cambio rechazado, por la contrasena actual o por la politica de la nueva, no guarda ni audita nada.
+    [TestMethod]
+    public void ChangePassword_ThatIsRejected_SavesAndAuditsNothing()
+    {
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        Mock<IUserRepository> users = new Mock<IUserRepository>();
+        users.Setup(repo => repo.GetById(2)).Returns(user);
+        MockAuditLogService audit = new MockAuditLogService();
+        UserServices auditedService = new UserServices(users.Object, audit);
+
+        Assert.ThrowsException<UserServicesException>(() => auditedService.ChangePassword(2, "Wrong123@", "Nueva456#"));
+        Assert.ThrowsException<ArgumentException>(() => auditedService.ChangePassword(2, "Pass123@", "corta"));
+
+        users.Verify(repo => repo.Update(It.IsAny<User>()), Times.Never);
+        Assert.AreEqual(0, audit.LoggedActions.Count);
+    }
+
+    private static void FailPasswordChanges(UserServices target, int userId, int times)
+    {
+        for (int attempt = 0; attempt < times; attempt++)
+        {
+            Assert.ThrowsException<UserServicesException>(() => target.ChangePassword(userId, "Wrong123@", "Nueva456#"));
+        }
     }
 
     [TestMethod]

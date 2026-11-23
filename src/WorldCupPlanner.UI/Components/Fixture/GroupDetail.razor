@@ -20,7 +20,7 @@
 
     @if (Matches.Count == 0)
     {
-        <p>No hay partidos persistidos para este grupo.</p>
+        <p>Este grupo no tiene partidos: hay que volver a generar el fixture.</p>
     }
     else
     {
@@ -49,9 +49,8 @@
                             <td>@match.MatchDate.ToString("dd/MM HH:mm")</td>
                             <td><TeamFlag Team="match.HomeTeam" />@match.HomeTeam?.Name</td>
                             <td>
-                                <span class="m26-score @(IsPlayed(match) ? "" : "pending")">
-                                    @(IsPlayed(match) ? $"{match.HomeGoals} - {match.AwayGoals}" : "vs")
-                                </span>
+                                <ScoreCell @key="match.MatchId" Played="IsPlayed(match)"
+                                           HomeGoals="match.HomeGoals" AwayGoals="match.AwayGoals" />
                             </td>
                             <td><TeamFlag Team="match.AwayTeam" />@match.AwayTeam?.Name</td>
                             <td>@match.Stadium?.Name</td>

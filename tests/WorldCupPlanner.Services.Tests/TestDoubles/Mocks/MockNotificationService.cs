@@ -45,11 +45,11 @@ public sealed class MockNotificationService : INotificationService
         return 0;
     }
 
-    public void MarkAsRead(int notificationId, int userId)
+    public void MarkAsRead(int notificationId, int userId, string? performedByEmail = null)
     {
     }
 
-    public void MarkAllAsRead(int userId)
+    public void MarkAllAsRead(int userId, string? performedByEmail = null)
     {
     }
 

@@ -70,6 +70,35 @@
             }
         </div>
     </div>
+
+    @if (Session.IsLoggedIn)
+    {
+        <div class="m26-card auth-card">
+            <div class="auth-body">
+                <h2 class="pane-title">Cambiar contraseña</h2>
+
+                @if (Session.CurrentUser!.idUser == SystemAdminUserId)
+                {
+                    <p class="mb-0">La contraseña del administrador del sistema no se puede cambiar.</p>
+                }
+                else
+                {
+                    <FeedbackAlerts Errors="passwordErrors" SuccessMessage="@passwordSuccessMessage" />
+
+                    <form @onsubmit="ChangePassword">
+                        <PasswordField Id="currentPassword" Label="Contraseña actual" Autocomplete="current-password"
+                                       @bind-Value="currentPassword" />
+                        <PasswordField Id="newPassword" Label="Contraseña nueva" Autocomplete="new-password"
+                                       @bind-Value="newPassword" ShowRules="true" />
+                        <PasswordField Id="repeatNewPassword" Label="Repetir contraseña nueva" Autocomplete="new-password"
+                                       @bind-Value="repeatNewPassword" />
+
+                        <button class="btn btn-primary w-100" type="submit">Cambiar contraseña</button>
+                    </form>
+                }
+            </div>
+        </div>
+    }
 </section>
 
 @code {
@@ -94,13 +123,26 @@
         email = Session.CurrentUser.email;
     }
 
+    private const string SessionEndedMessage = "Tu sesión terminó. Ingresá de nuevo.";
+    private const string SessionNotConfirmedMessage = "No se pudo confirmar tu sesión. Intentá nuevamente.";
+
     private async Task Save()
     {
         errors.Clear();
         successMessage = null;
 
+        // La página pudo quedar abierta después de que la sesión venciera o se cerrara en otra pestaña.
+        // También da falso si no se pudo releer al usuario: ahí la sesión sigue y solo se pide reintentar.
+        if (!await Session.RevalidateAsync())
+        {
+            errors.Add(Session.IsLoggedIn ? SessionNotConfirmedMessage : SessionEndedMessage);
+            return;
+        }
+
         if (!ValidateInput())
             return;
+
+        (name, lastname, email) = (name.Trim(), lastname.Trim(), email.Trim());
 
         try
         {
@@ -113,7 +155,7 @@
             );
 
             // La sesión guarda una copia del usuario: se recarga para que el layout y "Email actual" reflejen el cambio.
-            await Session.LoginAsync(UserServices.GetUserById(Session.CurrentUser!.idUser));
+            await Session.RefreshUserAsync();
             successMessage = "Usuario actualizado correctamente";
         }
         catch (Exception ex)
@@ -136,5 +178,74 @@
             errors.Add("El email no es válido.");
 
         return !errors.Any();
+    }
+
+    // Mismo id reservado que UserServices: el servicio rechaza cambiarle la contraseña a esa cuenta.
+    private const int SystemAdminUserId = 1;
+    private const string MissingCurrentPasswordMessage = "Ingresá tu contraseña actual.";
+    private const string MissingNewPasswordMessage = "Ingresá la contraseña nueva.";
+    private const string NewPasswordsDoNotMatchMessage = "Las dos contraseñas nuevas no coinciden.";
+    private const string PasswordChangedMessage = "Contraseña cambiada correctamente. Se cerraron las demás sesiones abiertas de tu cuenta.";
+
+    private string currentPassword = "";
+    private string newPassword = "";
+    private string repeatNewPassword = "";
+    private string? passwordSuccessMessage;
+    private readonly List<string> passwordErrors = new List<string>();
+
+    private async Task ChangePassword()
+    {
+        passwordErrors.Clear();
+        passwordSuccessMessage = null;
+
+        // Igual que Save: la página pudo quedar abierta con la sesión vencida o cerrada en otra pestaña.
+        if (!await Session.RevalidateAsync())
+        {
+            if (Session.IsLoggedIn)
+            {
+                passwordErrors.Add(SessionNotConfirmedMessage);
+                return;
+            }
+
+            // Sin sesión esta tarjeta deja de mostrarse: el aviso va en la de arriba, que sigue en pantalla.
+            errors.Clear();
+            successMessage = null;
+            errors.Add(SessionEndedMessage);
+            return;
+        }
+
+        // Se revisa antes de llamar al servicio: un error de tipeo al repetir no tiene que contar como intento fallido.
+        if (!ValidatePasswordInput())
+            return;
+
+        try
+        {
+            UserServices.ChangePassword(Session.CurrentUser!.idUser, currentPassword, newPassword);
+
+            // La sesión está atada a la contraseña: esta pestaña toma la nueva y las demás sesiones se cierran.
+            await Session.RefreshUserAsync();
+
+            currentPassword = "";
+            newPassword = "";
+            repeatNewPassword = "";
+            passwordSuccessMessage = PasswordChangedMessage;
+        }
+        catch (Exception ex)
+        {
+            passwordErrors.Add(UserFacingError.MessageFor(ex, Logger));
+        }
+    }
+
+    private bool ValidatePasswordInput()
+    {
+        if (string.IsNullOrEmpty(currentPassword))
+            passwordErrors.Add(MissingCurrentPasswordMessage);
+
+        if (string.IsNullOrEmpty(newPassword))
+            passwordErrors.Add(MissingNewPasswordMessage);
+        else if (newPassword != repeatNewPassword)
+            passwordErrors.Add(NewPasswordsDoNotMatchMessage);
+
+        return !passwordErrors.Any();
     }
 }

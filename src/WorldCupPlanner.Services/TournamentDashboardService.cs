@@ -17,27 +17,24 @@ public class TournamentDashboardService(
 {
     public TournamentDashboardDto GetOverview()
     {
-        List<Match> matches = matchRepository.GetAll();
-
         return new TournamentDashboardDto
         {
-            TeamCount = teamRepository.GetAll().Count,
-            StadiumCount = stadiumRepository.GetAll().Count,
-            TotalMatches = matches.Count,
-            PlayedMatches = matches.Count(IsPlayed),
+            TeamCount = teamRepository.Count(),
+            StadiumCount = stadiumRepository.Count(),
+            TotalMatches = matchRepository.Count(),
+            PlayedMatches = matchRepository.CountPlayed(),
             IsFixtureGenerated = fixtureOrchestrator.IsFixtureGenerated(),
             IsKnockoutGenerated = fixtureOrchestrator.IsKnockoutGenerated(),
-            ChampionName = FindChampionName(matches)
+            ChampionName = FindChampionName()
         };
     }
 
-    private static bool IsPlayed(Match match) => match.HasResult;
-
-    private static string? FindChampionName(IEnumerable<Match> matches)
+    // Solo se lee la final (consulta filtrada por fase), no toda la tabla de partidos.
+    private string? FindChampionName()
     {
-        MatchElimination? final = matches
+        MatchElimination? final = matchRepository.GetByPhase(Phase.Final)
             .OfType<MatchElimination>()
-            .FirstOrDefault(match => match.Phase == Phase.Final);
+            .FirstOrDefault();
 
         if (final is null || !final.HasResult)
         {

@@ -14,8 +14,9 @@ University project for *Diseño de Aplicaciones 1*, Universidad ORT Uruguay (202
 
 ## Highlights
 
-- **1,040 automated tests and 98% line coverage** (migrations excluded), as of November 2026:
-  333 on the domain, 557 on the services and 150 on data access. They run in CI and need no database.
+- **1,258 automated tests and about 97% line coverage** (migrations, Razor components and
+  `Program.cs` excluded), as of November 2026: 408 on the domain, 606 on the services, 164 on
+  data access and 80 on the UI's helper classes. They run in CI and need no database.
 - **Written with TDD.** The history has one commit per RED, GREEN and REFACTOR step.
 - **Layered architecture.** The UI only presents, the services hold the use cases, and the
   domain depends on nothing.
@@ -26,17 +27,21 @@ University project for *Diseño de Aplicaciones 1*, Universidad ORT Uruguay (202
 
 ## Features
 
-- Teams with confederation, FIFA ranking and flag, entered by hand or imported from CSV
-  (a 48-team sample is in `samples/`).
+- Teams with confederation, FIFA ranking and flag, entered by hand or imported from a UTF-8 CSV
+  with a header row (a 48-team sample is in `samples/`).
 - Stadiums, and a group draw into 12 groups of 4 that respects confederation quotas.
 - Group-stage fixture with dates, kick-off times and stadium rotation.
 - Standings per group and the full knockout bracket, including penalties and the third-place match.
 - Two interchangeable simulation engines (probabilistic and pure random); results can also be entered by hand.
-- Elo ranking recalculated after every result.
+- Elo ranking recalculated after every result, and an Elo-based forecast (home win, draw, away win)
+  next to each match that has not been played.
+- Tournament statistics (`/stats`) and a profile page per team (`/team/{id}`) with its record,
+  its matches and how far it got.
 - Roles: Admin, Editor and Journalist. Journalists are notified of match results.
-- Sessions survive reloads within a browser tab for up to eight hours; five failed logins
-  lock an email for five minutes.
-- CSV and XLSX export of the fixture and of the audit log, which records every change with its author and time.
+- Users change their own password from their profile ("Mi perfil").
+- CSV and XLSX export of the fixture and of the audit log, which records every change with its
+  author and time; the fixture also exports as an iCalendar (`.ics`) file.
+- Day and night themes, with a toggle that remembers the choice.
 
 ![Group standings after the group stage](docs/screenshots/group-stage.png)
 
@@ -57,6 +62,22 @@ University project for *Diseño de Aplicaciones 1*, Universidad ORT Uruguay (202
   the knockout stage exists; a knockout match locks once the next round is built from it, and
   it cannot end in a draw.
 
+## Security
+
+- Passwords are stored as salted PBKDF2-SHA256 hashes that carry their version and iteration
+  count (600,000 today); an older hash is replaced on its owner's next login. Five failed
+  logins within five minutes lock an email for five minutes.
+- A session survives reloads within a browser tab for up to eight hours. Logging out revokes it,
+  in duplicated tabs too, changing the password ends the account's other sessions, and the
+  user's roles are read again from the database before every action that changes or exports data.
+- Every response carries security headers and a Content-Security-Policy that only lets scripts
+  load from the app itself (`src/WorldCupPlanner.UI/SecurityHeaders.cs`).
+- The CSV import refuses a file that is not valid UTF-8 or has no header row, and a flag upload
+  must be a PNG, JPEG, WebP or SVG image by content.
+- Audit rows keep the actor's email and user id.
+
+To report a vulnerability see [SECURITY.md](SECURITY.md). Known weaknesses are listed in [TODO.md](TODO.md).
+
 ## Getting started
 
 Requirements: [.NET 8 SDK](https://dotnet.microsoft.com/download) and [Docker](https://www.docker.com/).
@@ -69,7 +90,8 @@ dotnet run --project src/WorldCupPlanner.UI
 
 The database is Azure SQL Edge, which also runs on ARM64. Its port is published on
 `127.0.0.1` only. On startup the app applies pending migrations and creates the tournament
-settings and the three default users if they are missing. Open the URL printed in the console.
+settings and, unless `Demo:Enabled` is `false`, the three demo users if they are missing. Open
+the URL printed in the console.
 
 To load a demo tournament (48 teams with flags, 5 stadiums, 6 extra users and a simulated
 group stage), run the seeder. It resets the database first.
@@ -77,6 +99,19 @@ group stage), run the seeder. It resets the database first.
 ```bash
 dotnet run --project src/WorldCupPlanner.DataSeeder
 ```
+
+### Docker
+
+The app can also run in a container next to the database:
+
+```bash
+docker compose --profile app up
+```
+
+The image is built from the root `Dockerfile`, runs as a non-root user and is published on
+`http://127.0.0.1:8080`; without the profile, Compose still starts only the database.
+`GET /health` answers `200 Healthy` when the database can be reached and `503 Unhealthy` when
+it cannot, with no other detail; the container's health check uses it.
 
 ### Accounts
 
@@ -89,6 +124,9 @@ dotnet run --project src/WorldCupPlanner.DataSeeder
 | Editor | editor1@copa.com | Editor@123 | Demo seeder |
 | Journalist | periodista1@copa.com | Prensa@123 | Demo seeder |
 
+The startup accounts are only created while `Demo:Enabled` is `true`. A password above only
+holds until its owner changes it from "Mi perfil"; the system admin (user id 1) cannot.
+
 ### Configuration
 
 Settings live in `src/WorldCupPlanner.UI/appsettings.json`:
@@ -98,7 +136,14 @@ Settings live in `src/WorldCupPlanner.UI/appsettings.json`:
   Windows `localhost` resolves to `::1`, which Docker does not forward to SQL Edge.
 - `TournamentSettings`: start date, maximum matches per day, days between matchdays and the
   four seeds (`FixtureSeed`, `CrossingsSeed`, `SimulationSeed`, `CompletionSeed`). They are
-  only read when the database has no settings yet.
+  only read when the database has no settings yet. `MaxMatchesPerDay` (1 to 3) counts kick-off
+  slots per stadium and day in the group stage and matches per day in the knockout stage.
+  `DaysBetweenJourneys` is the minimum gap between a group's matchdays, which are spaced
+  further apart when one does not fit in it, and the gap between knockout rounds; the final
+  is played the day after the third-place match.
+- `Demo:Enabled` (default `true`): creates the three demo accounts at startup and shows their
+  credentials on `/login`. With `false` neither happens, existing accounts are left as they
+  are, and the app refuses to start unless some user has the Admin role.
 - `Flags:Directory`: the folder with the flag images, relative to the UI project.
 
 ## Tests
@@ -114,9 +159,12 @@ need real foreign keys use SQLite in memory. One suite per layer:
 dotnet test tests/WorldCupPlanner.Domain.Tests
 dotnet test tests/WorldCupPlanner.Services.Tests
 dotnet test tests/WorldCupPlanner.DataAccess.Tests
+dotnet test tests/WorldCupPlanner.UI.Tests
 ```
 
 CI runs build, tests and a coverage report on every push and pull request to `main` and `develop`.
+CodeQL analyses the C# code on the same events and once a week, and Dependabot proposes NuGet,
+GitHub Actions and Docker updates weekly.
 
 ## Architecture
 
@@ -143,11 +191,14 @@ Main libraries: EF Core 8 (SQL Server provider), CsvHelper for CSV and ClosedXML
 
 ```
 src/        application projects
-tests/      one MSTest project per layer
+tests/      one MSTest project per layer: Domain, Services, DataAccess and UI
 docs/       architecture notes and screenshots
 samples/    sample CSV with the 48 teams
 db/         SQL seed scripts and database backups used by the release package
 scripts/    release packaging and the Windows start/seed scripts
+.github/    CI, CodeQL and release workflows, Dependabot configuration and agent skills
+Dockerfile  container image of the UI, used by the "app" profile of docker-compose.yml
+SECURITY.md how to report a vulnerability
 ```
 
 ## Release package

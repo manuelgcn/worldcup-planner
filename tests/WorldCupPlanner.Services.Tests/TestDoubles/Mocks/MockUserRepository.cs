@@ -20,6 +20,14 @@ public class MockUserRepository : IUserRepository
         return users.ToList();
     }
 
+    public int GetByRoleCalls { get; private set; }
+
+    public IReadOnlyCollection<User> GetByRole(UserRoles role)
+    {
+        GetByRoleCalls++;
+        return users.Where(u => u.HasRole(role)).ToList();
+    }
+
     public User? GetById(int id)
     {
         return users.FirstOrDefault(u => u.idUser == id);

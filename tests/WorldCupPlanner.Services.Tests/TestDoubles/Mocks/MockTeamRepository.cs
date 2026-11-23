@@ -11,6 +11,7 @@ public sealed class MockTeamRepository : ITeamRepository
     public int UpdateCalls { get; private set; }
     public int DeleteCalls { get; private set; }
     public int ExistsByNameCalls { get; private set; }
+    public int GetAllCalls { get; private set; }
 
     public void Add(Team team)
     {
@@ -50,8 +51,11 @@ public sealed class MockTeamRepository : ITeamRepository
 
     public IReadOnlyCollection<Team> GetAll()
     {
+        GetAllCalls++;
         return _teams.Values.ToList();
     }
+
+    public int Count() => _teams.Count;
 
     public int CountByConfederation(Confederation confederation)
     {

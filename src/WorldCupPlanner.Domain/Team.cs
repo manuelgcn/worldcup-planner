@@ -6,6 +6,8 @@ public class Team
     private const int MinFifaRanking = 300;
     private const int MaxFifaRanking = 2500;
     private const string InvalidNameMessage = "El nombre del equipo no puede estar vacio.";
+    private const string NameHasControlCharactersMessage = "El nombre del equipo no puede tener saltos de línea ni otros caracteres de control.";
+    private const string NameWithoutLettersOrDigitsMessage = "El nombre del equipo debe tener al menos una letra o un número.";
     private const string FifaRankingOutOfRangeMessage = "El ranking FIFA debe estar entre {0} y {1}.";
     private const string InvalidFlagMessage = "La bandera debe ser una cadena base64 valida.";
     private const int MaxFlagBytes = 200 * 1024;
@@ -18,6 +20,13 @@ public class Team
     public bool IsFictitious { get; }
     public Confederation Confederation { get; }
     public string? FlagBase64 { get; private set; }
+
+    // Solo para EF Core, que lo prefiere al leer: las reglas valen al crear un equipo, no al cargar una fila
+    // guardada con reglas anteriores, que si no haria fallar cada lectura de la tabla.
+    private Team()
+    {
+        Name = string.Empty;
+    }
 
     public Team(
         int id,
@@ -71,6 +80,17 @@ public class Team
         if (IsNameInvalid(name))
         {
             throw new ArgumentException(InvalidNameMessage, nameof(name));
+        }
+
+        if (name.Any(char.IsControl))
+        {
+            throw new ArgumentException(NameHasControlCharactersMessage, nameof(name));
+        }
+
+        // Un nombre de solo signos se normaliza a "" y seria el mismo equipo que cualquier otro de solo signos.
+        if (TextNormalizer.Normalize(name).Length == 0)
+        {
+            throw new ArgumentException(NameWithoutLettersOrDigitsMessage, nameof(name));
         }
     }
 

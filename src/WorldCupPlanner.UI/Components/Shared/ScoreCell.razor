@@ -1,0 +1,27 @@
+@* Marcador de un partido. Cuando el resultado cambia respecto de lo que esta celda ya mostraba,
+   @key recrea el span con .is-flipped y la cifra se da vuelta una vez, como en el tablero del
+   estadio (app.css). El primer dibujo no gira: abrir la página no anima nada. Quien lo usa le pone
+   @key con el id del partido, para que cambiar un filtro cree celdas nuevas y no "cambiadas". *@
+<span @key="flips" class="m26-score @(Played ? "" : "pending") @(flips > 0 ? "is-flipped" : "")">@Text</span>
+
+@code {
+    private const string PendingText = "vs";
+
+    [Parameter] public bool Played { get; set; }
+    [Parameter] public int HomeGoals { get; set; }
+    [Parameter] public int AwayGoals { get; set; }
+
+    private string? shownText;
+    private int flips;
+
+    private string Text => Played ? $"{HomeGoals} - {AwayGoals}" : PendingText;
+
+    protected override void OnParametersSet()
+    {
+        if (shownText is not null && shownText != Text)
+        {
+            flips++;
+        }
+        shownText = Text;
+    }
+}

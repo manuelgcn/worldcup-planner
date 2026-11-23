@@ -15,6 +15,7 @@ public interface IUserService
     User GetUserById(int id);
     void RemoveUser(int id, string? performedByEmail = null);
     void UpdateUser(int id, string name, string lastname, string email, string? performedByEmail = null);
+    void ChangePassword(int userId, string currentPassword, string newPassword);
     void AssignRole(int userId, UserRoles role, string? performedByEmail = null);
     void ToggleRole(int userId, UserRoles role, string? performedByEmail = null);
 }

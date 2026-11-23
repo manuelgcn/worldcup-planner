@@ -34,6 +34,7 @@ public sealed class KnockoutRoundScheduler
         }
 
         _orderedStadiums = stadiums.OrderBy(stadium => NormalizeName(stadium.Name)).ToList();
+        // MaxMatchesPerDay es aca el total de partidos del dia entre todos los estadios; GroupFixtureGenerator lo lee como horarios por estadio.
         _maxMatchesPerDay = Math.Clamp(maxMatchesPerDay, 1, MaxMatchesPerDayUpperBound);
         _allowedTimes = BuildAllowedTimes(_maxMatchesPerDay);
         _roundStartDay = roundStartDate.Date;

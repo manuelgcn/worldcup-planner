@@ -142,11 +142,12 @@ public class NotificationServiceTests
 
         notificationRepository.Add(new Notification(1, journalist, "Resultado cargado"));
 
-        auditedService.MarkAsRead(1, JournalistId);
+        auditedService.MarkAsRead(1, JournalistId, "ana@mail.com");
 
         List<AuditLog> logs = auditRepository.GetAll();
         Assert.AreEqual(1, logs.Count);
         Assert.AreEqual(AuditActions.NotificationRead, logs[0].Action);
+        Assert.AreEqual("ana@mail.com", logs[0].PerformedByEmail);
     }
 
     [TestMethod]
@@ -227,7 +228,8 @@ public class NotificationServiceTests
         service.NotifyMatchesSimulated(matches);
 
         Assert.AreEqual(6, notificationRepository.GetAll().Count);
-        Assert.AreEqual(1, userRepository.GetAllCalls - readsBefore);
+        Assert.AreEqual(0, userRepository.GetAllCalls - readsBefore, "Only the journalists are read, not every user.");
+        Assert.AreEqual(1, userRepository.GetByRoleCalls);
         Assert.AreEqual(1, notificationRepository.AddRangeCalls);
     }
 
@@ -319,11 +321,12 @@ public class NotificationServiceTests
         notificationRepository.Add(new Notification(1, journalist, "Resultado 1"));
         notificationRepository.Add(new Notification(2, journalist, "Resultado 2"));
 
-        auditedService.MarkAllAsRead(JournalistId);
+        auditedService.MarkAllAsRead(JournalistId, "ana@mail.com");
 
         List<AuditLog> logs = auditRepository.GetAll();
         Assert.AreEqual(1, logs.Count);
         Assert.AreEqual(AuditActions.NotificationReadAll, logs[0].Action);
+        Assert.AreEqual("ana@mail.com", logs[0].PerformedByEmail);
     }
 
     [TestMethod]

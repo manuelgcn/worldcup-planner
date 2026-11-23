@@ -24,7 +24,8 @@ else if (!IsAdmin)
 }
 else
 {
-    <FeedbackAlerts Errors="errors" SuccessMessage="@successMessage" />
+    <FeedbackAlerts Errors="errors" SuccessMessage="@successMessage"
+                    FocusOnSuccess="@(successMessage != roleChangeMessage)" />
 
     <section class="admin-stack">
         <article class="m26-card pane">
@@ -48,10 +49,8 @@ else
 
                 @if (editingUserId is null)
                 {
-                    <div class="mb-3">
-                        <label class="form-label" for="userPassword">Contraseña</label>
-                        <input id="userPassword" class="form-control" type="password" @bind="password" />
-                    </div>
+                    <PasswordField Id="userPassword" Label="Contraseña" Autocomplete="new-password"
+                                   @bind-Value="password" ShowRules="true" />
 
                     <div class="mb-3">
                         <label class="form-label" for="userBirth">Fecha de nacimiento</label>
@@ -96,12 +95,12 @@ else
             {
                 <div class="m26-empty">
                     <i class="bi bi-people" aria-hidden="true"></i>
-                    <p class="mb-0">No hay usuarios.</p>
+                    <p class="mb-0">Todavía no hay usuarios: cargá el primero desde Crear usuario.</p>
                 </div>
             }
             else
             {
-                <div class="table-responsive">
+                <div class="table-responsive table-wrap" tabindex="0" role="region" aria-label="Usuarios existentes">
                     <table class="table table-hover m26-scoreboard mb-0">
                         <thead>
                             <tr>
@@ -221,6 +220,9 @@ else
 
     private List<string> errors = new();
     private string? successMessage;
+    // El aviso que dejó el último cambio de rol: el botón de la fila ya muestra el resultado, así que
+    // mientras sea el que se muestra el foco se queda ahí (FeedbackAlerts.FocusOnSuccess).
+    private string? roleChangeMessage;
 
     private List<User> usuarios = new();
 
@@ -256,9 +258,9 @@ else
             UserServices.CreateUser(new CreateUserRequestDto
             {
                 Id = 0,
-                Name = name,
-                Lastname = lastname,
-                Email = email,
+                Name = name.Trim(),
+                Lastname = lastname.Trim(),
+                Email = email.Trim(),
                 Password = password,
                 DateOfBirth = dateOfBirth.Value,
                 InitialRole = initialRole
@@ -274,11 +276,20 @@ else
         }
     }
 
+    private const string PermissionNotConfirmedMessage =
+        "No se pudo confirmar que tengas permiso para esta acción. Recargá la página e intentá nuevamente.";
+
     // La página pudo quedar abierta después de que otro admin le quitara el rol o diera de baja a este usuario.
+    // También da falso si no se lo pudo releer: el mensaje no afirma que haya perdido el permiso.
     private async Task<bool> IsStillAdminAsync()
     {
-        await Session.RevalidateAsync();
-        return IsAdmin;
+        if (await Session.StillHasAnyRoleAsync(UserRoles.Admin))
+            return true;
+
+        if (Session.IsLoggedIn)
+            errors.Add(PermissionNotConfirmedMessage);
+
+        return false;
     }
 
     private void StartEdit(User u)
@@ -309,11 +320,11 @@ else
         try
         {
             int id = editingUserId!.Value;
-            UserServices.UpdateUser(id, name, lastname, email, Session.CurrentUser?.email);
+            UserServices.UpdateUser(id, name.Trim(), lastname.Trim(), email.Trim(), Session.CurrentUser?.email);
 
             // La sesión guarda una copia del usuario: si se editó a sí mismo, se recarga como en EditUser.
             if (id == Session.CurrentUser!.idUser)
-                await Session.LoginAsync(UserServices.GetUserById(id));
+                await Session.RefreshUserAsync();
 
             successMessage = "Usuario actualizado correctamente";
             editingUserId = null;
@@ -368,6 +379,10 @@ else
         if (!await IsStillAdminAsync())
             return;
 
+        // El botón de su propio rol Admin está deshabilitado, pero eso se quita desde el navegador.
+        if (role == UserRoles.Admin && user.idUser == Session.CurrentUser!.idUser)
+            return;
+
         try
         {
             if (user.HasRole(role))
@@ -381,11 +396,12 @@ else
                 successMessage = $"Rol {role} asignado";
             }
 
+            roleChangeMessage = successMessage;
             LoadUsers();
 
             // El menú y los permisos leen los roles de la copia en sesión: si cambió los propios, se recarga.
             if (user.idUser == Session.CurrentUser!.idUser)
-                await Session.LoginAsync(UserServices.GetUserById(user.idUser));
+                await Session.RefreshUserAsync();
         }
         catch (Exception ex)
         {

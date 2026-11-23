@@ -4,10 +4,16 @@ public class Stadium
 {
     private const string NameRequiredMessage = "El nombre es obligatorio";
     private const string NameTooLongMessage = "El nombre es demasiado largo";
+    private const string NameHasControlCharactersMessage = "El nombre no puede tener saltos de línea ni otros caracteres de control";
+    private const string NameWithoutLettersOrDigitsMessage = "El nombre debe tener al menos una letra o un número";
     private const string CityRequiredMessage = "La ciudad es obligatoria";
     private const string CityTooLongMessage = "La ciudad es demasiado larga";
+    private const string CityHasControlCharactersMessage = "La ciudad no puede tener saltos de línea ni otros caracteres de control";
     private const string DescriptionTooLongMessage = "La descripción no puede superar los 400 caracteres";
     private const int MaxDescriptionLength = 400;
+    private const int MaxNameLength = 80;
+    private const int MaxCityLength = 60;
+    private const int MinCapacity = 20000;
     private const string CapacityTooLowMessage = "La capacidad debe ser de al menos 20000";
 
     public int Id { get; set; }
@@ -15,6 +21,14 @@ public class Stadium
     public string City { get; private set; }
     public string? Description { get; private set; }
     public int Capacity { get; private set; }
+
+    // Solo para EF Core, que lo prefiere al leer: las reglas valen al crear un estadio, no al cargar una fila
+    // guardada con reglas anteriores, que si no haria fallar cada lectura de la tabla.
+    private Stadium()
+    {
+        Name = string.Empty;
+        City = string.Empty;
+    }
 
     public Stadium(string name, string city, string? description, int capacity)
     {
@@ -34,8 +48,15 @@ public class Stadium
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException(NameRequiredMessage);
 
-        if (name.Length > 80)
+        if (name.Length > MaxNameLength)
             throw new ArgumentException(NameTooLongMessage);
+
+        if (name.Any(char.IsControl))
+            throw new ArgumentException(NameHasControlCharactersMessage);
+
+        // Un nombre de solo signos se normaliza a "" y seria el mismo estadio que cualquier otro de solo signos.
+        if (TextNormalizer.Normalize(name).Length == 0)
+            throw new ArgumentException(NameWithoutLettersOrDigitsMessage);
     }
 
     private void ValidateCity(string city)
@@ -43,8 +64,11 @@ public class Stadium
         if (string.IsNullOrWhiteSpace(city))
             throw new ArgumentException(CityRequiredMessage);
 
-        if (city.Length > 60)
+        if (city.Length > MaxCityLength)
             throw new ArgumentException(CityTooLongMessage);
+
+        if (city.Any(char.IsControl))
+            throw new ArgumentException(CityHasControlCharactersMessage);
     }
 
     private void ValidateDescription(string? description)
@@ -55,7 +79,7 @@ public class Stadium
 
     private void ValidateCapacity(int capacity)
     {
-        if (capacity < 20000)
+        if (capacity < MinCapacity)
             throw new ArgumentException(CapacityTooLowMessage);
     }
 

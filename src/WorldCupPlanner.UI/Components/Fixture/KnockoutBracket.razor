@@ -6,8 +6,9 @@
 }
 else
 {
-    @* Vista única y compacta: árbol horizontal 16avos → Final con SOLO las
-       banderas y el marcador. Pasá el mouse para ver nombres y penales. *@
+    @* Árbol horizontal 16avos → Final: cada par de llaves se une en la llave que alimenta (el
+       generador empareja por MatchId, el mismo orden de las columnas). Las rondas sin armar
+       muestran sus llaves vacías y el tercer puesto queda aparte, debajo de la final. *@
     <div class="bracket-compact-wrap">
         @if (Champion is not null)
         {
@@ -18,36 +19,49 @@ else
                 <strong>@Champion.Name</strong>
             </div>
         }
-        <p class="bracket-hint">Cada llave muestra las banderas de los dos equipos con su resultado. Pasá el mouse para ver nombres y penales.</p>
+        <p class="bracket-hint">Pasá el mouse por un equipo, tocalo o llegá a él con Tab para seguir su camino por el cuadro.</p>
         <div class="bracket-compact" tabindex="0" role="region" aria-label="Cuadro eliminatorio">
             @foreach (BracketColumn column in BuildColumns())
             {
                 <div class="bracket-compact-column @column.CssClass">
                     <h3>@column.Title</h3>
                     <div class="bracket-compact-cells">
-                        @foreach (MatchElimination match in column.Matches)
+                        @foreach (BracketSlot slot in column.Slots)
                         {
-                            <div class="bracket-mini @PlayedClass(match)" title="@MatchTooltip(match)">
-                                @* Solo los 16avos tienen códigos legibles (A1…B8); el resto se ve en el tooltip. *@
-                                @if (match.Phase == Phase.RoundOf32)
+                            <div class="bracket-slot @(slot.Label is null ? "" : "detached")">
+                                @if (slot.Label is not null)
                                 {
-                                    <span class="bracket-mini-code">@match.MatchCode</span>
+                                    <h4 class="bracket-slot-label">@slot.Label</h4>
                                 }
-                                <div class="bracket-mini-row @WinnerClass(match, true)">
-                                    <TeamFlag Team="match.HomeTeam" />
-                                    <span class="bracket-mini-name">@TeamName(match.HomeTeam)</span>
-                                    <span class="bracket-mini-score">@ScoreFor(match, true)</span>
-                                </div>
-                                <div class="bracket-mini-row @WinnerClass(match, false)">
-                                    <TeamFlag Team="match.AwayTeam" />
-                                    <span class="bracket-mini-name">@TeamName(match.AwayTeam)</span>
-                                    <span class="bracket-mini-score">@ScoreFor(match, false)</span>
-                                </div>
+                                @if (slot.Match is MatchElimination match)
+                                {
+                                    <div class="bracket-mini @PlayedClass(match)" title="@MatchTooltip(match)">
+                                        @* Solo los 16avos tienen códigos legibles (A1…B8); el resto se ve en el tooltip. *@
+                                        @if (match.Phase == Phase.RoundOf32)
+                                        {
+                                            <span class="bracket-mini-code">@match.MatchCode</span>
+                                        }
+                                        @* data-team: bracket.js marca la fila del mismo equipo en todas las rondas. El foco
+                                           entra por los 16avos, donde cada equipo aparece una sola vez. *@
+                                        <div class="bracket-mini-row @WinnerClass(match, true)"
+                                             data-team="@match.HomeTeam?.Id" tabindex="@RowTabIndex(match)">
+                                            <TeamFlag Team="match.HomeTeam" />
+                                            <span class="bracket-mini-name">@TeamName(match.HomeTeam)</span>
+                                            <span class="bracket-mini-score">@ScoreFor(match, true)</span>
+                                        </div>
+                                        <div class="bracket-mini-row @WinnerClass(match, false)"
+                                             data-team="@match.AwayTeam?.Id" tabindex="@RowTabIndex(match)">
+                                            <TeamFlag Team="match.AwayTeam" />
+                                            <span class="bracket-mini-name">@TeamName(match.AwayTeam)</span>
+                                            <span class="bracket-mini-score">@ScoreFor(match, false)</span>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="bracket-mini undecided">Pendiente</div>
+                                }
                             </div>
-                        }
-                        @if (column.Matches.Count == 0)
-                        {
-                            <div class="bracket-mini placeholder">Pendiente</div>
                         }
                     </div>
                 </div>
@@ -61,14 +75,15 @@ else
 
     private const string NoScorePlaceholder = "–";
 
-    private static readonly (Phase Phase, string Title)[] PhasesInDisplayOrder =
+    private const string ThirdPlaceTitle = "3er puesto";
+
+    private static readonly (Phase Phase, string Title, int MatchCount)[] TreePhases =
     {
-        (Phase.RoundOf32, "16avos"),
-        (Phase.RoundOf16, "Octavos"),
-        (Phase.QuarterFinals, "Cuartos"),
-        (Phase.SemiFinal, "Semis"),
-        (Phase.ThirdPlace, "3er puesto"),
-        (Phase.Final, "Final")
+        (Phase.RoundOf32, "16avos", 16),
+        (Phase.RoundOf16, "Octavos", 8),
+        (Phase.QuarterFinals, "Cuartos", 4),
+        (Phase.SemiFinal, "Semis", 2),
+        (Phase.Final, "Final", 1)
     };
 
     private Team? Champion =>
@@ -76,17 +91,34 @@ else
 
     private IEnumerable<BracketColumn> BuildColumns()
     {
-        foreach ((Phase phase, string title) in PhasesInDisplayOrder)
+        foreach ((Phase phase, string title, int matchCount) in TreePhases)
         {
-            List<MatchElimination> matches = AllElimMatches
-                .Where(match => match.Phase == phase)
-                .OrderBy(match => match.MatchId)
-                .ToList();
-            yield return new BracketColumn(title, matches, $"phase-{phase}");
+            List<BracketSlot> slots = SlotsFor(phase, matchCount, label: null);
+            if (phase == Phase.Final)
+            {
+                slots.AddRange(SlotsFor(Phase.ThirdPlace, 1, ThirdPlaceTitle));
+            }
+            yield return new BracketColumn(title, slots, $"phase-{phase}");
         }
     }
 
+    private List<BracketSlot> SlotsFor(Phase phase, int matchCount, string? label)
+    {
+        List<BracketSlot> slots = AllElimMatches
+            .Where(match => match.Phase == phase)
+            .OrderBy(match => match.MatchId)
+            .Select(match => new BracketSlot(match, label))
+            .ToList();
+        while (slots.Count < matchCount)
+        {
+            slots.Add(new BracketSlot(null, label));
+        }
+        return slots;
+    }
+
     private static string PlayedClass(MatchElimination match) => match.HasResult ? "played" : "pending";
+
+    private static string? RowTabIndex(MatchElimination match) => match.Phase == Phase.RoundOf32 ? "0" : null;
 
     private static string WinnerClass(MatchElimination match, bool isHome)
     {
@@ -125,5 +157,8 @@ else
         return $"{match.MatchCode}: {home} {match.HomeGoals}-{match.AwayGoals} {away}{penalties}";
     }
 
-    private sealed record BracketColumn(string Title, List<MatchElimination> Matches, string CssClass);
+    // Label solo lo lleva la llave que no forma parte del árbol (el tercer puesto).
+    private sealed record BracketSlot(MatchElimination? Match, string? Label);
+
+    private sealed record BracketColumn(string Title, List<BracketSlot> Slots, string CssClass);
 }

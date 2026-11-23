@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 using System.Text;
@@ -9,6 +10,7 @@ public class User
     private const string EmailRequiredMessage = "Email es obligatorio";
     private const string EmailInvalidMessage = "Email invalido";
     private const string PasswordTooShortMessage = "La contrasena debe tener al menos 8 caracteres";
+    private const string PasswordTooLongMessage = "La contrasena no puede superar los 128 caracteres";
     private const string PasswordMissingUppercaseMessage = "La contrasena debe contener al menos una mayuscula";
     private const string PasswordMissingLowercaseMessage = "La contrasena debe contener al menos una minuscula";
     private const string PasswordMissingDigitMessage = "La contrasena debe contener al menos un numero";
@@ -16,17 +18,27 @@ public class User
     private const string FutureDateOfBirthMessage = "La fecha de nacimiento no puede ser futura";
     private const string UnderageUserMessage = "El usuario debe tener al menos 18 anos";
     private const string PasswordMismatchMessage = "La contrasena no coincide";
+    private const string NewPasswordSameAsCurrentMessage = "La contrasena nueva debe ser distinta de la actual";
     private const string NameRequiredMessage = "El nombre es obligatorio";
     private const string NameTooLongMessage = "El nombre no puede superar los 100 caracteres";
     private const string LastnameTooLongMessage = "El apellido no puede superar los 100 caracteres";
+    private const string NameHasControlCharactersMessage = "El nombre no puede tener saltos de línea ni otros caracteres de control";
+    private const string LastnameHasControlCharactersMessage = "El apellido no puede tener saltos de línea ni otros caracteres de control";
     private const string EmailTooLongMessage = "El email no puede superar los 254 caracteres";
     // Mismos límites que UserConfiguration: validarlos acá evita que fallen recién al guardar.
     private const int NameMaxLength = 100;
     private const int LastnameMaxLength = 100;
     private const int EmailMaxLength = 254;
+    // Acota lo que una contrasena nueva le da de trabajo a las regex y a PBKDF2.
+    private const int PasswordMaxLength = 128;
     private const int PasswordSaltSize = 16;
     private const int PasswordHashSize = 32;
-    private const int PasswordHashIterations = 100_000;
+    private const int PasswordHashIterations = 600_000;
+    // Los "sal:hash" de antes de guardar la version se derivaron con esta cantidad.
+    private const int UnversionedHashIterations = 100_000;
+    // Tope al leer un hash guardado: con una cantidad disparatada el login quedaria derivando durante minutos.
+    private const int MaxPasswordHashIterations = 10_000_000;
+    private const string PasswordHashVersion = "v2";
     private const char PasswordSaltSeparator = ':';
     public int idUser { get; set; }
 
@@ -72,6 +84,12 @@ public class User
 
         if (lastname?.Length > LastnameMaxLength)
             throw new ArgumentException(LastnameTooLongMessage);
+
+        if (name.Any(char.IsControl))
+            throw new ArgumentException(NameHasControlCharactersMessage);
+
+        if (lastname?.Any(char.IsControl) == true)
+            throw new ArgumentException(LastnameHasControlCharactersMessage);
     }
 
     private void ValidateEmail(string email)
@@ -145,6 +163,9 @@ public class User
         if (password == null || password.Length < 8)
             throw new ArgumentException(PasswordTooShortMessage);
 
+        if (password.Length > PasswordMaxLength)
+            throw new ArgumentException(PasswordTooLongMessage);
+
         if (!Regex.IsMatch(password, "[A-Z]"))
             throw new ArgumentException(PasswordMissingUppercaseMessage);
 
@@ -176,49 +197,107 @@ public class User
 
 
     
-    // Se guarda "sal:hash" en base64. La sal es aleatoria a proposito (no es un sorteo): dos
-    // usuarios con la misma contrasena no comparten hash y no sirven tablas precalculadas.
+    // Se guarda "v2:iteraciones:sal:hash", con la sal y el hash en base64; las iteraciones van en el valor
+    // para poder subirlas sin invalidar los hashes ya guardados. La sal es aleatoria a proposito (no es un
+    // sorteo): dos usuarios con la misma contrasena no comparten hash y no sirven tablas precalculadas.
     private static string HashPassword(string password)
     {
         byte[] salt = RandomNumberGenerator.GetBytes(PasswordSaltSize);
-        return Convert.ToBase64String(salt) + PasswordSaltSeparator + Convert.ToBase64String(DeriveHash(password, salt));
+        return FormatHash(salt, DeriveHash(password, salt, PasswordHashIterations));
     }
 
-    private static byte[] DeriveHash(string password, byte[] salt)
+    private static string FormatHash(byte[] salt, byte[] hash)
     {
-        return Rfc2898DeriveBytes.Pbkdf2(password, salt, PasswordHashIterations, HashAlgorithmName.SHA256, PasswordHashSize);
+        return string.Join(PasswordSaltSeparator, PasswordHashVersion, PasswordHashIterations, Convert.ToBase64String(salt), Convert.ToBase64String(hash));
     }
 
-    // Antes se guardaba un SHA-256 sin sal (nunca contiene ':'). Se sigue aceptando para no dejar
-    // afuera a las bases existentes; UserServices lo reemplaza por PBKDF2 en el primer login.
-    public bool HasLegacyPasswordHash => !password.Contains(PasswordSaltSeparator);
+    private static byte[] DeriveHash(string password, byte[] salt, int iterations)
+    {
+        return Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, PasswordHashSize);
+    }
+
+    // Legado es todo hash mas debil que el actual: el SHA-256 sin sal de la primera version (nunca contiene ':'),
+    // el "sal:hash" de 100.000 iteraciones y un v2 con menos iteraciones que las de hoy. Se siguen aceptando para
+    // no dejar afuera a las bases existentes; UserServices los reemplaza en el siguiente login correcto.
+    public bool HasLegacyPasswordHash =>
+        !TryReadSaltedHash(out int iterations, out _, out _) || iterations < PasswordHashIterations;
 
     public void UpgradeLegacyPasswordHash(string plainTextPassword)
     {
         if (!HasLegacyPasswordHash)
             return;
 
-        if (!LegacyPasswordMatches(plainTextPassword))
+        if (!PasswordMatches(plainTextPassword))
             throw new ArgumentException(PasswordMismatchMessage);
 
         password = HashPassword(plainTextPassword);
     }
 
-    public bool PasswordMatches(string plainTextPassword)
+    public void ChangePassword(string currentPassword, string newPassword)
     {
-        if (HasLegacyPasswordHash)
-            return LegacyPasswordMatches(plainTextPassword);
+        if (!PasswordMatches(currentPassword))
+            throw new ArgumentException(PasswordMismatchMessage);
 
-        string[] parts = password.Split(PasswordSaltSeparator);
-        if (parts.Length != 2)
-            return false;
+        ValidatePassword(newPassword);
 
-        byte[] salt = Convert.FromBase64String(parts[0]);
-        byte[] expectedHash = Convert.FromBase64String(parts[1]);
-        return CryptographicOperations.FixedTimeEquals(expectedHash, DeriveHash(plainTextPassword, salt));
+        // La actual ya se verifico: comparar los textos alcanza, sin derivar otro hash.
+        if (newPassword == currentPassword)
+            throw new ArgumentException(NewPasswordSameAsCurrentMessage);
+
+        password = HashPassword(newPassword);
     }
 
-    private bool LegacyPasswordMatches(string plainTextPassword)
+    public bool PasswordMatches(string plainTextPassword)
+    {
+        if (!password.Contains(PasswordSaltSeparator))
+            return UnsaltedPasswordMatches(plainTextPassword);
+
+        return TryReadSaltedHash(out int iterations, out byte[] salt, out byte[] expectedHash)
+               && CryptographicOperations.FixedTimeEquals(expectedHash, DeriveHash(plainTextPassword, salt, iterations));
+    }
+
+    // Lee "v2:iteraciones:sal:hash" o el "sal:hash" anterior. Un valor que no se puede leer no es de nadie:
+    // devuelve false en vez de lanzar, para que el login responda credenciales invalidas.
+    private bool TryReadSaltedHash(out int iterations, out byte[] salt, out byte[] hash)
+    {
+        iterations = UnversionedHashIterations;
+        salt = new byte[PasswordSaltSize];
+        hash = new byte[PasswordHashSize];
+        string[] parts = password.Split(PasswordSaltSeparator);
+
+        if (parts.Length == 4)
+        {
+            if (parts[0] != PasswordHashVersion
+                || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out iterations)
+                || iterations < 1
+                || iterations > MaxPasswordHashIterations)
+                return false;
+        }
+        else if (parts.Length != 2)
+        {
+            return false;
+        }
+
+        return TryDecodeExactly(parts[^2], salt) && TryDecodeExactly(parts[^1], hash);
+    }
+
+    // Exige el largo exacto: con un hash vacio o mas corto la comparacion no puede darle la razon a nadie.
+    private static bool TryDecodeExactly(string base64, byte[] bytes)
+    {
+        return Convert.TryFromBase64String(base64, bytes, out int written) && written == bytes.Length;
+    }
+
+    // Cuenta que no existe: un hash con el formato y las iteraciones de hoy, en cero, que ninguna contrasena produce.
+    private static readonly User NoAccount = new User { password = FormatHash(new byte[PasswordSaltSize], new byte[PasswordHashSize]) };
+
+    // Cuesta lo mismo que verificar la contrasena de una cuenta real y nunca coincide: es lo que el login
+    // verifica cuando el email no existe.
+    public static bool PasswordMatchesNoAccount(string plainTextPassword)
+    {
+        return NoAccount.PasswordMatches(plainTextPassword);
+    }
+
+    private bool UnsaltedPasswordMatches(string plainTextPassword)
     {
         string legacyHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(plainTextPassword)));
         return CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(password), Encoding.UTF8.GetBytes(legacyHash));

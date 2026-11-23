@@ -45,7 +45,7 @@
 }
 
 .row-editing {
-    background-color: rgba(242, 194, 0, .12);
+    background-color: color-mix(in srgb, var(--m26-yellow) 12%, transparent);
 }
 
 @media (max-width: 640.98px) {
@@ -64,4 +64,12 @@
     font-size: .75rem;
     font-weight: 500;
     color: var(--m26-muted);
+}
+
+/* Los filtros no se imprimen (app.css oculta sus campos): tampoco su caja vacía. */
+@media print {
+    .filters-card,
+    .section-separator {
+        display: none;
+    }
 }

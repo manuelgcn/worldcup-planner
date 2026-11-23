@@ -24,6 +24,7 @@ public sealed class KnockoutPersistenceIntegrationTests
     private const int TeamCount = 48;
     private const int StadiumCount = 4;
     private const int ExpectedRoundOf32Matches = 16;
+    private const int ExpectedTournamentMatches = 104;
     private const string AdminEmail = "admin@copa.com";
     private static readonly DateTime StartDate = new DateTime(2026, 6, 1);
 
@@ -164,6 +165,26 @@ public sealed class KnockoutPersistenceIntegrationTests
         // R32 (ronda inicial) sin fuentes; las rondas posteriores con su cadena de fuentes persistida.
         Assert.IsTrue(all.Where(match => match.Phase == Phase.RoundOf32).All(match => match.MatchHome == null));
         Assert.IsTrue(all.Where(match => match.Phase == Phase.RoundOf16).All(match => match.MatchHome != null));
+    }
+
+    // La home arma sus conteos con COUNT y lee solo la final: contra la base real tiene que dar lo
+    // mismo que contar sobre la tabla completa.
+    [TestMethod]
+    public void Dashboard_AfterTheWholeTournament_CountsEveryMatchAndNamesTheChampion()
+    {
+        _fixtureOrchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
+        _simulationService.SimulateGroupStageAndGenerateKnockout(Seed, AdminEmail);
+        _knockoutGenerator.SimulateUntilFinal(AdminEmail);
+
+        Services.DTOs.TournamentDashboardDto overview = new TournamentDashboardService(
+            _matchRepository, _teamRepository, _stadiumRepository, _fixtureOrchestrator).GetOverview();
+
+        MatchElimination final = _eliminationRepository.GetAll().OfType<MatchElimination>().Single(match => match.Phase == Phase.Final);
+        Assert.AreEqual(TeamCount, overview.TeamCount);
+        Assert.AreEqual(StadiumCount, overview.StadiumCount);
+        Assert.AreEqual(ExpectedTournamentMatches, overview.TotalMatches);
+        Assert.AreEqual(ExpectedTournamentMatches, overview.PlayedMatches);
+        Assert.AreEqual(final.GetWinner()!.Name, overview.ChampionName);
     }
 
     [TestMethod]

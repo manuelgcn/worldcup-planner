@@ -12,12 +12,13 @@
     padding: 1.1rem 1.4rem 1.2rem;
     margin: 1rem 0;
     border-radius: var(--m26-radius);
-    background: var(--m26-ink);
-    color: var(--m26-surface);
+    background: var(--m26-board);
+    color: var(--m26-on-board);
 }
 
 .wizard-banner.step-done {
     background: var(--m26-pitch);
+    color: var(--m26-on-pitch);
 }
 
 .wizard-step-label {
@@ -278,7 +279,7 @@
 }
 
 ::deep .standings-table tr.qualified td {
-    background: rgba(30, 122, 70, .06);
+    background: color-mix(in srgb, var(--m26-ok) 6%, transparent);
 }
 
 ::deep .standings-table tr.third-place td:first-child {
@@ -286,7 +287,7 @@
 }
 
 ::deep .standings-table tr.third-place td {
-    background: rgba(242, 194, 0, .1);
+    background: color-mix(in srgb, var(--m26-yellow) 10%, transparent);
 }
 
 ::deep .standings-table tr.eliminated td {
@@ -295,6 +296,18 @@
 
 ::deep .standings-table tr.eliminated .team-flag {
     opacity: .6;
+}
+
+/* Una fila que cambió de puesto se enciende un instante (GroupStandingsTable). Se animan las
+   celdas, que es donde están pintados los fondos de clasificado y de tercero. */
+::deep .standings-table tr.moved td {
+    animation: standings-moved 1.2s ease-out;
+}
+
+@keyframes standings-moved {
+    from {
+        background-color: color-mix(in srgb, var(--m26-yellow) 45%, transparent);
+    }
 }
 
 ::deep .matches-table {
@@ -370,7 +383,7 @@
     padding: 1rem 1.25rem;
     border-radius: var(--m26-radius-sm);
     background: repeating-linear-gradient(90deg, var(--m26-pitch) 0 56px, var(--m26-pitch-stripe) 56px 112px);
-    color: var(--m26-surface);
+    color: var(--m26-on-pitch);
 }
 
 ::deep .bracket-champion > i {
@@ -392,8 +405,9 @@
 }
 
 ::deep .bracket-compact {
+    --bracket-gap: 1.5rem;
     display: flex;
-    gap: .6rem;
+    gap: var(--bracket-gap);
     padding: .3rem 0;
     align-items: stretch;
     overflow-x: auto;
@@ -416,11 +430,77 @@
 }
 
 ::deep .bracket-compact-cells {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: .3rem;
-    justify-content: space-around;
     flex: 1;
+}
+
+/* Cada llave ocupa una franja igual de su columna y queda centrada en ella: así la franja de una
+   ronda mide lo que dos de la anterior y su centro cae justo entre las dos llaves que la alimentan. */
+::deep .bracket-slot {
+    position: relative;
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: .15rem 0;
+}
+
+/* Conectores: cada llave sale hasta la mitad del hueco y sube o baja hasta el borde de su franja,
+   donde se junta con su par; la llave siguiente pone el tramo que falta. Dicen qué llaves alimentan
+   a cuál, así que llevan el gris que da 3:1 sobre la superficie (WCAG 1.4.11). */
+::deep .bracket-slot::before,
+::deep .bracket-slot::after {
+    content: "";
+    position: absolute;
+    width: calc(var(--bracket-gap) / 2);
+    border: 0 solid var(--m26-control-border);
+}
+
+::deep .bracket-slot::before {
+    right: 100%;
+    top: calc(50% - 1px);
+    border-top-width: 2px;
+}
+
+::deep .bracket-slot::after {
+    left: 100%;
+    border-right-width: 2px;
+}
+
+::deep .bracket-slot:nth-child(odd)::after {
+    top: calc(50% - 1px);
+    bottom: 0;
+    border-top-width: 2px;
+}
+
+::deep .bracket-slot:nth-child(even)::after {
+    top: 0;
+    bottom: calc(50% - 1px);
+    border-bottom-width: 2px;
+}
+
+/* A los 16avos no les llega nada, de la final no sale nada y el tercer puesto no es parte del árbol. */
+::deep .phase-RoundOf32 .bracket-slot::before,
+::deep .phase-Final .bracket-slot::after,
+::deep .bracket-slot.detached::before {
+    content: none;
+}
+
+/* Tercer puesto: en la columna de la final, debajo y sin conectores. */
+::deep .bracket-slot.detached {
+    position: absolute;
+    inset: calc(50% + 3.5rem) 0 auto;
+}
+
+::deep .bracket-slot-label {
+    margin: 0 0 .4rem;
+    padding-bottom: .3rem;
+    text-align: center;
+    font-size: .9rem;
+    color: var(--m26-muted);
+    border-bottom: 2px solid var(--m26-muted);
 }
 
 ::deep .bracket-mini {
@@ -438,7 +518,7 @@
     border-left: 3px solid var(--m26-ok);
 }
 
-::deep .phase-Final .bracket-mini {
+::deep .phase-Final .bracket-slot:not(.detached) .bracket-mini {
     border: 2px solid var(--m26-ink);
 }
 
@@ -448,15 +528,12 @@
     border-bottom-width: 4px;
 }
 
-::deep .phase-ThirdPlace h3 {
-    border-bottom-color: var(--m26-muted);
-}
-
 ::deep .bracket-mini.pending {
     border-left: 3px solid var(--m26-line);
 }
 
-::deep .bracket-mini.placeholder {
+/* No se llama .placeholder: esa clase es de Bootstrap (opacidad .5 y cursor de espera). */
+::deep .bracket-mini.undecided {
     text-align: center;
     font-style: italic;
     font-size: .7rem;
@@ -506,10 +583,13 @@
     color: var(--m26-ink);
     min-width: 1ch;
     text-align: right;
+    /* "1 (4)" no se parte en dos líneas en las columnas angostas. */
+    flex: 0 0 auto;
+    white-space: nowrap;
 }
 
 ::deep .bracket-mini-row.winner {
-    background: rgba(30, 122, 70, .1);
+    background: color-mix(in srgb, var(--m26-ok) 10%, transparent);
     font-weight: 700;
 }
 
@@ -526,9 +606,32 @@
     opacity: .45;
 }
 
+/* Seguir a un equipo (bracket.js): su fila se enciende en amarillo en todas las rondas. De las
+   demás se atenúa solo la bandera: con la fila entera, nombres y marcadores bajaban de 4.5:1. */
+::deep .bracket-mini-row {
+    transition: background-color .12s ease;
+}
+
+::deep .bracket-compact[data-following] .bracket-mini-row:not([data-followed]) .team-flag {
+    opacity: .45;
+}
+
+::deep .bracket-mini-row[data-followed] {
+    background: var(--m26-yellow);
+}
+
+::deep .bracket-mini-row[data-followed] .bracket-mini-name,
+::deep .bracket-mini-row[data-followed] .bracket-mini-score {
+    color: var(--m26-on-yellow);
+}
+
+::deep .bracket-mini-row[data-followed] .team-flag {
+    opacity: 1;
+}
+
 /* Danger zone: full tournament reset (delete fixture + knockout) */
 .danger-zone {
-    border-color: rgba(200, 16, 46, .3);
+    border-color: color-mix(in srgb, var(--m26-red) 30%, transparent);
     border-top-color: var(--m26-red);
     background: var(--m26-surface);
 }
@@ -538,7 +641,7 @@
 }
 
 .confirm-panel {
-    border: 1px solid rgba(200, 16, 46, .35);
+    border: 1px solid color-mix(in srgb, var(--m26-red) 35%, transparent);
     border-left: 4px solid var(--m26-red);
     background: var(--m26-surface);
     border-radius: 4px;
@@ -549,4 +652,101 @@
     margin: 0 0 .6rem;
     font-size: .9rem;
     color: var(--m26-ink);
+}
+
+/* Impresión: quedan los grupos, el detalle abierto y el cuadro; los pasos del asistente no. Las
+   marcas que en pantalla son un fondo o una sombra pasan a ser un borde, que sí se imprime. */
+@media print {
+    .wizard-banner,
+    .status-panel,
+    .step-section,
+    .group-chips,
+    ::deep .bracket-hint {
+        display: none;
+    }
+
+    .groups-section,
+    .group-detail-section,
+    .bracket-section {
+        margin: 1rem 0 0;
+        padding: 0;
+        border: 0;
+    }
+
+    ::deep .group-card {
+        overflow: visible;
+        break-inside: avoid;
+    }
+
+    ::deep .group-card-body {
+        overflow: visible;
+    }
+
+    ::deep .standings-table tr.qualified td:first-child {
+        border-left: 4px solid var(--m26-ok);
+        box-shadow: none;
+    }
+
+    ::deep .standings-table tr.third-place td:first-child {
+        border-left: 4px dotted var(--m26-ink);
+        box-shadow: none;
+    }
+
+    .groups-legend li::before {
+        width: 0;
+        height: .8rem;
+        border-left: 4px solid var(--m26-ok);
+        border-radius: 0;
+        background: none;
+    }
+
+    .groups-legend .legend-third::before {
+        border-left: 4px dotted var(--m26-ink);
+        background: none;
+    }
+
+    /* El cuadro va en su propia hoja y más apretado, para que los 16avos entren enteros. */
+    .bracket-section {
+        break-before: page;
+    }
+
+    ::deep .bracket-champion {
+        margin-bottom: .75rem;
+        padding: .5rem .75rem;
+        border: 2px solid var(--m26-ink);
+        background: none;
+    }
+
+    ::deep .bracket-champion > i,
+    ::deep .bracket-champion-label {
+        color: var(--m26-ink);
+    }
+
+    ::deep .bracket-compact {
+        --bracket-gap: 1rem;
+        overflow: visible;
+    }
+
+    ::deep .bracket-compact-column {
+        min-width: 0;
+    }
+
+    ::deep .bracket-slot {
+        padding: .1rem 0;
+        break-inside: avoid;
+    }
+
+    ::deep .bracket-mini {
+        gap: 0;
+        padding: .1rem .3rem;
+    }
+
+    ::deep .bracket-mini-code {
+        display: none;
+    }
+
+    /* En papel no hay tooltip: con la letra angosta los nombres largos entran sin cortarse. */
+    ::deep .bracket-mini-name {
+        font-stretch: 68%;
+    }
 }

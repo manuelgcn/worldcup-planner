@@ -247,6 +247,18 @@ public class KnockoutFixtureGeneratorExtensionTests
     }
 
     [TestMethod]
+    public void GenerateBracket_LoadsTheMatchTableOnlyToCheckTheGroupStage()
+    {
+        SeedPlayedGroupStageMatches();
+        int readsBefore = _matchRepository.GetAllCalls;
+
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+
+        // La fecha del ultimo partido de grupos sale de una consulta MAX, no de otra lectura completa.
+        Assert.AreEqual(1, _matchRepository.GetAllCalls - readsBefore);
+    }
+
+    [TestMethod]
     public void GenerateBracket_RoundOf32_IsScheduledAfterGroupStage()
     {
         // H3: el R32 no debe solaparse con la fase de grupos.
@@ -315,28 +327,40 @@ public class KnockoutFixtureGeneratorExtensionTests
     }
 
     [TestMethod]
-    [DataRow(1)]
-    [DataRow(2)]
-    [DataRow(3)]
-    public void KnockoutRounds_EachRoundStartsAfterThePreviousRoundEnds(int maxMatchesPerDay)
+    [DataRow(1, 3)]
+    [DataRow(2, 3)]
+    [DataRow(3, 3)]
+    [DataRow(3, 1)]
+    [DataRow(3, 5)]
+    public void KnockoutRounds_EachRoundStartsAfterThePreviousRoundEnds(int maxMatchesPerDay, int daysBetweenJourneys)
     {
         _settingsRepository.Update(new TournamentSettings(
-            DefaultSettingsId, DefaultStartDate, maxMatchesPerDay, 3, DefaultSeed, DefaultSeed, DefaultSeed, DefaultSeed));
+            DefaultSettingsId, DefaultStartDate, maxMatchesPerDay, daysBetweenJourneys, DefaultSeed, DefaultSeed, DefaultSeed, DefaultSeed));
         SeedPlayedGroupStageMatches();
         _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
         _generator.SimulateUntilFinal(performedByEmail: AdminEmail);
 
         List<MatchElimination> all = _eliminationRepository.GetAll().OfType<MatchElimination>().ToList();
         DateTime previousRoundEnd = _matchRepository.GetAll().Max(match => match.MatchDate.Date);
-        Phase[] chronologicalPhases = { Phase.RoundOf32, Phase.RoundOf16, Phase.QuarterFinals, Phase.SemiFinal, Phase.ThirdPlace, Phase.Final };
-        foreach (Phase phase in chronologicalPhases)
+        DateTime semiFinalsEnd = all.Where(match => match.Phase == Phase.SemiFinal).Max(match => match.MatchDate.Date);
+        // El tercer puesto va ultimo: su ronda anterior son las semis, igual que para la Final.
+        Phase[] roundsUpToThirdPlace = { Phase.RoundOf32, Phase.RoundOf16, Phase.QuarterFinals, Phase.SemiFinal, Phase.ThirdPlace };
+        foreach (Phase phase in roundsUpToThirdPlace)
         {
             List<DateTime> roundDays = all.Where(match => match.Phase == phase).Select(match => match.MatchDate.Date).ToList();
-            Assert.IsTrue(
-                roundDays.Min() > previousRoundEnd,
-                $"{phase} arranca el {roundDays.Min():d}, sin esperar al fin de la ronda anterior ({previousRoundEnd:d}).");
+            Assert.AreEqual(
+                previousRoundEnd.AddDays(daysBetweenJourneys),
+                roundDays.Min(),
+                $"{phase} debe arrancar {daysBetweenJourneys} dias despues del fin de la ronda anterior ({previousRoundEnd:d}).");
             previousRoundEnd = roundDays.Max();
         }
+
+        DateTime thirdPlaceDay = previousRoundEnd;
+        DateTime finalDay = all.Single(match => match.Phase == Phase.Final).MatchDate.Date;
+        Assert.IsTrue(finalDay > thirdPlaceDay, $"La Final ({finalDay:d}) debe jugarse despues del tercer puesto ({thirdPlaceDay:d}).");
+        Assert.IsTrue(
+            finalDay >= semiFinalsEnd.AddDays(daysBetweenJourneys),
+            $"La Final ({finalDay:d}) debe esperar {daysBetweenJourneys} dias desde las semis ({semiFinalsEnd:d}).");
     }
 
     [TestMethod]
@@ -383,6 +407,20 @@ public class KnockoutFixtureGeneratorExtensionTests
 
         Assert.ThrowsException<MatchServicesException>(
             () => _generator.AdvanceToNextRound(performedByEmail: AdminEmail));
+    }
+
+    [TestMethod]
+    public void AdvanceToNextRound_LoadsTheBracketOnce()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.RoundOf32);
+        int readsBefore = _eliminationRepository.GetAllCalls;
+
+        _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+
+        // El proximo id de partido sale de una consulta MAX, no de otra lectura del cuadro.
+        Assert.AreEqual(1, _eliminationRepository.GetAllCalls - readsBefore);
     }
 
     [TestMethod]

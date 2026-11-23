@@ -83,13 +83,13 @@ else
         {
             <div class="m26-empty">
                 <i class="bi bi-journal-x" aria-hidden="true"></i>
-                <p class="mb-0">No hay registros que coincidan.</p>
+                <p class="mb-0">Ningún registro coincide con esos filtros: cambialos o tocá Limpiar para ver todo el log.</p>
             </div>
         }
         else
         {
-            <div class="table-responsive" tabindex="0" role="region" aria-label="Registros de auditoría">
-                <table class="table m26-scoreboard audit-table mb-0">
+            <div class="table-responsive table-wrap" tabindex="0" role="region" aria-label="Registros de auditoría">
+                <table class="table table-hover m26-scoreboard audit-table mb-0">
                     <thead>
                         <tr>
                             <th>Fecha y hora</th>
@@ -124,6 +124,9 @@ else
 @code {
     private const string TimestampFormat = "dd/MM/yyyy HH:mm:ss";
     private const int MaxRows = 500;
+    // No afirma que perdió el permiso: también pasa cuando no se pudo releer al usuario de la base.
+    private const string PermissionNotConfirmedMessage =
+        "No se pudo confirmar que tengas permiso para esta acción. Recargá la página e intentá nuevamente.";
 
     private string actionFilter = "";
     private string emailFilter = "";
@@ -145,13 +148,23 @@ else
     {
         if (CanExport)
         {
-            LoadLogs();
+            QueryLogs();
+        }
+    }
+
+    // Los filtros se pueden seguir usando en una página dejada abierta: el rol se relee antes de cada consulta.
+    // La primera carga no lo necesita: MainLayout acaba de releer al usuario al navegar hasta acá.
+    private async Task LoadLogs()
+    {
+        if (await Session.StillHasAnyRoleAsync(UserRoles.Admin, UserRoles.Periodista))
+        {
+            QueryLogs();
         }
     }
 
     // Filtro, orden (más nuevo primero) y tope corren en SQL. Se pide una fila de más
     // solo para saber si quedaron registros afuera de la pantalla.
-    private void LoadLogs()
+    private void QueryLogs()
     {
         logs = AuditLogService.GetFiltered(BuildFilter(), MaxRows + 1);
         limitReached = logs.Count > MaxRows;
@@ -173,19 +186,26 @@ else
         };
     }
 
-    private void ClearFilters()
+    private Task ClearFilters()
     {
         actionFilter = "";
         emailFilter = "";
         fromDate = null;
         toDate = null;
         exportError = null;
-        LoadLogs();
+        return LoadLogs();
     }
 
     private async Task ExportAsync()
     {
         exportError = null;
+
+        if (!await Session.StillHasAnyRoleAsync(UserRoles.Admin, UserRoles.Periodista))
+        {
+            if (Session.IsLoggedIn) exportError = PermissionNotConfirmedMessage;
+            return;
+        }
+
         isExporting = true;
         try
         {

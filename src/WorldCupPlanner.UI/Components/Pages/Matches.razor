@@ -121,15 +121,19 @@ else
                             <td>@match.MatchDate.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>@StageLabel(match)</td>
                             <td class="match-teams">
-                                <TeamFlag Team="TeamNamed(match.HomeTeamName)" />@match.HomeTeamName
+                                @* Sin equipo resuelto el href queda en null y el nombre se ve como texto, no como enlace roto. *@
+                                <TeamFlag Team="TeamNamed(match.HomeTeamName)" /><a href="@(TeamNamed(match.HomeTeamName) is Team homeTeam ? $"team/{homeTeam.Id}" : null)">@match.HomeTeamName</a>
                                 <span class="match-vs">vs</span>
-                                <TeamFlag Team="TeamNamed(match.AwayTeamName)" />@match.AwayTeamName
+                                <TeamFlag Team="TeamNamed(match.AwayTeamName)" /><a href="@(TeamNamed(match.AwayTeamName) is Team awayTeam ? $"team/{awayTeam.Id}" : null)">@match.AwayTeamName</a>
                             </td>
                             <td>@match.StadiumName</td>
                             <td>
-                                <span class="m26-score @(IsPlayed(match) ? "" : "pending")">
-                                    @(IsPlayed(match) ? $"{match.HomeGoals} - {match.AwayGoals}" : "vs")
-                                </span>
+                                <ScoreCell @key="match.MatchId" Played="IsPlayed(match)"
+                                           HomeGoals="match.HomeGoals" AwayGoals="match.AwayGoals" />
+                                @if (!IsPlayed(match) && match.HomeTeamRanking is int homeRanking && match.AwayTeamRanking is int awayRanking)
+                                {
+                                    <MatchForecast HomeRanking="homeRanking" AwayRanking="awayRanking" Knockout="@(match.GroupName is null)" />
+                                }
                             </td>
                             <td>
                                 <span class="match-status @(IsPlayed(match) ? "played" : "pending")">
@@ -175,7 +179,7 @@ else
     {
         <div class="m26-empty">
             <i class="bi bi-calendar-x" aria-hidden="true"></i>
-            <p class="mb-0">No hay partidos para los filtros seleccionados.</p>
+            <p class="mb-0">No hay partidos para mostrar: si usaste filtros, tocá Limpiar; si no, todavía falta generar el fixture.</p>
         </div>
     }
 }

@@ -6,6 +6,7 @@
 @inject SessionState Session
 @inject NavigationManager Nav
 @inject ILogger<LogIn> Logger
+@inject IConfiguration Configuration
 
 <PageTitle>Ingresar · Golazo</PageTitle>
 
@@ -46,11 +47,7 @@
                            @bind="email" @bind:event="oninput" />
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label" for="loginPassword">Contraseña</label>
-                    <input id="loginPassword" class="form-control" type="password" autocomplete="current-password" placeholder="••••••••"
-                           @bind="password" @bind:event="oninput" />
-                </div>
+                <PasswordField Id="loginPassword" Label="Contraseña" Autocomplete="current-password" @bind-Value="password" />
 
                 <button class="btn btn-primary w-100" type="submit">
                     Ingresar
@@ -62,6 +59,8 @@
             <!-- ========================= -->
             <!-- TESTEO FUNCIONAL -->
             <!-- ========================= -->
+            @if (Configuration.GetValue("Demo:Enabled", true))
+            {
             <hr />
 
             <div class="alert alert-info demo-credentials">
@@ -84,6 +83,7 @@
                     </li>
                 </ul>
             </div>
+            }
 
         </div>
     </div>

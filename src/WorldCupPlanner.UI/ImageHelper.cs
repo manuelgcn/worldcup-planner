@@ -5,6 +5,9 @@ namespace WorldCupPlanner.UI;
 public static class ImageHelper
 {
     private const string DefaultMimeType = "image/png";
+    // La firma está en los primeros bytes y esto corre en cada render de una bandera. Múltiplo de 4:
+    // un prefijo de ese largo sigue siendo base64 válido.
+    private const int SignaturePrefixLength = 256;
 
     public static string GetDataUri(string? base64, string? contentType = null)
     {
@@ -24,7 +27,7 @@ public static class ImageHelper
     {
         try
         {
-            byte[] bytes = Convert.FromBase64String(base64);
+            byte[] bytes = Convert.FromBase64String(base64[..Math.Min(SignaturePrefixLength, base64.Length)]);
 
             if (IsPng(bytes))
             {
@@ -51,6 +54,16 @@ public static class ImageHelper
         }
 
         return DefaultMimeType;
+    }
+
+    // Los mismos formatos que GuessImageMimeType reconoce: lo que se acepta al subir se puede mostrar después.
+    // Con el archivo entero además se exige el <svg, porque cualquier XML empieza con "<?xml"; el prefijo
+    // que lee GuessImageMimeType puede no alcanzarlo.
+    // shortcut: no parsea el XML, un XHTML con un <svg> adentro pasa; parsearlo si una bandera deja de mostrarse solo en <img>.
+    public static bool IsSupportedImage(byte[] bytes)
+    {
+        return IsPng(bytes) || IsJpeg(bytes) || IsWebp(bytes) ||
+               (IsSvg(bytes) && Encoding.UTF8.GetString(bytes).Contains("<svg", StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool IsPng(byte[] bytes)

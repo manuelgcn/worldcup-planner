@@ -2,6 +2,10 @@
 @using WorldCupPlanner.Domain
 @implements IDisposable
 @inject SessionState Session
+@inject IJSRuntime JS
+
+@* Con <base href="/"> el ancla sola navegaría al inicio: el clic se cancela y el foco se mueve a mano. *@
+<a class="skip-link" href="#main-content" @onclick="SkipToContent" @onclick:preventDefault>Saltar al contenido</a>
 
 <div class="page">
     <header class="sidebar">
@@ -10,6 +14,11 @@
 
     <main>
         <div class="top-row px-4">
+            @* theme.js atiende el clic y pone aria-pressed; el ícono lo elige el CSS según data-theme. *@
+            <button type="button" class="theme-toggle" data-theme-toggle aria-label="Tema nocturno" title="Tema nocturno">
+                <i class="bi bi-sun-fill" aria-hidden="true"></i>
+                <i class="bi bi-moon-stars-fill" aria-hidden="true"></i>
+            </button>
             @if (Session.IsLoggedIn)
             {
                 <a class="session-chip" href="edit-user" title="Mi perfil">
@@ -22,19 +31,27 @@
             }
         </div>
 
-        <article class="content px-4">
+        <article id="main-content" class="content px-4" tabindex="-1" @ref="content">
             @Body
         </article>
     </main>
 </div>
 
+@* Blazor lo muestra ante un error sin manejar y atiende .reload y .dismiss. *@
 <div id="blazor-error-ui" role="alert">
+    <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
     Ocurrió un error inesperado.
     <a href="" class="reload">Recargar</a>
-    <button type="button" class="dismiss" aria-label="Cerrar aviso">🗙</button>
+    <button type="button" class="dismiss" aria-label="Cerrar aviso">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+    </button>
 </div>
 
 @code {
+    private ElementReference content;
+
+    private async Task SkipToContent() => await content.FocusAsync();
+
     private string Initials =>
         $"{FirstLetter(Session.CurrentUser!.name)}{FirstLetter(Session.CurrentUser.lastname)}";
 
@@ -51,6 +68,15 @@
     // Cada navegación cambia el Body: se relee el usuario para que un rol quitado o una baja hecha en
     // otra pestaña se apliquen ya, no recién al recargar.
     protected override Task OnParametersSetAsync() => Session.RevalidateAsync();
+
+    // El servidor no sabe qué tema tiene el navegador: theme.js marca el botón recién dibujado.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("golazoTheme.sync");
+        }
+    }
 
     private void HandleSessionChanged() => InvokeAsync(StateHasChanged);
 

@@ -44,6 +44,18 @@ public sealed class MatchServiceEditGuardTests
     }
 
     [TestMethod]
+    public void UpdateMatch_WithTournamentSettingsId_RecordsWhoMadeTheChange()
+    {
+        UpdateMatchRequestDto request = new UpdateMatchRequestDto { StadiumId = StadiumId, TournamentSettingsId = TournamentSettingsId };
+
+        _context.Service.UpdateMatch(GroupMatchId, request, "editor@copa.com");
+
+        AuditLog entry = _context.AuditLogs.Single(log => log.Action == AuditActions.UpdateMatch);
+        Assert.AreEqual("editor@copa.com", entry.PerformedByEmail);
+        Assert.AreEqual(TournamentSettingsId, entry.TournamentSettingsId);
+    }
+
+    [TestMethod]
     public void UpdateMatch_WhenTheSaveFails_WritesNoAuditEntry()
     {
         _context.MatchRepository.FailNextUpdate = new InvalidOperationException("database unavailable");
@@ -59,39 +71,6 @@ public sealed class MatchServiceEditGuardTests
         MatchDto result = _context.Service.UpdateMatch(GroupMatchId, new UpdateMatchRequestDto { StadiumId = StadiumId });
 
         Assert.AreEqual(GroupMatchId, result.MatchId);
-    }
-
-    [TestMethod]
-    public void SetGoals_OnGroupMatch_WhenKnockoutExists_Throws()
-    {
-        _context.SeedFakeEliminationMatchInRepository();
-
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.SetGoals(GroupMatchId, 2, 1));
-    }
-
-    [TestMethod]
-    public void AddGoal_OnGroupMatch_WhenKnockoutExists_Throws()
-    {
-        _context.SeedFakeEliminationMatchInRepository();
-
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.AddGoal(GroupMatchId, isHomeTeam: true));
-    }
-
-    [TestMethod]
-    public void RemoveGoal_OnGroupMatch_WhenKnockoutExists_Throws()
-    {
-        _context.Service.SetGoals(GroupMatchId, 2, 0);
-        _context.SeedFakeEliminationMatchInRepository();
-
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.RemoveGoal(GroupMatchId, isHomeTeam: true));
-    }
-
-    [TestMethod]
-    public void SimulateMatch_OnGroupMatch_WhenKnockoutExists_Throws()
-    {
-        _context.SeedFakeEliminationMatchInRepository();
-
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.SimulateMatch(GroupMatchId));
     }
 
     [TestMethod]

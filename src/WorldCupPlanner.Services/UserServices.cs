@@ -19,8 +19,11 @@ public class UserServices : IUserService
 
     private const string InvalidCredentialsMessage = "Credenciales invalidas";
     private const string TooManyFailedLoginsMessage = "Demasiados intentos fallidos. Probá de nuevo en unos minutos.";
+    private const string WrongCurrentPasswordMessage = "La contraseña actual no es correcta.";
     private const int MaxFailedLogins = 5;
     private const int LockoutMinutes = 5;
+    private const int MaxTrackedLogins = 10_000;
+    private const int MaxLoginKeyLength = 254;
     private const string EmailAlreadyExistsMessage = "El email ya esta registrado";
     private const string UserIdAlreadyAssignedMessage = "El id de usuario ya esta asignado";
     private const string UserMustHaveOneRoleMessage = "El usuario debe tener al menos un rol";
@@ -33,8 +36,11 @@ public class UserServices : IUserService
     private readonly IUserRepository _userRepository;
     private readonly TimeProvider _timeProvider;
 
-    // Intentos fallidos por email normalizado. El servicio es singleton: el conteo vive mientras corre la app.
+    // Intentos fallidos por clave de login (ver LoginKeyFor). El servicio es singleton: el conteo vive mientras corre la app.
     private readonly ConcurrentDictionary<string, FailedLogins> _failedLogins = new();
+
+    // Cuantas claves de login se estan recordando: deja comprobar que esa memoria esta acotada.
+    public int TrackedLoginCount => _failedLogins.Count;
 
     public UserServices(IUserRepository userRepository, IAuditLogService auditLogService, TimeProvider? timeProvider = null)
     {
@@ -130,20 +136,20 @@ public class UserServices : IUserService
 
     public User Authenticate(string email, string password)
     {
-        string loginKey = email.Trim().ToLowerInvariant();
         DateTimeOffset now = _timeProvider.GetUtcNow();
-
-        if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.LockedUntil is { } lockedUntil)
-        {
-            if (now < lockedUntil)
-                throw new UserServicesException(TooManyFailedLoginsMessage);
-
-            _failedLogins.TryRemove(loginKey, out _);
-        }
-
         User? user = _userRepository.GetByEmail(email);
 
-        if (user == null || !user.PasswordMatches(password))
+        // Si el email es de una cuenta se cuenta bajo su email guardado: la base puede resolver a la misma
+        // cuenta un email escrito distinto, y con la clave tipeada cada forma tendria su propio contador.
+        // Por eso la lectura va antes del bloqueo; la verificacion de la contrasena, que es lo caro, sigue despues.
+        string loginKey = LoginKeyFor(user?.email ?? email);
+
+        EnsureNotLocked(loginKey, now);
+
+        // Con un email desconocido se verifica igual una contrasena: si no, la respuesta rapida delataria cuales estan registrados.
+        bool passwordMatches = user?.PasswordMatches(password) ?? User.PasswordMatchesNoAccount(password);
+
+        if (user == null || !passwordMatches)
         {
             RegisterFailedLogin(loginKey, now);
             throw new UserServicesException(InvalidCredentialsMessage);
@@ -157,20 +163,61 @@ public class UserServices : IUserService
         return user;
     }
 
+    // Se recorta al largo maximo de un email de cuenta: lo que sobra no puede ser de ningun usuario
+    // y, sin recortar, cada clave ocuparia tanto como el texto que mande el cliente.
+    private static string LoginKeyFor(string email)
+    {
+        string key = email.Trim().ToLowerInvariant();
+        return key.Length > MaxLoginKeyLength ? key[..MaxLoginKeyLength] : key;
+    }
+
+    private void EnsureNotLocked(string loginKey, DateTimeOffset now)
+    {
+        if (_failedLogins.TryGetValue(loginKey, out FailedLogins? failed) && failed.IsLockedAt(now))
+            throw new UserServicesException(TooManyFailedLoginsMessage);
+    }
+
     // Se cuenta también para emails inexistentes: si no, el bloqueo delataría cuáles están registrados.
     private void RegisterFailedLogin(string loginKey, DateTimeOffset now)
     {
+        if (_failedLogins.Count >= MaxTrackedLogins && !_failedLogins.ContainsKey(loginKey))
+            FreeTrackedLogin(now);
+
+        DateTimeOffset expiresAt = now.AddMinutes(LockoutMinutes);
+
         _failedLogins.AddOrUpdate(
             loginKey,
-            _ => new FailedLogins(1, null),
-            (_, current) => current.Count + 1 >= MaxFailedLogins
-                ? new FailedLogins(0, now.AddMinutes(LockoutMinutes))
+            _ => new FailedLogins(1, expiresAt),
+            (_, current) =>
+                current.ExpiresAt <= now ? new FailedLogins(1, expiresAt)
+                : current.Count + 1 >= MaxFailedLogins ? new FailedLogins(MaxFailedLogins, expiresAt)
                 : current with { Count = current.Count + 1 });
     }
 
-    private sealed record FailedLogins(int Count, DateTimeOffset? LockedUntil);
+    // Sin tope, probar emails al azar haria crecer el diccionario sin limite. TryRemove compara tambien
+    // el valor, asi no se pierde una entrada que otro hilo acaba de renovar; entre hilos el tope es aproximado.
+    // shortcut: con el tope lleno de entradas vigentes se descarta la mas proxima a vencer, asi que
+    // MaxTrackedLogins emails nuevos pueden borrar un contador o un bloqueo real, y cada clave nueva
+    // recorre todo el diccionario; si eso llega a importar, limitar los intentos por IP antes de este servicio.
+    private void FreeTrackedLogin(DateTimeOffset now)
+    {
+        foreach (KeyValuePair<string, FailedLogins> entry in _failedLogins)
+        {
+            if (entry.Value.ExpiresAt <= now)
+                _failedLogins.TryRemove(entry);
+        }
 
-    // Unica oportunidad de migrar un hash viejo: solo en el login se conoce la contrasena.
+        if (_failedLogins.Count >= MaxTrackedLogins)
+            _failedLogins.TryRemove(_failedLogins.MinBy(entry => entry.Value.ExpiresAt));
+    }
+
+    // Vence a los LockoutMinutes del primer fallo mientras cuenta, y a los LockoutMinutes del ultimo una vez bloqueado.
+    private sealed record FailedLogins(int Count, DateTimeOffset ExpiresAt)
+    {
+        public bool IsLockedAt(DateTimeOffset now) => Count >= MaxFailedLogins && now < ExpiresAt;
+    }
+
+    // Unica oportunidad de reemplazar un hash mas debil que el actual: solo en el login se conoce la contrasena.
     private void UpgradeLegacyPasswordHash(User user, string password)
     {
         user.UpgradeLegacyPasswordHash(password);
@@ -178,7 +225,7 @@ public class UserServices : IUserService
 
         _auditLogService.LogPerformedBy(
             AuditActions.UpgradePasswordHash,
-            $"Password hash of UserId={user.idUser} upgraded to PBKDF2.",
+            $"Password hash of UserId={user.idUser} upgraded to the current format.",
             user.email,
             nameof(User),
             user.idUser
@@ -250,15 +297,59 @@ public class UserServices : IUserService
             throw new UserServicesException(EmailAlreadyExistsMessage);
 
         User user = GetUserById(id);
+        string oldLoginKey = LoginKeyFor(user.email);
+
+        // Quien edita su propia cuenta: tras guardar, su email anterior ya no resuelve a su id en la auditoria.
+        bool isOwnAccount = string.Equals(performedByEmail?.Trim(), user.email, StringComparison.OrdinalIgnoreCase);
 
         user.UpdatePersonalData(name, lastname, email);
 
         _userRepository.Update(user);
 
+        // El contador sigue a la cuenta: si quedara bajo el email viejo, cambiar el email (que no pide
+        // contrasena) daria intentos nuevos y levantaria un bloqueo.
+        string newLoginKey = LoginKeyFor(user.email);
+
+        if (newLoginKey != oldLoginKey && _failedLogins.TryRemove(oldLoginKey, out FailedLogins? failed))
+            _failedLogins[newLoginKey] = failed;
+
         _auditLogService.LogPerformedBy(
             AuditActions.UpdateUser,
             $"UserId={user.idUser} updated.",
-            performedByEmail,
+            isOwnAccount ? user.email : performedByEmail,
+            nameof(User),
+            user.idUser
+        );
+    }
+
+    // La contrasena actual se pide aunque haya sesion, y sus fallos cuentan para el mismo bloqueo que el login:
+    // si no, una sesion abierta en una maquina ajena alcanzaria para adivinarla sin limite o quedarse con la cuenta.
+    public void ChangePassword(int userId, string currentPassword, string newPassword)
+    {
+        if (userId == SystemAdminUserId)
+            throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
+
+        User user = GetUserById(userId);
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        string loginKey = LoginKeyFor(user.email);
+
+        EnsureNotLocked(loginKey, now);
+
+        if (!user.PasswordMatches(currentPassword))
+        {
+            RegisterFailedLogin(loginKey, now);
+            throw new UserServicesException(WrongCurrentPasswordMessage);
+        }
+
+        _failedLogins.TryRemove(loginKey, out _);
+
+        user.ChangePassword(currentPassword, newPassword);
+        _userRepository.Update(user);
+
+        _auditLogService.LogPerformedBy(
+            AuditActions.ChangePassword,
+            $"Password of UserId={user.idUser} changed.",
+            user.email,
             nameof(User),
             user.idUser
         );
@@ -266,6 +357,9 @@ public class UserServices : IUserService
 
     public void AssignRole(int userId, UserRoles role, string? performedByEmail = null)
     {
+        if (userId == SystemAdminUserId)
+            throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
+
         User user = GetUserById(userId);
 
         user.AddRole(role);

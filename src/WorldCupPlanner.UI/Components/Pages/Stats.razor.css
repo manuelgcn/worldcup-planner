@@ -1,0 +1,114 @@
+/* Recuento: el mismo tablero de cifras anchas de la home, con tantas columnas como entren. */
+.stat-tally {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(9.5rem, 100%), 1fr));
+    column-gap: 1.25rem;
+    margin: 1.5rem 0 .75rem;
+    border-top: 2px solid var(--m26-ink);
+}
+
+/* Un rótulo en dos líneas no desalinea su cifra: todas apoyan abajo. */
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1rem 0 1.1rem;
+    border-bottom: 1px solid var(--m26-line);
+}
+
+.stat-tally dt,
+.stat-highlights dt {
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--m26-muted);
+}
+
+.stat-tally dd {
+    margin: .2rem 0 0;
+    font-size: clamp(1.9rem, 4vw, 2.75rem);
+    font-stretch: 118%;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+}
+
+.stat-note {
+    margin: .6rem 0 0;
+    font-size: .9rem;
+}
+
+.stat-highlights {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr));
+    gap: 1rem 1.25rem;
+    margin: 1.75rem 0 0;
+}
+
+.stat-highlights dd {
+    margin: .3rem 0 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.stat-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
+    column-gap: 1.25rem;
+}
+
+.stat-section {
+    margin-top: 2.5rem;
+}
+
+/* Barras: el ancho es solo un apoyo visual; la cifra va siempre escrita al lado. */
+.bar-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--m26-line);
+}
+
+.bar-row {
+    display: grid;
+    grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr) minmax(11rem, auto);
+    align-items: center;
+    gap: .25rem .9rem;
+    padding: .55rem 0;
+    border-bottom: 1px solid var(--m26-line);
+}
+
+.bar-label {
+    font-weight: 600;
+}
+
+.bar-track {
+    height: .8rem;
+    border-radius: var(--m26-radius-sm);
+    background: var(--m26-line-soft);
+}
+
+.bar-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--m26-accent);
+}
+
+.bar-value {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--m26-muted);
+}
+
+@media (max-width: 640.98px) {
+    /* En móvil el nombre y la cifra van arriba y la barra ocupa todo el ancho debajo. */
+    .bar-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .bar-track {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+}

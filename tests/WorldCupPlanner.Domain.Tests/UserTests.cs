@@ -202,6 +202,28 @@ public class UserTests
     }
 
     
+    // Sin tope, una contrasena enorme iria entera a PBKDF2.
+    [TestMethod]
+    public void PasswordCannotHaveMoreThan128Characters()
+    {
+        string tooLong = "Aa1@" + new string('a', 125);
+
+        ArgumentException error = Assert.ThrowsException<ArgumentException>(() =>
+            new User(1, "Juan", "Perez", "juan@mail.com", tooLong, new DateTime(1990, 5, 15)));
+
+        StringAssert.Contains(error.Message, "128");
+    }
+
+    [TestMethod]
+    public void PasswordCanHaveExactly128Characters()
+    {
+        string longest = "Aa1@" + new string('a', 124);
+
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", longest, new DateTime(1990, 5, 15));
+
+        Assert.IsTrue(user.PasswordMatches(longest));
+    }
+
     [TestMethod]
     public void PasswordIsNotStoredInPlainText()
     {
@@ -267,7 +289,219 @@ public class UserTests
         Assert.IsFalse(usuario.PasswordMatches("Other123@"));
     }
 
-    
+    [TestMethod]
+    public void PasswordIsStoredAsAVersionedHashWith600000Iterations()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        string[] parts = user.password.Split(':');
+        Assert.AreEqual(4, parts.Length);
+        Assert.AreEqual("v2", parts[0]);
+        Assert.AreEqual("600000", parts[1]);
+        Assert.AreEqual(ZeroSalt.Length, parts[2].Length);
+        Assert.AreEqual(ZeroHash.Length, parts[3].Length);
+    }
+
+    [TestMethod]
+    public void PasswordMatchesUsesTheIterationCountStoredWithTheHash()
+    {
+        byte[] salt = Convert.FromBase64String(ZeroSalt);
+        byte[] hash = Rfc2898DeriveBytes.Pbkdf2("Pass123@", salt, 1000, HashAlgorithmName.SHA256, 32);
+        User user = WithStoredPassword(new User(), $"v2:1000:{ZeroSalt}:{Convert.ToBase64String(hash)}");
+
+        Assert.IsTrue(user.PasswordMatches("Pass123@"));
+        Assert.IsFalse(user.PasswordMatches("Other123@"));
+    }
+
+    // Los "sal:hash" (PBKDF2, 100.000 iteraciones) de db/scripts/seed-full.sql, con las contrasenas del README.
+    [DataTestMethod]
+    [DataRow(SeedScriptPassword, SeedScriptHash)]
+    [DataRow("Admin@456", "Iaz3OUXq6gNg9ouIZreHaw==:PujOzyetnEYZf7SDY/Jqb2xfTI3+aFBGuDKXyM2X8dg=")]
+    [DataRow("Editor@123", "og79LuOs2AVfjMwwLZ5eDQ==:Wjw4utF31I4jBYRFYKB3kLYaL/u24n7YCduRyqJG9gY=")]
+    [DataRow("Editor@456", "Ysso6hoqbX/CmssIkLk/4A==:5+ZSsjQQSduSoE+SgCSRcSaY5W7g2ZPDX1bJnLD1iRA=")]
+    [DataRow("Prensa@123", "lfFxKRmCcvTS085MJYUNmQ==:MuMoDfBiRkE4VI6ZLp5QA7baQC+AdhEciP2F+C5T38w=")]
+    [DataRow("Prensa@456", "L0TnkMYvZA4rWs0Bde7htQ==:e23TJPpzaq7I27ZlX6MHGyxKPztJEFe74IrB4IcT4j4=")]
+    public void PasswordMatchesAcceptsTheSaltedHashesOfTheSeedScript(string plainTextPassword, string stored)
+    {
+        User user = WithStoredPassword(new User(), stored);
+
+        Assert.IsTrue(user.PasswordMatches(plainTextPassword));
+        Assert.IsFalse(user.PasswordMatches("Other123@"));
+    }
+
+    // Legado es todo hash mas debil que el actual, no solo el SHA-256 sin sal.
+    [TestMethod]
+    public void UpgradeLegacyPasswordHashReplacesAnUnversionedSaltedHash()
+    {
+        User user = WithStoredPassword(new User(), SeedScriptHash);
+        Assert.IsTrue(user.HasLegacyPasswordHash);
+
+        user.UpgradeLegacyPasswordHash(SeedScriptPassword);
+
+        Assert.IsFalse(user.HasLegacyPasswordHash);
+        StringAssert.StartsWith(user.password, "v2:600000:");
+        Assert.IsTrue(user.PasswordMatches(SeedScriptPassword));
+    }
+
+    [TestMethod]
+    public void UpgradeLegacyPasswordHashReplacesAVersionedHashWithFewerIterations()
+    {
+        byte[] salt = Convert.FromBase64String(ZeroSalt);
+        byte[] hash = Rfc2898DeriveBytes.Pbkdf2("Pass123@", salt, 1000, HashAlgorithmName.SHA256, 32);
+        User user = WithStoredPassword(new User(), $"v2:1000:{ZeroSalt}:{Convert.ToBase64String(hash)}");
+        Assert.IsTrue(user.HasLegacyPasswordHash);
+
+        user.UpgradeLegacyPasswordHash("Pass123@");
+
+        StringAssert.StartsWith(user.password, "v2:600000:");
+        Assert.IsTrue(user.PasswordMatches("Pass123@"));
+    }
+
+    [TestMethod]
+    public void UpgradeLegacyPasswordHashRejectsAWrongPasswordForASaltedHash()
+    {
+        User user = WithStoredPassword(new User(), SeedScriptHash);
+
+        Assert.ThrowsException<ArgumentException>(() => user.UpgradeLegacyPasswordHash("Other123@"));
+        Assert.AreEqual(SeedScriptHash, user.password);
+    }
+
+    [TestMethod]
+    public void UpgradeLegacyPasswordHashLeavesACurrentHashAsItIs()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+        Assert.IsFalse(user.HasLegacyPasswordHash);
+
+        user.UpgradeLegacyPasswordHash("Pass123@");
+
+        Assert.AreEqual(stored, user.password);
+    }
+
+    // Mas iteraciones que las actuales no es mas debil: no hay nada que mejorar.
+    [TestMethod]
+    public void AHashWithMoreIterationsThanTheCurrentOnesIsNotLegacy()
+    {
+        User user = WithStoredPassword(new User(), $"v2:700000:{ZeroSalt}:{ZeroHash}");
+
+        Assert.IsFalse(user.HasLegacyPasswordHash);
+    }
+
+    // Lo que el login verifica cuando el email no existe: tiene que fallar siempre, sea cual sea la contrasena.
+    [DataTestMethod]
+    [DataRow("Pass123@")]
+    [DataRow("")]
+    public void NoPasswordMatchesTheAccountThatDoesNotExist(string plainTextPassword)
+    {
+        Assert.IsFalse(User.PasswordMatchesNoAccount(plainTextPassword));
+    }
+
+    // Un valor guardado que no se puede leer nunca coincide, y tampoco rompe el login con una excepcion.
+    [DataTestMethod]
+    [DataRow(":")]
+    [DataRow("no-es-base64:no-es-base64")]
+    [DataRow(ZeroSalt + ":")]
+    [DataRow("v2:600000::")]
+    [DataRow("v2:600000:" + ZeroSalt + ":")]
+    [DataRow("v2:600000:" + ZeroSalt)]
+    [DataRow("v2:600000:" + ZeroSalt + ":" + ZeroHash + ":sobra")]
+    [DataRow("v2:600000:no-es-base64:" + ZeroHash)]
+    [DataRow("v3:600000:" + ZeroSalt + ":" + ZeroHash)]
+    [DataRow("v2::" + ZeroSalt + ":" + ZeroHash)]
+    [DataRow("v2:muchas:" + ZeroSalt + ":" + ZeroHash)]
+    [DataRow("v2:0:" + ZeroSalt + ":" + ZeroHash)]
+    [DataRow("v2:-1:" + ZeroSalt + ":" + ZeroHash)]
+    [DataRow("v2:99999999999:" + ZeroSalt + ":" + ZeroHash)]
+    public void PasswordMatchesReturnsFalseForAMalformedStoredValue(string stored)
+    {
+        User user = WithStoredPassword(new User(), stored);
+
+        Assert.IsFalse(user.PasswordMatches("Pass123@"));
+    }
+
+    // Con el maximo de un int derivar llevaria minutos: tiene que rechazarse sin llegar a PBKDF2.
+    [TestMethod]
+    [Timeout(5000)]
+    public void PasswordMatchesRejectsAnAbsurdIterationCountWithoutDerivingIt()
+    {
+        User user = WithStoredPassword(new User(), $"v2:{int.MaxValue}:{ZeroSalt}:{ZeroHash}");
+
+        Assert.IsFalse(user.PasswordMatches("Pass123@"));
+    }
+
+    [TestMethod]
+    public void ChangePasswordStoresTheNewPasswordAsACurrentHash()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        user.ChangePassword("Pass123@", "Nueva456#");
+
+        StringAssert.StartsWith(user.password, "v2:600000:");
+        Assert.IsTrue(user.PasswordMatches("Nueva456#"));
+        Assert.IsFalse(user.PasswordMatches("Pass123@"));
+    }
+
+    // Cambiar la contrasena tambien deja atras un hash mas debil que el actual.
+    [TestMethod]
+    public void ChangePasswordReplacesALegacyHash()
+    {
+        User user = WithStoredPassword(new User(), SeedScriptHash);
+
+        user.ChangePassword(SeedScriptPassword, "Nueva456#");
+
+        Assert.IsFalse(user.HasLegacyPasswordHash);
+        Assert.IsTrue(user.PasswordMatches("Nueva456#"));
+    }
+
+    [TestMethod]
+    public void ChangePasswordRejectsAWrongCurrentPassword()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+
+        Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Other123@", "Nueva456#"));
+        Assert.AreEqual(stored, user.password);
+    }
+
+    [DataTestMethod]
+    [DataRow("Nu1#")]
+    [DataRow("nueva456#")]
+    [DataRow("NUEVA456#")]
+    [DataRow("Nuevaaaa#")]
+    [DataRow("Nueva4567")]
+    public void ChangePasswordRejectsANewPasswordThatBreaksThePolicy(string newPassword)
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+
+        Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Pass123@", newPassword));
+        Assert.AreEqual(stored, user.password);
+    }
+
+    [TestMethod]
+    public void ChangePasswordRejectsANewPasswordLongerThan128Characters()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+        string tooLong = "Aa1@" + new string('a', 125);
+
+        ArgumentException error = Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Pass123@", tooLong));
+
+        StringAssert.Contains(error.Message, "128");
+        Assert.AreEqual(stored, user.password);
+    }
+
+    [TestMethod]
+    public void ChangePasswordRejectsANewPasswordEqualToTheCurrentOne()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+
+        Assert.ThrowsException<ArgumentException>(() => user.ChangePassword("Pass123@", "Pass123@"));
+        Assert.AreEqual(stored, user.password);
+    }
+
+
     [TestMethod]
     public void UserStartsWithoutRoles()
     {
@@ -502,7 +736,20 @@ public class UserTests
     private static User WithLegacyHash(User user, string plainTextPassword)
     {
         string legacyHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(plainTextPassword)));
-        typeof(User).GetProperty(nameof(User.password))!.SetValue(user, legacyHash);
+        return WithStoredPassword(user, legacyHash);
+    }
+
+    // admin1@copa.com en db/scripts/seed-full.sql.
+    private const string SeedScriptPassword = "Admin@123";
+    private const string SeedScriptHash = "NayVITcSJcByRMrVNU74ug==:mbu4770CN/kEqP065+upgXhAC4zzKJ9smvFh25ZH5BU=";
+
+    // Una sal de 16 bytes y un hash de 32, todos en cero, en base64: partes bien formadas para armar valores guardados.
+    private const string ZeroSalt = "AAAAAAAAAAAAAAAAAAAAAA==";
+    private const string ZeroHash = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+
+    private static User WithStoredPassword(User user, string stored)
+    {
+        typeof(User).GetProperty(nameof(User.password))!.SetValue(user, stored);
         return user;
     }
 
@@ -543,5 +790,35 @@ public class UserTests
         User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15));
 
         Assert.ThrowsException<ArgumentException>(() => user.UpdatePersonalData(" ", "Perez", "juan@mail.com"));
+    }
+
+    [DataTestMethod]
+    [DataRow("Ju\nan", "Perez")]
+    [DataRow("Juan\u0000", "Perez")]
+    [DataRow("Juan", "Pe\trez")]
+    [DataRow("Juan", "Perez\u0085")]
+    public void User_WithControlCharacterInNameOrLastname_Throws(string name, string lastname)
+    {
+        Assert.ThrowsException<ArgumentException>(
+            () => new User(1, name, lastname, "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15)));
+    }
+
+    [TestMethod]
+    public void UpdatePersonalData_WithControlCharacterInName_ThrowsAndKeepsTheName()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15));
+
+        Assert.ThrowsException<ArgumentException>(() => user.UpdatePersonalData("Ju\ran", "Perez", "juan@mail.com"));
+
+        Assert.AreEqual("Juan", user.name);
+    }
+
+    [TestMethod]
+    public void User_WithSignsInsideARealName_IsCreated()
+    {
+        User user = new User(1, "María José", "O'Connor-Núñez", "maria@mail.com", "Pass1234@", new DateTime(1990, 5, 15));
+
+        Assert.AreEqual("María José", user.name);
+        Assert.AreEqual("O'Connor-Núñez", user.lastname);
     }
 }

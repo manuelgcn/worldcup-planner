@@ -2,6 +2,7 @@ using WorldCupPlanner.DataAccess.Repositories;
 using WorldCupPlanner.DataAccess.Tests.TestDoubles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WorldCupPlanner.Domain;
+using WorldCupPlanner.Services;
 
 namespace WorldCupPlanner.DataAccess.Tests;
 
@@ -83,6 +84,67 @@ public class AuditLogRepositoryTests
         _repository.Add(AuditLog.Create("GLOBAL", "Global log", performedByEmail: "admin@copa.com"));
 
         Assert.AreEqual("admin@copa.com", _repository.GetAll()[0].PerformedByEmail);
+    }
+
+    // Sobre SQLite, que impone las claves foraneas: el id se guarda aunque ese usuario no exista (o ya se haya borrado).
+    [TestMethod]
+    public void AddPersistsPerformedByUserIdEvenWhenNoSuchUserExists()
+    {
+        using SqliteDbContextFactory factory = new SqliteDbContextFactory();
+        AuditLogRepository repository = new AuditLogRepository(factory);
+
+        repository.Add(AuditLog.Create("GLOBAL", "Global log", performedByEmail: "admin@copa.com", performedByUserId: 4242));
+        repository.Add(AuditLog.Create("GLOBAL", "No actor"));
+
+        List<AuditLog> logs = repository.GetAll();
+        Assert.AreEqual(4242, logs[0].PerformedByUserId);
+        Assert.IsNull(logs[1].PerformedByUserId);
+    }
+
+    // El caso que motivo guardar el id: el actor cambia su email, o se lo borra, y sus registros lo siguen identificando.
+    [TestMethod]
+    public void LogsKeepTheActorIdAfterTheUserChangesEmailAndIsDeleted()
+    {
+        using SqliteDbContextFactory factory = new SqliteDbContextFactory();
+        UserRepository users = new UserRepository(factory);
+        AuditLogRepository logs = new AuditLogRepository(factory);
+        AuditLogService service = AuditLogService.CreateInstance(logs, users);
+        User actor = new User(0, "Ana", "Admin", "ana@copa.com", "Pass123@", new DateTime(1990, 5, 15));
+        actor.AddRole(UserRoles.Admin);
+        users.Add(actor);
+        int actorId = actor.idUser;
+
+        service.LogPerformedBy("ACTION", "Before the change", "ana@copa.com");
+        actor.UpdatePersonalData("Ana", "Admin", "otra@copa.com");
+        users.Update(actor);
+        service.LogPerformedBy("ACTION", "After the change", "otra@copa.com");
+        users.Remove(actor);
+
+        List<AuditLog> stored = logs.GetAll();
+        Assert.AreEqual(2, stored.Count);
+        Assert.IsTrue(actorId > 0);
+        Assert.IsTrue(stored.All(log => log.PerformedByUserId == actorId));
+    }
+
+    // Por el caso de uso real: al loguear, el email con el que el actor entro ya no es de nadie.
+    [TestMethod]
+    public void UpdatingOnesOwnEmailThroughUserServicesKeepsTheActorId()
+    {
+        using SqliteDbContextFactory factory = new SqliteDbContextFactory();
+        UserRepository users = new UserRepository(factory);
+        AuditLogRepository logs = new AuditLogRepository(factory);
+        UserServices userServices = new UserServices(users, AuditLogService.CreateInstance(logs, users));
+        // El id 1 es el administrador del sistema, que no se puede modificar: el actor va segundo.
+        users.Add(new User(0, "Admin", "Sistema", "admin@copa.com", "Pass123@", new DateTime(1990, 5, 15)));
+        User actor = new User(0, "Ana", "Editora", "ana@copa.com", "Pass123@", new DateTime(1990, 5, 15));
+        actor.AddRole(UserRoles.Editor);
+        users.Add(actor);
+
+        userServices.UpdateUser(actor.idUser, "Ana", "Editora", "otra@copa.com", performedByEmail: "ana@copa.com");
+
+        AuditLog log = logs.GetAll().Single(l => l.Action == AuditActions.UpdateUser);
+        Assert.AreEqual(actor.idUser, log.PerformedByUserId);
+        Assert.AreEqual("otra@copa.com", log.PerformedByEmail);
     }
 
     [TestMethod]

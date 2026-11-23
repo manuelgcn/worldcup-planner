@@ -9,6 +9,7 @@ public class FixtureService
     private const int RequiredTeams = GroupsInTournament * TeamsPerGroup;
     private const int MaxUefaTeamsPerGroup = 2;
     private const int MaxNonUefaTeamsPerGroup = 1;
+    private const int MinimumStadiumCount = 4;
 
     // Each group draws exactly one team from each bombo, so there are as many bombos as teams per group.
     private const int BomboCount = TeamsPerGroup;
@@ -43,7 +44,7 @@ public class FixtureService
         if (teams.Count != RequiredTeams)
             throw new ArgumentException("El fixture requiere exactamente 48 equipos");
 
-        if (stadiums.Count < 4)
+        if (stadiums.Count < MinimumStadiumCount)
             throw new ArgumentException("Se requieren al menos 4 estadios");
     }
 

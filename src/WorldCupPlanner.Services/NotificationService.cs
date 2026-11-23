@@ -74,7 +74,7 @@ public class NotificationService : INotificationService
         return notificationRepository.CountUnreadByUserId(userId);
     }
 
-    public void MarkAllAsRead(int userId)
+    public void MarkAllAsRead(int userId, string? performedByEmail = null)
     {
         int marked = notificationRepository.MarkAllAsRead(userId);
 
@@ -83,14 +83,15 @@ public class NotificationService : INotificationService
             return;
         }
 
-        auditLogService.Log(
+        auditLogService.LogPerformedBy(
             AuditActions.NotificationReadAll,
             $"All notifications ({marked}) marked as read by user {userId}.",
+            performedByEmail,
             affectedEntityType: nameof(Notification),
             affectedEntityId: userId);
     }
 
-    public void MarkAsRead(int notificationId, int userId)
+    public void MarkAsRead(int notificationId, int userId, string? performedByEmail = null)
     {
         Notification? notification = notificationRepository.GetById(notificationId);
 
@@ -107,9 +108,10 @@ public class NotificationService : INotificationService
         notification.MarkAsRead();
         notificationRepository.Update(notification);
 
-        auditLogService.Log(
+        auditLogService.LogPerformedBy(
             AuditActions.NotificationRead,
             $"Notification {notificationId} marked as read by user {userId}.",
+            performedByEmail,
             affectedEntityType: nameof(Notification),
             affectedEntityId: notificationId);
     }
@@ -122,9 +124,7 @@ public class NotificationService : INotificationService
             return;
         }
 
-        List<User> journalists = userRepository.GetAll()
-            .Where(u => u.HasRole(UserRoles.Periodista))
-            .ToList();
+        IReadOnlyCollection<User> journalists = userRepository.GetByRole(UserRoles.Periodista);
         List<Notification> notifications = messages
             .SelectMany(message => journalists.Select(journalist => new Notification(IdGeneratedByPersistence, journalist, message)))
             .ToList();
