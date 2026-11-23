@@ -680,6 +680,18 @@ public class UserServicesTests
     }
 
     [TestMethod]
+    public void AssignRole_SystemAdmin_ThrowsAndAddsNoRole()
+    {
+        // Con el usuario cargado: sin el, "no encontrado" haria pasar el test sin ninguna guarda.
+        service.AddUser(BuildUser(1, "Admin", "Sistema", "admin@mail.com", "Pass123@", new DateTime(1985, 1, 1), UserRoles.Admin));
+
+        Assert.ThrowsException<UserServicesException>(() =>
+            service.AssignRole(1, UserRoles.Editor, performedByEmail: "admin@mail.com"));
+
+        Assert.IsFalse(service.GetUserById(1).HasRole(UserRoles.Editor));
+    }
+
+    [TestMethod]
     public void CannotAssignRoleToNonExistingUser()
     {
         Assert.ThrowsException<UserServicesException>(() =>
