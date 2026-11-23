@@ -19,6 +19,7 @@ public class UserServices : IUserService
 
     private const string InvalidCredentialsMessage = "Credenciales invalidas";
     private const string TooManyFailedLoginsMessage = "Demasiados intentos fallidos. Probá de nuevo en unos minutos.";
+    private const string WrongCurrentPasswordMessage = "La contraseña actual no es correcta.";
     private const int MaxFailedLogins = 5;
     private const int LockoutMinutes = 5;
     private const int MaxTrackedLogins = 10_000;
@@ -311,6 +312,9 @@ public class UserServices : IUserService
             throw new UserServicesException(SystemAdminCannotBeModifiedMessage);
 
         User user = GetUserById(userId);
+
+        if (!user.PasswordMatches(currentPassword))
+            throw new UserServicesException(WrongCurrentPasswordMessage);
 
         user.ChangePassword(currentPassword, newPassword);
         _userRepository.Update(user);
