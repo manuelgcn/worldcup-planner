@@ -16,7 +16,24 @@ public sealed class MockEliminationMatchRepository : IEliminationMatchRepository
     public IReadOnlyCollection<Match> GetByPhase(Phase phase) =>
         _storage.OfType<MatchElimination>().Where(match => match.Phase == phase).Cast<Match>().ToList();
 
-    public IReadOnlyCollection<Match> GetAll() => _storage.AsReadOnly();
+    // Lecturas del cuadro completo; Any, MaxMatchId y GetSourceMatchIds son consultas angostas y no cuentan.
+    public int GetAllCalls { get; private set; }
+
+    public IReadOnlyCollection<Match> GetAll()
+    {
+        GetAllCalls++;
+        return _storage.AsReadOnly();
+    }
+
+    public bool Any() => _storage.Count > 0;
+
+    public int? MaxMatchId() => _storage.Max(match => (int?)match.MatchId);
+
+    public IReadOnlySet<int> GetSourceMatchIds() => _storage
+        .OfType<MatchElimination>()
+        .SelectMany(next => new[] { next.MatchHome?.MatchId, next.MatchAway?.MatchId })
+        .OfType<int>()
+        .ToHashSet();
 
     public void Add(Match match)
     {

@@ -43,6 +43,20 @@ public sealed class TournamentDashboardServiceTests
     }
 
     [TestMethod]
+    public void GetOverview_CountsWithoutLoadingTheTables()
+    {
+        _teamRepository.Add(Team(1, "Uruguay"));
+        _stadiumRepository.Add(Stadium(1, "Centenario"));
+        _matchRepository.Add(GroupMatch(1, Date(10), "A", Stadium(1, "Centenario")));
+
+        _service.GetOverview();
+
+        Assert.AreEqual(0, _matchRepository.GetAllCalls);
+        Assert.AreEqual(0, _teamRepository.GetAllCalls);
+        Assert.AreEqual(0, _stadiumRepository.GetAllCalls);
+    }
+
+    [TestMethod]
     public void GetOverview_CountsEachMatchExactlyOnce()
     {
         _matchRepository.Add(GroupMatch(1, Date(10), "A", Stadium(1, "St1")));

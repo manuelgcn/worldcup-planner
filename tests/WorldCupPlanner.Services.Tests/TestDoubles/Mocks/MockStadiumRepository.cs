@@ -10,6 +10,7 @@ public sealed class MockStadiumRepository : IStadiumRepository
     public int AddCalls { get; private set; }
     public int UpdateCalls { get; private set; }
     public int DeleteCalls { get; private set; }
+    public int GetAllCalls { get; private set; }
 
     public void Add(Stadium stadium)
     {
@@ -48,6 +49,9 @@ public sealed class MockStadiumRepository : IStadiumRepository
 
     public IReadOnlyCollection<Stadium> GetAll()
     {
+        GetAllCalls++;
         return _stadiums.Values.ToList();
     }
+
+    public int Count() => _stadiums.Count;
 }

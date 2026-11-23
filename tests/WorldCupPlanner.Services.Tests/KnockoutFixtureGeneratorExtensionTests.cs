@@ -247,6 +247,18 @@ public class KnockoutFixtureGeneratorExtensionTests
     }
 
     [TestMethod]
+    public void GenerateBracket_LoadsTheMatchTableOnlyToCheckTheGroupStage()
+    {
+        SeedPlayedGroupStageMatches();
+        int readsBefore = _matchRepository.GetAllCalls;
+
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+
+        // La fecha del ultimo partido de grupos sale de una consulta MAX, no de otra lectura completa.
+        Assert.AreEqual(1, _matchRepository.GetAllCalls - readsBefore);
+    }
+
+    [TestMethod]
     public void GenerateBracket_RoundOf32_IsScheduledAfterGroupStage()
     {
         // H3: el R32 no debe solaparse con la fase de grupos.
@@ -395,6 +407,20 @@ public class KnockoutFixtureGeneratorExtensionTests
 
         Assert.ThrowsException<MatchServicesException>(
             () => _generator.AdvanceToNextRound(performedByEmail: AdminEmail));
+    }
+
+    [TestMethod]
+    public void AdvanceToNextRound_LoadsTheBracketOnce()
+    {
+        SeedPlayedGroupStageMatches();
+        _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
+        PlayPhaseManually(Phase.RoundOf32);
+        int readsBefore = _eliminationRepository.GetAllCalls;
+
+        _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
+
+        // El proximo id de partido sale de una consulta MAX, no de otra lectura del cuadro.
+        Assert.AreEqual(1, _eliminationRepository.GetAllCalls - readsBefore);
     }
 
     [TestMethod]

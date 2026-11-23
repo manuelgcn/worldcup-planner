@@ -217,6 +217,19 @@ public sealed class MatchServiceRegisterResultTests
             harness.Service.GetLockedKnockoutMatchIds().ToArray());
     }
 
+    [TestMethod]
+    public void GetLockedKnockoutMatchIds_DoesNotLoadTheBracket()
+    {
+        Harness harness = new Harness();
+        MatchElimination first = harness.SeedRoundOf32Match(MatchId);
+        MatchElimination second = harness.SeedRoundOf32Match(MatchId + 1);
+        harness.SeedRoundOf16Match(first, second);
+
+        harness.Service.GetLockedKnockoutMatchIds();
+
+        Assert.AreEqual(0, harness.EliminationRepository.GetAllCalls);
+    }
+
     private sealed class Harness
     {
         public MockMatchRepository MatchRepository { get; } = new MockMatchRepository();

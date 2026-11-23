@@ -55,6 +55,7 @@ public sealed class FixtureViewServiceTests
         FixtureSnapshotDto snapshot = _service.GetSnapshot();
 
         Assert.AreEqual(2, snapshot.TeamCount);
+        Assert.AreEqual(0, _teamRepository.GetAllCalls, "The team count must not load the teams.");
     }
 
     [TestMethod]
