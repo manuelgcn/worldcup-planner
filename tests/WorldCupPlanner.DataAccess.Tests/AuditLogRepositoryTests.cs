@@ -126,6 +126,27 @@ public class AuditLogRepositoryTests
         Assert.IsTrue(stored.All(log => log.PerformedByUserId == actorId));
     }
 
+    // Por el caso de uso real: al loguear, el email con el que el actor entro ya no es de nadie.
+    [TestMethod]
+    public void UpdatingOnesOwnEmailThroughUserServicesKeepsTheActorId()
+    {
+        using SqliteDbContextFactory factory = new SqliteDbContextFactory();
+        UserRepository users = new UserRepository(factory);
+        AuditLogRepository logs = new AuditLogRepository(factory);
+        UserServices userServices = new UserServices(users, AuditLogService.CreateInstance(logs, users));
+        // El id 1 es el administrador del sistema, que no se puede modificar: el actor va segundo.
+        users.Add(new User(0, "Admin", "Sistema", "admin@copa.com", "Pass123@", new DateTime(1990, 5, 15)));
+        User actor = new User(0, "Ana", "Editora", "ana@copa.com", "Pass123@", new DateTime(1990, 5, 15));
+        actor.AddRole(UserRoles.Editor);
+        users.Add(actor);
+
+        userServices.UpdateUser(actor.idUser, "Ana", "Editora", "otra@copa.com", performedByEmail: "ana@copa.com");
+
+        AuditLog log = logs.GetAll().Single(l => l.Action == AuditActions.UpdateUser);
+        Assert.AreEqual(actor.idUser, log.PerformedByUserId);
+        Assert.AreEqual("otra@copa.com", log.PerformedByEmail);
+    }
+
     [TestMethod]
     public void AddKeepsMaterializingLogsWithTournamentContext()
     {
