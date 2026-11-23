@@ -194,6 +194,31 @@ public sealed class ExportServiceTests
         Assert.IsTrue(csv.IndexOf("oldest row", StringComparison.Ordinal) < csv.IndexOf("newest row", StringComparison.Ordinal));
     }
 
+    [TestMethod]
+    public void ExportAuditLogWithoutStartIsNamedAfterTheOldestExportedRow()
+    {
+        // La pantalla manda DateTime.MinValue cuando "Desde" esta vacio y la lista llego a su tope:
+        // el archivo se llamaba audit-log_00010101_...
+        _auditRepository.Seed(AuditLog.Create("ACTION", "Det"));
+        User admin = BuildUser(UserRoles.Admin);
+        DateTime today = DateTime.UtcNow.Date;
+
+        ExportFileDto result = _service.ExportAuditLog(new DateRange(DateTime.MinValue, today), ExportFormat.Csv, admin);
+
+        Assert.AreEqual($"audit-log_{today:yyyyMMdd}_{today:yyyyMMdd}.csv", result.FileName);
+        StringAssert.Contains(_auditRepository.GetAll().Single(log => log.Action == AuditActions.ExportAuditCsv).Details, result.FileName);
+    }
+
+    [TestMethod]
+    public void ExportAuditLogWithoutStartAndWithoutRowsIsNamedAfterTheEndDate()
+    {
+        User admin = BuildUser(UserRoles.Admin);
+
+        ExportFileDto result = _service.ExportAuditLog(new DateRange(DateTime.MinValue, Date(30)), ExportFormat.Csv, admin);
+
+        Assert.AreEqual("audit-log_20260630_20260630.csv", result.FileName);
+    }
+
     private void SeedAuditRows(int count)
     {
         for (int i = 0; i < count; i++)
