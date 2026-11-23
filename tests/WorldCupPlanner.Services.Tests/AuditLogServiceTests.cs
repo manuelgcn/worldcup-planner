@@ -368,12 +368,6 @@ public class AuditLogServiceTests
     }
 
     [TestMethod]
-    public void AuditActions_DefinesSimulationExecutedConstant()
-    {
-        Assert.AreEqual("SIMULATION_EXECUTED", AuditActions.SimulationExecuted);
-    }
-
-    [TestMethod]
     public void Log_StoresIso8601RoundTrippableTimestamp()
     {
         DateTime before = DateTime.UtcNow.AddSeconds(-1);

@@ -86,18 +86,12 @@ public class FixturePendingMatchesTests
     }
 
     [TestMethod]
-    public void GenerateGroupStage_DoesNotLogAnySimulationOrPublishAuditEntries()
+    public void GenerateGroupStage_DoesNotLogAnySimulationAuditEntries()
     {
         _orchestrator.GenerateGroupStage(fixtureSeedOverride: null, selectedEngineName: null, performedByEmail: AdminEmail);
 
         IReadOnlyCollection<AuditLog> logs = _auditRepository.GetAll();
 
-        Assert.IsFalse(
-            logs.Any(log => log.Action == AuditActions.SimulationExecuted),
-            "Fixture generation must not emit SIMULATION_EXECUTED audit entries.");
-        Assert.IsFalse(
-            logs.Any(log => log.Action == AuditActions.PublishMatchResult),
-            "Fixture generation must not emit PUBLISH_MATCH_RESULT audit entries.");
         Assert.IsFalse(
             logs.Any(log => log.Action == AuditActions.SimulateRound),
             "Fixture generation must not emit SIMULATE_ROUND audit entries.");
