@@ -98,12 +98,15 @@ public sealed class CsvStreamTeamParser : ITeamParser
     }
 
     // Los titulos son libres ("Nombre,Confederación,RankingFIFA", "Name,Confederation,Ranking"), asi que se mira
-    // la forma: una primera fila con una confederacion o un ranking numerico es un equipo, y saltearla lo perderia.
+    // la forma: una primera fila con una confederacion o con algun digito en el ranking es un equipo, y saltearla
+    // lo perderia.
+    // shortcut: un titulo con un digito en la tercera columna ("Ranking 2026") se rechaza, y un equipo sin encabezado,
+    // con la confederacion mal escrita y un ranking sin digitos, se sigue salteando; si molesta, exigir titulos conocidos.
     private static void EnsureIsHeader(string[] columns)
     {
         bool looksLikeATeam =
             Enum.GetNames<Confederation>().Contains(columns.ElementAtOrDefault(ConfederationColumn), StringComparer.OrdinalIgnoreCase)
-            || int.TryParse(columns.ElementAtOrDefault(RankingColumn), out _);
+            || columns.ElementAtOrDefault(RankingColumn)?.Any(char.IsDigit) == true;
 
         if (looksLikeATeam)
         {
