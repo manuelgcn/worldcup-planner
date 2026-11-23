@@ -298,6 +298,18 @@
     opacity: .6;
 }
 
+/* Una fila que cambió de puesto se enciende un instante (GroupStandingsTable). Se animan las
+   celdas, que es donde están pintados los fondos de clasificado y de tercero. */
+::deep .standings-table tr.moved td {
+    animation: standings-moved 1.2s ease-out;
+}
+
+@keyframes standings-moved {
+    from {
+        background-color: color-mix(in srgb, var(--m26-yellow) 45%, transparent);
+    }
+}
+
 ::deep .matches-table {
     width: 100%;
     border-collapse: collapse;

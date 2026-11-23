@@ -633,6 +633,21 @@ html[data-theme="night"] .form-check-input:checked[type=checkbox] {
     font-weight: 500;
 }
 
+/* Cuando un resultado cambia (ScoreCell), la cifra se da vuelta una vez, como la chapa del tablero. */
+.m26-score.is-flipped {
+    animation: m26-score-flip .45s cubic-bezier(.2, .7, .3, 1);
+}
+
+@keyframes m26-score-flip {
+    from {
+        transform: perspective(10rem) rotateX(-90deg);
+    }
+
+    60% {
+        transform: perspective(10rem) rotateX(14deg);
+    }
+}
+
 /* Editor de resultado compartido */
 .match-result-editor {
     display: flex;
