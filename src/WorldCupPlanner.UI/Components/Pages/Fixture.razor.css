@@ -448,13 +448,14 @@
 }
 
 /* Conectores: cada llave sale hasta la mitad del hueco y sube o baja hasta el borde de su franja,
-   donde se junta con su par; la llave siguiente pone el tramo que falta. */
+   donde se junta con su par; la llave siguiente pone el tramo que falta. Dicen qué llaves alimentan
+   a cuál, así que llevan el gris que da 3:1 sobre la superficie (WCAG 1.4.11). */
 ::deep .bracket-slot::before,
 ::deep .bracket-slot::after {
     content: "";
     position: absolute;
     width: calc(var(--bracket-gap) / 2);
-    border: 0 solid var(--m26-line-strong);
+    border: 0 solid var(--m26-control-border);
 }
 
 ::deep .bracket-slot::before {
