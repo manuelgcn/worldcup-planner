@@ -193,18 +193,25 @@
     private string? passwordSuccessMessage;
     private readonly List<string> passwordErrors = new List<string>();
 
-    private void ChangePassword()
+    private async Task ChangePassword()
     {
         passwordErrors.Clear();
         passwordSuccessMessage = null;
 
+        // Igual que Save: la página pudo quedar abierta con la sesión vencida o cerrada en otra pestaña.
+        if (!await Session.RevalidateAsync())
+        {
+            passwordErrors.Add(Session.IsLoggedIn ? SessionNotConfirmedMessage : SessionEndedMessage);
+            return;
+        }
+
         // Se revisa antes de llamar al servicio: un error de tipeo al repetir no tiene que contar como intento fallido.
-        if (Session.CurrentUser is null || !ValidatePasswordInput())
+        if (!ValidatePasswordInput())
             return;
 
         try
         {
-            UserServices.ChangePassword(Session.CurrentUser.idUser, currentPassword, newPassword);
+            UserServices.ChangePassword(Session.CurrentUser!.idUser, currentPassword, newPassword);
 
             currentPassword = "";
             newPassword = "";

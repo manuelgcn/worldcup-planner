@@ -86,15 +86,22 @@ else
         unreadNotifications = NotificationService.GetUnreadForUser(Session.CurrentUser!.idUser);
     }
 
-    private void MarkNotificationAsRead(int notificationId)
+    // La página pudo quedar abierta después de perder el rol o de cerrar la sesión en otra pestaña.
+    private async Task MarkNotificationAsRead(int notificationId)
     {
+        if (!await Session.StillHasAnyRoleAsync(UserRoles.Periodista))
+            return;
+
         NotificationService.MarkAsRead(notificationId, Session.CurrentUser!.idUser, Session.CurrentUser.email);
         LoadUnreadNotifications();
         Session.Refresh();
     }
 
-    private void MarkAllNotificationsAsRead()
+    private async Task MarkAllNotificationsAsRead()
     {
+        if (!await Session.StillHasAnyRoleAsync(UserRoles.Periodista))
+            return;
+
         NotificationService.MarkAllAsRead(Session.CurrentUser!.idUser, Session.CurrentUser.email);
         LoadUnreadNotifications();
         Session.Refresh();
