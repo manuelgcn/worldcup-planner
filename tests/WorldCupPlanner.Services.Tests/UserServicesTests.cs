@@ -826,6 +826,20 @@ public class UserServicesTests
     }
 
     [TestMethod]
+    public void ChangePassword_WithAWrongCurrentPassword_ThrowsAndKeepsTheOldOne()
+    {
+        User user = BuildUser(2, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+        string stored = user.password;
+        service.AddUser(user);
+
+        UserServicesException error = Assert.ThrowsException<UserServicesException>(
+            () => service.ChangePassword(2, "Wrong123@", "Nueva456#"));
+
+        StringAssert.Contains(error.Message, "contraseña actual");
+        Assert.AreEqual(stored, user.password);
+    }
+
+    [TestMethod]
     public void RemoveRole_SystemAdmin_Throws()
     {
         Assert.ThrowsException<UserServicesException>(() =>
