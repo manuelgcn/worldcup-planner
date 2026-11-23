@@ -839,6 +839,30 @@ public class UserServicesTests
         Assert.AreEqual(stored, user.password);
     }
 
+    // El mismo contador y la misma clave que el login: los fallos de los dos caminos se suman,
+    // aunque el email guardado tenga mayusculas.
+    [TestMethod]
+    public void ChangePassword_WrongCurrentPasswords_CountAsFailedLogins()
+    {
+        UserServices lockingService = new UserServices(repository, new MockAuditLogService(), new ManualTimeProvider());
+        lockingService.AddUser(BuildUser(2, "Juan", "Perez", "Juan@Mail.com", "Pass123@", new DateTime(1990, 5, 15)));
+        FailPasswordChanges(lockingService, userId: 2, times: 3);
+        FailLogins(lockingService, "Juan@Mail.com", times: 2);
+
+        UserServicesException locked = Assert.ThrowsException<UserServicesException>(
+            () => lockingService.Authenticate("Juan@Mail.com", "Pass123@"));
+
+        StringAssert.Contains(locked.Message, "intentos");
+    }
+
+    private static void FailPasswordChanges(UserServices target, int userId, int times)
+    {
+        for (int attempt = 0; attempt < times; attempt++)
+        {
+            Assert.ThrowsException<UserServicesException>(() => target.ChangePassword(userId, "Wrong123@", "Nueva456#"));
+        }
+    }
+
     [TestMethod]
     public void RemoveRole_SystemAdmin_Throws()
     {
