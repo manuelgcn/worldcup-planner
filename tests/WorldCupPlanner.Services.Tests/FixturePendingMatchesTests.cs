@@ -93,9 +93,6 @@ public class FixturePendingMatchesTests
         IReadOnlyCollection<AuditLog> logs = _auditRepository.GetAll();
 
         Assert.IsFalse(
-            logs.Any(log => log.Action == AuditActions.SimulateMatch),
-            "Fixture generation must not emit SIMULATE_MATCH audit entries.");
-        Assert.IsFalse(
             logs.Any(log => log.Action == AuditActions.SimulationExecuted),
             "Fixture generation must not emit SIMULATION_EXECUTED audit entries.");
         Assert.IsFalse(

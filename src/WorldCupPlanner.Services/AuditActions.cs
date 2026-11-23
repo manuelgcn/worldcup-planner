@@ -18,8 +18,6 @@ public static class AuditActions
 
     public const string DeleteMatch = "DELETE_MATCH";
 
-    public const string SimulateMatch = "SIMULATE_MATCH";
-
     // Simulacion individual ejecutada con exito (registra motor y semilla);
     // las operaciones agregadas conservan sus acciones (SIMULATE_ROUND, etc.).
     public const string SimulationExecuted = "SIMULATION_EXECUTED";
@@ -33,8 +31,6 @@ public static class AuditActions
     public const string IncidentRemoved = "INCIDENT_REMOVED";
 
     public const string CreateTeam = "CREATE_TEAM";
-
-    public const string UpdateTeam = "UPDATE_TEAM";
 
     public const string DeleteTeam = "DELETE_TEAM";
 
