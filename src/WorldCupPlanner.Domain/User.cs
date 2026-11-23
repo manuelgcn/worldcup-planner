@@ -224,6 +224,10 @@ public class User
         password = HashPassword(plainTextPassword);
     }
 
+    public void ChangePassword(string currentPassword, string newPassword)
+    {
+    }
+
     public bool PasswordMatches(string plainTextPassword)
     {
         if (!password.Contains(PasswordSaltSeparator))

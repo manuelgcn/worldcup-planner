@@ -429,6 +429,30 @@ public class UserTests
         Assert.IsFalse(user.PasswordMatches("Pass123@"));
     }
 
+    [TestMethod]
+    public void ChangePasswordStoresTheNewPasswordAsACurrentHash()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass123@", new DateTime(1990, 5, 15));
+
+        user.ChangePassword("Pass123@", "Nueva456#");
+
+        StringAssert.StartsWith(user.password, "v2:600000:");
+        Assert.IsTrue(user.PasswordMatches("Nueva456#"));
+        Assert.IsFalse(user.PasswordMatches("Pass123@"));
+    }
+
+    // Cambiar la contrasena tambien deja atras un hash mas debil que el actual.
+    [TestMethod]
+    public void ChangePasswordReplacesALegacyHash()
+    {
+        User user = WithStoredPassword(new User(), SeedScriptHash);
+
+        user.ChangePassword(SeedScriptPassword, "Nueva456#");
+
+        Assert.IsFalse(user.HasLegacyPasswordHash);
+        Assert.IsTrue(user.PasswordMatches("Nueva456#"));
+    }
+
 
     [TestMethod]
     public void UserStartsWithoutRoles()
