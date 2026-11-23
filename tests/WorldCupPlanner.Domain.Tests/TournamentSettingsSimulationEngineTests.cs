@@ -41,7 +41,7 @@ public sealed class TournamentSettingsSimulationEngineTests
     {
         TournamentSettings settings = new TournamentSettings();
 
-        Assert.ThrowsException<SettingsException>(() => settings.SelectSimulationEngine(null!));
+        Assert.ThrowsExactly<SettingsException>(() => settings.SelectSimulationEngine(null!));
     }
 
     [TestMethod]
@@ -49,7 +49,7 @@ public sealed class TournamentSettingsSimulationEngineTests
     {
         TournamentSettings settings = new TournamentSettings();
 
-        Assert.ThrowsException<SettingsException>(() => settings.SelectSimulationEngine(string.Empty));
+        Assert.ThrowsExactly<SettingsException>(() => settings.SelectSimulationEngine(string.Empty));
     }
 
     [TestMethod]
@@ -57,6 +57,6 @@ public sealed class TournamentSettingsSimulationEngineTests
     {
         TournamentSettings settings = new TournamentSettings();
 
-        Assert.ThrowsException<SettingsException>(() => settings.SelectSimulationEngine("   "));
+        Assert.ThrowsExactly<SettingsException>(() => settings.SelectSimulationEngine("   "));
     }
 }

@@ -21,7 +21,7 @@ public class SecurityHeadersTests
             .Select(directive => directive.Split(' ', 2))
             .ToDictionary(parts => parts[0], parts => parts.Length > 1 ? parts[1] : "");
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("X-Content-Type-Options", "nosniff")]
     [DataRow("X-Frame-Options", "DENY")]
     [DataRow("Referrer-Policy", "strict-origin-when-cross-origin")]
@@ -32,7 +32,7 @@ public class SecurityHeadersTests
         Assert.AreEqual(expectedValue, Apply()[header].ToString());
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("default-src", "'self'")]
     [DataRow("base-uri", "'self'")]
     [DataRow("object-src", "'none'")]

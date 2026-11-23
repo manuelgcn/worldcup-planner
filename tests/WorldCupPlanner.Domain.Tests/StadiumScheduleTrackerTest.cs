@@ -27,7 +27,6 @@ public class StadiumScheduleTrackerTests
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentNullException))]
     public void CanSchedule_NullStadium_ThrowsArgumentNullException()
     {
         // Arrange
@@ -35,7 +34,7 @@ public class StadiumScheduleTrackerTests
         DateTime matchTime = new DateTime(2026, 6, 1, 14, 0, 0);
 
         // Act
-        tracker.CanSchedule(null!, matchTime);
+        Assert.ThrowsExactly<ArgumentNullException>(() => tracker.CanSchedule(null!, matchTime));
     }
 
     [TestMethod]
@@ -55,7 +54,6 @@ public class StadiumScheduleTrackerTests
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentNullException))]
     public void Reserve_NullStadium_ThrowsArgumentNullException()
     {
         // Arrange
@@ -63,7 +61,7 @@ public class StadiumScheduleTrackerTests
         DateTime matchTime = new DateTime(2026, 6, 1, 14, 0, 0);
 
         // Act
-        tracker.Reserve(null!, matchTime);
+        Assert.ThrowsExactly<ArgumentNullException>(() => tracker.Reserve(null!, matchTime));
     }
 
     [TestMethod]
@@ -77,7 +75,7 @@ public class StadiumScheduleTrackerTests
         tracker.Reserve(stadium, matchTime); // Primera reserva exitosa
 
         // Act & Assert
-        MatchException exception = Assert.ThrowsException<MatchException>(() => 
+        MatchException exception = Assert.ThrowsExactly<MatchException>(() => 
         {
             tracker.Reserve(stadium, matchTime); // Intento de doble reserva en la misma hora
         });
@@ -102,7 +100,7 @@ public class StadiumScheduleTrackerTests
         tracker.Reserve(stadium, slot3);
 
         // Act & Assert
-        MatchException exception = Assert.ThrowsException<MatchException>(() => 
+        MatchException exception = Assert.ThrowsExactly<MatchException>(() => 
         {
             tracker.Reserve(stadium, slot4); // Intento de reservar un 4to partido en el mismo día
         });

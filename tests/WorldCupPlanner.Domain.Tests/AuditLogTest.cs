@@ -67,14 +67,14 @@ public sealed class AuditLogTests
     [TestMethod]
     public void Create_NullAction_ThrowsAuditLogException()
     {
-        Assert.ThrowsException<AuditLogException>(() => 
+        Assert.ThrowsExactly<AuditLogException>(() => 
             AuditLog.Create(null, ValidDetails, ValidSettingsId));
     }
 
     [TestMethod]
     public void Create_EmptyOrWhitespaceAction_ThrowsAuditLogException()
     {
-        Assert.ThrowsException<AuditLogException>(() => 
+        Assert.ThrowsExactly<AuditLogException>(() => 
             AuditLog.Create("   ", ValidDetails, ValidSettingsId));
     }
     

@@ -66,7 +66,7 @@ public class NotificationRepositoryTest
         User ana = SeedUser(1, "ana@mail.com");
         User ghost = new User(99, "Ghost", "User", "ghost@mail.com", "Pass123@", new DateTime(1990, 1, 1));
 
-        Assert.ThrowsException<InvalidOperationException>(() => _repository.AddRange(new List<Notification>
+        Assert.ThrowsExactly<InvalidOperationException>(() => _repository.AddRange(new List<Notification>
         {
             new Notification(0, ana, "Partido 1"),
             new Notification(0, ghost, "Partido 1"),
@@ -107,7 +107,7 @@ public class NotificationRepositoryTest
 
         Notification notification = new Notification(1, unsavedUser, "Resultado cargado");
 
-        Assert.ThrowsException<InvalidOperationException>(() => _repository.Add(notification));
+        Assert.ThrowsExactly<InvalidOperationException>(() => _repository.Add(notification));
     }
 
     [TestMethod]
@@ -178,7 +178,7 @@ public class NotificationRepositoryTest
 
         Notification notification = new Notification(1, user, "Resultado cargado");
 
-        Assert.ThrowsException<InvalidOperationException>(() => _repository.Update(notification));
+        Assert.ThrowsExactly<InvalidOperationException>(() => _repository.Update(notification));
     }
 
     [TestMethod]

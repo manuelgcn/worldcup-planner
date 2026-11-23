@@ -149,10 +149,9 @@ public sealed class MatchQueryServiceTests
     }
 
     [TestMethod]
-    [ExpectedException(typeof(MatchServicesException))]
     public void Search_WhenFromIsAfterTo_ThrowsServiceException()
     {
-        _service.Search(new MatchFilterDto { From = Date(20), To = Date(10) });
+        Assert.ThrowsExactly<MatchServicesException>(() => _service.Search(new MatchFilterDto { From = Date(20), To = Date(10) }));
     }
 
     private static DateTime Date(int day) => new DateTime(2026, 6, day);

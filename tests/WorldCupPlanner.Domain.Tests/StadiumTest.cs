@@ -23,7 +23,7 @@ public class StadiumTest
     [TestMethod]
     public void StadiumCapacityMustBeAtLeast20000()
     {
-        Assert.ThrowsException<ArgumentException>(() => 
+        Assert.ThrowsExactly<ArgumentException>(() => 
             new Stadium("Estadio Chico", "Ciudad", "Muy pequeno", 15000));
     }
 
@@ -31,7 +31,7 @@ public class StadiumTest
     [TestMethod]
     public void StadiumNameCannotBeEmpty()
     {
-        Assert.ThrowsException<ArgumentException>(() => 
+        Assert.ThrowsExactly<ArgumentException>(() => 
             new Stadium("", "Ciudad", "Descripcion", 30000));
     }
 
@@ -40,14 +40,14 @@ public class StadiumTest
     {
         string longName = new string('N', 81);
 
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new Stadium(longName, "Ciudad", "Descripcion", 30000));
     }
 
     [TestMethod]
     public void StadiumCityCannotBeEmpty()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new Stadium("Estadio", "", "Descripcion", 30000));
     }
 
@@ -56,7 +56,7 @@ public class StadiumTest
     {
         string longCity = new string('C', 61);
 
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new Stadium("Estadio", longCity, "Descripcion", 30000));
     }
 
@@ -65,7 +65,7 @@ public class StadiumTest
     {
         string longDescription = new string('D', 401);
 
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new Stadium("Estadio", "Ciudad", longDescription, 30000));
     }
 
@@ -75,33 +75,33 @@ public class StadiumTest
         Stadium stadium = new Stadium("Estadio", "Ciudad", "Descripcion", 30000);
         string longDescription = new string('D', 401);
 
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             stadium.Update("Ciudad", longDescription, 30000));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("Estadio\nCentenario")]
     [DataRow("Estadio\u0000")]
     public void StadiumNameCannotHaveControlCharacters(string name)
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new Stadium(name, "Ciudad", "Descripcion", 30000));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("---")]
     [DataRow("​")]
     public void StadiumNameMustHaveALetterOrDigit(string name)
     {
         // Solo signos se normaliza a "": la unicidad por nombre normalizado los trataria como el mismo estadio.
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new Stadium(name, "Ciudad", "Descripcion", 30000));
     }
 
     [TestMethod]
     public void StadiumCityCannotHaveControlCharacters()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new Stadium("Estadio", "Monte\tvideo", "Descripcion", 30000));
     }
 
@@ -110,7 +110,7 @@ public class StadiumTest
     {
         Stadium stadium = new Stadium("Estadio", "Ciudad", "Descripcion", 30000);
 
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             stadium.Update("Ciu\ndad", "Descripcion", 30000));
     }
 

@@ -120,7 +120,7 @@ public sealed class TeamServicesTests
 
         _service.AddTeam(t1);
 
-        Assert.ThrowsException<TeamServicesException>(() => _service.AddTeam(t2));
+        Assert.ThrowsExactly<TeamServicesException>(() => _service.AddTeam(t2));
     }
 
     [TestMethod]
@@ -128,14 +128,14 @@ public sealed class TeamServicesTests
     {
         _service.AddTeam(new Team(1, "Brasil", 2000, false, Confederation.CONMEBOL));
 
-        Assert.ThrowsException<TeamServicesException>(
+        Assert.ThrowsExactly<TeamServicesException>(
             () => _service.AddTeam(new Team(2, "BRASIL", 1800, false, Confederation.CONMEBOL)));
     }
 
     [TestMethod]
     public void CannotAddTeamWithEmptyName()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team(1, "", 2000, false, Confederation.CONMEBOL));
+        Assert.ThrowsExactly<ArgumentException>(() => new Team(1, "", 2000, false, Confederation.CONMEBOL));
     }
 
     [TestMethod]
@@ -143,19 +143,19 @@ public sealed class TeamServicesTests
     {
         string longName = new string('A', 61);
 
-        Assert.ThrowsException<ArgumentException>(() => new Team(1, longName, 2000, false, Confederation.CONMEBOL));
+        Assert.ThrowsExactly<ArgumentException>(() => new Team(1, longName, 2000, false, Confederation.CONMEBOL));
     }
 
     [TestMethod]
     public void CannotAddTeamWithLowFifaRanking()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team(1, "Uruguay", 299, false, Confederation.CONMEBOL));
+        Assert.ThrowsExactly<ArgumentException>(() => new Team(1, "Uruguay", 299, false, Confederation.CONMEBOL));
     }
 
     [TestMethod]
     public void CannotAddTeamWithHighFifaRanking()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team(1, "Uruguay", 2501, false, Confederation.CONMEBOL));
+        Assert.ThrowsExactly<ArgumentException>(() => new Team(1, "Uruguay", 2501, false, Confederation.CONMEBOL));
     }
 
     [TestMethod]
@@ -173,7 +173,7 @@ public sealed class TeamServicesTests
     [TestMethod]
     public void GetTeamByNameThrowsIfNotFound()
     {
-        Assert.ThrowsException<TeamServicesException>(() => _service.FindByName("NoExiste"));
+        Assert.ThrowsExactly<TeamServicesException>(() => _service.FindByName("NoExiste"));
     }
 
     [TestMethod]
@@ -190,7 +190,7 @@ public sealed class TeamServicesTests
     [TestMethod]
     public void CannotRemoveNonExistingTeam()
     {
-        Assert.ThrowsException<TeamServicesException>(() => _service.RemoveTeam("NoExiste"));
+        Assert.ThrowsExactly<TeamServicesException>(() => _service.RemoveTeam("NoExiste"));
     }
 
     [TestMethod]
@@ -201,7 +201,7 @@ public sealed class TeamServicesTests
             _service.AddTeam(new Team(i, $"UEFA{i}", 1000 + i, false, Confederation.UEFA));
         }
 
-        Assert.ThrowsException<TeamServicesException>(() => _service.AddTeam(new Team(17, "UEFA17", 1100, false, Confederation.UEFA)));
+        Assert.ThrowsExactly<TeamServicesException>(() => _service.AddTeam(new Team(17, "UEFA17", 1100, false, Confederation.UEFA)));
     }
 
     [TestMethod]
@@ -212,7 +212,7 @@ public sealed class TeamServicesTests
             _service.AddTeam(new Team(i, $"CONMEBOL{i}", 1400 + i, false, Confederation.CONMEBOL));
         }
 
-        Assert.ThrowsException<TeamServicesException>(() => _service.AddTeam(new Team(8, "CONMEBOL8", 1500, false, Confederation.CONMEBOL)));
+        Assert.ThrowsExactly<TeamServicesException>(() => _service.AddTeam(new Team(8, "CONMEBOL8", 1500, false, Confederation.CONMEBOL)));
     }
 
     [TestMethod]
@@ -223,7 +223,7 @@ public sealed class TeamServicesTests
             _service.AddTeam(new Team(i, $"CONCACAF{i}", 1600 + i, false, Confederation.CONCACAF));
         }
 
-        Assert.ThrowsException<TeamServicesException>(() => _service.AddTeam(new Team(8, "CONCACAF8", 1700, false, Confederation.CONCACAF)));
+        Assert.ThrowsExactly<TeamServicesException>(() => _service.AddTeam(new Team(8, "CONCACAF8", 1700, false, Confederation.CONCACAF)));
     }
 
     [TestMethod]
@@ -234,7 +234,7 @@ public sealed class TeamServicesTests
             _service.AddTeam(new Team(i, $"CAF{i}", 1800 + i, false, Confederation.CAF));
         }
 
-        Assert.ThrowsException<TeamServicesException>(() => _service.AddTeam(new Team(10, "CAF10", 1900, false, Confederation.CAF)));
+        Assert.ThrowsExactly<TeamServicesException>(() => _service.AddTeam(new Team(10, "CAF10", 1900, false, Confederation.CAF)));
     }
 
     [TestMethod]
@@ -245,7 +245,7 @@ public sealed class TeamServicesTests
             _service.AddTeam(new Team(i, $"AFC{i}", 2000 + i, false, Confederation.AFC));
         }
 
-        Assert.ThrowsException<TeamServicesException>(() => _service.AddTeam(new Team(9, "AFC9", 2100, false, Confederation.AFC)));
+        Assert.ThrowsExactly<TeamServicesException>(() => _service.AddTeam(new Team(9, "AFC9", 2100, false, Confederation.AFC)));
     }
 
     [TestMethod]
@@ -253,7 +253,7 @@ public sealed class TeamServicesTests
     {
         _service.AddTeam(new Team(1, "OFC1", 2200, false, Confederation.OFC));
 
-        Assert.ThrowsException<TeamServicesException>(() => _service.AddTeam(new Team(2, "OFC2", 2300, false, Confederation.OFC)));
+        Assert.ThrowsExactly<TeamServicesException>(() => _service.AddTeam(new Team(2, "OFC2", 2300, false, Confederation.OFC)));
     }
 
     [TestMethod]

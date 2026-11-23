@@ -179,7 +179,7 @@ public sealed class TournamentSimulationServiceTests
             new MockNotificationService(),
             _rankingServiceMock.Object);
 
-        MatchServicesException exception = Assert.ThrowsException<MatchServicesException>(
+        MatchServicesException exception = Assert.ThrowsExactly<MatchServicesException>(
             () => service.SimulateGroupStageAndGenerateKnockout(Seed, AdminEmail));
 
         Assert.AreEqual("El fixture aún no ha sido generado", exception.Message);
@@ -194,7 +194,7 @@ public sealed class TournamentSimulationServiceTests
             match.SetGoals(1, 0);
         }
 
-        MatchServicesException exception = Assert.ThrowsException<MatchServicesException>(
+        MatchServicesException exception = Assert.ThrowsExactly<MatchServicesException>(
             () => _service.SimulateGroupStageAndGenerateKnockout(Seed, AdminEmail));
 
         Assert.AreEqual("La fase de grupos ya fue jugada", exception.Message);

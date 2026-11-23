@@ -123,7 +123,7 @@ public class KnockoutFixtureGeneratorExtensionTests
         SeedPlayedGroupStageMatches();
         _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail));
     }
 
@@ -132,7 +132,7 @@ public class KnockoutFixtureGeneratorExtensionTests
     {
         SeedUnplayedGroupStageMatches();
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail));
     }
 
@@ -395,7 +395,7 @@ public class KnockoutFixtureGeneratorExtensionTests
     {
         SeedPlayedGroupStageMatches();
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => _generator.AdvanceToNextRound(performedByEmail: AdminEmail));
     }
 
@@ -405,7 +405,7 @@ public class KnockoutFixtureGeneratorExtensionTests
         SeedPlayedGroupStageMatches();
         _generator.GenerateBracket(crossingsSeedOverride: null, performedByEmail: AdminEmail);
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => _generator.AdvanceToNextRound(performedByEmail: AdminEmail));
     }
 
@@ -448,7 +448,7 @@ public class KnockoutFixtureGeneratorExtensionTests
         MatchElimination drawn = _eliminationRepository.GetAll().OfType<MatchElimination>().First();
         drawn.SetGoals(1, 1);
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => _generator.AdvanceToNextRound(performedByEmail: AdminEmail));
         Assert.IsFalse(_eliminationRepository.GetAll().OfType<MatchElimination>().Any(match => match.Phase == Phase.RoundOf16));
     }
@@ -521,7 +521,7 @@ public class KnockoutFixtureGeneratorExtensionTests
         PlayPhaseManually(Phase.SemiFinal);
         _generator.AdvanceToNextRound(performedByEmail: AdminEmail);
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => _generator.AdvanceToNextRound(performedByEmail: AdminEmail));
     }
 

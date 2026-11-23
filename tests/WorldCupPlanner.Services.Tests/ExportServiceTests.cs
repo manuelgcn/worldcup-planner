@@ -28,7 +28,7 @@ public sealed class ExportServiceTests
     {
         User editor = BuildUser(UserRoles.Editor);
 
-        Assert.ThrowsException<ExportServiceException>(() =>
+        Assert.ThrowsExactly<ExportServiceException>(() =>
             _service.ExportFixture(new DateRange(Date(1), Date(30)), ExportFormat.Csv, editor));
     }
 
@@ -37,7 +37,7 @@ public sealed class ExportServiceTests
     {
         User admin = BuildUser(UserRoles.Admin);
 
-        Assert.ThrowsException<ExportServiceException>(() =>
+        Assert.ThrowsExactly<ExportServiceException>(() =>
             _service.ExportAuditLog(new DateRange(Date(30), Date(1)), ExportFormat.Csv, admin));
     }
 
@@ -46,7 +46,7 @@ public sealed class ExportServiceTests
     {
         User admin = BuildUser(UserRoles.Admin);
 
-        Assert.ThrowsException<ExportServiceException>(() =>
+        Assert.ThrowsExactly<ExportServiceException>(() =>
             _service.ExportFixture(new DateRange(Date(1), Date(30)), (ExportFormat)999, admin));
         Assert.AreEqual(0, _auditRepository.GetAll().Count);
     }
@@ -56,7 +56,7 @@ public sealed class ExportServiceTests
     {
         User editor = BuildUser(UserRoles.Editor);
 
-        Assert.ThrowsException<ExportServiceException>(() =>
+        Assert.ThrowsExactly<ExportServiceException>(() =>
             _service.ExportFixture(new DateRange(Date(1), Date(30)), ExportFormat.Csv, editor));
         Assert.AreEqual(0, _auditRepository.GetAll().Count);
     }
@@ -187,7 +187,7 @@ public sealed class ExportServiceTests
         User journalist = BuildUser(UserRoles.Periodista);
         DateTime today = DateTime.UtcNow.Date;
 
-        ExportServiceException ex = Assert.ThrowsException<ExportServiceException>(() =>
+        ExportServiceException ex = Assert.ThrowsExactly<ExportServiceException>(() =>
             _service.ExportAuditLog(new DateRange(today, today), ExportFormat.Csv, journalist));
 
         StringAssert.Contains(ex.Message, "rango de fechas");

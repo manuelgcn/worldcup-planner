@@ -120,7 +120,7 @@ public class NotificationServiceTests
 
         notificationRepository.Add(new Notification(1, journalist, "Resultado cargado"));
 
-        Assert.ThrowsException<ArgumentException>(() => service.MarkAsRead(1, OtherUserId));
+        Assert.ThrowsExactly<ArgumentException>(() => service.MarkAsRead(1, OtherUserId));
 
         Notification? stored = notificationRepository.GetById(1);
         Assert.IsNotNull(stored);

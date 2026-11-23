@@ -30,7 +30,7 @@ public sealed class MatchServiceEditGuardTests
     {
         _context.SeedFakeEliminationMatchInRepository();
 
-        Assert.ThrowsException<MatchServicesException>(
+        Assert.ThrowsExactly<MatchServicesException>(
             () => _context.Service.UpdateMatch(GroupMatchId, new UpdateMatchRequestDto { StadiumId = StadiumId }));
     }
 
@@ -60,7 +60,7 @@ public sealed class MatchServiceEditGuardTests
     {
         _context.MatchRepository.FailNextUpdate = new InvalidOperationException("database unavailable");
 
-        Assert.ThrowsException<InvalidOperationException>(
+        Assert.ThrowsExactly<InvalidOperationException>(
             () => _context.Service.UpdateMatch(GroupMatchId, new UpdateMatchRequestDto { StadiumId = StadiumId }, "editor@copa.com"));
         Assert.IsFalse(_context.AuditLogs.Any(log => log.Action == AuditActions.UpdateMatch));
     }
@@ -78,7 +78,7 @@ public sealed class MatchServiceEditGuardTests
     {
         _context.SeedFakeEliminationMatchInRepository();
 
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.DeleteMatch(GroupMatchId));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.DeleteMatch(GroupMatchId));
     }
 
     [TestMethod]

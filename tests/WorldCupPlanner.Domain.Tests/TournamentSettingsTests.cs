@@ -174,7 +174,7 @@ public sealed class TournamentSettingsTests
         void Action() => CreateConfiguredSettings(maxMatchesPerDay: 0);
 
         // Assert
-        Assert.ThrowsException<SettingsException>(Action);
+        Assert.ThrowsExactly<SettingsException>(Action);
     }
 
     [TestMethod]
@@ -184,7 +184,7 @@ public sealed class TournamentSettingsTests
         void Action() => CreateConfiguredSettings(maxMatchesPerDay: -1);
 
         // Assert
-        Assert.ThrowsException<SettingsException>(Action);
+        Assert.ThrowsExactly<SettingsException>(Action);
     }
 
     [TestMethod]
@@ -194,7 +194,7 @@ public sealed class TournamentSettingsTests
         void Action() => CreateConfiguredSettings(maxMatchesPerDay: 4);
 
         // Assert
-        Assert.ThrowsException<SettingsException>(Action);
+        Assert.ThrowsExactly<SettingsException>(Action);
     }
 
     [TestMethod]
@@ -204,7 +204,7 @@ public sealed class TournamentSettingsTests
         void Action() => CreateConfiguredSettings(daysBetweenJourneys: 0);
 
         // Assert
-        Assert.ThrowsException<SettingsException>(Action);
+        Assert.ThrowsExactly<SettingsException>(Action);
     }
 
     private static TournamentSettings CreateConfiguredSettings(

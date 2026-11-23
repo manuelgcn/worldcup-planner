@@ -37,7 +37,7 @@ public sealed class SimulationEngineRegistryTests
     {
         SimulationEngineRegistry registry = CreateRegistryWithBothEngines();
 
-        Assert.ThrowsException<SimulationEngineException>(() => registry.Resolve("Inexistente"));
+        Assert.ThrowsExactly<SimulationEngineException>(() => registry.Resolve("Inexistente"));
     }
 
     [TestMethod]
@@ -45,7 +45,7 @@ public sealed class SimulationEngineRegistryTests
     {
         SimulationEngineRegistry registry = CreateRegistryWithBothEngines();
 
-        Assert.ThrowsException<SimulationEngineException>(() => registry.Resolve(null!));
+        Assert.ThrowsExactly<SimulationEngineException>(() => registry.Resolve(null!));
     }
 
     [TestMethod]
@@ -53,7 +53,7 @@ public sealed class SimulationEngineRegistryTests
     {
         SimulationEngineRegistry registry = CreateRegistryWithBothEngines();
 
-        Assert.ThrowsException<SimulationEngineException>(() => registry.Resolve("   "));
+        Assert.ThrowsExactly<SimulationEngineException>(() => registry.Resolve("   "));
     }
 
     [TestMethod]
@@ -62,20 +62,20 @@ public sealed class SimulationEngineRegistryTests
         MockMatchSimulationEngine firstEngine = new MockMatchSimulationEngine { Name = ProbabilisticName };
         MockMatchSimulationEngine duplicatedEngine = new MockMatchSimulationEngine { Name = ProbabilisticName };
 
-        Assert.ThrowsException<SimulationEngineException>(
+        Assert.ThrowsExactly<SimulationEngineException>(
             () => new SimulationEngineRegistry(new IMatchSimulationEngine[] { firstEngine, duplicatedEngine }));
     }
 
     [TestMethod]
     public void Constructor_WithNullEngines_ThrowsArgumentNullException()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => new SimulationEngineRegistry(null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => new SimulationEngineRegistry(null!));
     }
 
     [TestMethod]
     public void Constructor_WithoutEngines_ThrowsSimulationEngineException()
     {
-        Assert.ThrowsException<SimulationEngineException>(
+        Assert.ThrowsExactly<SimulationEngineException>(
             () => new SimulationEngineRegistry(Array.Empty<IMatchSimulationEngine>()));
     }
 

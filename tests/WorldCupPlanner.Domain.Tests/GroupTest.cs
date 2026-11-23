@@ -16,7 +16,7 @@ public class GroupTest
     [TestMethod]
     public void GroupCannotBeCreatedWithEmptyName()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Group(string.Empty));
+        Assert.ThrowsExactly<ArgumentException>(() => new Group(string.Empty));
     }
     
     
@@ -40,7 +40,6 @@ public class GroupTest
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void GroupCannotHaveMoreThanFourTeams()
     {
         Group group = new Group("A");
@@ -49,12 +48,11 @@ public class GroupTest
         group.AddTeam(new Team(2, "T2", 1100, false, Confederation.UEFA));
         group.AddTeam(new Team(3, "T3", 1200, false, Confederation.UEFA));
         group.AddTeam(new Team(4, "T4", 1300, false, Confederation.UEFA));
-        group.AddTeam(new Team(5, "T5", 1400, false, Confederation.UEFA));
+        Assert.ThrowsExactly<ArgumentException>(() => group.AddTeam(new Team(5, "T5", 1400, false, Confederation.UEFA)));
     }
 
     
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void GroupCannotContainDuplicateTeams()
     {
         Group group = new Group("A");
@@ -68,7 +66,7 @@ public class GroupTest
         );
 
         group.AddTeam(team);
-        group.AddTeam(team); 
+        Assert.ThrowsExactly<ArgumentException>(() => group.AddTeam(team));
     }
 
     

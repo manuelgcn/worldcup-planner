@@ -55,7 +55,7 @@ public sealed class TeamProfileServiceTests
     public void GetProfile_WithAnUnknownId_ThrowsATeamServicesException()
     {
         TeamServicesException exception =
-            Assert.ThrowsException<TeamServicesException>(() => _service.GetProfile(UnknownTeamId));
+            Assert.ThrowsExactly<TeamServicesException>(() => _service.GetProfile(UnknownTeamId));
 
         Assert.AreEqual("No se encontró el equipo.", exception.Message);
     }

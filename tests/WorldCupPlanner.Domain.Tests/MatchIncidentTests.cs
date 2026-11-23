@@ -52,14 +52,14 @@ public sealed class MatchIncidentTests
     {
         Team stranger = new Team(99, "Stranger", 1500, true, Confederation.AFC);
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             _match.AddIncident(new YellowCardIncident(1, 30, stranger)));
     }
 
     [TestMethod]
     public void IncidentRejectsNegativeMinute()
     {
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             new YellowCardIncident(1, -1, _homeTeam));
     }
 
@@ -86,7 +86,7 @@ public sealed class MatchIncidentTests
     [TestMethod]
     public void RemoveIncidentRejectsNull()
     {
-        Assert.ThrowsException<ArgumentNullException>(() =>
+        Assert.ThrowsExactly<ArgumentNullException>(() =>
             _match.RemoveIncident(null!));
     }
 
@@ -95,7 +95,7 @@ public sealed class MatchIncidentTests
     {
         YellowCardIncident notAdded = new YellowCardIncident(1, 30, _homeTeam);
 
-        Assert.ThrowsException<MatchException>(() =>
+        Assert.ThrowsExactly<MatchException>(() =>
             _match.RemoveIncident(notAdded));
     }
 

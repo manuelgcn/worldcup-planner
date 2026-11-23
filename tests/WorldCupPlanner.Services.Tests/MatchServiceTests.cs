@@ -112,7 +112,7 @@ public sealed class MatchServiceTest
     [TestMethod]
     public void CreateMatch_WithNullRequest_ThrowsException()
     {
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request: null!));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request: null!));
     }
 
     [TestMethod]
@@ -123,63 +123,63 @@ public sealed class MatchServiceTest
         _context.Service.CreateMatch(request);
 
         // Act & Assert
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
     public void CreateMatch_WithNonexistentHomeTeam_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(homeTeamId: 999);
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
     public void CreateMatch_WithNonexistentAwayTeam_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(awayTeamId: 999);
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
     public void CreateMatch_WithNonexistentStadium_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(stadiumId: 999);
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
     public void CreateMatch_WithNonexistentChampionshipConfiguration_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(championshipConfigurationId: 999);
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
     
     [TestMethod]
     public void CreateGroupMatch_WithMissingGroupName_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(groupName: null);
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
     public void CreateGroupMatch_WithNonexistentGroup_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(groupName: "NoExiste");
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
     public void CreateGroupMatch_WithMissingJourneyId_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(journeyId: null);
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
     public void CreateGroupMatch_WithNonexistentJourney_ThrowsException()
     {
         CreateMatchRequestDto request = BuildGroupMatchRequest(journeyId: 999);
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
@@ -187,7 +187,7 @@ public sealed class MatchServiceTest
     {
         _context.AddSourceEliminationMatches();
         CreateMatchRequestDto request = BuildEliminationMatchRequest(phase: null);
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
@@ -195,7 +195,7 @@ public sealed class MatchServiceTest
     {
         _context.AddSourceEliminationMatches();
         CreateMatchRequestDto request = BuildEliminationMatchRequest(matchCode: null);
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
@@ -203,7 +203,7 @@ public sealed class MatchServiceTest
     {
         _context.AddSourceEliminationMatches();
         CreateMatchRequestDto request = BuildEliminationMatchRequest(matchHomeId: null);
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
@@ -211,7 +211,7 @@ public sealed class MatchServiceTest
     {
         _context.AddSourceEliminationMatches();
         CreateMatchRequestDto request = BuildEliminationMatchRequest(matchAwayId: null);
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
@@ -225,7 +225,7 @@ public sealed class MatchServiceTest
             stadium: new Stadium("Stadium 1", "City 1", "None", 25000)));
 
         CreateMatchRequestDto request = BuildEliminationMatchRequest();
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
@@ -239,13 +239,13 @@ public sealed class MatchServiceTest
             stadium: new Stadium("Stadium 2", "City 2", "None", 25000)));
 
         CreateMatchRequestDto request = BuildEliminationMatchRequest();
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.CreateMatch(request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.CreateMatch(request));
     }
 
     [TestMethod]
     public void UpdateMatch_WithNullRequest_ThrowsException()
     {
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.UpdateMatch(matchId: 1, request: null!));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.UpdateMatch(matchId: 1, request: null!));
     }
 
     [TestMethod]
@@ -300,7 +300,7 @@ public sealed class MatchServiceTest
     public void UpdateMatch_WithNonexistentMatch_ThrowsException()
     {
         UpdateMatchRequestDto request = new UpdateMatchRequestDto();
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.UpdateMatch(matchId: 999, request));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.UpdateMatch(matchId: 999, request));
     }
 
     [TestMethod]
@@ -312,7 +312,7 @@ public sealed class MatchServiceTest
         UpdateMatchRequestDto updateRequest = new UpdateMatchRequestDto { StadiumId = 999 };
 
         // Act & Assert
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.UpdateMatch(matchId: 1, request: updateRequest));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.UpdateMatch(matchId: 1, request: updateRequest));
     }
 
     [TestMethod]
@@ -330,7 +330,7 @@ public sealed class MatchServiceTest
         Assert.AreEqual(initialDeleteCalls + 1, _context.MatchRepository.DeleteCalls);
         
         // Verify match is actually deleted
-        MatchServicesException deleteException = Assert.ThrowsException<MatchServicesException>(
+        MatchServicesException deleteException = Assert.ThrowsExactly<MatchServicesException>(
             () => _context.Service.GetById(matchId: 1));
         Assert.IsNotNull(deleteException);
     }
@@ -349,7 +349,7 @@ public sealed class MatchServiceTest
     [TestMethod]
     public void DeleteMatch_WithNonexistentMatch_ThrowsException()
     {
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.DeleteMatch(matchId: 999));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.DeleteMatch(matchId: 999));
     }
 
     [TestMethod]
@@ -370,7 +370,7 @@ public sealed class MatchServiceTest
     [TestMethod]
     public void GetMatchById_WithNonexistentMatch_ThrowsException()
     {
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.GetById(matchId: 999));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.GetById(matchId: 999));
     }
 
     [TestMethod]
@@ -411,7 +411,7 @@ public sealed class MatchServiceTest
     [TestMethod]
     public void GetMatchesByGroup_WithWhitespaceGroupName_ThrowsException()
     {
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.GetByGroup(groupName: "  "));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.GetByGroup(groupName: "  "));
     }
 
     [TestMethod]
@@ -480,7 +480,7 @@ public sealed class MatchServiceTest
         DateTime from = new DateTime(year: 2026, month: 6, day: 30);
         DateTime to = new DateTime(year: 2026, month: 6, day: 1);
         
-        Assert.ThrowsException<MatchServicesException>(() => _context.Service.GetByDateRange(from, to));
+        Assert.ThrowsExactly<MatchServicesException>(() => _context.Service.GetByDateRange(from, to));
     }
 
     private static CreateMatchRequestDto BuildGroupMatchRequest(

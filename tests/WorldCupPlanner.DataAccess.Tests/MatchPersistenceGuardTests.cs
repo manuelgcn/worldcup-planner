@@ -37,7 +37,7 @@ public class MatchPersistenceGuardTests
         MatchElimination elimination = EfFixtureData.MakeEliminationMatch(
             20, new DateTime(2026, 6, 15), a, d, stadium, Phase.RoundOf16, sourceHome, sourceAway);
 
-        MatchPersistenceException exception = Assert.ThrowsException<MatchPersistenceException>(
+        MatchPersistenceException exception = Assert.ThrowsExactly<MatchPersistenceException>(
             () => _repository.Add(elimination));
 
         Assert.IsTrue(
