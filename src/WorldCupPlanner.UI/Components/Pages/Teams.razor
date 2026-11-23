@@ -165,6 +165,7 @@ else
 
     private const long MaxFlagSize = 200 * 1024;
     private const string FlagTooLargeMessage = "La bandera no puede superar los 200 KB.";
+    private const string FlagNotAnImageMessage = "La bandera tiene que ser una imagen PNG, JPG, WebP o SVG.";
 
     private readonly List<string> errors = new();
     private string? successMessage;
@@ -199,8 +200,16 @@ else
             await using Stream stream = file.OpenReadStream(MaxFlagSize);
             using MemoryStream ms = new();
             await stream.CopyToAsync(ms);
+            byte[] content = ms.ToArray();
 
-            flagBase64 = Convert.ToBase64String(ms.ToArray());
+            // La extensión y el tipo que declara el navegador se eligen del lado del usuario: se mira el contenido.
+            if (!ImageHelper.IsSupportedImage(content))
+            {
+                errors.Add(FlagNotAnImageMessage);
+                return;
+            }
+
+            flagBase64 = Convert.ToBase64String(content);
         }
         catch (IOException) when (e.File.Size > MaxFlagSize)
         {
