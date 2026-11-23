@@ -44,6 +44,8 @@ public class UserRepository : IUserRepository
         return context.Users.AsNoTracking().Include(u => u.Roles).ToList();
     }
 
+    public IReadOnlyCollection<User> GetByRole(UserRoles role) => throw new NotImplementedException();
+
     public void Remove(User user)
     {
         using AppDbContext context = _contextFactory.CreateDbContext();

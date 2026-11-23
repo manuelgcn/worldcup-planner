@@ -125,6 +125,12 @@ public class MatchRepository : IMatchRepository
         return MatchEf.WithGraph(context.Matches).ToList();
     }
 
+    public int Count() => throw new NotImplementedException();
+
+    public int CountPlayed() => throw new NotImplementedException();
+
+    public DateTime? LatestGroupMatchDate() => throw new NotImplementedException();
+
     public int NextIncidentId()
     {
         using AppDbContext context = _contextFactory.CreateDbContext();

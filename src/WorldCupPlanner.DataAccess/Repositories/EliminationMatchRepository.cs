@@ -39,6 +39,10 @@ public class EliminationMatchRepository : IEliminationMatchRepository
         return context.Matches.OfType<MatchElimination>().Any();
     }
 
+    public int? MaxMatchId() => throw new NotImplementedException();
+
+    public IReadOnlySet<int> GetSourceMatchIds() => throw new NotImplementedException();
+
     public IReadOnlyCollection<Match> GetAll()
     {
         using AppDbContext context = _contextFactory.CreateDbContext();
