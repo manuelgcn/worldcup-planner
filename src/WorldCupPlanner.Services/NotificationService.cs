@@ -74,7 +74,7 @@ public class NotificationService : INotificationService
         return notificationRepository.CountUnreadByUserId(userId);
     }
 
-    public void MarkAllAsRead(int userId)
+    public void MarkAllAsRead(int userId, string? performedByEmail = null)
     {
         int marked = notificationRepository.MarkAllAsRead(userId);
 
@@ -90,7 +90,7 @@ public class NotificationService : INotificationService
             affectedEntityId: userId);
     }
 
-    public void MarkAsRead(int notificationId, int userId)
+    public void MarkAsRead(int notificationId, int userId, string? performedByEmail = null)
     {
         Notification? notification = notificationRepository.GetById(notificationId);
 

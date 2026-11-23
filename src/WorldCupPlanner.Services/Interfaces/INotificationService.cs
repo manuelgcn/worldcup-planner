@@ -10,6 +10,6 @@ public interface INotificationService
     void NotifyMatchesSimulated(IReadOnlyCollection<Match> matches);
     IReadOnlyCollection<Notification> GetUnreadForUser(int userId);
     int CountUnreadForUser(int userId);
-    void MarkAsRead(int notificationId, int userId);
-    void MarkAllAsRead(int userId);
+    void MarkAsRead(int notificationId, int userId, string? performedByEmail = null);
+    void MarkAllAsRead(int userId, string? performedByEmail = null);
 }
