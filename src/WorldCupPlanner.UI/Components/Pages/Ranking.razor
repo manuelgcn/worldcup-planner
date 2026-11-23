@@ -58,7 +58,7 @@ else
                             <td><span class="rank-pos @PodiumClass(position)">@position</span></td>
                             <td>
                                 <TeamFlag Team="team" />
-                                @team.Name
+                                <a href="team/@team.Id">@team.Name</a>
                                 @if (team.IsFictitious)
                                 {
                                     <span class="badge bg-secondary ms-1">Ficticio</span>

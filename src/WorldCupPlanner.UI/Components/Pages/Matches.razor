@@ -121,9 +121,10 @@ else
                             <td>@match.MatchDate.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>@StageLabel(match)</td>
                             <td class="match-teams">
-                                <TeamFlag Team="TeamNamed(match.HomeTeamName)" />@match.HomeTeamName
+                                @* Sin equipo resuelto el href queda en null y el nombre se ve como texto, no como enlace roto. *@
+                                <TeamFlag Team="TeamNamed(match.HomeTeamName)" /><a href="@(TeamNamed(match.HomeTeamName) is Team homeTeam ? $"team/{homeTeam.Id}" : null)">@match.HomeTeamName</a>
                                 <span class="match-vs">vs</span>
-                                <TeamFlag Team="TeamNamed(match.AwayTeamName)" />@match.AwayTeamName
+                                <TeamFlag Team="TeamNamed(match.AwayTeamName)" /><a href="@(TeamNamed(match.AwayTeamName) is Team awayTeam ? $"team/{awayTeam.Id}" : null)">@match.AwayTeamName</a>
                             </td>
                             <td>@match.StadiumName</td>
                             <td>
