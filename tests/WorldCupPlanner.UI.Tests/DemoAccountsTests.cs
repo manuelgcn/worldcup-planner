@@ -68,6 +68,7 @@ public class DemoAccountsTests
 
         VerifyWarnings(Times.Exactly(2));
         VerifyWarnings(Times.Once(), about: "admin@copa.com");
-        VerifyWarnings(Times.Once(), about: "Editor@Copa.com");
+        // El aviso nombra la cuenta de demo como está publicada, no lo que guarda la fila del usuario.
+        VerifyWarnings(Times.Once(), about: "editor@copa.com");
     }
 }
