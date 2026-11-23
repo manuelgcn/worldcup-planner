@@ -5,6 +5,7 @@ using WorldCupPlanner.Services;
 using WorldCupPlanner.Services.DTOs;
 using WorldCupPlanner.Services.Exceptions;
 using WorldCupPlanner.Services.Interfaces;
+using WorldCupPlanner.Services.Parsers;
 using WorldCupPlanner.Services.Tests.TestDoubles.Mocks;
 // ReSharper disable UseCollectionExpression
 
@@ -290,6 +291,32 @@ public class ImportServiceTests
         MockAuditLogService.LoggedAction entry = _auditLogService.LoggedActions.Single();
         Assert.AreEqual(AuditActions.ImportTeams, entry.Action);
         Assert.AreEqual("editor@copa.com", entry.PerformedByEmail);
+    }
+
+    [TestMethod]
+    public void ImportTeams_ImportsThe48TeamsOfTheSampleFile()
+    {
+        // samples/teams-wc2026-48.csv es el archivo de la demo y del DataSeeder: tiene que pasar
+        // el parser real y todas las validaciones de nombres, confederaciones y cupos.
+        ImportService service = CreateService(_teamRepository, new CsvStreamTeamParser(), _auditLogService);
+        using FileStream stream = File.OpenRead(SampleTeamsPath());
+
+        ImportResult result = service.ImportTeams(stream);
+
+        Assert.AreEqual(48, result.ImportedCount);
+        Assert.IsNull(result.WarningMessage);
+        Assert.AreEqual("México", result.ImportedTeams.First().Name);
+    }
+
+    private static string SampleTeamsPath()
+    {
+        DirectoryInfo? directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "WorldCupPlanner.sln")))
+        {
+            directory = directory.Parent;
+        }
+
+        return Path.Combine(directory!.FullName, "samples", "teams-wc2026-48.csv");
     }
 
     private static ImportService CreateService(ITeamRepository teamRepository, ITeamParser teamParser, IAuditLogService auditLogService)
