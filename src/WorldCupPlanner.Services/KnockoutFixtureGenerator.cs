@@ -11,8 +11,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
     private const int RequiredGroupCount = 12;
     private const int RequiredGroupStageMatchCount = 72;
     private const int FirstNewMatchIdSeed = 3000;
-    private const int DaysBetweenRounds = 1;
-    private const int DaysFromSemiFinalsToFinal = 2;
+    private const int DaysFromThirdPlaceToFinal = 1;
     private const string TournamentSettingsRequiredMessage = "La configuracion del torneo es obligatoria para generar la fase 2.";
     private const string StadiumsRequiredMessage = "Se requiere al menos un estadio para generar la fase 2.";
     private const string GroupsRequiredMessage = "Deben existir los 12 grupos antes de generar el cuadro eliminatorio.";
@@ -86,7 +85,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         EnsureEveryQualifiedTeamHasGroup(qualifiedTeams);
 
         EliminationBuilder builder = new EliminationBuilder();
-        // El R32 arranca al terminar la fase de grupos (H3): nunca se solapa con ella.
+        // El R32 arranca DaysBetweenJourneys dias despues del ultimo partido de grupos (H3): nunca se solapa con ella.
         KnockoutRoundScheduler scheduler = CreateRoundScheduler(settings, Phase.RoundOf32, LastGroupMatchDate(settings));
 
         // H2: se pasa QualifiedTeams (no la lista aplanada) para respetar las categorias A1..B8.
@@ -488,7 +487,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 
         int nextId = NextMatchId();
         // El tercer puesto es un unico partido: el calendario por ronda le asigna el primer slot
-        // (14:00) del dia siguiente a las semis, en un estadio segun la rotacion.
+        // (14:00) del dia en que le toca arrancar tras las semis, en un estadio segun la rotacion.
         KnockoutRoundScheduler scheduler = CreateRoundScheduler(settings, phase, semiFinals.Max(match => match.MatchDate));
 
         MatchElimination first = semiFinals[0];
@@ -511,9 +510,10 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
         return new List<MatchElimination> { thirdPlace };
     }
 
-    // Cada ronda arranca el dia siguiente al ultimo partido de la anterior: una ronda de n partidos
-    // ocupa ceil(n / MaxMatchesPerDay) dias, asi que un offset fijo por fase se solapaba con 1 o 2
-    // partidos por dia. La Final espera ademas al tercer puesto, que se juega el dia despues de semis.
+    // Cada ronda arranca DaysBetweenJourneys dias despues del ultimo partido de la anterior (el R32,
+    // del ultimo de grupos). Se cuenta desde el ultimo partido porque una ronda de n partidos ocupa
+    // ceil(n / MaxMatchesPerDay) dias: un offset fijo por fase se solapaba con 1 o 2 partidos por dia.
+    // La Final va el dia siguiente al tercer puesto.
     private KnockoutRoundScheduler CreateRoundScheduler(TournamentSettings settings, Phase phase, DateTime previousRoundLastMatch)
     {
         List<Stadium> stadiums = _stadiumRepository.GetAll().ToList();
@@ -522,7 +522,8 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
             throw new KnockoutGeneratorException(StadiumsRequiredMessage);
         }
 
-        int daysAfterPreviousRound = phase == Phase.Final ? DaysFromSemiFinalsToFinal : DaysBetweenRounds;
+        int daysBetweenRounds = Math.Max(1, settings.DaysBetweenJourneys);
+        int daysAfterPreviousRound = phase == Phase.Final ? daysBetweenRounds + DaysFromThirdPlaceToFinal : daysBetweenRounds;
         return new KnockoutRoundScheduler(stadiums, settings.MaxMatchesPerDay, previousRoundLastMatch.Date.AddDays(daysAfterPreviousRound));
     }
 
