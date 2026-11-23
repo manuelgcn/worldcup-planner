@@ -282,6 +282,26 @@ public class ImportServiceTests
         Assert.AreEqual(0, _teamRepository.GetAll().Count);
     }
 
+    [DataTestMethod]
+    [DataRow("---")]
+    [DataRow("Costa\nRica")]
+    public void ImportTeamsReportsTheRowOfANameWithoutLettersOrWithControlCharacters(string name)
+    {
+        // Un campo entre comillas puede traer un salto de linea. El dominio rechaza estos nombres:
+        // el import tiene que decir en que fila, no dejar escapar la excepcion del constructor.
+        MemoryStream stream = CreateImportStream();
+        SetupParserRows(stream, new List<TeamImportDto>
+        {
+            Row(2, "Argentina", "CONMEBOL", "500"),
+            Row(3, name, "CONCACAF", "800")
+        });
+
+        ImportServiceException ex = Assert.ThrowsException<ImportServiceException>(() => _service.ImportTeams(stream));
+
+        StringAssert.Contains(ex.Message, "Nombre de equipo invalido. Row: 3.");
+        Assert.AreEqual(0, _teamRepository.GetAll().Count);
+    }
+
     [TestMethod]
     public void ImportTeamsAcceptsTheConfederationNameInAnyCase()
     {

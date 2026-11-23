@@ -791,4 +791,34 @@ public class UserTests
 
         Assert.ThrowsException<ArgumentException>(() => user.UpdatePersonalData(" ", "Perez", "juan@mail.com"));
     }
+
+    [DataTestMethod]
+    [DataRow("Ju\nan", "Perez")]
+    [DataRow("Juan\u0000", "Perez")]
+    [DataRow("Juan", "Pe\trez")]
+    [DataRow("Juan", "Perez\u0085")]
+    public void User_WithControlCharacterInNameOrLastname_Throws(string name, string lastname)
+    {
+        Assert.ThrowsException<ArgumentException>(
+            () => new User(1, name, lastname, "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15)));
+    }
+
+    [TestMethod]
+    public void UpdatePersonalData_WithControlCharacterInName_ThrowsAndKeepsTheName()
+    {
+        User user = new User(1, "Juan", "Perez", "juan@mail.com", "Pass1234@", new DateTime(1990, 5, 15));
+
+        Assert.ThrowsException<ArgumentException>(() => user.UpdatePersonalData("Ju\ran", "Perez", "juan@mail.com"));
+
+        Assert.AreEqual("Juan", user.name);
+    }
+
+    [TestMethod]
+    public void User_WithSignsInsideARealName_IsCreated()
+    {
+        User user = new User(1, "María José", "O'Connor-Núñez", "maria@mail.com", "Pass1234@", new DateTime(1990, 5, 15));
+
+        Assert.AreEqual("María José", user.name);
+        Assert.AreEqual("O'Connor-Núñez", user.lastname);
+    }
 }

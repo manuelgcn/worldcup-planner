@@ -372,4 +372,39 @@ public sealed class TeamTests
         Assert.ThrowsException<ArgumentException>(
             () => new Team(1, name: "   ", fifaRanking: 1500, isFictitious: false, confederation: Confederation.CONMEBOL));
     }
+
+    [DataTestMethod]
+    [DataRow("Uru\nguay")]
+    [DataRow("Uruguay\t")]
+    [DataRow("Uru\u0000guay")]
+    [DataRow("Uru\u0085guay")]
+    public void Team_WithControlCharacterInName_Throws(string name)
+    {
+        Assert.ThrowsException<ArgumentException>(
+            () => new Team(1, name, fifaRanking: 1500, isFictitious: false, confederation: Confederation.CONMEBOL));
+    }
+
+    [DataTestMethod]
+    [DataRow("---")]
+    [DataRow("?!")]
+    [DataRow("​​")]
+    public void Team_WithNameWithoutLettersOrDigits_Throws(string name)
+    {
+        // Solo signos (o solo espacios de ancho cero) se normaliza a "": todos esos nombres serian el mismo equipo.
+        Assert.ThrowsException<ArgumentException>(
+            () => new Team(1, name, fifaRanking: 1500, isFictitious: false, confederation: Confederation.CONMEBOL));
+    }
+
+    [DataTestMethod]
+    [DataRow("UEFA_01")]
+    [DataRow("Côte d'Ivoire")]
+    [DataRow("Bosnia y Herzegovina")]
+    [DataRow("대한민국")]
+    public void Team_WithSignsInsideARealName_IsCreated(string name)
+    {
+        // "UEFA_01" es el formato de los equipos ficticios que genera TeamServices.
+        Team team = new Team(1, name, fifaRanking: 1500, isFictitious: false, confederation: Confederation.UEFA);
+
+        Assert.AreEqual(name, team.Name);
+    }
 }
