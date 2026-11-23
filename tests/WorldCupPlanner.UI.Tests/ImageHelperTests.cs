@@ -35,6 +35,35 @@ public class ImageHelperTests
     }
 
     [TestMethod]
+    public void IsSupportedImage_SvgWithXmlDeclaration_IsAccepted()
+    {
+        byte[] svg = Encoding.UTF8.GetBytes(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!-- exportado -->\n<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>");
+
+        Assert.IsTrue(ImageHelper.IsSupportedImage(svg));
+    }
+
+    [TestMethod]
+    public void IsSupportedImage_XmlThatIsNotSvg_IsRejected()
+    {
+        byte[] sitemap = Encoding.UTF8.GetBytes(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"></urlset>");
+
+        Assert.IsFalse(ImageHelper.IsSupportedImage(sitemap));
+    }
+
+    // Al mostrar solo se lee el comienzo, y un SVG exportado puede traer comentarios antes de su <svg.
+    [TestMethod]
+    public void GuessImageMimeType_SvgWhoseRootComesAfterThePrefix_IsStillSvg()
+    {
+        string svg = "<?xml version=\"1.0\"?><!--" + new string('-', 300) + "--><svg xmlns=\"http://www.w3.org/2000/svg\"></svg>";
+        string base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(svg));
+
+        Assert.IsTrue(ImageHelper.IsSupportedImage(Encoding.UTF8.GetBytes(svg)));
+        Assert.AreEqual("image/svg+xml", ImageHelper.GuessImageMimeType(base64));
+    }
+
+    [TestMethod]
     public void IsSupportedImage_PlainText_IsRejected()
     {
         Assert.IsFalse(ImageHelper.IsSupportedImage(Encoding.UTF8.GetBytes("Nombre,Confederacion,RankingFIFA")));
