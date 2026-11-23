@@ -23,6 +23,7 @@ do not make the app or its database reachable from another machine while they ar
 
 - The three accounts created at startup (`admin@copa.com`, `editor@copa.com`,
   `periodista@copa.com`) and their passwords, which are in the README and on the login page.
+  Setting `Demo:Enabled` to false stops creating them and hides them from the login page.
 - The database `sa` password in `.env.example` and in `appsettings.json`.
 
 Known weaknesses that are already tracked are listed under "Security" in [TODO.md](TODO.md).
@@ -32,17 +33,24 @@ Known weaknesses that are already tracked are listed under "Security" in [TODO.m
 - **Passwords** are stored as salted PBKDF2-SHA256 with 600,000 iterations and compared in
   constant time. They must have 8 to 128 characters with an upper-case letter, a lower-case
   letter, a digit and a symbol. A hash in an older format is replaced on the next successful login.
+  Changing a password from the profile page asks for the current one, and a wrong one counts
+  as a failed login.
 - **Login**: an unknown email costs the same password check as a wrong password, and five failed
   logins within five minutes lock that email for five minutes. The counter is kept in memory.
 - **Sessions** are kept in the browser's `sessionStorage`, encrypted with ASP.NET Core Data
-  Protection, with an eight-hour expiry that is checked when a page load restores the session.
-  The user is read again from the database on every navigation, so a deleted user or a changed
+  Protection, with an eight-hour expiry. On every navigation, and again before every action
+  that changes or exports data, the app checks the expiry, whether that session was closed from
+  another tab, and the user's current roles in the database, so a deleted user or a removed
   role takes effect there.
 - **Roles**: public sign-up only creates journalists, and the demo accounts are created only
   when they are missing; existing accounts are never modified at startup.
 - **Database access** goes through EF Core queries only; the application builds no SQL text.
-- **Audit log**: changes are recorded with their time and the email of the user who made them.
-  The few entries that still lack the author are listed in TODO.md.
+- **Audit log**: changes are recorded with their time and the email and id of the user who made
+  them. Entries the system writes by itself, such as ranking updates, have no author.
+- **Browser**: every response carries a Content-Security-Policy that only lets scripts load from
+  the app, and forbids framing, MIME sniffing and the device APIs the app does not use.
+- **Uploads**: the team CSV must be UTF-8 and at most 256 KB; a flag must be a PNG, JPEG, WebP
+  or SVG image by content, not by file name.
 - **CSV export** escapes cells that a spreadsheet would read as a formula.
 - **Transport**: the antiforgery middleware is on, and requests are redirected to HTTPS, with
   HSTS outside Development, when the app is given an HTTPS endpoint. The container image
