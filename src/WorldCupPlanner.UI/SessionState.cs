@@ -124,6 +124,8 @@ public class SessionState
         // Los ids se reusan si se resetea la base: con otro email es otra persona, no esta sesión.
         if (!string.Equals(user.email, CurrentUser.email, StringComparison.OrdinalIgnoreCase))
         {
+            // Sin revocar el id: lo comparte la pestaña donde el usuario se cambió el email, que sigue siendo suya.
+            session = null;
             await LogoutAsync();
             return false;
         }
