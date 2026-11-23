@@ -31,7 +31,8 @@ public sealed class AuditLog
         int? tournamentSettingsId,
         string? affectedEntityType,
         int? affectedEntityId,
-        string? performedByEmail)
+        string? performedByEmail,
+        int? performedByUserId)
     {
         Timestamp = timestampUtc;
         Action = action;
@@ -40,6 +41,7 @@ public sealed class AuditLog
         AffectedEntityType = affectedEntityType;
         AffectedEntityId = affectedEntityId;
         PerformedByEmail = performedByEmail;
+        PerformedByUserId = performedByUserId;
     }
 
     private static void EnsureActionIsValid(string? action)
@@ -81,7 +83,7 @@ public sealed class AuditLog
         string? cleanActor = NormalizeActor(performedByEmail);
         DateTime timestampUtc = DateTime.UtcNow;
 
-        return new AuditLog(timestampUtc, cleanAction, cleanDetails, tournamentSettingsId, affectedEntityType, affectedEntityId, cleanActor);
+        return new AuditLog(timestampUtc, cleanAction, cleanDetails, tournamentSettingsId, affectedEntityType, affectedEntityId, cleanActor, performedByUserId);
     }
 
     public void SetId(int id)
