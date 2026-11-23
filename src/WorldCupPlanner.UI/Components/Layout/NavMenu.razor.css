@@ -16,6 +16,12 @@
     background-color: color-mix(in srgb, var(--m26-on-pitch) 15%, transparent);
 }
 
+/* Bootstrap le pone un aro blanco de 4px que en el celular queda pegado después de tocarlo; con
+   teclado se sigue viendo el anillo amarillo de :focus-visible, más abajo. */
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
 .top-row {
     min-height: 4.5rem;
 }
