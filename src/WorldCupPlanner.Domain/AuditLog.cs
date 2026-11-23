@@ -9,6 +9,8 @@ public sealed class AuditLog
     public string Details { get; }
     public int? TournamentSettingsId { get; }
     public string? PerformedByEmail { get; }
+    // El email se puede cambiar y el usuario se puede borrar: el id identifica al actor y no es clave foranea.
+    public int? PerformedByUserId { get; }
     public string? AffectedEntityType { get; }
     public int? AffectedEntityId { get; }
 
@@ -69,7 +71,8 @@ public sealed class AuditLog
         int? tournamentSettingsId = null,
         string? affectedEntityType = null,
         int? affectedEntityId = null,
-        string? performedByEmail = null)
+        string? performedByEmail = null,
+        int? performedByUserId = null)
     {
         EnsureActionIsValid(action);
 
