@@ -17,6 +17,9 @@ public sealed class FixtureSnapshotDto
     public IReadOnlyList<Group> Groups { get; init; } = Array.Empty<Group>();
     public IReadOnlyList<MatchGroup> GroupMatches { get; init; } = Array.Empty<MatchGroup>();
     public IReadOnlyList<MatchElimination> EliminationMatches { get; init; } = Array.Empty<MatchElimination>();
+    // Estado de la fase de grupos, calculado sobre GroupMatches para que la pagina no relea los partidos.
+    public int PendingGroupMatchCount { get; init; }
+    public bool IsGroupStageComplete { get; init; }
     public DateTime? EarliestMatchDate { get; init; }
     public DateTime? LatestMatchDate { get; init; }
 }

@@ -87,6 +87,41 @@ public sealed class FixtureViewServiceTests
     }
 
     [TestMethod]
+    public void GetSnapshot_CountsGroupMatchesWithoutResultAndGroupStageIsNotComplete()
+    {
+        _matchRepository.Add(PlayedGroupMatch(1));
+        _matchRepository.Add(GroupMatch(2, Date(11), "A", Stadium(1, "St1")));
+        _matchRepository.Add(EliminationMatch(3, Date(20), Phase.RoundOf16, Stadium(1, "St1")));
+
+        FixtureSnapshotDto snapshot = _service.GetSnapshot();
+
+        Assert.AreEqual(1, snapshot.PendingGroupMatchCount, "Only group matches without a result are pending.");
+        Assert.IsFalse(snapshot.IsGroupStageComplete);
+    }
+
+    [TestMethod]
+    public void GetSnapshot_WhenEveryGroupMatchHasAResult_GroupStageIsComplete()
+    {
+        _matchRepository.Add(PlayedGroupMatch(1));
+        _matchRepository.Add(PlayedGroupMatch(2));
+        _matchRepository.Add(EliminationMatch(3, Date(20), Phase.RoundOf16, Stadium(1, "St1")));
+
+        FixtureSnapshotDto snapshot = _service.GetSnapshot();
+
+        Assert.AreEqual(0, snapshot.PendingGroupMatchCount);
+        Assert.IsTrue(snapshot.IsGroupStageComplete);
+    }
+
+    [TestMethod]
+    public void GetSnapshot_WithoutGroupMatches_GroupStageIsNotComplete()
+    {
+        FixtureSnapshotDto snapshot = _service.GetSnapshot();
+
+        Assert.AreEqual(0, snapshot.PendingGroupMatchCount);
+        Assert.IsFalse(snapshot.IsGroupStageComplete);
+    }
+
+    [TestMethod]
     public void GetSnapshot_ComputesEarliestAndLatestMatchDate()
     {
         _matchRepository.Add(GroupMatch(1, Date(10), "A", Stadium(1, "St1")));
@@ -124,6 +159,14 @@ public sealed class FixtureViewServiceTests
             id, date, Team(id * 10 + 1, "H" + id), Team(id * 10 + 2, "A" + id), stadium,
             new Group(groupName), Journey.CreateInstance(id));
         match.SetMatchCode("M" + id);
+        return match;
+    }
+
+    // Un 0-0 cargado cuenta como jugado: lo que vale es HasResult, no los goles.
+    private static MatchGroup PlayedGroupMatch(int id)
+    {
+        MatchGroup match = GroupMatch(id, Date(10), "A", Stadium(1, "St1"));
+        match.SetGoals(0, 0);
         return match;
     }
 
