@@ -123,7 +123,8 @@ public sealed class ImportService : IImportService
 
     private static void ValidateName(string name, int rowNumber)
     {
-        if (string.IsNullOrWhiteSpace(name) || name.Length > MaxNameLength)
+        // Las mismas reglas que Team, repetidas aca para poder decir en que fila esta el nombre rechazado.
+        if (name.Length > MaxNameLength || name.Any(char.IsControl) || TextNormalizer.Normalize(name).Length == 0)
         {
             ThrowInvalidTeamName(rowNumber);
         }

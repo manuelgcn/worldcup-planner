@@ -4,8 +4,11 @@ public class Stadium
 {
     private const string NameRequiredMessage = "El nombre es obligatorio";
     private const string NameTooLongMessage = "El nombre es demasiado largo";
+    private const string NameHasControlCharactersMessage = "El nombre no puede tener saltos de línea ni otros caracteres de control";
+    private const string NameWithoutLettersOrDigitsMessage = "El nombre debe tener al menos una letra o un número";
     private const string CityRequiredMessage = "La ciudad es obligatoria";
     private const string CityTooLongMessage = "La ciudad es demasiado larga";
+    private const string CityHasControlCharactersMessage = "La ciudad no puede tener saltos de línea ni otros caracteres de control";
     private const string DescriptionTooLongMessage = "La descripción no puede superar los 400 caracteres";
     private const int MaxDescriptionLength = 400;
     private const string CapacityTooLowMessage = "La capacidad debe ser de al menos 20000";
@@ -36,6 +39,13 @@ public class Stadium
 
         if (name.Length > 80)
             throw new ArgumentException(NameTooLongMessage);
+
+        if (name.Any(char.IsControl))
+            throw new ArgumentException(NameHasControlCharactersMessage);
+
+        // Un nombre de solo signos se normaliza a "" y seria el mismo estadio que cualquier otro de solo signos.
+        if (TextNormalizer.Normalize(name).Length == 0)
+            throw new ArgumentException(NameWithoutLettersOrDigitsMessage);
     }
 
     private void ValidateCity(string city)
@@ -45,6 +55,9 @@ public class Stadium
 
         if (city.Length > 60)
             throw new ArgumentException(CityTooLongMessage);
+
+        if (city.Any(char.IsControl))
+            throw new ArgumentException(CityHasControlCharactersMessage);
     }
 
     private void ValidateDescription(string? description)

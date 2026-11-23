@@ -22,6 +22,8 @@ public class User
     private const string NameRequiredMessage = "El nombre es obligatorio";
     private const string NameTooLongMessage = "El nombre no puede superar los 100 caracteres";
     private const string LastnameTooLongMessage = "El apellido no puede superar los 100 caracteres";
+    private const string NameHasControlCharactersMessage = "El nombre no puede tener saltos de línea ni otros caracteres de control";
+    private const string LastnameHasControlCharactersMessage = "El apellido no puede tener saltos de línea ni otros caracteres de control";
     private const string EmailTooLongMessage = "El email no puede superar los 254 caracteres";
     // Mismos límites que UserConfiguration: validarlos acá evita que fallen recién al guardar.
     private const int NameMaxLength = 100;
@@ -82,6 +84,12 @@ public class User
 
         if (lastname?.Length > LastnameMaxLength)
             throw new ArgumentException(LastnameTooLongMessage);
+
+        if (name.Any(char.IsControl))
+            throw new ArgumentException(NameHasControlCharactersMessage);
+
+        if (lastname?.Any(char.IsControl) == true)
+            throw new ArgumentException(LastnameHasControlCharactersMessage);
     }
 
     private void ValidateEmail(string email)
