@@ -52,7 +52,8 @@ Each item says where it is and what the fix looks like. Remove an item in the sa
 
 ## Operations
 
-- **Not run yet:** `docker compose --profile app up` (the image was built and run by hand: non-root user, `/health`, HEALTHCHECK), Dependabot and CodeQL on GitHub (their files were only parsed), and the `.runsettings` coverage exclusions on the Linux CI. Check the first run of each.
+- **Not run yet:** `docker compose --profile app up` (the image was built and run by hand: non-root user, `/health`, HEALTHCHECK).
+- **CsvHelper stays on 33.** Version 34 is a rewrite with another API (no `CsvConfiguration`, `CsvParser` or `InjectionOptions`), so Dependabot ignores its major versions (`.github/dependabot.yml`). Moving to it means rewriting `CsvStreamTeamParser` and `Exporter`, including the formula escaping that `InjectionOptions.Escape` gives today.
 - **The `app` container is only fit for loopback.** It serves plain HTTP on 8080 (no HSTS or HTTPS redirection without an HTTPS port), shows UTC in the audit log and the notifications (`ToLocalTime()` with no `TZ`), and keeps its Data Protection keys inside the container, so recreating it ends every session. Fix: a TLS-terminating proxy, a `TZ` variable on the `app` service, and a volume with `PersistKeysToFileSystem`.
 - **`/health` is anonymous and unthrottled.** With the database down it waits for the SQL connect timeout (15 s by default) while the Docker HEALTHCHECK gives up at 10 s. Fix: a short `Connect Timeout` for the check, or cache the result for a few seconds.
 
@@ -87,4 +88,4 @@ What the code does today, and the alternative.
 - **Repository and CI settings**
   - `SECURITY.md` names GitHub private vulnerability reporting as the only channel, and it was disabled on the repository when last checked (November 2026). Enable it, or give another contact.
   - Dependabot opens its pull requests against `main` because `develop` does not exist on the remote, and its Docker entry ignores major updates. Push `develop` and set `target-branch`, or accept them on `main`.
-  - The CodeQL workflow needs a public repository or GitHub Advanced Security, and code scanning "default setup" turned off.
+  - Dependabot opens one pull request per major version and those can break the build (CsvHelper 34 and MSTest 4 did). Keep reading each one, or ignore major versions for NuGet as the Docker entry does.
