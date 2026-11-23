@@ -219,6 +219,21 @@ public sealed class ExportServiceTests
         Assert.AreEqual("audit-log_20260630_20260630.csv", result.FileName);
     }
 
+    [TestMethod]
+    public void ExportAuditLogWithoutStartIsNeverNamedWithAStartAfterItsEnd()
+    {
+        // El filtro de la pantalla va en UTC y el rango en dias locales: al oeste de UTC la fila mas vieja puede
+        // caer en el dia UTC siguiente al "Hasta", y el nombre quedaba al reves.
+        _auditRepository.Seed(AuditLog.Create("ACTION", "Det"));
+        User admin = BuildUser(UserRoles.Admin);
+        DateTime yesterday = DateTime.UtcNow.Date.AddDays(-1);
+        AuditLogFilterDto filter = new AuditLogFilterDto { To = DateTime.UtcNow.AddDays(1) };
+
+        ExportFileDto result = _service.ExportAuditLog(new DateRange(DateTime.MinValue, yesterday), ExportFormat.Csv, admin, filter);
+
+        Assert.AreEqual($"audit-log_{yesterday:yyyyMMdd}_{yesterday:yyyyMMdd}.csv", result.FileName);
+    }
+
     private void SeedAuditRows(int count)
     {
         for (int i = 0; i < count; i++)
