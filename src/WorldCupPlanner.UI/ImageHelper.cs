@@ -53,9 +53,10 @@ public static class ImageHelper
         return DefaultMimeType;
     }
 
+    // Los mismos formatos que GuessImageMimeType reconoce: lo que se acepta al subir se puede mostrar después.
     public static bool IsSupportedImage(byte[] bytes)
     {
-        return false;
+        return IsPng(bytes) || IsJpeg(bytes) || IsWebp(bytes) || IsSvg(bytes);
     }
 
     private static bool IsPng(byte[] bytes)
