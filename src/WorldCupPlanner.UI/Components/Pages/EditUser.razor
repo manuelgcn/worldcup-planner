@@ -94,10 +94,21 @@
         email = Session.CurrentUser.email;
     }
 
+    private const string SessionEndedMessage = "Tu sesión terminó. Ingresá de nuevo.";
+    private const string SessionNotConfirmedMessage = "No se pudo confirmar tu sesión. Intentá nuevamente.";
+
     private async Task Save()
     {
         errors.Clear();
         successMessage = null;
+
+        // La página pudo quedar abierta después de que la sesión venciera o se cerrara en otra pestaña.
+        // También da falso si no se pudo releer al usuario: ahí la sesión sigue y solo se pide reintentar.
+        if (!await Session.RevalidateAsync())
+        {
+            errors.Add(Session.IsLoggedIn ? SessionNotConfirmedMessage : SessionEndedMessage);
+            return;
+        }
 
         if (!ValidateInput())
             return;
