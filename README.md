@@ -47,6 +47,8 @@ University project for *Diseño de Aplicaciones 1*, Universidad ORT Uruguay (202
 
 ![Knockout bracket from the round of 32 to the final](docs/screenshots/bracket.png)
 
+![Tournament statistics in the night theme](docs/screenshots/stats-night.png)
+
 ## Tournament rules
 
 - **Quotas:** UEFA 16, CAF 9, AFC 8, CONMEBOL 7, CONCACAF 7, OFC 1. A group holds at most two
