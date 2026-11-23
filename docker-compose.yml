@@ -13,5 +13,22 @@ services:
       - mssql-data:/var/opt/mssql
     restart: unless-stopped
 
+  # Solo arranca con "docker compose --profile app up": sin el perfil, "docker compose up -d sqlserver"
+  # sigue levantando unicamente la base.
+  app:
+    profiles: ["app"]
+    build: .
+    container_name: worldcup-app
+    depends_on:
+      - sqlserver
+    environment:
+      ConnectionStrings__Default: "Server=sqlserver,1433;Database=WorldCupPlanner;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
+    ports:
+      # Solo loopback, igual que la base: las cuentas de demo tienen claves publicas.
+      - "127.0.0.1:8080:8080"
+    # depends_on no espera a que SQL Edge acepte conexiones y la app migra la base al arrancar: si
+    # todavia no responde, el proceso termina y este reinicio lo vuelve a intentar.
+    restart: unless-stopped
+
 volumes:
   mssql-data:

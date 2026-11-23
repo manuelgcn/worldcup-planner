@@ -54,6 +54,8 @@ public class MatchQueryService(IMatchRepository matchRepository) : IMatchQuerySe
             MatchDate = match.MatchDate,
             HomeTeamName = match.HomeTeam?.Name,
             AwayTeamName = match.AwayTeam?.Name,
+            HomeTeamRanking = match.HomeTeam?.FifaRanking,
+            AwayTeamRanking = match.AwayTeam?.FifaRanking,
             HomeGoals = match.HomeGoals,
             AwayGoals = match.AwayGoals,
             StadiumName = match.Stadium?.Name,

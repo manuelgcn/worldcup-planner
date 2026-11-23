@@ -24,6 +24,7 @@ string flagsDirectory = Path.Combine(
 builder.Services.AddWorldCupPlanner(connectionString, flagsDirectory);
 builder.Services.TryAddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<RevokedSessions>();
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 builder.Services.AddScoped<SessionState>();
 
 var app = builder.Build();
@@ -114,6 +115,9 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+
+// Para el HEALTHCHECK del contenedor: 200 "Healthy" o 503 "Unhealthy", sin más detalle en el cuerpo.
+app.MapHealthChecks("/health");
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

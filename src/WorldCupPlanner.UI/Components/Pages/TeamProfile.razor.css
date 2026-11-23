@@ -1,0 +1,91 @@
+.team-head {
+    display: flex;
+    align-items: center;
+    gap: .5rem 1rem;
+    flex-wrap: wrap;
+}
+
+/* El título comparte renglón con la bandera: el aire de abajo lo pone la línea de datos. */
+.team-head .m26-page-title {
+    margin-bottom: .5rem;
+}
+
+.team-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .35rem 1.1rem;
+    margin: 0;
+    color: var(--m26-muted);
+}
+
+.team-meta strong {
+    color: var(--m26-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.team-progress {
+    margin: 1.5rem 0 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.team-progress i {
+    margin-right: .35rem;
+    color: var(--m26-pitch);
+}
+
+/* Recuento: el mismo tablero de cifras anchas de Estadísticas, con tantas columnas como entren. */
+.record-tally {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(8rem, 100%), 1fr));
+    column-gap: 1.25rem;
+    margin: 1rem 0 .75rem;
+    border-top: 2px solid var(--m26-ink);
+}
+
+/* Un rótulo en dos líneas no desalinea su cifra: todas apoyan abajo. */
+.record-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1rem 0 1.1rem;
+    border-bottom: 1px solid var(--m26-line);
+}
+
+.record-tally dt {
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--m26-muted);
+}
+
+.record-tally dd {
+    margin: .2rem 0 0;
+    font-size: clamp(1.9rem, 4vw, 2.75rem);
+    font-stretch: 118%;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+}
+
+.record-note {
+    margin: .6rem 0 0;
+    font-size: .9rem;
+}
+
+.team-matches {
+    margin-top: 2.5rem;
+}
+
+.match-rival {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.match-penalties {
+    margin-left: .4rem;
+    font-size: .82rem;
+    color: var(--m26-muted);
+    white-space: nowrap;
+}

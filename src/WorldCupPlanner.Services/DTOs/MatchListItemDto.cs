@@ -11,6 +11,9 @@ public sealed class MatchListItemDto
     public DateTime MatchDate { get; set; }
     public string? HomeTeamName { get; set; }
     public string? AwayTeamName { get; set; }
+    // Ranking actual de cada equipo (null si todavía no está definido): alimenta el pronóstico Elo del listado.
+    public int? HomeTeamRanking { get; set; }
+    public int? AwayTeamRanking { get; set; }
     public int HomeGoals { get; set; }
     public int AwayGoals { get; set; }
     public string? StadiumName { get; set; }

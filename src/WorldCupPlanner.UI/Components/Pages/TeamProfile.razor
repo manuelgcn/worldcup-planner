@@ -1,0 +1,236 @@
+@page "/team/{Id:int}"
+@using WorldCupPlanner.Domain
+@using WorldCupPlanner.Services.DTOs
+@using WorldCupPlanner.Services.Exceptions
+@using WorldCupPlanner.Services.Interfaces
+@inject ITeamProfileService ProfileService
+@inject ITeamService TeamServices
+@inject SessionState Session
+@inject ILogger<TeamProfile> Logger
+
+<PageTitle>@(profile?.Name ?? PageName) · Golazo</PageTitle>
+
+@if (!Session.IsLoggedIn)
+{
+    <h1 class="m26-page-title">@PageName</h1>
+    <LoginRequired />
+}
+else if (loadError is not null)
+{
+    <h1 class="m26-page-title">@PageName</h1>
+    <div class="alert alert-error" role="alert">@loadError</div>
+}
+else if (profile is null)
+{
+    <h1 class="m26-page-title">@PageName</h1>
+    <div class="m26-empty">
+        <i class="bi bi-flag" aria-hidden="true"></i>
+        <p class="mb-0">No encontramos ese equipo. Buscalo en el <a href="ranking">ranking</a>.</p>
+    </div>
+}
+else
+{
+    <header class="team-head">
+        <TeamFlag Team="TeamWithId(profile.TeamId)" Large="true" />
+        <div>
+            <h1 class="m26-page-title">@profile.Name</h1>
+            <p class="team-meta">
+                <span class="m26-conf-badge conf-@profile.Confederation">@profile.Confederation</span>
+                <span>Ranking FIFA <strong>@profile.FifaRanking</strong></span>
+                @if (profile.GroupName is not null)
+                {
+                    <span>
+                        <a href="matches?grupo=@Uri.EscapeDataString(profile.GroupName)">Grupo @profile.GroupName</a>@if (profile.GroupPosition is int position)
+                        {
+                            <text>, puesto @position</text>
+                        }
+                    </span>
+                }
+                @if (profile.IsFictitious)
+                {
+                    <span class="badge bg-secondary">Ficticio</span>
+                }
+            </p>
+        </div>
+    </header>
+
+    <p class="team-progress">
+        @if (profile.IsChampion)
+        {
+            <i class="bi bi-trophy-fill" aria-hidden="true"></i>
+        }
+        @ProgressLabel(profile)
+    </p>
+
+    <dl class="record-tally">
+        <div class="record-item">
+            <dt>Jugados</dt>
+            <dd>@profile.Played</dd>
+        </div>
+        <div class="record-item">
+            <dt>Ganados</dt>
+            <dd>@profile.Won</dd>
+        </div>
+        <div class="record-item">
+            <dt>Empatados</dt>
+            <dd>@profile.Drawn</dd>
+        </div>
+        <div class="record-item">
+            <dt>Perdidos</dt>
+            <dd>@profile.Lost</dd>
+        </div>
+        <div class="record-item">
+            <dt>Goles a favor</dt>
+            <dd>@profile.GoalsFor</dd>
+        </div>
+        <div class="record-item">
+            <dt>Goles en contra</dt>
+            <dd>@profile.GoalsAgainst</dd>
+        </div>
+        <div class="record-item">
+            <dt>Puntos</dt>
+            <dd>@profile.Points</dd>
+        </div>
+    </dl>
+    <p class="text-muted record-note">
+        Cuenta todos los partidos con resultado, eliminatorias incluidas: por eso puede no coincidir con
+        la tabla del grupo. Un partido que se define por penales cuenta como empate.
+    </p>
+
+    <section class="team-matches" aria-labelledby="matchesTitle">
+        <h2 id="matchesTitle" class="pane-title">Partidos</h2>
+        @if (profile.Matches.Count == 0)
+        {
+            <div class="m26-empty">
+                <i class="bi bi-calendar-x" aria-hidden="true"></i>
+                <p class="mb-0">Este equipo todavía no tiene partidos: el fixture no fue generado.</p>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted">En el resultado van primero los goles de @profile.Name.</p>
+            <div class="table-responsive m26-card" tabindex="0" role="region" aria-labelledby="matchesTitle">
+                <table class="table table-hover m26-scoreboard mb-0">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Grupo / Fase</th>
+                            <th>Rival</th>
+                            <th>Estadio</th>
+                            <th>Resultado</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (TeamProfileMatchDto match in profile.Matches)
+                        {
+                            <tr>
+                                <td>@match.MatchDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@StageLabel(match)</td>
+                                <td class="match-rival">
+                                    <TeamFlag Team="TeamWithId(match.OpponentId)" /><a href="team/@match.OpponentId">@match.OpponentName</a>
+                                </td>
+                                <td>@match.StadiumName</td>
+                                <td>
+                                    <span class="m26-score @(match.HasResult ? "" : "pending")">
+                                        @(match.HasResult ? $"{match.GoalsFor} - {match.GoalsAgainst}" : "vs")
+                                    </span>
+                                    @if (match.PenaltiesFor is int penaltiesFor && match.PenaltiesAgainst is int penaltiesAgainst)
+                                    {
+                                        <span class="match-penalties">@penaltiesFor - @penaltiesAgainst en los penales</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="match-status @(match.HasResult ? "played" : "pending")">
+                                        @(match.HasResult ? "Finalizado" : "Pendiente")
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+}
+
+@code {
+    private const string PageName = "Ficha del equipo";
+    private const string LoadErrorMessage =
+        "No se pudo cargar la ficha del equipo. Probá de nuevo en unos minutos.";
+    private const string ChampionLabel = "Campeón del mundo";
+    private const string ReachedPrefix = "Instancia alcanzada: ";
+    private const string GroupStageLabel = "Fase de grupos";
+    // "Tercer puesto" a secas se leería como "salió tercero", y lo ve también el que perdió ese partido.
+    private const string ThirdPlaceMatchLabel = "Partido por el tercer puesto";
+    private const string NoFixtureLabel = "Todavía sin partidos";
+
+    [Parameter] public int Id { get; set; }
+
+    private TeamProfileDto? profile;
+    private string? loadError;
+
+    // La ficha trae nombres e ids; las banderas se resuelven una vez por carga, como en Partidos.
+    private IReadOnlyDictionary<int, Team> teamsById = new Dictionary<int, Team>();
+
+    // OnParametersSet y no OnInitialized: ir de la ficha de un equipo a la de su rival reusa el componente.
+    protected override void OnParametersSet()
+    {
+        profile = null;
+        loadError = null;
+
+        if (!Session.IsLoggedIn)
+        {
+            return;
+        }
+
+        try
+        {
+            profile = ProfileService.GetProfile(Id);
+            teamsById = TeamServices.GetTeams().ToDictionary(team => team.Id);
+        }
+        catch (TeamServicesException)
+        {
+            // Id desconocido: profile queda en null y la página muestra "No encontramos ese equipo".
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while loading the profile of team {TeamId}.", Id);
+            loadError = LoadErrorMessage;
+        }
+    }
+
+    private Team? TeamWithId(int teamId) => teamsById.GetValueOrDefault(teamId);
+
+    // Vale a mitad del torneo: dice hasta dónde llegó, no si quedó eliminado.
+    private static string ProgressLabel(TeamProfileDto profile)
+    {
+        if (profile.IsChampion)
+        {
+            return ChampionLabel;
+        }
+
+        if (profile.RoundReached is Phase phase)
+        {
+            return ReachedPrefix + (phase == Phase.ThirdPlace ? ThirdPlaceMatchLabel : PhaseLabel(phase));
+        }
+
+        return profile.Matches.Count == 0 ? NoFixtureLabel : ReachedPrefix + GroupStageLabel;
+    }
+
+    private static string StageLabel(TeamProfileMatchDto match) =>
+        match.GroupName is not null
+            ? $"Grupo {match.GroupName}"
+            : match.Phase is Phase phase ? PhaseLabel(phase) : "";
+
+    // Mismos nombres de ronda que el listado de Partidos.
+    private static string PhaseLabel(Phase phase) => phase switch
+    {
+        Phase.RoundOf32 => "16avos de final",
+        Phase.RoundOf16 => "Octavos de final",
+        Phase.QuarterFinals => "Cuartos de final",
+        Phase.SemiFinal => "Semifinal",
+        Phase.ThirdPlace => "Tercer puesto",
+        _ => "Final"
+    };
+}
