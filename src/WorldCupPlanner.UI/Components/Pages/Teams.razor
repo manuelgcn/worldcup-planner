@@ -230,7 +230,7 @@ else
                 .DefaultIfEmpty(0)
                 .Max() + 1;
 
-            Team team = new Team(nextId, nombre, rankingFifa, false, confederation, flagBase64);
+            Team team = new Team(nextId, nombre.Trim(), rankingFifa, false, confederation, flagBase64);
 
             TeamServices.AddTeam(team, Session.CurrentUser?.email);
             successMessage = "Equipo creado correctamente";

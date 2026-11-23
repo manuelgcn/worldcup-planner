@@ -256,9 +256,9 @@ else
             UserServices.CreateUser(new CreateUserRequestDto
             {
                 Id = 0,
-                Name = name,
-                Lastname = lastname,
-                Email = email,
+                Name = name.Trim(),
+                Lastname = lastname.Trim(),
+                Email = email.Trim(),
                 Password = password,
                 DateOfBirth = dateOfBirth.Value,
                 InitialRole = initialRole
@@ -308,7 +308,7 @@ else
         try
         {
             int id = editingUserId!.Value;
-            UserServices.UpdateUser(id, name, lastname, email, Session.CurrentUser?.email);
+            UserServices.UpdateUser(id, name.Trim(), lastname.Trim(), email.Trim(), Session.CurrentUser?.email);
 
             // La sesión guarda una copia del usuario: si se editó a sí mismo, se recarga como en EditUser.
             if (id == Session.CurrentUser!.idUser)

@@ -150,8 +150,8 @@ else
         try
         {
             WorldCupPlanner.Domain.Stadium stadium = new WorldCupPlanner.Domain.Stadium(
-                name,
-                city,
+                name.Trim(),
+                city.Trim(),
                 description,
                 capacity
             );
