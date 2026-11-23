@@ -213,3 +213,23 @@ article:focus {
 #blazor-error-ui .dismiss:hover {
     background: var(--m26-chalk);
 }
+
+/* En papel solo va el contenido: sin menú, sin barra de sesión y sin la columna verde del fondo. */
+@media print {
+    .skip-link,
+    .sidebar,
+    .top-row,
+    #blazor-error-ui {
+        display: none;
+    }
+
+    .page {
+        display: block;
+        min-height: 0;
+        background: none;
+    }
+
+    article {
+        padding: 0 !important;
+    }
+}

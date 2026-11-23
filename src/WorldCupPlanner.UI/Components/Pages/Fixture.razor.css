@@ -652,3 +652,100 @@
     font-size: .9rem;
     color: var(--m26-ink);
 }
+
+/* Impresión: quedan los grupos, el detalle abierto y el cuadro; los pasos del asistente no. Las
+   marcas que en pantalla son un fondo o una sombra pasan a ser un borde, que sí se imprime. */
+@media print {
+    .wizard-banner,
+    .status-panel,
+    .step-section,
+    .group-chips,
+    ::deep .bracket-hint {
+        display: none;
+    }
+
+    .groups-section,
+    .group-detail-section,
+    .bracket-section {
+        margin: 1rem 0 0;
+        padding: 0;
+        border: 0;
+    }
+
+    ::deep .group-card {
+        overflow: visible;
+        break-inside: avoid;
+    }
+
+    ::deep .group-card-body {
+        overflow: visible;
+    }
+
+    ::deep .standings-table tr.qualified td:first-child {
+        border-left: 4px solid var(--m26-ok);
+        box-shadow: none;
+    }
+
+    ::deep .standings-table tr.third-place td:first-child {
+        border-left: 4px dotted var(--m26-ink);
+        box-shadow: none;
+    }
+
+    .groups-legend li::before {
+        width: 0;
+        height: .8rem;
+        border-left: 4px solid var(--m26-ok);
+        border-radius: 0;
+        background: none;
+    }
+
+    .groups-legend .legend-third::before {
+        border-left: 4px dotted var(--m26-ink);
+        background: none;
+    }
+
+    /* El cuadro va en su propia hoja y más apretado, para que los 16avos entren enteros. */
+    .bracket-section {
+        break-before: page;
+    }
+
+    ::deep .bracket-champion {
+        margin-bottom: .75rem;
+        padding: .5rem .75rem;
+        border: 2px solid var(--m26-ink);
+        background: none;
+    }
+
+    ::deep .bracket-champion > i,
+    ::deep .bracket-champion-label {
+        color: var(--m26-ink);
+    }
+
+    ::deep .bracket-compact {
+        --bracket-gap: 1rem;
+        overflow: visible;
+    }
+
+    ::deep .bracket-compact-column {
+        min-width: 0;
+    }
+
+    ::deep .bracket-slot {
+        padding: .1rem 0;
+        break-inside: avoid;
+    }
+
+    ::deep .bracket-mini {
+        gap: 0;
+        padding: .1rem .3rem;
+    }
+
+    ::deep .bracket-mini-code {
+        display: none;
+    }
+
+    /* En papel no hay tooltip: con la letra angosta los nombres largos entran sin cortarse. */
+    ::deep .bracket-mini-name {
+        font-stretch: 68%;
+    }
+}

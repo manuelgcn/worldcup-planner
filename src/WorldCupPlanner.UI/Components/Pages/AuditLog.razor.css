@@ -38,3 +38,10 @@
     white-space: normal;
     color: var(--m26-ink);
 }
+
+/* Los filtros no se imprimen (app.css oculta sus campos): tampoco su caja vacía. */
+@media print {
+    .audit-filters {
+        display: none;
+    }
+}

@@ -65,3 +65,11 @@
     font-weight: 500;
     color: var(--m26-muted);
 }
+
+/* Los filtros no se imprimen (app.css oculta sus campos): tampoco su caja vacía. */
+@media print {
+    .filters-card,
+    .section-separator {
+        display: none;
+    }
+}

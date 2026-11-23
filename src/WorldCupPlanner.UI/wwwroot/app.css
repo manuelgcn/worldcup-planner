@@ -46,26 +46,29 @@
    Contraste medido par por par (WCAG): tiza 13.4:1 sobre la superficie y 15.1:1 sobre el fondo,
    gris 6.9:1 y 7.8:1, verde 7.9:1, roja 6.3:1, amarilla 9.0:1; borde de control 3.8:1 y 4.3:1;
    texto sobre botón de cal 13.4:1, sobre verde 7.9:1, sobre roja 6.3:1 y sobre el tablero 8.9:1
-   (la amarilla sobre el tablero, 5.3:1). */
-html[data-theme="night"] {
-    color-scheme: dark;
-    --m26-chalk: #0A2014;
-    --m26-surface: #0F2B1B;
-    --m26-ink: #EEF2EB;
-    --m26-muted: #A5B2A8;
-    --m26-line: #27493A;
-    --m26-line-soft: #1A3A29;
-    --m26-line-strong: #3F6A52;
-    --m26-control-border: #6E8577;
-    --m26-ok: #5BD08C;
-    --m26-red: #FF8088;
-    --m26-red-hover: #FFA3A9;
-    --m26-accent: #F2C200;
-    --m26-on-accent: #17251D;
-    --m26-board: #28523A;
-    --m26-conf-conmebol: #5BA8E0;
-    --m26-conf-uefa: #8496EA;
-    --m26-conf-ofc: #9AA69F;
+   (la amarilla sobre el tablero, 5.3:1).
+   Solo en pantalla: en papel valen siempre los tokens de día (ver @media print, más abajo). */
+@media screen {
+    html[data-theme="night"] {
+        color-scheme: dark;
+        --m26-chalk: #0A2014;
+        --m26-surface: #0F2B1B;
+        --m26-ink: #EEF2EB;
+        --m26-muted: #A5B2A8;
+        --m26-line: #27493A;
+        --m26-line-soft: #1A3A29;
+        --m26-line-strong: #3F6A52;
+        --m26-control-border: #6E8577;
+        --m26-ok: #5BD08C;
+        --m26-red: #FF8088;
+        --m26-red-hover: #FFA3A9;
+        --m26-accent: #F2C200;
+        --m26-on-accent: #17251D;
+        --m26-board: #28523A;
+        --m26-conf-conmebol: #5BA8E0;
+        --m26-conf-uefa: #8496EA;
+        --m26-conf-ofc: #9AA69F;
+    }
 }
 
 /* Foco visible y consistente para teclado (WCAG 2.4.7). */
@@ -1001,6 +1004,78 @@ html[data-theme="night"] .form-check-input:checked[type=checkbox] {
 #components-reconnect-modal:is(.components-reconnect-failed, .components-reconnect-rejected) .reconnect-retrying,
 #components-reconnect-modal.components-reconnect-show .reconnect-lost {
     display: none;
+}
+
+/* Impresión: tinta sobre blanco en cualquier tema (los tokens de noche son solo de pantalla). Los
+   navegadores no imprimen fondos ni sombras salvo que se pida, así que nada puede depender de un
+   fondo oscuro: lo que iba en cal sobre el verde o sobre el tablero pasa a tinta sobre blanco. El
+   marco de la app y el fixture ajustan lo suyo en MainLayout.razor.css y Fixture.razor.css. */
+@media print {
+    :root {
+        --m26-chalk: #FFFFFF;
+        --m26-pitch: #FFFFFF;
+        --m26-pitch-stripe: #FFFFFF;
+        --m26-on-pitch: var(--m26-ink);
+        --m26-board: #FFFFFF;
+        --m26-on-board: var(--m26-ink);
+    }
+
+    @page {
+        margin: 12mm;
+    }
+
+    /* En papel los controles no sirven: fuera botones, campos y los paneles que solo tienen eso. */
+    .btn,
+    button,
+    form,
+    .form-control,
+    .form-select,
+    .form-label,
+    .form-check,
+    .match-result-editor,
+    .admin-grid > .pane:first-child,
+    .admin-stack > .pane:first-child {
+        display: none !important;
+    }
+
+    .admin-grid {
+        display: block;
+    }
+
+    /* Las cajas con scroll muestran todo su contenido y se pueden partir entre hojas. */
+    .table-responsive,
+    .table-wrap {
+        max-height: none;
+        overflow: visible;
+        container-type: normal;
+    }
+
+    .table-wrap > .table.m26-scoreboard > thead th {
+        position: static;
+    }
+
+    /* El ranking, con sus 12 columnas, entra justo en una hoja A4: un cuerpo menor le da margen. */
+    .m26-scoreboard {
+        font-size: .875rem;
+    }
+
+    /* Ninguna fila queda cortada entre dos hojas ni un título solo al pie. */
+    tr,
+    .alert,
+    .m26-empty {
+        break-inside: avoid;
+    }
+
+    h1,
+    h2,
+    h3 {
+        break-after: avoid;
+    }
+
+    /* Sin su fondo, el marcador se distingue por el borde. */
+    .m26-score {
+        border: 1px solid var(--m26-ink);
+    }
 }
 
 /* Siempre al final: apaga cualquier transición o animación definida más arriba. */
