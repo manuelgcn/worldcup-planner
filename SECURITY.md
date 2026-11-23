@@ -18,8 +18,8 @@ supported. Older releases are not patched.
 
 ## Demo defaults are not vulnerabilities
 
-The project ships as a demo that runs on one machine. These values are public on purpose and
-must be changed before the app is reachable from anywhere else:
+The project ships as a demo that runs on one machine. These values are public on purpose, so
+do not make the app or its database reachable from another machine while they are in place:
 
 - The three accounts created at startup (`admin@copa.com`, `editor@copa.com`,
   `periodista@copa.com`) and their passwords, which are in the README and on the login page.
@@ -35,8 +35,9 @@ Known weaknesses that are already tracked are listed under "Security" in [TODO.m
 - **Login**: an unknown email costs the same password check as a wrong password, and five failed
   logins within five minutes lock that email for five minutes. The counter is kept in memory.
 - **Sessions** are kept in the browser's `sessionStorage`, encrypted with ASP.NET Core Data
-  Protection, and expire after eight hours. The user is read again from the database on every
-  navigation, so a deleted user or a changed role takes effect there.
+  Protection, with an eight-hour expiry that is checked when a page load restores the session.
+  The user is read again from the database on every navigation, so a deleted user or a changed
+  role takes effect there.
 - **Roles**: public sign-up only creates journalists, and the demo accounts are created only
   when they are missing; existing accounts are never modified at startup.
 - **Database access** goes through EF Core queries only; the application builds no SQL text.

@@ -1,5 +1,6 @@
-# Imagen de la UI (Blazor Server). La cadena de conexion no va en la imagen: se pasa al contenedor
-# con la variable ConnectionStrings__Default (docker-compose.yml lo hace con el perfil "app").
+# Imagen de la UI (Blazor Server). La cadena de conexion real se pasa al contenedor con la variable
+# ConnectionStrings__Default (docker-compose.yml lo hace con el perfil "app"); la imagen solo lleva
+# el valor publico de desarrollo que trae appsettings.json.
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
