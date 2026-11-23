@@ -10,6 +10,7 @@ public class KnockoutFixtureGenerator : IKnockoutFixtureGenerator
 {
     private const int RequiredGroupCount = 12;
     private const int RequiredGroupStageMatchCount = 72;
+    // Solo sin eliminatorias guardadas; si las hay, cada ronda sigue desde el id mas alto (el R32 arranca en 2000, EliminationBuilder).
     private const int FirstNewMatchIdSeed = 3000;
     private const int DaysFromThirdPlaceToFinal = 1;
     private const string TournamentSettingsRequiredMessage = "La configuracion del torneo es obligatoria para generar la fase 2.";
